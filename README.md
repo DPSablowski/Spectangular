@@ -9,6 +9,7 @@ in the extracted folder, you can run the command
 objdump -p CroCo | grep NEEDED
 
 to find the necessary libraries you may to install some of them:
+
 NEEDED               libcfitsio.so.2
 NEEDED               libCCfits.so.0
 NEEDED               libstdc++.so.6
