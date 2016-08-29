@@ -3,11 +3,11 @@ Spectangular - spectral disentangling
 
 # installation
 
-download the croco.tar.gz and extract
+download the spectangular.tar.gz and extract
 
 in the extracted folder, you can run the command
 
-objdump -p CroCo | grep NEEDED
+objdump -p Spectangular | grep NEEDED
 
 to find the necessary libraries; you may have to install some of them:
 
@@ -35,4 +35,4 @@ libgcc_s.so.1
 
 libc.so.6
 
-to run the program: ./CroCo
+to run the program: ./Spectangular
