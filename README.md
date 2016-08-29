@@ -9,7 +9,7 @@ in the extracted folder, you can run the command
 
 objdump -p CroCo | grep NEEDED
 
-to find the necessary libraries you may to install some of them:
+to find the necessary libraries; you may have to install some of them:
 
 libcfitsio.so.2
 
