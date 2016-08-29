@@ -1,0 +1,2 @@
+# spectangular
+Spectangular - spectral disentangling
