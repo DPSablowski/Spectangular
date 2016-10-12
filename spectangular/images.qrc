@@ -1,0 +1,13 @@
+<RCC>
+    <qresource prefix="/new/Icons">
+        <file>Corr.png</file>
+        <file>activity_logo.png</file>
+        <file>run.png</file>
+        <file>SPlotter.png</file>
+        <file>AIP.jpeg</file>
+    </qresource>
+    <qresource prefix="/new/backround">
+        <file>Infected_Sith.jpg</file>
+        <file>Logo.png</file>
+    </qresource>
+</RCC>

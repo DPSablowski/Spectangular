@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/new/effects">
+        <file>ping.mp3</file>
+        <file>love.wav</file>
+    </qresource>
+</RCC>
