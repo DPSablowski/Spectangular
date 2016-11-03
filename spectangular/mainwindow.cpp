@@ -20,8 +20,6 @@
 #include <chrono>
 #include <thread>
 #include <QFileInfo>
-#include <QMediaPlayer>
-#include <iomanip>
 
 using namespace std;
 using namespace arma;
@@ -287,10 +285,6 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->spinBox_7->setValue(cores);
     ui->spinBox_8->setValue(cores);
 
-    QMediaPlayer * player = new QMediaPlayer();
-    player->setMedia(QUrl::fromLocalFile("/home/daniels/Music/ping.wav"));
-    player->setVolume(100);
-    player->play();
 }
 
 MainWindow::~MainWindow()
@@ -1525,13 +1519,23 @@ void MainWindow::on_pushButton_5_clicked()
 
     vec res(Mm);
 
+    int cBS;
+
     if(ui->checkBox_5->isChecked()){
     svd_econ(U,w,V,M, "both", "std");
     }
+    else ++cBS;
 
     if(ui->checkBox_6->isChecked()){
     svd_econ(U,w,V,M, "both", "dc");
     }
+    else ++cBS;
+
+    if(cBS == 0){
+        QMessageBox::information(this, "Error", "Select method for ECON.");
+        return;
+    }
+
 
     int i,j,jj, svalues=0;
         double s;
@@ -3886,6 +3890,7 @@ void MainWindow::Optimisation()
                                   this->setCursor(QCursor(Qt::ArrowCursor));
                                   return;
                               }
+
                               //Beta_1_1 branch
                               if(yt>yh){
                                   cout<<"yt <yh tot ";
@@ -4104,35 +4109,39 @@ void MainWindow::Optimisation()
                   //looking for highest value
                   yh=y[0];
                   for (int j=0; j<nu+1; j++){
-                  if(y[j]>yh){
-                  yh = y[j];
-                  Ph = j;
-                  }}
+                        if(y[j]>yh){
+                            yh = y[j];
+                            Ph = j;
+                        }
+                  }
 
                   //looking for smallest value
                   yl=yh;
                   for (int j=0; j<nu+1; j++){
-                  if(y[j]<yl){
-                  yl=y[j];
-                  Pl = j;
-                  }}
+                        if(y[j]<yl){
+                            yl=y[j];
+                            Pl = j;
+                        }
+                  }
 
                   //looking for second highest value
                   ysh=yl;
                   for (int j=0; j<nu+1; j++){
-                  if((y[j]>ysh)&(y[j]<yh)){
-                  ysh=y[j];
-                  Psh=j;
-                  }}
+                        if((y[j]>ysh)&(y[j]<yh)){
+                            ysh=y[j];
+                            Psh=j;
+                        }
+                  }
 
                   //output results
                   for(int i=0; i<nu+1;i++){
-                  cout<<y[i]<<endl;
-                  opt1<<setprecision(14)<<y[i]<<endl;
-                  for(int j=0; j<nu; j++){
-                      opt2<<setprecision(14)<<P[i][j]<<endl;
+                        cout<<y[i]<<endl;
+                        opt1<<setprecision(14)<<y[i]<<endl;
+                        for(int j=0; j<nu; j++){
+                            opt2<<setprecision(14)<<P[i][j]<<endl;
+                        }
                   }
-                  }
+
                   cout<<endl;
                   cout<<"Simplex Mean: "<<ym<<" Simplex STD: "<<ys<<endl;
                   cout<<endl;
@@ -4143,10 +4152,12 @@ void MainWindow::Optimisation()
                   cout<<"Period; Eccentricity; Amplitude A; Amplitude B; Systemic V.; T_peri; Omega A;"<<endl;
                   LogFile<<"Orbitelements after "<<zaehler<<" Iterations and "<<eval<<" Evaluations:"<<endl;
                   LogFile<<"Period; Eccentricity; Amplitude A; Amplitude B; Systemic V.; T_peri; Omega A;"<<endl;
+
                 for(int i=0; i<7;i++){
                     cout<<orbele[i]<<" ";
                     LogFile<<orbele[i]<<" ";
                 }
+
                 cout<<endl;
                 LogFile<<endl;
 
@@ -4190,12 +4201,12 @@ void MainWindow::ConstructMatrix(){
     RV1max=abs(RV1[0]);
     RV3max=abs(RV3[0]);
     for (int i=0; i<num; i++){
-    if (abs(RV1[i])>abs(RV1max)){
-    RV1max=RV1[i];
-    }
-    if (abs(RV3[i])>abs(RV3max)){
-    RV3max=RV3[i];
-    }
+        if (abs(RV1[i])>abs(RV1max)){
+            RV1max=RV1[i];
+        }
+        if (abs(RV3[i])>abs(RV3max)){
+            RV3max=RV3[i];
+        }
     }
 
     //looking for minimum and maximum RV
@@ -4219,166 +4230,171 @@ void MainWindow::ConstructMatrix(){
     }
 
     RV1amin=RV1[0];
+
     for(int i=0; i<num; i++){
         if(abs(RV1[i])<RV1amin){
-        RV1amin=RV1[i];
+            RV1amin=RV1[i];
         }
     }
 
     ui->doubleSpinBox->setValue(RV1max);
     ui->doubleSpinBox_2->setValue(RV3max);
 
-dv=(pow(10,(W(5)-W(4)))-1)*c0;
-difference=W(5)-W(4);
-ui->doubleSpinBox_3->setValue(dv);
-RV1m=RV1max/dv;
-RV3m=RV3max/dv;
-bso1=logbin+2*abs(RV1m);
-bso2=logbin+2*abs(RV3m);
+    dv=(pow(10,(W(5)-W(4)))-1)*c0;
+    difference=W(5)-W(4);
+    ui->doubleSpinBox_3->setValue(dv);
+    RV1m=RV1max/dv;
+    RV3m=RV3max/dv;
+    bso1=logbin+2*abs(RV1m);
+    bso2=logbin+2*abs(RV3m);
 
-cout<<endl;
-cout<<"bso1 "<<bso1<<endl;
-cout<<"bso2 "<<bso2<<endl;
+    cout<<endl;
+    cout<<"bso1 "<<bso1<<endl;
+    cout<<"bso2 "<<bso2<<endl;
 
-Mn=num*logbin;
-if(ui->checkBox_8->isChecked()){
-Mm=bso1+bso2+logbin;    //telluric +logbin
-}
-else{
-    Mm=bso1+bso2;
-}
-M.resize(Mn,Mm);
-Mt.resize(Mm,Mn);
-X.resize(Mm);
-cout<<Mm<<" "<<Mn<<endl;
+    Mn=num*logbin;
 
-elements=0;
-
-double RV1b[num], RV3b[num];
-int RV1c[num], RV3c[num];
-
-for(int j=0; j<num; j++){
-    RV1a=RV1[j];
-    RV3a=RV3[j];
-    RV1b[j]=(abs(RV1[j])-abs(RV1a))/dv;
-    RV3b[j]=(abs(RV3[j])-abs(RV3a))/dv;
-
-    if(RV1b[j]>=0.5){
-        if(RV1[j]>=0){
-            RV1c[j]=RV1[j]/dv+1;
-        }
-        if(RV1[j]<0){
-            RV1c[j]=RV1[j]/dv-1;
-        }
+    if(ui->checkBox_8->isChecked()){
+        Mm=bso1+bso2+logbin;    //telluric +logbin
     }
+
     else{
-        RV1c[j]=RV1[j]/dv;
+        Mm=bso1+bso2;
     }
 
-    if(RV3b[j]>=0.5){
-        if(RV3[j]>=0){
-            RV3c[j]=RV3[j]/dv+1;
-        }
-        if(RV3[j]<0){
-            RV3c[j]=RV3[j]/dv-1;
-        }
-    }
-    else{
-        RV3c[j]=RV3[j]/dv;
-    }
-}
+    M.resize(Mn,Mm);
+    Mt.resize(Mm,Mn);
+    X.resize(Mm);
+    cout<<Mm<<" "<<Mn<<endl;
 
-RV1a=RV1c[0];
-RV3a=RV3c[0];
+    elements=0;
 
+    double RV1b[num], RV3b[num];
+    int RV1c[num], RV3c[num];
 
-//constructing initial transformation matrix with telluric lines
-if(ui->checkBox_8->isChecked()){
-for (int n=0; n<num*logbin; n++){//num*logbin
-if(n==logbin+a*logbin){
-a+=1;
-RV1a=RV1c[a];
-RV3a=RV3c[a];
-}
-for (int m=0; m<Mm; m++){
-if((n-a*logbin+RV1a+abs(RV1m))==m or n+logbin+2*abs(RV1m)-a*logbin+RV3a+abs(RV3m)==m or m-(bso1+bso2)+1==n-a*logbin){//or n+logbin+2*abs(RV1m)-a*logbin+RV3a+abs(RV3m)==m
-if(bidi==1){
-    if(m-(bso1+bso2)+1==n-a*logbin){
-        M(n,m)=Mtel[a];
-    }
-    if(n+logbin+2*abs(RV1m)-a*logbin+RV3a+abs(RV3m)==m){
-        M(n,m)=Mval2[a];
-    }
-    else M(n,m)=Mval1[a];
-if(m<Mm-1) {
-    if(m-(bso1+bso2)+1==n-a*logbin){
-        M(n,m)=Mtel[a];
-    }
-    if(n+logbin+2*abs(RV1m)-a*logbin+RV3a+abs(RV3m)==m){
-        M(n,m)=Mval2[a];
-    }
-    else M(n,m+1)=Mval1[a];
-    m=m+1;
-    ++elements;
-}
-++elements;
+    for(int j=0; j<num; j++){
+        RV1a=RV1[j];
+        RV3a=RV3[j];
+        RV1b[j]=(abs(RV1[j])-abs(RV1a))/dv;
+        RV3b[j]=(abs(RV3[j])-abs(RV3a))/dv;
+
+        if(RV1b[j]>=0.5){
+            if(RV1[j]>=0){
+                RV1c[j]=RV1[j]/dv+1;
             }
-if(bidi==0){
-    if(m-(bso1+bso2)+1==n-a*logbin){
-        M(n,m)=Mtel[a];
-    }
-    if(n+logbin+2*abs(RV1m)-a*logbin+RV3a+abs(RV3m)==m){
-        M(n,m)=Mval2[a];
-    }
-    else M(n,m)=Mval1[a];
-    ++elements;
+            if(RV1[j]<0){
+                RV1c[j]=RV1[j]/dv-1;
             }
-}
-else{
-M(n,m)=0;
-}
-}
-}}
+        }
+        else{
+            RV1c[j]=RV1[j]/dv;
+        }
 
-else{   //without telluric lines
-    for (int n=0; n<num*logbin; n++){   //num*logbin
-    if(n==logbin+a*logbin){
-    a+=1;
-    RV1a=RV1c[a];
-    RV3a=RV3c[a];
-    }
-    for (int m=0; m<Mm; m++){
-    if((n-a*logbin+RV1a+abs(RV1m))==m or n+logbin+2*abs(RV1m)-a*logbin+RV3a+abs(RV3m)==m){//or n+logbin+2*abs(RV1m)-a*logbin+RV3a+abs(RV3m)==m
-    if(bidi==1){
-        if(n+logbin+2*abs(RV1m)-a*logbin+RV3a+abs(RV3m)==m){
-            M(n,m)=Mval2[a];
+        if(RV3b[j]>=0.5){
+            if(RV3[j]>=0){
+                RV3c[j]=RV3[j]/dv+1;
+            }
+            if(RV3[j]<0){
+                RV3c[j]=RV3[j]/dv-1;
+            }
         }
-        else M(n,m)=Mval1[a];
-    if(m<Mm-1) {
-        if(n+logbin+2*abs(RV1m)-a*logbin+RV3a+abs(RV3m)==m){
-            M(n,m+1)=Mval2[a];
-        }
-        else M(n,m+1)=Mval1[a];
-        m=m+1;
-        ++elements;
+        else{
+             RV3c[j]=RV3[j]/dv;
+            }
     }
-    ++elements;
+
+    RV1a=RV1c[0];
+    RV3a=RV3c[0];
+
+
+    //constructing initial transformation matrix with telluric lines
+    if(ui->checkBox_8->isChecked()){
+        for (int n=0; n<num*logbin; n++){//num*logbin
+            if(n==logbin+a*logbin){
+                a+=1;
+                RV1a=RV1c[a];
+                RV3a=RV3c[a];
+            }
+        for (int m=0; m<Mm; m++){
+            if((n-a*logbin+RV1a+abs(RV1m))==m or n+logbin+2*abs(RV1m)-a*logbin+RV3a+abs(RV3m)==m or m-(bso1+bso2)+1==n-a*logbin){//or n+logbin+2*abs(RV1m)-a*logbin+RV3a+abs(RV3m)==m
+                if(bidi==1){
+                    if(m-(bso1+bso2)+1==n-a*logbin){
+                        M(n,m)=Mtel[a];
+                    }
+                    if(n+logbin+2*abs(RV1m)-a*logbin+RV3a+abs(RV3m)==m){
+                        M(n,m)=Mval2[a];
+                    }
+                    else M(n,m)=Mval1[a];
+                    if(m<Mm-1) {
+                        if(m-(bso1+bso2)+1==n-a*logbin){
+                            M(n,m)=Mtel[a];
+                        }
+                    if(n+logbin+2*abs(RV1m)-a*logbin+RV3a+abs(RV3m)==m){
+                        M(n,m)=Mval2[a];
+                    }
+                    else M(n,m+1)=Mval1[a];
+                    m=m+1;
+                    ++elements;
+                    }
+                ++elements;
                 }
-    if(bidi==0){
-        if(n+logbin+2*abs(RV1m)-a*logbin+RV3a+abs(RV3m)==m){
-            M(n,m)=Mval2[a];
-        }
-        else M(n,m)=Mval1[a];
-        ++elements;
+                if(bidi==0){
+                    if(m-(bso1+bso2)+1==n-a*logbin){
+                        M(n,m)=Mtel[a];
+                    }
+                    if(n+logbin+2*abs(RV1m)-a*logbin+RV3a+abs(RV3m)==m){
+                    M(n,m)=Mval2[a];
+                    }
+                    else M(n,m)=Mval1[a];
+                ++elements;
                 }
+            }
+            else{
+                M(n,m)=0;
+            }
+          }
+       }
     }
-    else{
-    M(n,m)=0;
+
+    else{   //without telluric lines
+        for (int n=0; n<num*logbin; n++){   //num*logbin
+            if(n==logbin+a*logbin){
+                a+=1;
+                RV1a=RV1c[a];
+                RV3a=RV3c[a];
+            }
+            for (int m=0; m<Mm; m++){
+                if((n-a*logbin+RV1a+abs(RV1m))==m or n+logbin+2*abs(RV1m)-a*logbin+RV3a+abs(RV3m)==m){//or n+logbin+2*abs(RV1m)-a*logbin+RV3a+abs(RV3m)==m
+                    if(bidi==1){
+                        if(n+logbin+2*abs(RV1m)-a*logbin+RV3a+abs(RV3m)==m){
+                            M(n,m)=Mval2[a];
+                        }
+                        else M(n,m)=Mval1[a];
+                        if(m<Mm-1) {
+                            if(n+logbin+2*abs(RV1m)-a*logbin+RV3a+abs(RV3m)==m){
+                                M(n,m+1)=Mval2[a];
+                            }
+                            else M(n,m+1)=Mval1[a];
+                            m=m+1;
+                            ++elements;
+                        }
+                        ++elements;
+                    }
+                    if(bidi==0){
+                    if(n+logbin+2*abs(RV1m)-a*logbin+RV3a+abs(RV3m)==m){
+                        M(n,m)=Mval2[a];
+                    }
+                    else M(n,m)=Mval1[a];
+                    ++elements;
+                    }
+                }
+                else{
+                    M(n,m)=0;
+                }
+             }
+          }
+       }
     }
-    }
-    }
-}
-}
 
     //construct matrix for SB1 system
     if(ui->checkBox_3->isChecked()){
@@ -4387,9 +4403,9 @@ else{   //without telluric lines
         RV1max=abs(RV1[0]);
 
         for (int i=0; i<num; i++){
-        if (abs(RV1[i])>abs(RV1max)){
-        RV1max=RV1[i];
-        }
+            if (abs(RV1[i])>abs(RV1max)){
+                RV1max=RV1[i];
+            }
         }
 
         //looking for minimum and maximum RV
@@ -4410,6 +4426,7 @@ else{   //without telluric lines
 
         RV1amin=RV1[0];
         RV1min=RV1[0];
+
         for(int i=0; i<num; i++){
             if(abs(RV1[i])<RV1amin){
             RV1amin=RV1[i];
@@ -4431,12 +4448,14 @@ else{   //without telluric lines
     cout<<"bso1 "<<bso1<<endl;
 
     Mn=num*logbin;
+
     if(ui->checkBox_8->isChecked()){
-    Mm=bso1+logbin;    //telluric +logbin
+        Mm=bso1+logbin;    //telluric +logbin
     }
     else{
         Mm=bso1;
     }
+
     M.resize(Mn,Mm);
     Mt.resize(Mm,Mn);
     X.resize(Mm);
@@ -4471,110 +4490,107 @@ else{   //without telluric lines
 
         //constructing initial transformation matrix with tellric lines
         if(ui->checkBox_8->isChecked()){
-        for (int n=0; n<num*logbin; n++){//num*logbin
-        if(n==logbin+a*logbin){
-        a+=1;
-        RV1a=RV1c[a];
+            for (int n=0; n<num*logbin; n++){//num*logbin
+                if(n==logbin+a*logbin){
+                a+=1;
+                RV1a=RV1c[a];
+                }
 
-        }
-        for (int m=0; m<Mm; m++){
-        if((n-a*logbin+RV1a+abs(RV1m))==m or m-bso1+1==n-a*logbin){//or n+logbin+2*abs(RV1m)-a*logbin+RV3a+abs(RV3m)==m
-        if(bidi==1){
-            if(m-(bso1)+1==n-a*logbin){
-                M(n,m)=Mtel[a];
-            }
+            for (int m=0; m<Mm; m++){
+                if((n-a*logbin+RV1a+abs(RV1m))==m or m-bso1+1==n-a*logbin){//or n+logbin+2*abs(RV1m)-a*logbin+RV3a+abs(RV3m)==m
+                    if(bidi==1){
+                        if(m-(bso1)+1==n-a*logbin){
+                            M(n,m)=Mtel[a];
+                        }
 
-            else M(n,m)=Mval1[a];
-        if(m<Mm-1) {
-            if(m-(bso1)+1==n-a*logbin){
-                M(n,m)=Mtel[a];
-            }
+                        else M(n,m)=Mval1[a];
+                        if(m<Mm-1) {
+                            if(m-(bso1)+1==n-a*logbin){
+                                M(n,m)=Mtel[a];
+                            }
 
-            else M(n,m+1)=Mval1[a];
-            m=m+1;
-            ++elements;
-        }
-        ++elements;
+                            else M(n,m+1)=Mval1[a];
+                            m=m+1;
+                            ++elements;
+                        }
+                        ++elements;
                     }
-        if(bidi==0){
-            if(m-(bso1)+1==n-a*logbin){
-                M(n,m)=Mtel[a];
-            }
+                    if(bidi==0){
+                        if(m-(bso1)+1==n-a*logbin){
+                            M(n,m)=Mtel[a];
+                        }
 
-            else M(n,m)=Mval1[a];
-            ++elements;
+                        else M(n,m)=Mval1[a];
+                        ++elements;
                     }
-        }
-        else{
-        M(n,m)=0;
-        }
-        }
-        }}
+                }
+                else{
+                M(n,m)=0;
+                }
+             }
+          }
+       }
 
         //without telluric lines
         else{
             for (int n=0; n<num*logbin; n++){//num*logbin
-            if(n==logbin+a*logbin){
-            a+=1;
-            RV1a=RV1c[a];
-
-            }
-            for (int m=0; m<Mm; m++){
-            if((n-a*logbin+RV1a+abs(RV1m))==m){//or n+logbin+2*abs(RV1m)-a*logbin+RV3a+abs(RV3m)==m
-            if(bidi==1){
-                if(n+logbin+2*abs(RV1m)==m){
-                    M(n,m)=Mval2[a];
+                if(n==logbin+a*logbin){
+                    a+=1;
+                    RV1a=RV1c[a];
                 }
-                else M(n,m)=Mval1[a];
-            if(m<Mm-1) {
-                if(n+logbin+2*abs(RV1m)==m){
-                    M(n,m+1)=Mval2[a];
-                }
-                else M(n,m+1)=Mval1[a];
-                m=m+1;
-                ++elements;
-            }
-            ++elements;
+                for (int m=0; m<Mm; m++){
+                    if((n-a*logbin+RV1a+abs(RV1m))==m){//or n+logbin+2*abs(RV1m)-a*logbin+RV3a+abs(RV3m)==m
+                        if(bidi==1){
+                            if(n+logbin+2*abs(RV1m)==m){
+                                M(n,m)=Mval2[a];
+                            }
+                            else M(n,m)=Mval1[a];
+                            if(m<Mm-1) {
+                                if(n+logbin+2*abs(RV1m)==m){
+                                    M(n,m+1)=Mval2[a];
+                                }
+                                else M(n,m+1)=Mval1[a];
+                                m=m+1;
+                                ++elements;
+                            }
+                            ++elements;
                         }
-            if(bidi==0){
-                if(n+logbin+2*abs(RV1m)==m){
-                    M(n,m)=Mval2[a];
-                }
-                else M(n,m)=Mval1[a];
-                ++elements;
+                        if(bidi==0){
+                            if(n+logbin+2*abs(RV1m)==m){
+                                M(n,m)=Mval2[a];
+                            }
+                            else M(n,m)=Mval1[a];
+                            ++elements;
+                            }
                         }
-            }
-            else{
-            M(n,m)=0;
-            }
-            }
+                        else{
+                            M(n,m)=0;
+                        }
+                    }
+                }
             }
         }
 
+    a=0;
 
+    loc.resize(2,elements);
+    val.resize(elements);
+    int elcount=0;
+
+    for(int i=0; i<elements; i++){
+        val(i)=Mval1[a];
     }
 
-
-a=0;
-
-loc.resize(2,elements);
-val.resize(elements);
-int elcount=0;
-
-for(int i=0; i<elements; i++){
-    val(i)=Mval1[a];
-}
-
-for(int n=0; n<Mn;n++){
-    for(int m=0; m<Mm;m++){
-        if(M(n,m)>0){
-        loc(0,elcount)=n;
-        loc(1,elcount)=m;
-        ++elcount;
-        }
-}}
-
-}
+    for(int n=0; n<Mn;n++){
+        for(int m=0; m<Mm;m++){
+            if(M(n,m)>0){
+                loc(0,elcount)=n;
+                loc(1,elcount)=m;
+                ++elcount;
+            }
+         }
+      }
+    }
 
 //*******************************************
 //ECON for optimization
@@ -4592,12 +4608,24 @@ double MainWindow::DivideConquer(){
 
     vec res(Mm);
 
+    int cBS;
+
     if(ui->checkBox_5->isChecked()){
     svd_econ(U,w,V,M, "both", "std");
     }
 
+    else ++cBS;
+
     if(ui->checkBox_6->isChecked()){
     svd_econ(U,w,V,M, "both", "dc");
+    }
+
+    else ++cBS;
+
+    if(cBS == 0){
+        QMessageBox::information(this, "Error", "Select method for ECON.");
+        abortt=1;
+        return 0;
     }
 
     int i,j,jj;
@@ -4695,22 +4723,22 @@ double MainWindow::DivideConquer(){
             //Logfile<<"New Parameters found:"<<endl;
             cout<<"Period; Eccentricity; Amplitude A; Amplitude B; Systemic V.; T_peri; Omega A;"<<endl;
             //Logfile<<"Period; Eccentricity; Amplitude A; Amplitude B; Systemic V.; T_peri; Omega A;"<<endl;
-          for(int i=0; i<7;i++){
-              cout<<setprecision(14)<<orbele[i]<<" ";
-              //Logfile<<setprecision(14)<<orbele[i]<<" ";
-          }
-          cout<<endl;
-          //Logfile<<endl;
+                for(int i=0; i<7;i++){
+                    cout<<setprecision(14)<<orbele[i]<<" ";
+                    //Logfile<<setprecision(14)<<orbele[i]<<" ";
+                }
+                cout<<endl;
+                //Logfile<<endl;
 
-          ui->plainTextEdit_2->appendPlainText("New Parameters found:\nPeriod; Eccentricity; Amplitude A; Amplitude B; Systemic V; T_peri; Omega A;");
-          QString Peri = QString::number(orbele[0]);
-          QString Ecce = QString::number(orbele[1]);
-          QString AA = QString::number(orbele[2]);
-          QString AB = QString::number(orbele[3]);
-          QString SV = QString::number(orbele[4]);
-          QString Tper = QString::number(orbele[5]);
-          QString wper = QString::number(orbele[6]);
-          ui->plainTextEdit_2->appendPlainText(Peri+" "+Ecce+" "+AA+" "+AB+" "+SV+" "+Tper+" "+wper);
+            ui->plainTextEdit_2->appendPlainText("New Parameters found:\nPeriod; Eccentricity; Amplitude A; Amplitude B; Systemic V; T_peri; Omega A;");
+            QString Peri = QString::number(orbele[0]);
+            QString Ecce = QString::number(orbele[1]);
+            QString AA = QString::number(orbele[2]);
+            QString AB = QString::number(orbele[3]);
+            QString SV = QString::number(orbele[4]);
+            QString Tper = QString::number(orbele[5]);
+            QString wper = QString::number(orbele[6]);
+            ui->plainTextEdit_2->appendPlainText(Peri+" "+Ecce+" "+AA+" "+AB+" "+SV+" "+Tper+" "+wper);
             }
             else{
                 cout<<"Found better RVs."<<endl;
@@ -4776,30 +4804,29 @@ double MainWindow::DivideConquer(){
             }
 
 
-        for (j=0;j<Mm;j++) {
-            if(abs(X(j))>10*tsh){
-            if(j<bso1){
-                if(ui->checkBox_4->isChecked()){
-                    X(j)=X(j)+(fluxratio/(fluxratio+1)-0.5);
+            for (j=0;j<Mm;j++) {
+                 if(abs(X(j))>10*tsh){
+                    if(j<bso1){
+                        if(ui->checkBox_4->isChecked()){
+                            X(j)=X(j)+(fluxratio/(fluxratio+1)-0.5);
+                        }
+
+                        file1<<pow(10,(W(0)+(index1-(RV3maxi+orbele[4])/dv)*difference))<<"\t"<<X(j)<<endl;
+                        ++index1;
                     }
-
-              file1<<pow(10,(W(0)+(index1-(RV3maxi+orbele[4])/dv)*difference))<<"\t"<<X(j)<<endl;
-                ++index1;
-            }
-            if((j>=bso1)&(j<bso1+bso2)){
-                if(ui->checkBox_4->isChecked()){
-                    X(j)=X(j)+(1.0/(fluxratio+1)-0.5);
+                    if((j>=bso1)&(j<bso1+bso2)){
+                        if(ui->checkBox_4->isChecked()){
+                            X(j)=X(j)+(1.0/(fluxratio+1)-0.5);
+                        }
+                        file2<<pow(10,(W(0)+(index2-(RV1maxi+orbele[4])/dv)*difference))<<"\t"<<X(j)<<endl;
+                        ++index2;
                     }
-                file2<<pow(10,(W(0)+(index2-(RV1maxi+orbele[4])/dv)*difference))<<"\t"<<X(j)<<endl;
-                ++index2;
+                    if(j>=bso1+bso2){
+                        tell<<pow(10,(W(0)+index3*difference))<<"\t"<<X(j)<<endl;
+                        ++index3;
+                    }
+                }
             }
-            if(j>=bso1+bso2){
-
-                tell<<pow(10,(W(0)+index3*difference))<<"\t"<<X(j)<<endl;
-                ++index3;
-            }
-
-        }}
 
         for(int n=0; n<X.size(); n++){
             file7<<n<<" "<<X(n)<<endl;
@@ -4842,15 +4869,15 @@ double MainWindow::DivideConquer(){
                     file4<<pow(10,(W(0)+(2*index2-(RV1maxi+orbele[4])/dv)*difference))<<"\t"<<Xr[index3]<<endl;
                     ++index2;
                 }
-            ++i;
-            ++index3;
+                ++i;
+                ++index3;
                 }
             }
         }
         qApp->processEvents(QEventLoop::AllEvents);
 
         return residu;
-}
+    }
 
 //*******************************************************
 //plot results in main window
@@ -4904,11 +4931,11 @@ void MainWindow::on_pushButton_6_clicked()
     QVector<double> a(number_of_lines), b(number_of_lines);
 
     for (int i=0; i<number_of_lines; i++){
-    toplot1 >> one >>two;
-    istringstream ist(one);
-    ist >> a[i];
-    istringstream ist2(two);
-    ist2 >> b[i];
+        toplot1 >> one >>two;
+        istringstream ist(one);
+        ist >> a[i];
+        istringstream ist2(two);
+        ist2 >> b[i];
     }
     toplot1.close();
 
@@ -4952,11 +4979,11 @@ void MainWindow::on_pushButton_6_clicked()
     QVector<double> c(number_of_lines), d(number_of_lines);
 
     for (int i=0; i<number_of_lines; i++){
-    toplot2 >> one >>two;
-    istringstream ist(one);
-    ist >> c[i];
-    istringstream ist2(two);
-    ist2 >> d[i];
+        toplot2 >> one >>two;
+        istringstream ist(one);
+        ist >> c[i];
+        istringstream ist2(two);
+        ist2 >> d[i];
     }
     toplot2.close();
 
@@ -5026,16 +5053,17 @@ void MainWindow::on_pushButton_6_clicked()
      b.resize(number_of_lines);
 
      for (int i=0; i<number_of_lines; i++){
-     toplot3 >> one >>two;
-     istringstream ist(one);
-     ist >> a[i];
-     istringstream ist2(two);
-     if((i>0) & (a[i]<a[i-1])){
-         ++index;
+        toplot3 >> one >>two;
+        istringstream ist(one);
+        ist >> a[i];
+        istringstream ist2(two);
+        if((i>0) & (a[i]<a[i-1])){
+            ++index;
+        }
+        ist2 >> b[i];
+        b[i]=b[i]+index*offset;
      }
-     ist2 >> b[i];
-     b[i]=b[i]+index*offset;
-     }
+
      toplot3.close();
 
       ui->customPlot_3->addGraph();
@@ -5077,11 +5105,11 @@ void MainWindow::on_pushButton_6_clicked()
           b.resize(number_of_lines);
 
           for (int i=0; i<number_of_lines; i++){
-          toplot5 >> one >>two;
-          istringstream ist(one);
-          ist >> a[i];
-          istringstream ist2(two);
-          ist2 >> b[i];
+            toplot5 >> one >>two;
+            istringstream ist(one);
+            ist >> a[i];
+            istringstream ist2(two);
+            ist2 >> b[i];
           }
           toplot5.close();
 
