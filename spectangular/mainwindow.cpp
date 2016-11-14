@@ -74,7 +74,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->lineEdit_2->setText("velocities.txt");
     ui->lineEdit_3->setText("spectra2m_");
     ui->lineEdit_18->setText("times.dat");
-    ui->lineEdit_4->setText("/home/daniels/Observations/EcB/nndel/Ca_IR");
+    ui->lineEdit_4->setText("/home/daniels/Observations/Capella/Set_1/Ca_UV");
     qPath=ui->lineEdit_4->text();
     path = qPath.toUtf8().constData();
 
@@ -129,6 +129,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->lineEdit_13->setText("SN100_2orb_diff.txt");
     ui->lineEdit_20->setText("SN100_2orb_error.txt");
     ui->lineEdit_21->setText("logfile_2orb.dat");
+    ui->lineEdit_22->setText("reg1_conf");
+    ui->lineEdit_23->setText("reg1_conf");
     ui->lineEdit_24->setText("errors.dat");
 
     ui->customPlot->xAxis2->setVisible(true);
@@ -4611,13 +4613,13 @@ double MainWindow::DivideConquer(){
     int cBS;
 
     if(ui->checkBox_5->isChecked()){
-    svd_econ(U,w,V,M, "both", "std");
+        svd_econ(U,w,V,M, "both", "std");
     }
 
     else ++cBS;
 
     if(ui->checkBox_6->isChecked()){
-    svd_econ(U,w,V,M, "both", "dc");
+        svd_econ(U,w,V,M, "both", "dc");
     }
 
     else ++cBS;
@@ -4650,10 +4652,11 @@ double MainWindow::DivideConquer(){
         for (j=0;j<Mm;j++) {
             s=0.0;
             if(w(j)>tsh){
-            for (jj=0;jj<Mm;jj++) s += V(j,jj)*tmp(jj);
-            X(j)=s;
+                for (jj=0;jj<Mm;jj++) s += V(j,jj)*tmp(jj);
+                X(j)=s;
+                }
             }
-        }
+        
         res=M*X;
 
         int resbins=0;

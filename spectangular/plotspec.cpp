@@ -36,7 +36,7 @@ PlotSpec::PlotSpec(QWidget *parent) :
     this->setWindowTitle("Spectrum Plotter");
 
     connect(ui->customPlot, SIGNAL(mouseMove(QMouseEvent*)), this ,SLOT(showPointToolTip(QMouseEvent*)));
-    connect(ui->customPlot, SIGNAL(mouseDoubleClick(QMouseEvent*)), this,SLOT(writeCoords(QMouseEvent*)));
+    connect(ui->customPlot, SIGNAL(mousePress(QMouseEvent*)), this,SLOT(writeCoords(QMouseEvent*)));
 
     ui->lineEdit->setText("95_orb_1.txt");
     ui->lineEdit_7->setText("comp2.txt");
