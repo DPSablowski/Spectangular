@@ -34,6 +34,7 @@ string path, eins, zwei, line;
 QString qPath, qExtension, qWCol, qICol, qInitval, qInitmat, qOptval, qOptmat;
 QVector<double> RV1(1), RV2(1), RV3(1), edits(5), Mval1(1), Mval2(1), Mtel(1), otimes(1), orbele(7);
 double RV1max, RV3max, dv, residu, RV1min, RV3min, RV1maxi, RV3maxi, difference, RV1amin, RV3amin, r1, Diff, fluxratio, ldiff, Per, T0, ecc, Omega1, gama, K1, K2;
+double RVT0, RVt, RVe, RVE, RVP;
 const double c0 = 299792.458;
 string Extension, WCol, ICol;
 std::valarray<double> wave;
@@ -5220,34 +5221,31 @@ void MainWindow::on_checkBox_16_clicked()
     ui->checkBox_2->setChecked(false);
 }
 
+double Ofunction (double XX[], double RVt, double RVT0, double RVP, double RVe){
+    double func;
+
+    func= abs(RVe*sin(XX[0])+2*M_PI*(RVt-RVT0)/RVP-XX[0]);
+
+    return func;
+
+    }
+
 void MainWindow::VAmplitudeA()
 {
-    double a1, a2, xx, dE2, E, dE1, E2, E1, theta;
-    double dx=0.00001;
+    double E, theta;
+
+    RVT0 = orbele[5];
+    RVP = orbele[0];
+    RVe = orbele[1];
+
 
     for(int m=0; m<num; m++){
         if(orbele[1]!=0){
 
-        a1=2*M_PI*(otimes[m]-orbele[5])/orbele[0]-2*orbele[1];
-        a2=2*M_PI*(otimes[m]-orbele[5])/orbele[0]+3*orbele[1];
-
-    dE2=0;
-    for(int i=0; i<(a2-a1)/dx; i++){
-        xx=a1+i*dx;
-        E1=xx;
-        E2=orbele[1]*sin(xx)+2*M_PI*(otimes[m]-orbele[5])/orbele[0];
-        dE1=E1-E2;
-        if((dE1<0) & (dE2>0)){
-        E=xx-dx;
-        i=(a2-a1)/dx;
-        }
-        if((dE1>0) & (dE2<0)){
-        E=xx-dx;
-        i=(a2-a1)/dx;
-        }
-        dE2=E1-E2;
-    }
-        theta=2*(atan(tan(E/2)*sqrt((1+orbele[1])/(1-orbele[1]))));
+            RVt = otimes[m];
+            MainWindow::findroot();
+            E=RVE;
+            theta=2*(atan(tan(E/2)*sqrt((1+orbele[1])/(1-orbele[1]))));
         }
         else{
             E = M_PI*(otimes[m]-orbele[5])/orbele[0];
@@ -5261,32 +5259,19 @@ void MainWindow::VAmplitudeA()
 
 void MainWindow::VAmplitudeB()
 {
-    double a1, a2, xx, dE2, E, E1, E2, dE1, theta;
-    double dx=0.00001;
+    double E, theta;
+
+    RVT0 = orbele[5];
+    RVP = orbele[0];
+    RVe = orbele[1];
 
     for(int m=0; m<num; m++){
 
         if(orbele[1]!=0){
-        a1=2*M_PI*(otimes[m]-orbele[5])/orbele[0]-2*orbele[1];
-        a2=2*M_PI*(otimes[m]-orbele[5])/orbele[0]+3*orbele[1];
-
-    dE2=0;
-    for(int i=0; i<(a2-a1)/dx; i++){
-        xx=a1+i*dx;
-        E1=xx;
-        E2=orbele[1]*sin(xx)+2*M_PI*(otimes[m]-orbele[5])/orbele[0];
-        dE1=E1-E2;
-        if((dE1<0) & (dE2>0)){
-        E=xx-dx;
-        i=(a2-a1)/dx;
-        }
-        if((dE1>0) & (dE2<0)){
-        E=xx-dx;
-        i=(a2-a1)/dx;
-        }
-        dE2=E1-E2;
-    }
-        theta=2*(atan(tan(E/2)*sqrt((1+orbele[1])/(1-orbele[1]))));
+            RVt = otimes[m];
+            MainWindow::findroot();
+            E=RVE;
+            theta=2*(atan(tan(E/2)*sqrt((1+orbele[1])/(1-orbele[1]))));
         }
         else{
             E = M_PI*(otimes[m]-orbele[5])/orbele[0];
@@ -6671,3 +6656,219 @@ void MainWindow::on_pushButton_10_clicked()
 
     }
 }
+
+//**************************************
+// root finding
+//**************************************
+void MainWindow::findroot(){
+
+    int n=1, Ph, Pl, Psh, zaehler=40, eval=0;
+    double yh, ysh, yl, ym, yi, ys, yt;
+    double sigma = 1e-5;
+    double step=0.1;
+    double gamma=2.0;	//expansion coeff.
+    double alpha =1.0;	//reflection coeff.
+    double beta=0.5;	//contraction coeff.
+    double btot=0.5;	//total contraction coeff.
+    double y[n+1], Pm[n+1][n], Z[n], CX[n], S[n], Em[n], XX[n], e[n][n];
+
+
+        ofstream file("DSM2.txt");
+        ofstream file2("Val2.txt");
+
+        //initial points
+        Pm[0][0]=2*M_PI*(RVt-RVT0)/RVP-2*RVe;
+        for (int i=0; i<n+1; i++){
+        for (int j=0; j<n; j++){
+        if(i>0 & i==j+1){
+        e[i][j]=1;
+        }
+        else{
+        e[i][j]=0;
+        }
+        if(i==0){
+
+        XX[j]=Pm[i][j];
+        //cout <<X[j]<<"\t";
+        }
+        if(i!=0){
+        Pm[i][j]=Pm[0][j]+step*e[i][j];
+        XX[j]=Pm[i][j];
+        //cout <<X[j]<<"\t";
+        }
+        }
+        y[i]=Ofunction(XX, RVt, RVT0, RVP, RVe);
+        eval++;
+        //cout <<y[i]<<endl;
+        }
+
+        //start main loop
+        for (int tc=0; tc<zaehler; tc++){
+
+        //initialize next step
+        ym=0;
+        ys=0;
+        for (int i=0; i<n; i++){
+        Z[i]=0;
+        }
+
+        //looking for highest value
+        yh=y[0];
+        for (int j=0; j<n+1; j++){
+        if(y[j]>=yh){
+        yh = y[j];
+        Ph = j;
+        }}
+
+        //looking for smallest value
+        yl=yh;
+        for (int j=0; j<n+1; j++){
+        if(y[j]<yl){
+        yl=y[j];
+        Pl = j;
+        }}
+
+        // second highest value
+        ysh=yl;
+
+        yh=y[Ph];
+        yl=y[Pl];
+        ysh=y[Psh];
+
+        //computing mean and sigma
+        for (int i=0; i<n+1; i++){
+        ym+=y[i]/(n+1);
+        }
+        for (int i=0; i<n+1; i++){
+        ys+=sqrt(pow((y[i]-ym),2));
+        }
+        ys=ys/(n);
+
+        //compute centroid
+        for (int j=0; j<n; j++){
+        for (int i=0; i<n+1; i++){
+        if (i!=Ph){
+        Z[j]+=Pm[i][j]/n;
+        }}}
+
+        //reflect highest value at centroid
+        for (int i=0; i<n; i++){
+        CX[i]=Z[i]+alpha*(Z[i]-Pm[Ph][i]);
+        }
+        yi=Ofunction(CX, RVt, RVT0, RVP, RVe);
+        eval++;
+
+        if(yi<yl){
+        file<<"yi<yl ";
+        for (int i=0; i<n; i++){
+        Em[i]=Z[i]+gamma*(CX[i]-Z[i]);
+        }
+        yt=Ofunction(Em, RVt, RVT0, RVP, RVe);
+        eval++;
+        if(yt<yl){
+        file<<"exp ";
+        for (int i=0; i<n; i++){
+        Pm[Ph][i]=Em[i];
+        }
+        y[Ph]=yt;//Ofunction(E);
+        //eval++;
+        }
+        if (yt>=yl){
+        file<<"ref1 ";
+        for (int i=0; i<n; i++){
+        Pm[Ph][i]=CX[i];
+        }
+        eval++;
+        y[Ph]=Ofunction(CX, RVt, RVT0, RVP, RVe);
+        }}
+
+        if(yi>=yl){
+        file<<"yi>=yl ";
+        if(yi<=ysh){
+        file<<"ref2 ";
+        for(int i=0; i<n; i++){
+        Pm[Ph][i]=CX[i];
+        }
+        eval++;
+        y[Ph]=Ofunction(CX, RVt, RVT0, RVP, RVe);
+        }
+        if(yi>ysh){
+        file<<"yi>ysh ";
+        if(yi<=yh){
+        file<<"yi<=yh ref3 ";
+        for(int i=0; i<n; i++){
+        Pm[Ph][i]=CX[i];
+        }
+        eval++;
+        y[Ph]=Ofunction(CX, RVt, RVT0, RVP, RVe);
+        yh=y[Ph];
+        }
+        for(int i=0; i<n; i++){
+        S[i]=Z[i]+beta*(Pm[Ph][i]-Z[i]);
+        }
+        yt=Ofunction(S, RVt, RVT0, RVP, RVe);
+        eval++;
+        if(yt>yh){
+        file<<"yt>yh tot ";
+        for (int j=0; j<n+1; j++){
+        for (int i=0; i<n; i++){
+        Pm[j][i]=Pm[Pl][i]+btot*(Pm[j][i]-Pm[Pl][i]); //total contraction
+        XX[i]=Pm[j][i];
+        }
+        y[j]=Ofunction(XX, RVt, RVT0, RVP, RVe);
+        eval++;
+        }}
+
+        if(yt<=yh){
+        file<<"yt<=yh sco ";
+        for(int i=0; i<n; i++){
+        Pm[Ph][i]=S[i];
+        }
+        eval++;
+        y[Ph]=Ofunction(S, RVt, RVT0, RVP, RVe);
+        }}
+
+        }
+        file <<eval<<"\n";
+        file2<<tc<<" "<<eval<<" "<<y[Pl]<<" "<<y[Ph]<<"\n";
+        }//end main loop
+
+        //looking for highest value
+        yh=y[0];
+        for (int j=0; j<n+1; j++){
+        if(y[j]>=yh){
+        yh = y[j];
+        Ph = j;
+        }}
+
+        //looking for smallest value
+        yl=yh;
+        for (int j=0; j<n+1; j++){
+        if(y[j]<yl){
+        yl=y[j];
+        Pl = j;
+        }}
+
+        //looking for second highest value
+        ysh=yl;
+        for (int j=0; j<n+1; j++){
+        if(y[j]>ysh & y[j]<yh){
+        ysh=y[j];
+        Psh=j;
+        }}
+
+        //output results
+        //for(int i=0; i<n+1;i++){
+        //cout<<y[i]<<endl;
+        //}
+
+        file <<"Ph "<< Ph<<" yh "<<yh<<" x1 "<<Pm[Ph][0]<<endl;
+        file <<"Pl "<< Pl<<" yl "<<yl<<" x1 "<<Pm[Pl][0]<<endl;
+        file <<"Psh "<< Psh<<" ysh "<<ysh<<endl;
+        file <<"sigma "<<ys<<endl;
+        file <<"Iterations: "<<zaehler<<endl;
+
+        RVE=Pm[Pl][0];
+
+}
+
