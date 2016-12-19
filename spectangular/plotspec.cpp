@@ -22,7 +22,7 @@ using namespace std;
 QString qSpPath;
 string spPath;
 QVector<double> aps(1), bps(1), cps(1), dps(1), eps(1), fps(1), d1ps(1), d2ps(1), asc(1), bsc(1), sc(1), csc(1), dsc(1), errw(1), erry(1);
-int clicks=0, slength;
+int clicks=0, slength, EWstat=0;
 double xc, yc;
 ofstream spline("spline.dat");
 tk::spline s;
@@ -34,6 +34,8 @@ PlotSpec::PlotSpec(QWidget *parent) :
     ui->setupUi(this);
 
     this->setWindowTitle("Spectrum Plotter");
+
+    ui->checkBox_16->setChecked(true);
 
     connect(ui->customPlot, SIGNAL(mouseMove(QMouseEvent*)), this ,SLOT(showPointToolTip(QMouseEvent*)));
     connect(ui->customPlot, SIGNAL(mousePress(QMouseEvent*)), this,SLOT(writeCoords(QMouseEvent*)));
@@ -86,10 +88,24 @@ void PlotSpec::writeCoords(QMouseEvent *event){
     xc = ui->customPlot->xAxis->pixelToCoord(event->pos().x());
     yc = ui->customPlot->yAxis->pixelToCoord(event->pos().y());
 
+    if(ui->checkBox_16->isChecked()){
     spline<<xc<<" "<<yc<<endl;
 
     ++clicks;
+    }
+    else{
+        if(EWstat==0){
+        ui->doubleSpinBox_17->setValue(xc);
+        ++EWstat;
+        }
+        else{
+            EWstat=0;
+            ui->doubleSpinBox_18->setValue(xc);
+        }
+    }
+
 }
+
 
 string one, two, zeile;
 double xs1, xs2, ys1, ys2;
@@ -572,6 +588,70 @@ void PlotSpec::SNR(){
 //*******************************************************
 void PlotSpec::EW(){
 
+    QString plot1=ui->lineEdit->text();
+    string plot11 = plot1.toUtf8().constData();
+    std::ostringstream datNameStream(plot11);
+    datNameStream<<spPath<<"/"<<plot11;
+    std::string datName = datNameStream.str();
+    ifstream toplot1(datName.c_str());
+
+    QFile checkfile(datName.c_str());
+
+    if(!checkfile.exists()){
+        qDebug()<<"The file "<<checkfile.fileName()<<" does not exist.";
+        QMessageBox::information(this, "Error", "File "+qSpPath+"/"+plot1+" does not exist!");
+       return;
+    }
+
+    int number_of_lines=0;
+
+    while(std::getline(toplot1, zeile))
+       ++ number_of_lines;
+
+    toplot1.clear();
+    toplot1.seekg(0, ios::beg);
+
+    QVector<double> a(number_of_lines), b(number_of_lines);
+
+    double loww=ui->doubleSpinBox_17->value();
+    double hiw=ui->doubleSpinBox_18->value(), Wtot=0, Wline=0, Wew=0, Ilow=0, Ihigh=0, EW=0;
+    int points=0;
+
+    for (int i=0; i<number_of_lines; i++){
+    toplot1 >> one >>two;
+    istringstream ist(one);
+    ist >> a[i];
+    istringstream ist2(two);
+    ist2 >> b[i];
+    }
+    toplot1.close();
+
+    for(int i =1; i<number_of_lines; i++){
+        if(a[i-1]<=loww & a[i]>=loww){
+            Ilow=b[i];
+        }
+        else{
+            Ilow=Ilow;
+        }
+        if(a[i-1]<=hiw & a[i]>=hiw){
+            Ihigh = b[i];
+        }
+        else{
+            Ihigh=Ihigh;
+        }
+        if(a[i-1]>loww & a[i-1]<hiw){
+            Wline+=(a[i]-a[i-1])*(b[i]+b[i-1])/2;
+        }
+    }
+
+    Wtot = (Ilow+Ihigh)/2*(hiw-loww);
+    Wew = Wtot - Wline;
+    EW = Wew/(Ilow+Ihigh)*2;
+    cout<<"EW measurment:"<<endl;
+    cout<<"I_low: "<<Ilow<<"\tI_high: "<<Ihigh<<endl;
+    cout<<"W_tot: "<<Wtot<<"\tW_line: "<<Wline<<"\tW_ew: "<<Wew<<"\tEW: "<<EW<<endl;
+    ui->doubleSpinBox_16->setValue(EW);
+
 }
 
 //*******************************************************
@@ -886,4 +966,9 @@ void PlotSpec::on_pushButton_11_clicked()
 void PlotSpec::on_pushButton_12_clicked()
 {
     PlotSpec::SNR();
+}
+
+void PlotSpec::on_pushButton_13_clicked()
+{
+    PlotSpec::EW();
 }

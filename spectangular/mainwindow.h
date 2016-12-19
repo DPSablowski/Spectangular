@@ -114,6 +114,8 @@ private slots:
 
     void findroot();
 
+    void on_pushButton_11_clicked();
+
 private:
     Ui::MainWindow *ui;
     PlotSpec *pSpec;

@@ -75,7 +75,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->lineEdit_2->setText("velocities.txt");
     ui->lineEdit_3->setText("spectra2m_");
     ui->lineEdit_18->setText("times.dat");
-    ui->lineEdit_4->setText("/home/daniels/Observations/Capella/Set_1/Ca_UV");
+    ui->lineEdit_4->setText("/home/daniels/Observations/Tomer/BAT019/Disentangled");
     qPath=ui->lineEdit_4->text();
     path = qPath.toUtf8().constData();
 
@@ -130,8 +130,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->lineEdit_13->setText("SN100_2orb_diff.txt");
     ui->lineEdit_20->setText("SN100_2orb_error.txt");
     ui->lineEdit_21->setText("logfile_2orb.dat");
-    ui->lineEdit_22->setText("reg1_conf");
-    ui->lineEdit_23->setText("reg1_conf");
+    ui->lineEdit_22->setText("BAT019_conf");
+    ui->lineEdit_23->setText("BAT019_conf");
     ui->lineEdit_24->setText("errors.dat");
 
     ui->customPlot->xAxis2->setVisible(true);
@@ -1797,15 +1797,28 @@ void MainWindow::Optimisation()
     QFileInfo lstrength("edit.dat");
 
     QString qLogFile = ui->lineEdit_21->text();
+    QString qlFile = qPath+"/"+qLogFile;
+    QFileInfo QLFile(qlFile);
     string lFile = qLogFile.toUtf8().constData();
     std::ostringstream lFileNameStream(lFile);
     lFileNameStream<<path<<"/"<<lFile;
     std::string lFileName = lFileNameStream.str();
-    ofstream LogFile(lFileName.c_str());
+    ofstream LogFile;
 
-    LogFile<<"******************************"<<endl;
-    LogFile<<"  Optimisation LogFile"<<endl;
-    LogFile<<"******************************"<<endl;
+
+    if(QLFile.exists()){
+        LogFile.open(lFileName.c_str(), std::ios_base::app);
+        LogFile<<endl;
+        LogFile<<"__________________________________________________"<<endl;
+        LogFile<<endl;
+    }
+
+    else{
+        LogFile.open(lFileName.c_str());
+        LogFile<<"******************************"<<endl;
+        LogFile<<"  Optimisation LogFile"<<endl;
+        LogFile<<"******************************"<<endl;
+    }
 
     if(lstrength.exists()){
 
@@ -1890,6 +1903,9 @@ void MainWindow::Optimisation()
         btot=0.5;
     }
 
+    LogFile<<"Alpha: "<<alpha<<"; Beta: "<<beta<<"; Beta_tot: "<<btot<<"; Gamma: "<<Gamma<<"; Step: "<<step<<endl;
+
+
     LogFile<<endl;
 
     QFileInfo initstep("initialstep.dat");
@@ -1931,6 +1947,9 @@ void MainWindow::Optimisation()
         dT0 = orbele[0]/10;
         dOmega = M_PI/20;
     }
+
+    LogFile<<"Step: "<<step<<"; dP: "<<dP<<"; de: "<<de<<"; dKA: "<<dKA<<"; dKB: "<<dKB<<"; dGamma: "<<dGamma<<"; dT0: "<<dT0<<"; dOmega: "<<dOmega<<endl;
+
     LogFile<<endl;
 
     if(ui->checkBox->isChecked() or ui->checkBox_2->isChecked()){
@@ -2210,6 +2229,12 @@ void MainWindow::Optimisation()
     LogFile<<"Start Optimisation"<<endl;
     LogFile<<endl;
     LogFile<<"Iteration     Mean of Simplex     STD of Simplex"<<endl;
+
+    if(ui->checkBox_32->isChecked()){
+        ui->checkBox_9->setChecked(false);
+        ui->checkBox_11->setChecked(true);
+        ui->checkBox_12->setChecked(false);
+    }
 
 
     //start main loop
@@ -3035,13 +3060,13 @@ void MainWindow::Optimisation()
                       if(upda==1){
                           upda=0;
                           LogFile<<"New Parameters found."<<endl;
-                          LogFile<<scientific<<"Period: "<<orbele[0]<<endl;
-                          LogFile<<scientific<<"Period: "<<orbele[1]<<endl;
-                          LogFile<<scientific<<"Period: "<<orbele[2]<<endl;
-                          LogFile<<scientific<<"Period: "<<orbele[3]<<endl;
-                          LogFile<<scientific<<"Period: "<<orbele[4]<<endl;
-                          LogFile<<scientific<<"Period: "<<orbele[5]<<endl;
-                          LogFile<<scientific<<"Period: "<<orbele[6]<<endl;
+                          LogFile<<scientific<<"P: "<<orbele[0]<<endl;
+                          LogFile<<scientific<<"e: "<<orbele[1]<<endl;
+                          LogFile<<scientific<<"KA: "<<orbele[2]<<endl;
+                          LogFile<<scientific<<"KB: "<<orbele[3]<<endl;
+                          LogFile<<scientific<<"Gamma: "<<orbele[4]<<endl;
+                          LogFile<<scientific<<"T0: "<<orbele[5]<<endl;
+                          LogFile<<scientific<<"Omega: "<<orbele[6]<<endl;
                           LogFile<<endl;
                       }
 
@@ -3236,6 +3261,12 @@ void MainWindow::Optimisation()
               double ym2=0, ys2=0;
               int stagnate=0;
 
+              if(ui->checkBox_32->isChecked()){
+                  ui->checkBox_9->setChecked(false);
+                  ui->checkBox_11->setChecked(true);
+                  ui->checkBox_12->setChecked(false);
+              }
+
 
                   //start main loop
                   for(int t=0; t<zaehler; t++){
@@ -3304,6 +3335,9 @@ void MainWindow::Optimisation()
                           if(ui->checkBox_32->isChecked()){
                               cout<<"Reinitiate optimisation with current best orbit."<<endl;
                               ui->plainTextEdit_2->appendPlainText("Reinitiate optimisation with current best orbit.");
+                              LogFile<<"Stagnation of DSM: "<<stagnate<<endl;
+                              LogFile<<endl;
+                              LogFile<<"Reinitiate optimisation with current best orbit."<<endl;
 
                               ofstream borbit("orbitelements.dat");
 
@@ -3487,13 +3521,13 @@ void MainWindow::Optimisation()
                       if(upda==1){
                           upda=0;
                           LogFile<<"New Parameters found."<<endl;
-                          LogFile<<scientific<<"Period: "<<orbele[0]<<endl;
-                          LogFile<<scientific<<"Period: "<<orbele[1]<<endl;
-                          LogFile<<scientific<<"Period: "<<orbele[2]<<endl;
-                          LogFile<<scientific<<"Period: "<<orbele[3]<<endl;
-                          LogFile<<scientific<<"Period: "<<orbele[4]<<endl;
-                          LogFile<<scientific<<"Period: "<<orbele[5]<<endl;
-                          LogFile<<scientific<<"Period: "<<orbele[6]<<endl;
+                          LogFile<<scientific<<"P: "<<orbele[0]<<endl;
+                          LogFile<<scientific<<"e: "<<orbele[1]<<endl;
+                          LogFile<<scientific<<"KA: "<<orbele[2]<<endl;
+                          LogFile<<scientific<<"KB: "<<orbele[3]<<endl;
+                          LogFile<<scientific<<"Gamma: "<<orbele[4]<<endl;
+                          LogFile<<scientific<<"T0: "<<orbele[5]<<endl;
+                          LogFile<<scientific<<"Omega: "<<orbele[6]<<endl;
                           LogFile<<endl;
                       }
 
@@ -3593,13 +3627,13 @@ void MainWindow::Optimisation()
                           if(upda==1){
                               upda=0;
                               LogFile<<"New Parameters found."<<endl;
-                              LogFile<<scientific<<"Period: "<<orbele[0]<<endl;
-                              LogFile<<scientific<<"Period: "<<orbele[1]<<endl;
-                              LogFile<<scientific<<"Period: "<<orbele[2]<<endl;
-                              LogFile<<scientific<<"Period: "<<orbele[3]<<endl;
-                              LogFile<<scientific<<"Period: "<<orbele[4]<<endl;
-                              LogFile<<scientific<<"Period: "<<orbele[5]<<endl;
-                              LogFile<<scientific<<"Period: "<<orbele[6]<<endl;
+                              LogFile<<scientific<<"P: "<<orbele[0]<<endl;
+                              LogFile<<scientific<<"e: "<<orbele[1]<<endl;
+                              LogFile<<scientific<<"KA: "<<orbele[2]<<endl;
+                              LogFile<<scientific<<"KB: "<<orbele[3]<<endl;
+                              LogFile<<scientific<<"Gamma: "<<orbele[4]<<endl;
+                              LogFile<<scientific<<"T0: "<<orbele[5]<<endl;
+                              LogFile<<scientific<<"Omega: "<<orbele[6]<<endl;
                               LogFile<<endl;
                           }
 
@@ -3868,13 +3902,13 @@ void MainWindow::Optimisation()
                               if(upda==1){
                                   upda=0;
                                   LogFile<<"New Parameters found."<<endl;
-                                  LogFile<<scientific<<"Period: "<<orbele[0]<<endl;
-                                  LogFile<<scientific<<"Period: "<<orbele[1]<<endl;
-                                  LogFile<<scientific<<"Period: "<<orbele[2]<<endl;
-                                  LogFile<<scientific<<"Period: "<<orbele[3]<<endl;
-                                  LogFile<<scientific<<"Period: "<<orbele[4]<<endl;
-                                  LogFile<<scientific<<"Period: "<<orbele[5]<<endl;
-                                  LogFile<<scientific<<"Period: "<<orbele[6]<<endl;
+                                  LogFile<<scientific<<"P: "<<orbele[0]<<endl;
+                                  LogFile<<scientific<<"e: "<<orbele[1]<<endl;
+                                  LogFile<<scientific<<"KA: "<<orbele[2]<<endl;
+                                  LogFile<<scientific<<"KB: "<<orbele[3]<<endl;
+                                  LogFile<<scientific<<"Gamma: "<<orbele[4]<<endl;
+                                  LogFile<<scientific<<"T0: "<<orbele[5]<<endl;
+                                  LogFile<<scientific<<"Omega: "<<orbele[6]<<endl;
                                   LogFile<<endl;
                               }
 
@@ -3974,13 +4008,13 @@ void MainWindow::Optimisation()
                                       if(upda==1){
                                           upda=0;
                                           LogFile<<"New Parameters found."<<endl;
-                                          LogFile<<scientific<<"Period: "<<orbele[0]<<endl;
-                                          LogFile<<scientific<<"Period: "<<orbele[1]<<endl;
-                                          LogFile<<scientific<<"Period: "<<orbele[2]<<endl;
-                                          LogFile<<scientific<<"Period: "<<orbele[3]<<endl;
-                                          LogFile<<scientific<<"Period: "<<orbele[4]<<endl;
-                                          LogFile<<scientific<<"Period: "<<orbele[5]<<endl;
-                                          LogFile<<scientific<<"Period: "<<orbele[6]<<endl;
+                                          LogFile<<scientific<<"P: "<<orbele[0]<<endl;
+                                          LogFile<<scientific<<"e: "<<orbele[1]<<endl;
+                                          LogFile<<scientific<<"KA: "<<orbele[2]<<endl;
+                                          LogFile<<scientific<<"KB: "<<orbele[3]<<endl;
+                                          LogFile<<scientific<<"Gamma: "<<orbele[4]<<endl;
+                                          LogFile<<scientific<<"T0: "<<orbele[5]<<endl;
+                                          LogFile<<scientific<<"Omega: "<<orbele[6]<<endl;
                                           LogFile<<endl;
                                       }
 
@@ -6672,10 +6706,6 @@ void MainWindow::findroot(){
     double btot=0.5;	//total contraction coeff.
     double y[n+1], Pm[n+1][n], Z[n], CX[n], S[n], Em[n], XX[n], e[n][n];
 
-
-        ofstream file("DSM2.txt");
-        ofstream file2("Val2.txt");
-
         //initial points
         Pm[0][0]=2*M_PI*(RVt-RVT0)/RVP-2*RVe;
         for (int i=0; i<n+1; i++){
@@ -6689,17 +6719,14 @@ void MainWindow::findroot(){
         if(i==0){
 
         XX[j]=Pm[i][j];
-        //cout <<X[j]<<"\t";
         }
         if(i!=0){
         Pm[i][j]=Pm[0][j]+step*e[i][j];
         XX[j]=Pm[i][j];
-        //cout <<X[j]<<"\t";
         }
         }
         y[i]=Ofunction(XX, RVt, RVT0, RVP, RVe);
         eval++;
-        //cout <<y[i]<<endl;
         }
 
         //start main loop
@@ -6759,14 +6786,12 @@ void MainWindow::findroot(){
         eval++;
 
         if(yi<yl){
-        file<<"yi<yl ";
         for (int i=0; i<n; i++){
         Em[i]=Z[i]+gamma*(CX[i]-Z[i]);
         }
         yt=Ofunction(Em, RVt, RVT0, RVP, RVe);
         eval++;
         if(yt<yl){
-        file<<"exp ";
         for (int i=0; i<n; i++){
         Pm[Ph][i]=Em[i];
         }
@@ -6774,7 +6799,6 @@ void MainWindow::findroot(){
         //eval++;
         }
         if (yt>=yl){
-        file<<"ref1 ";
         for (int i=0; i<n; i++){
         Pm[Ph][i]=CX[i];
         }
@@ -6783,9 +6807,7 @@ void MainWindow::findroot(){
         }}
 
         if(yi>=yl){
-        file<<"yi>=yl ";
         if(yi<=ysh){
-        file<<"ref2 ";
         for(int i=0; i<n; i++){
         Pm[Ph][i]=CX[i];
         }
@@ -6793,9 +6815,7 @@ void MainWindow::findroot(){
         y[Ph]=Ofunction(CX, RVt, RVT0, RVP, RVe);
         }
         if(yi>ysh){
-        file<<"yi>ysh ";
         if(yi<=yh){
-        file<<"yi<=yh ref3 ";
         for(int i=0; i<n; i++){
         Pm[Ph][i]=CX[i];
         }
@@ -6809,7 +6829,6 @@ void MainWindow::findroot(){
         yt=Ofunction(S, RVt, RVT0, RVP, RVe);
         eval++;
         if(yt>yh){
-        file<<"yt>yh tot ";
         for (int j=0; j<n+1; j++){
         for (int i=0; i<n; i++){
         Pm[j][i]=Pm[Pl][i]+btot*(Pm[j][i]-Pm[Pl][i]); //total contraction
@@ -6820,7 +6839,6 @@ void MainWindow::findroot(){
         }}
 
         if(yt<=yh){
-        file<<"yt<=yh sco ";
         for(int i=0; i<n; i++){
         Pm[Ph][i]=S[i];
         }
@@ -6829,8 +6847,7 @@ void MainWindow::findroot(){
         }}
 
         }
-        file <<eval<<"\n";
-        file2<<tc<<" "<<eval<<" "<<y[Pl]<<" "<<y[Ph]<<"\n";
+
         }//end main loop
 
         //looking for highest value
@@ -6857,18 +6874,26 @@ void MainWindow::findroot(){
         Psh=j;
         }}
 
-        //output results
-        //for(int i=0; i<n+1;i++){
-        //cout<<y[i]<<endl;
-        //}
-
-        file <<"Ph "<< Ph<<" yh "<<yh<<" x1 "<<Pm[Ph][0]<<endl;
-        file <<"Pl "<< Pl<<" yl "<<yl<<" x1 "<<Pm[Pl][0]<<endl;
-        file <<"Psh "<< Psh<<" ysh "<<ysh<<endl;
-        file <<"sigma "<<ys<<endl;
-        file <<"Iterations: "<<zaehler<<endl;
-
         RVE=Pm[Pl][0];
 
 }
 
+//*************************
+// apply file names
+//*************************
+void MainWindow::on_pushButton_11_clicked()
+{
+    QString cName = ui->lineEdit_25->text();
+    QString cExt = ui->lineEdit_26->text();
+
+    ui->lineEdit_5->setText(cName+"_1."+cExt);
+    ui->lineEdit_8->setText(cName+"_2."+cExt);
+    ui->lineEdit_10->setText(cName+"_tell."+cExt);
+    ui->lineEdit_13->setText(cName+"_diff."+cExt);
+    ui->lineEdit_14->setText("initval_"+cName+"."+cExt);
+    ui->lineEdit_15->setText("initmat_"+cName+"."+cExt);
+    ui->lineEdit_16->setText("optval_"+cName+"."+cExt);
+    ui->lineEdit_17->setText("optmat_"+cName+"."+cExt);
+    ui->lineEdit_20->setText(cName+"_error."+cExt);
+    ui->lineEdit_21->setText(cName+"_log."+cExt);
+}

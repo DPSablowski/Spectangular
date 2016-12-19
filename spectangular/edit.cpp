@@ -49,6 +49,7 @@ Edit::Edit(QWidget *parent) :
     ui->comboBox->addItem("Capella");
     ui->comboBox->addItem("Mizar");
     ui->comboBox->addItem("BAT99_12");
+    ui->comboBox->addItem("BAT99_19");
     ui->comboBox->addItem("BAT99_32");
     ui->comboBox->addItem("BAT99_77");
     ui->comboBox->addItem("BAT99_92");
@@ -226,8 +227,19 @@ void Edit::on_pushButton_10_clicked()
         ui->doubleSpinBox_12->setValue(-29);
     }
 
-    // BAT99_32
+    // BAT99_19
     if(ui->comboBox->currentIndex()==3){
+        ui->doubleSpinBox_6->setValue(17.994);
+        ui->doubleSpinBox_7->setValue(0.02);
+        ui->doubleSpinBox_8->setValue(234);
+        ui->doubleSpinBox_9->setValue(0);
+        ui->doubleSpinBox_10->setValue(328);
+        ui->doubleSpinBox_11->setValue(51911.08);
+        ui->doubleSpinBox_12->setValue(197);
+    }
+
+    // BAT99_32
+    if(ui->comboBox->currentIndex()==4){
         ui->doubleSpinBox_6->setValue(1.90756);
         ui->doubleSpinBox_7->setValue(0.06);
         ui->doubleSpinBox_8->setValue(120);
@@ -238,7 +250,7 @@ void Edit::on_pushButton_10_clicked()
     }
 
     // BAT99_77
-    if(ui->comboBox->currentIndex()==4){
+    if(ui->comboBox->currentIndex()==5){
         ui->doubleSpinBox_6->setValue(3.00303);
         ui->doubleSpinBox_7->setValue(0.32);
         ui->doubleSpinBox_8->setValue(144);
@@ -249,7 +261,7 @@ void Edit::on_pushButton_10_clicked()
     }
 
     // BAT99_92
-    if(ui->comboBox->currentIndex()==5){
+    if(ui->comboBox->currentIndex()==6){
         ui->doubleSpinBox_6->setValue(4.3125);
         ui->doubleSpinBox_7->setValue(0.02);
         ui->doubleSpinBox_8->setValue(204);
@@ -260,7 +272,7 @@ void Edit::on_pushButton_10_clicked()
     }
 
     // BAT99_95
-    if(ui->comboBox->currentIndex()==6){
+    if(ui->comboBox->currentIndex()==7){
         ui->doubleSpinBox_6->setValue(2.1110);
         ui->doubleSpinBox_7->setValue(0.07);
         ui->doubleSpinBox_8->setValue(107);
@@ -271,7 +283,7 @@ void Edit::on_pushButton_10_clicked()
     }
 
     // BAT99_99
-    if(ui->comboBox->currentIndex()==7){
+    if(ui->comboBox->currentIndex()==8){
         ui->doubleSpinBox_6->setValue(92.60);
         ui->doubleSpinBox_7->setValue(0);
         ui->doubleSpinBox_8->setValue(91);
@@ -283,7 +295,7 @@ void Edit::on_pushButton_10_clicked()
 
 
     // BAT99_103
-    if(ui->comboBox->currentIndex()==8){
+    if(ui->comboBox->currentIndex()==9){
         ui->doubleSpinBox_6->setValue(2.75975);
         ui->doubleSpinBox_7->setValue(0.23);
         ui->doubleSpinBox_8->setValue(158);
@@ -294,7 +306,7 @@ void Edit::on_pushButton_10_clicked()
     }
 
     // BAT99_113
-    if(ui->comboBox->currentIndex()==9){
+    if(ui->comboBox->currentIndex()==10){
         ui->doubleSpinBox_6->setValue(4.699);
         ui->doubleSpinBox_7->setValue(0.20);
         ui->doubleSpinBox_8->setValue(130);
@@ -305,7 +317,7 @@ void Edit::on_pushButton_10_clicked()
     }
 
     // BAT99_119
-    if(ui->comboBox->currentIndex()==10){
+    if(ui->comboBox->currentIndex()==11){
         ui->doubleSpinBox_6->setValue(159.62413);
         ui->doubleSpinBox_7->setValue(0.8060);
         ui->doubleSpinBox_8->setValue(103.6355);
@@ -316,7 +328,7 @@ void Edit::on_pushButton_10_clicked()
     }
 
     // NGC 3603-A1
-    if(ui->comboBox->currentIndex()==11){
+    if(ui->comboBox->currentIndex()==12){
         ui->doubleSpinBox_6->setValue(3.7724);
         ui->doubleSpinBox_7->setValue(0.0000);
         ui->doubleSpinBox_8->setValue(330);
@@ -327,7 +339,7 @@ void Edit::on_pushButton_10_clicked()
     }
 
     // NN Del
-    if(ui->comboBox->currentIndex()==12){
+    if(ui->comboBox->currentIndex()==13){
         ui->doubleSpinBox_6->setValue(99.1648477);
         ui->doubleSpinBox_7->setValue(0.5177);
         ui->doubleSpinBox_8->setValue(36.2432);
@@ -338,7 +350,7 @@ void Edit::on_pushButton_10_clicked()
     }
 
     // PX Hya
-    if(ui->comboBox->currentIndex()==13){
+    if(ui->comboBox->currentIndex()==14){
         ui->doubleSpinBox_6->setValue(36.1828518);
         ui->doubleSpinBox_7->setValue(0.5652);
         ui->doubleSpinBox_8->setValue(57.6967);
@@ -349,7 +361,7 @@ void Edit::on_pushButton_10_clicked()
     }
 
     // HR5110
-    if(ui->comboBox->currentIndex()==14){
+    if(ui->comboBox->currentIndex()==15){
         ui->doubleSpinBox_6->setValue(2.613214);
         ui->doubleSpinBox_7->setValue(0.00);
         ui->doubleSpinBox_8->setValue(8.9);

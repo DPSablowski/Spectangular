@@ -154,6 +154,13 @@ public:
     QLabel *label_29;
     QSpinBox *spinBox_8;
     QSpacerItem *horizontalSpacer_14;
+    QHBoxLayout *horizontalLayout_24;
+    QLabel *label_32;
+    QLineEdit *lineEdit_25;
+    QLabel *label_33;
+    QLineEdit *lineEdit_26;
+    QPushButton *pushButton_11;
+    QSpacerItem *horizontalSpacer_20;
     QHBoxLayout *horizontalLayout_8;
     QLabel *label_23;
     QLineEdit *lineEdit_5;
@@ -174,12 +181,10 @@ public:
     QLabel *label_30;
     QLineEdit *lineEdit_14;
     QLineEdit *lineEdit_15;
-    QSpacerItem *horizontalSpacer_21;
-    QHBoxLayout *horizontalLayout_24;
     QLabel *label_31;
     QLineEdit *lineEdit_16;
     QLineEdit *lineEdit_17;
-    QSpacerItem *horizontalSpacer_20;
+    QSpacerItem *horizontalSpacer_21;
     QHBoxLayout *horizontalLayout_12;
     QLabel *label_15;
     QLineEdit *lineEdit_6;
@@ -348,7 +353,7 @@ public:
         scrollArea->setWidgetResizable(true);
         scrollAreaWidgetContents = new QWidget();
         scrollAreaWidgetContents->setObjectName(QStringLiteral("scrollAreaWidgetContents"));
-        scrollAreaWidgetContents->setGeometry(QRect(0, 0, 1782, 1023));
+        scrollAreaWidgetContents->setGeometry(QRect(0, 0, 1795, 1016));
         gridLayout_2 = new QGridLayout(scrollAreaWidgetContents);
         gridLayout_2->setSpacing(6);
         gridLayout_2->setContentsMargins(11, 11, 11, 11);
@@ -1710,6 +1715,51 @@ public:
 
         verticalLayout_2->addLayout(horizontalLayout_16);
 
+        horizontalLayout_24 = new QHBoxLayout();
+        horizontalLayout_24->setSpacing(6);
+        horizontalLayout_24->setObjectName(QStringLiteral("horizontalLayout_24"));
+        label_32 = new QLabel(scrollAreaWidgetContents);
+        label_32->setObjectName(QStringLiteral("label_32"));
+        sizePolicy3.setHeightForWidth(label_32->sizePolicy().hasHeightForWidth());
+        label_32->setSizePolicy(sizePolicy3);
+
+        horizontalLayout_24->addWidget(label_32);
+
+        lineEdit_25 = new QLineEdit(scrollAreaWidgetContents);
+        lineEdit_25->setObjectName(QStringLiteral("lineEdit_25"));
+        sizePolicy1.setHeightForWidth(lineEdit_25->sizePolicy().hasHeightForWidth());
+        lineEdit_25->setSizePolicy(sizePolicy1);
+
+        horizontalLayout_24->addWidget(lineEdit_25);
+
+        label_33 = new QLabel(scrollAreaWidgetContents);
+        label_33->setObjectName(QStringLiteral("label_33"));
+        sizePolicy3.setHeightForWidth(label_33->sizePolicy().hasHeightForWidth());
+        label_33->setSizePolicy(sizePolicy3);
+
+        horizontalLayout_24->addWidget(label_33);
+
+        lineEdit_26 = new QLineEdit(scrollAreaWidgetContents);
+        lineEdit_26->setObjectName(QStringLiteral("lineEdit_26"));
+        sizePolicy1.setHeightForWidth(lineEdit_26->sizePolicy().hasHeightForWidth());
+        lineEdit_26->setSizePolicy(sizePolicy1);
+
+        horizontalLayout_24->addWidget(lineEdit_26);
+
+        pushButton_11 = new QPushButton(scrollAreaWidgetContents);
+        pushButton_11->setObjectName(QStringLiteral("pushButton_11"));
+        sizePolicy1.setHeightForWidth(pushButton_11->sizePolicy().hasHeightForWidth());
+        pushButton_11->setSizePolicy(sizePolicy1);
+
+        horizontalLayout_24->addWidget(pushButton_11);
+
+        horizontalSpacer_20 = new QSpacerItem(40, 20, QSizePolicy::Preferred, QSizePolicy::Minimum);
+
+        horizontalLayout_24->addItem(horizontalSpacer_20);
+
+
+        verticalLayout_2->addLayout(horizontalLayout_24);
+
         horizontalLayout_8 = new QHBoxLayout();
         horizontalLayout_8->setSpacing(6);
         horizontalLayout_8->setObjectName(QStringLiteral("horizontalLayout_8"));
@@ -1888,16 +1938,6 @@ public:
 
         horizontalLayout_25->addWidget(lineEdit_15);
 
-        horizontalSpacer_21 = new QSpacerItem(40, 20, QSizePolicy::Preferred, QSizePolicy::Minimum);
-
-        horizontalLayout_25->addItem(horizontalSpacer_21);
-
-
-        verticalLayout_2->addLayout(horizontalLayout_25);
-
-        horizontalLayout_24 = new QHBoxLayout();
-        horizontalLayout_24->setSpacing(6);
-        horizontalLayout_24->setObjectName(QStringLiteral("horizontalLayout_24"));
         label_31 = new QLabel(scrollAreaWidgetContents);
         label_31->setObjectName(QStringLiteral("label_31"));
         sizePolicy3.setHeightForWidth(label_31->sizePolicy().hasHeightForWidth());
@@ -1911,7 +1951,7 @@ public:
         palette53.setBrush(QPalette::Disabled, QPalette::ButtonText, brush);
         label_31->setPalette(palette53);
 
-        horizontalLayout_24->addWidget(label_31);
+        horizontalLayout_25->addWidget(label_31);
 
         lineEdit_16 = new QLineEdit(scrollAreaWidgetContents);
         lineEdit_16->setObjectName(QStringLiteral("lineEdit_16"));
@@ -1923,7 +1963,7 @@ public:
         palette54.setBrush(QPalette::Disabled, QPalette::WindowText, brush7);
         lineEdit_16->setPalette(palette54);
 
-        horizontalLayout_24->addWidget(lineEdit_16);
+        horizontalLayout_25->addWidget(lineEdit_16);
 
         lineEdit_17 = new QLineEdit(scrollAreaWidgetContents);
         lineEdit_17->setObjectName(QStringLiteral("lineEdit_17"));
@@ -1935,14 +1975,14 @@ public:
         palette55.setBrush(QPalette::Disabled, QPalette::WindowText, brush7);
         lineEdit_17->setPalette(palette55);
 
-        horizontalLayout_24->addWidget(lineEdit_17);
+        horizontalLayout_25->addWidget(lineEdit_17);
 
-        horizontalSpacer_20 = new QSpacerItem(40, 20, QSizePolicy::Preferred, QSizePolicy::Minimum);
+        horizontalSpacer_21 = new QSpacerItem(40, 20, QSizePolicy::Preferred, QSizePolicy::Minimum);
 
-        horizontalLayout_24->addItem(horizontalSpacer_20);
+        horizontalLayout_25->addItem(horizontalSpacer_21);
 
 
-        verticalLayout_2->addLayout(horizontalLayout_24);
+        verticalLayout_2->addLayout(horizontalLayout_25);
 
         horizontalLayout_12 = new QHBoxLayout();
         horizontalLayout_12->setSpacing(6);
@@ -2469,7 +2509,7 @@ public:
         MainWindow->setCentralWidget(centralWidget);
         menuBar = new QMenuBar(MainWindow);
         menuBar->setObjectName(QStringLiteral("menuBar"));
-        menuBar->setGeometry(QRect(0, 0, 1815, 26));
+        menuBar->setGeometry(QRect(0, 0, 1815, 27));
         menuFile = new QMenu(menuBar);
         menuFile->setObjectName(QStringLiteral("menuFile"));
         menuTools = new QMenu(menuBar);
@@ -2629,14 +2669,17 @@ public:
         checkBox_15->setText(QApplication::translate("MainWindow", "Peak", 0));
         label_28->setText(QApplication::translate("MainWindow", "# CPU Cores:", 0));
         label_29->setText(QApplication::translate("MainWindow", "<html><head/><body><p><span style=\" font-weight:600; color:#000000;\">Use:</span></p></body></html>", 0));
+        label_32->setText(QApplication::translate("MainWindow", "Common Name:", 0));
+        label_33->setText(QApplication::translate("MainWindow", "Extension:", 0));
+        pushButton_11->setText(QApplication::translate("MainWindow", "Set File Names", 0));
         label_23->setText(QApplication::translate("MainWindow", "<html><head/><body><p>Out Component 1:</p></body></html>", 0));
         label_24->setText(QApplication::translate("MainWindow", "<html><head/><body><p>Out Component 2:</p></body></html>", 0));
         label_45->setText(QApplication::translate("MainWindow", "<html><head/><body><p>Out Errors:</p></body></html>", 0));
         label_26->setText(QApplication::translate("MainWindow", "<html><head/><body><p><span style=\" color:#000000;\">Out Static Comp:</span></p></body></html>", 0));
         label_27->setText(QApplication::translate("MainWindow", "<html><head/><body><p><span style=\" color:#000000;\">Out Differences:</span></p></body></html>", 0));
         label_46->setText(QApplication::translate("MainWindow", "Log-File", 0));
-        label_30->setText(QApplication::translate("MainWindow", "<html><head/><body><p><span style=\" color:#000000;\">Save/Use Initial Data:</span></p></body></html>", 0));
-        label_31->setText(QApplication::translate("MainWindow", "<html><head/><body><p><span style=\" color:#000000;\">Save/Use Optimization Data:</span></p></body></html>", 0));
+        label_30->setText(QApplication::translate("MainWindow", "<html><head/><body><p><span style=\" color:#000000;\">I/O Initial Data:</span></p></body></html>", 0));
+        label_31->setText(QApplication::translate("MainWindow", "<html><head/><body><p><span style=\" color:#000000;\">I/O Optimisation Data:</span></p></body></html>", 0));
         label_15->setText(QApplication::translate("MainWindow", "Time:", 0));
         lineEdit_6->setText(QString());
         label_14->setText(QApplication::translate("MainWindow", "min, residuum", 0));
@@ -2648,7 +2691,7 @@ public:
         label_49->setText(QApplication::translate("MainWindow", "<html><head/><body><p><span style=\" color:#000000;\">.sps</span></p></body></html>", 0));
         pushButton_8->setText(QApplication::translate("MainWindow", "Error", 0));
         pushButton->setText(QApplication::translate("MainWindow", "Close", 0));
-        label_8->setText(QApplication::translate("MainWindow", "Result", 0));
+        label_8->setText(QApplication::translate("MainWindow", "<html><head/><body><p>Result; <span style=\" color:#0000ff;\">Comp A</span> &amp; <span style=\" color:#ff0000;\">Comp B</span></p></body></html>", 0));
         label_9->setText(QApplication::translate("MainWindow", "Telluric", 0));
         label_13->setText(QApplication::translate("MainWindow", "<html><head/><body><p>Difference; Offset:</p></body></html>", 0));
         pushButton_6->setText(QApplication::translate("MainWindow", "Plot", 0));

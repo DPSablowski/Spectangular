@@ -45,7 +45,9 @@ public:
     QHBoxLayout *horizontalLayout_6;
     QPushButton *pushButton_13;
     QDoubleSpinBox *doubleSpinBox_16;
+    QHBoxLayout *horizontalLayout_17;
     QLabel *label_15;
+    QCheckBox *checkBox_16;
     QHBoxLayout *horizontalLayout_12;
     QCheckBox *checkBox_14;
     QDoubleSpinBox *doubleSpinBox_19;
@@ -141,7 +143,7 @@ public:
     {
         if (PlotSpec->objectName().isEmpty())
             PlotSpec->setObjectName(QStringLiteral("PlotSpec"));
-        PlotSpec->resize(1143, 644);
+        PlotSpec->resize(1143, 642);
         PlotSpec->setMinimumSize(QSize(200, 50));
         QPalette palette;
         QBrush brush(QColor(0, 0, 0, 255));
@@ -290,10 +292,22 @@ public:
 
         verticalLayout_2->addLayout(horizontalLayout_6);
 
+        horizontalLayout_17 = new QHBoxLayout();
+        horizontalLayout_17->setObjectName(QStringLiteral("horizontalLayout_17"));
         label_15 = new QLabel(PlotSpec);
         label_15->setObjectName(QStringLiteral("label_15"));
 
-        verticalLayout_2->addWidget(label_15);
+        horizontalLayout_17->addWidget(label_15);
+
+        checkBox_16 = new QCheckBox(PlotSpec);
+        checkBox_16->setObjectName(QStringLiteral("checkBox_16"));
+        sizePolicy2.setHeightForWidth(checkBox_16->sizePolicy().hasHeightForWidth());
+        checkBox_16->setSizePolicy(sizePolicy2);
+
+        horizontalLayout_17->addWidget(checkBox_16);
+
+
+        verticalLayout_2->addLayout(horizontalLayout_17);
 
         horizontalLayout_12 = new QHBoxLayout();
         horizontalLayout_12->setObjectName(QStringLiteral("horizontalLayout_12"));
@@ -874,6 +888,7 @@ public:
         pushButton_12->setText(QApplication::translate("PlotSpec", "SNR", 0));
         pushButton_13->setText(QApplication::translate("PlotSpec", "EW", 0));
         label_15->setText(QApplication::translate("PlotSpec", "<html><head/><body><p><span style=\" font-size:12pt; font-weight:600;\">Normalization</span></p></body></html>", 0));
+        checkBox_16->setText(QApplication::translate("PlotSpec", "Yes", 0));
         checkBox_14->setText(QApplication::translate("PlotSpec", "correct to ratio:", 0));
         checkBox_13->setText(QApplication::translate("PlotSpec", "divide", 0));
         pushButton_6->setText(QApplication::translate("PlotSpec", "Apply", 0));

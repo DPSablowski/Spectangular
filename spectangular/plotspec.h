@@ -76,6 +76,8 @@ private slots:
 
     void on_pushButton_12_clicked();
 
+    void on_pushButton_13_clicked();
+
 private:
     Ui::PlotSpec *ui;
 };

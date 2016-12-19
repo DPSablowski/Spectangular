@@ -19,8 +19,8 @@
 
 QT_BEGIN_MOC_NAMESPACE
 struct qt_meta_stringdata_PlotSpec_t {
-    QByteArrayData data[34];
-    char stringdata0[762];
+    QByteArrayData data[35];
+    char stringdata0[787];
 };
 #define QT_MOC_LITERAL(idx, ofs, len) \
     Q_STATIC_BYTE_ARRAY_DATA_HEADER_INITIALIZER_WITH_OFFSET(len, \
@@ -62,7 +62,8 @@ QT_MOC_LITERAL(29, 639, 23), // "on_pushButton_8_clicked"
 QT_MOC_LITERAL(30, 663, 23), // "on_pushButton_9_clicked"
 QT_MOC_LITERAL(31, 687, 24), // "on_pushButton_10_clicked"
 QT_MOC_LITERAL(32, 712, 24), // "on_pushButton_11_clicked"
-QT_MOC_LITERAL(33, 737, 24) // "on_pushButton_12_clicked"
+QT_MOC_LITERAL(33, 737, 24), // "on_pushButton_12_clicked"
+QT_MOC_LITERAL(34, 762, 24) // "on_pushButton_13_clicked"
 
     },
     "PlotSpec\0on_pushButton_2_clicked\0\0"
@@ -88,7 +89,8 @@ QT_MOC_LITERAL(33, 737, 24) // "on_pushButton_12_clicked"
     "on_pushButton_9_clicked\0"
     "on_pushButton_10_clicked\0"
     "on_pushButton_11_clicked\0"
-    "on_pushButton_12_clicked"
+    "on_pushButton_12_clicked\0"
+    "on_pushButton_13_clicked"
 };
 #undef QT_MOC_LITERAL
 
@@ -98,7 +100,7 @@ static const uint qt_meta_data_PlotSpec[] = {
        7,       // revision
        0,       // classname
        0,    0, // classinfo
-      30,   14, // methods
+      31,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -106,36 +108,37 @@ static const uint qt_meta_data_PlotSpec[] = {
        0,       // signalCount
 
  // slots: name, argc, parameters, tag, flags
-       1,    0,  164,    2, 0x08 /* Private */,
-       3,    0,  165,    2, 0x08 /* Private */,
-       4,    0,  166,    2, 0x08 /* Private */,
-       5,    0,  167,    2, 0x08 /* Private */,
-       6,    0,  168,    2, 0x08 /* Private */,
-       7,    0,  169,    2, 0x08 /* Private */,
-       8,    0,  170,    2, 0x08 /* Private */,
-       9,    0,  171,    2, 0x08 /* Private */,
-      10,    0,  172,    2, 0x08 /* Private */,
-      11,    0,  173,    2, 0x08 /* Private */,
-      12,    0,  174,    2, 0x08 /* Private */,
-      13,    0,  175,    2, 0x08 /* Private */,
-      14,    0,  176,    2, 0x08 /* Private */,
-      15,    0,  177,    2, 0x08 /* Private */,
-      16,    0,  178,    2, 0x08 /* Private */,
-      17,    0,  179,    2, 0x08 /* Private */,
-      18,    0,  180,    2, 0x08 /* Private */,
-      19,    0,  181,    2, 0x08 /* Private */,
-      20,    0,  182,    2, 0x08 /* Private */,
-      21,    0,  183,    2, 0x08 /* Private */,
-      22,    0,  184,    2, 0x08 /* Private */,
-      23,    1,  185,    2, 0x08 /* Private */,
-      26,    1,  188,    2, 0x08 /* Private */,
-      27,    0,  191,    2, 0x08 /* Private */,
-      28,    0,  192,    2, 0x08 /* Private */,
-      29,    0,  193,    2, 0x08 /* Private */,
-      30,    0,  194,    2, 0x08 /* Private */,
-      31,    0,  195,    2, 0x08 /* Private */,
-      32,    0,  196,    2, 0x08 /* Private */,
-      33,    0,  197,    2, 0x08 /* Private */,
+       1,    0,  169,    2, 0x08 /* Private */,
+       3,    0,  170,    2, 0x08 /* Private */,
+       4,    0,  171,    2, 0x08 /* Private */,
+       5,    0,  172,    2, 0x08 /* Private */,
+       6,    0,  173,    2, 0x08 /* Private */,
+       7,    0,  174,    2, 0x08 /* Private */,
+       8,    0,  175,    2, 0x08 /* Private */,
+       9,    0,  176,    2, 0x08 /* Private */,
+      10,    0,  177,    2, 0x08 /* Private */,
+      11,    0,  178,    2, 0x08 /* Private */,
+      12,    0,  179,    2, 0x08 /* Private */,
+      13,    0,  180,    2, 0x08 /* Private */,
+      14,    0,  181,    2, 0x08 /* Private */,
+      15,    0,  182,    2, 0x08 /* Private */,
+      16,    0,  183,    2, 0x08 /* Private */,
+      17,    0,  184,    2, 0x08 /* Private */,
+      18,    0,  185,    2, 0x08 /* Private */,
+      19,    0,  186,    2, 0x08 /* Private */,
+      20,    0,  187,    2, 0x08 /* Private */,
+      21,    0,  188,    2, 0x08 /* Private */,
+      22,    0,  189,    2, 0x08 /* Private */,
+      23,    1,  190,    2, 0x08 /* Private */,
+      26,    1,  193,    2, 0x08 /* Private */,
+      27,    0,  196,    2, 0x08 /* Private */,
+      28,    0,  197,    2, 0x08 /* Private */,
+      29,    0,  198,    2, 0x08 /* Private */,
+      30,    0,  199,    2, 0x08 /* Private */,
+      31,    0,  200,    2, 0x08 /* Private */,
+      32,    0,  201,    2, 0x08 /* Private */,
+      33,    0,  202,    2, 0x08 /* Private */,
+      34,    0,  203,    2, 0x08 /* Private */,
 
  // slots: parameters
     QMetaType::Void,
@@ -161,6 +164,7 @@ static const uint qt_meta_data_PlotSpec[] = {
     QMetaType::Void,
     QMetaType::Void, 0x80000000 | 24,   25,
     QMetaType::Void, 0x80000000 | 24,   25,
+    QMetaType::Void,
     QMetaType::Void,
     QMetaType::Void,
     QMetaType::Void,
@@ -208,6 +212,7 @@ void PlotSpec::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, vo
         case 27: _t->on_pushButton_10_clicked(); break;
         case 28: _t->on_pushButton_11_clicked(); break;
         case 29: _t->on_pushButton_12_clicked(); break;
+        case 30: _t->on_pushButton_13_clicked(); break;
         default: ;
         }
     }
@@ -238,13 +243,13 @@ int PlotSpec::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 30)
+        if (_id < 31)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 30;
+        _id -= 31;
     } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 30)
+        if (_id < 31)
             *reinterpret_cast<int*>(_a[0]) = -1;
-        _id -= 30;
+        _id -= 31;
     }
     return _id;
 }
