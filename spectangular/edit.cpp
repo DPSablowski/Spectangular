@@ -229,13 +229,13 @@ void Edit::on_pushButton_10_clicked()
 
     // BAT99_19
     if(ui->comboBox->currentIndex()==3){
-        ui->doubleSpinBox_6->setValue(17.994);
-        ui->doubleSpinBox_7->setValue(0.02);
+        ui->doubleSpinBox_6->setValue(17.9947);
+        ui->doubleSpinBox_7->setValue(0.34);
         ui->doubleSpinBox_8->setValue(234);
         ui->doubleSpinBox_9->setValue(0);
         ui->doubleSpinBox_10->setValue(328);
-        ui->doubleSpinBox_11->setValue(51911.08);
-        ui->doubleSpinBox_12->setValue(197);
+        ui->doubleSpinBox_11->setValue(52006.6737);
+        ui->doubleSpinBox_12->setValue(188.2);
     }
 
     // BAT99_32

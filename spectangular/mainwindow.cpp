@@ -6896,4 +6896,6 @@ void MainWindow::on_pushButton_11_clicked()
     ui->lineEdit_17->setText("optmat_"+cName+"."+cExt);
     ui->lineEdit_20->setText(cName+"_error."+cExt);
     ui->lineEdit_21->setText(cName+"_log."+cExt);
+    ui->lineEdit_22->setText(cName+"_conf");
+    ui->lineEdit_23->setText(cName+"_conf");
 }
