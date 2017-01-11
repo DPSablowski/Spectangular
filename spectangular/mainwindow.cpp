@@ -3060,6 +3060,7 @@ void MainWindow::Optimisation()
                       if(upda==1){
                           upda=0;
                           LogFile<<"New Parameters found."<<endl;
+                          LogFile<<"Residuum: "<<r1<<endl;
                           LogFile<<scientific<<"P: "<<orbele[0]<<endl;
                           LogFile<<scientific<<"e: "<<orbele[1]<<endl;
                           LogFile<<scientific<<"KA: "<<orbele[2]<<endl;
@@ -3382,7 +3383,7 @@ void MainWindow::Optimisation()
                                       borbit<<setprecision(14)<<P[Pl][k]<<endl;
                                       }
                                       borbit<<setprecision(14)<<orbele[5]<<endl;
-                                      borbit<<setprecision(14)<<orbele[4]<<endl;
+                                      borbit<<setprecision(14)<<P[Pl][4]<<endl;
                                   }
                                   if((elock==1) & (T0lock==1)){
                                       borbit<<setprecision(14)<<P[Pl][0]<<endl;
@@ -3521,6 +3522,7 @@ void MainWindow::Optimisation()
                       if(upda==1){
                           upda=0;
                           LogFile<<"New Parameters found."<<endl;
+                          LogFile<<"Residuum: "<<r1<<endl;
                           LogFile<<scientific<<"P: "<<orbele[0]<<endl;
                           LogFile<<scientific<<"e: "<<orbele[1]<<endl;
                           LogFile<<scientific<<"KA: "<<orbele[2]<<endl;
@@ -3627,6 +3629,7 @@ void MainWindow::Optimisation()
                           if(upda==1){
                               upda=0;
                               LogFile<<"New Parameters found."<<endl;
+                              LogFile<<"Residuum: "<<r1<<endl;
                               LogFile<<scientific<<"P: "<<orbele[0]<<endl;
                               LogFile<<scientific<<"e: "<<orbele[1]<<endl;
                               LogFile<<scientific<<"KA: "<<orbele[2]<<endl;
@@ -3902,6 +3905,7 @@ void MainWindow::Optimisation()
                               if(upda==1){
                                   upda=0;
                                   LogFile<<"New Parameters found."<<endl;
+                                  LogFile<<"Residuum: "<<r1<<endl;
                                   LogFile<<scientific<<"P: "<<orbele[0]<<endl;
                                   LogFile<<scientific<<"e: "<<orbele[1]<<endl;
                                   LogFile<<scientific<<"KA: "<<orbele[2]<<endl;
@@ -4007,7 +4011,9 @@ void MainWindow::Optimisation()
 
                                       if(upda==1){
                                           upda=0;
+
                                           LogFile<<"New Parameters found."<<endl;
+                                          LogFile<<"Residuum: "<<r1<<endl;
                                           LogFile<<scientific<<"P: "<<orbele[0]<<endl;
                                           LogFile<<scientific<<"e: "<<orbele[1]<<endl;
                                           LogFile<<scientific<<"KA: "<<orbele[2]<<endl;
@@ -5264,6 +5270,7 @@ double Ofunction (double XX[], double RVt, double RVT0, double RVP, double RVe){
 
     }
 
+// RVs for A
 void MainWindow::VAmplitudeA()
 {
     double E, theta;
@@ -5291,6 +5298,7 @@ void MainWindow::VAmplitudeA()
     }
 }
 
+// RVs for B
 void MainWindow::VAmplitudeB()
 {
     double E, theta;
@@ -6696,154 +6704,154 @@ void MainWindow::on_pushButton_10_clicked()
 //**************************************
 void MainWindow::findroot(){
 
-    int n=1, Ph, Pl, Psh, zaehler=40, eval=0;
-    double yh, ysh, yl, ym, yi, ys, yt;
-    double sigma = 1e-5;
-    double step=0.1;
-    double gamma=2.0;	//expansion coeff.
-    double alpha =1.0;	//reflection coeff.
-    double beta=0.5;	//contraction coeff.
-    double btot=0.5;	//total contraction coeff.
-    double y[n+1], Pm[n+1][n], Z[n], CX[n], S[n], Em[n], XX[n], e[n][n];
+    int rn=1, rPh, rPl, rPsh, rzaehler=40, reval=0;
+    double ryh, rysh, ryl, rym, ryi, rys, ryt;
+    double rsigma = 1e-5;
+    double rstep=0.1;
+    double rgamma=2.0;	//expansion coeff.
+    double ralpha =1.0;	//reflection coeff.
+    double rbeta=0.5;	//contraction coeff.
+    double rbtot=0.5;	//total contraction coeff.
+    double ry[rn+1], rPm[rn+1][rn], rZ[rn], rCX[rn], rS[rn], rEm[rn], rXX[rn], re[rn][rn];
 
         //initial points
-        Pm[0][0]=2*M_PI*(RVt-RVT0)/RVP-2*RVe;
-        for (int i=0; i<n+1; i++){
-        for (int j=0; j<n; j++){
+        rPm[0][0]=2*M_PI*(RVt-RVT0)/RVP-2*RVe;
+        for (int i=0; i<rn+1; i++){
+        for (int j=0; j<rn; j++){
         if(i>0 & i==j+1){
-        e[i][j]=1;
+        re[i][j]=1;
         }
         else{
-        e[i][j]=0;
+        re[i][j]=0;
         }
         if(i==0){
 
-        XX[j]=Pm[i][j];
+        rXX[j]=rPm[i][j];
         }
         if(i!=0){
-        Pm[i][j]=Pm[0][j]+step*e[i][j];
-        XX[j]=Pm[i][j];
+        rPm[i][j]=rPm[0][j]+rstep*re[i][j];
+        rXX[j]=rPm[i][j];
         }
         }
-        y[i]=Ofunction(XX, RVt, RVT0, RVP, RVe);
-        eval++;
+        ry[i]=Ofunction(rXX, RVt, RVT0, RVP, RVe);
+        reval++;
         }
 
         //start main loop
-        for (int tc=0; tc<zaehler; tc++){
+        for (int tc=0; tc<rzaehler; tc++){
 
         //initialize next step
-        ym=0;
-        ys=0;
-        for (int i=0; i<n; i++){
-        Z[i]=0;
+        rym=0;
+        rys=0;
+        for (int i=0; i<rn; i++){
+        rZ[i]=0;
         }
 
         //looking for highest value
-        yh=y[0];
-        for (int j=0; j<n+1; j++){
-        if(y[j]>=yh){
-        yh = y[j];
-        Ph = j;
+        ryh=ry[0];
+        for (int j=0; j<rn+1; j++){
+        if(ry[j]>=ryh){
+        ryh = ry[j];
+        rPh = j;
         }}
 
         //looking for smallest value
-        yl=yh;
-        for (int j=0; j<n+1; j++){
-        if(y[j]<yl){
-        yl=y[j];
-        Pl = j;
+        ryl=ryh;
+        for (int j=0; j<rn+1; j++){
+        if(ry[j]<ryl){
+        ryl=ry[j];
+        rPl = j;
         }}
 
         // second highest value
-        ysh=yl;
+        rysh=ryl;
 
-        yh=y[Ph];
-        yl=y[Pl];
-        ysh=y[Psh];
+        ryh=ry[rPh];
+        ryl=ry[rPl];
+        rysh=ry[rPsh];
 
         //computing mean and sigma
-        for (int i=0; i<n+1; i++){
-        ym+=y[i]/(n+1);
+        for (int i=0; i<rn+1; i++){
+        rym+=ry[i]/(rn+1);
         }
-        for (int i=0; i<n+1; i++){
-        ys+=sqrt(pow((y[i]-ym),2));
+        for (int i=0; i<rn+1; i++){
+        rys+=sqrt(pow((ry[i]-rym),2));
         }
-        ys=ys/(n);
+        rys=rys/(rn);
 
         //compute centroid
-        for (int j=0; j<n; j++){
-        for (int i=0; i<n+1; i++){
-        if (i!=Ph){
-        Z[j]+=Pm[i][j]/n;
+        for (int j=0; j<rn; j++){
+        for (int i=0; i<rn+1; i++){
+        if (i!=rPh){
+        rZ[j]+=rPm[i][j]/rn;
         }}}
 
         //reflect highest value at centroid
-        for (int i=0; i<n; i++){
-        CX[i]=Z[i]+alpha*(Z[i]-Pm[Ph][i]);
+        for (int i=0; i<rn; i++){
+        rCX[i]=rZ[i]+ralpha*(rZ[i]-rPm[rPh][i]);
         }
-        yi=Ofunction(CX, RVt, RVT0, RVP, RVe);
-        eval++;
+        ryi=Ofunction(rCX, RVt, RVT0, RVP, RVe);
+        reval++;
 
-        if(yi<yl){
-        for (int i=0; i<n; i++){
-        Em[i]=Z[i]+gamma*(CX[i]-Z[i]);
+        if(ryi<ryl){
+        for (int i=0; i<rn; i++){
+        rEm[i]=rZ[i]+rgamma*(rCX[i]-rZ[i]);
         }
-        yt=Ofunction(Em, RVt, RVT0, RVP, RVe);
-        eval++;
-        if(yt<yl){
-        for (int i=0; i<n; i++){
-        Pm[Ph][i]=Em[i];
+        ryt=Ofunction(rEm, RVt, RVT0, RVP, RVe);
+        reval++;
+        if(ryt<ryl){
+        for (int i=0; i<rn; i++){
+        rPm[rPh][i]=rEm[i];
         }
-        y[Ph]=yt;//Ofunction(E);
+        ry[rPh]=ryt;//Ofunction(E);
         //eval++;
         }
-        if (yt>=yl){
-        for (int i=0; i<n; i++){
-        Pm[Ph][i]=CX[i];
+        if (ryt>=ryl){
+        for (int i=0; i<rn; i++){
+        rPm[rPh][i]=rCX[i];
         }
-        eval++;
-        y[Ph]=Ofunction(CX, RVt, RVT0, RVP, RVe);
+        reval++;
+        ry[rPh]=Ofunction(rCX, RVt, RVT0, RVP, RVe);
         }}
 
-        if(yi>=yl){
-        if(yi<=ysh){
-        for(int i=0; i<n; i++){
-        Pm[Ph][i]=CX[i];
+        if(ryi>=ryl){
+        if(ryi<=rysh){
+        for(int i=0; i<rn; i++){
+        rPm[rPh][i]=rCX[i];
         }
-        eval++;
-        y[Ph]=Ofunction(CX, RVt, RVT0, RVP, RVe);
+        reval++;
+        ry[rPh]=Ofunction(rCX, RVt, RVT0, RVP, RVe);
         }
-        if(yi>ysh){
-        if(yi<=yh){
-        for(int i=0; i<n; i++){
-        Pm[Ph][i]=CX[i];
+        if(ryi>rysh){
+        if(ryi<=ryh){
+        for(int i=0; i<rn; i++){
+        rPm[rPh][i]=rCX[i];
         }
-        eval++;
-        y[Ph]=Ofunction(CX, RVt, RVT0, RVP, RVe);
-        yh=y[Ph];
+        reval++;
+        ry[rPh]=Ofunction(rCX, RVt, RVT0, RVP, RVe);
+        ryh=ry[rPh];
         }
-        for(int i=0; i<n; i++){
-        S[i]=Z[i]+beta*(Pm[Ph][i]-Z[i]);
+        for(int i=0; i<rn; i++){
+        rS[i]=rZ[i]+rbeta*(rPm[rPh][i]-rZ[i]);
         }
-        yt=Ofunction(S, RVt, RVT0, RVP, RVe);
-        eval++;
-        if(yt>yh){
-        for (int j=0; j<n+1; j++){
-        for (int i=0; i<n; i++){
-        Pm[j][i]=Pm[Pl][i]+btot*(Pm[j][i]-Pm[Pl][i]); //total contraction
-        XX[i]=Pm[j][i];
+        ryt=Ofunction(rS, RVt, RVT0, RVP, RVe);
+        reval++;
+        if(ryt>ryh){
+        for (int j=0; j<rn+1; j++){
+        for (int i=0; i<rn; i++){
+        rPm[j][i]=rPm[rPl][i]+rbtot*(rPm[j][i]-rPm[rPl][i]); //total contraction
+        rXX[i]=rPm[j][i];
         }
-        y[j]=Ofunction(XX, RVt, RVT0, RVP, RVe);
-        eval++;
+        ry[j]=Ofunction(rXX, RVt, RVT0, RVP, RVe);
+        reval++;
         }}
 
-        if(yt<=yh){
-        for(int i=0; i<n; i++){
-        Pm[Ph][i]=S[i];
+        if(ryt<=ryh){
+        for(int i=0; i<rn; i++){
+        rPm[rPh][i]=rS[i];
         }
-        eval++;
-        y[Ph]=Ofunction(S, RVt, RVT0, RVP, RVe);
+        reval++;
+        ry[rPh]=Ofunction(rS, RVt, RVT0, RVP, RVe);
         }}
 
         }
@@ -6851,30 +6859,30 @@ void MainWindow::findroot(){
         }//end main loop
 
         //looking for highest value
-        yh=y[0];
-        for (int j=0; j<n+1; j++){
-        if(y[j]>=yh){
-        yh = y[j];
-        Ph = j;
+        ryh=ry[0];
+        for (int j=0; j<rn+1; j++){
+        if(ry[j]>=ryh){
+        ryh = ry[j];
+        rPh = j;
         }}
 
         //looking for smallest value
-        yl=yh;
-        for (int j=0; j<n+1; j++){
-        if(y[j]<yl){
-        yl=y[j];
-        Pl = j;
+        ryl=ryh;
+        for (int j=0; j<rn+1; j++){
+        if(ry[j]<ryl){
+        ryl=ry[j];
+        rPl = j;
         }}
 
         //looking for second highest value
-        ysh=yl;
-        for (int j=0; j<n+1; j++){
-        if(y[j]>ysh & y[j]<yh){
-        ysh=y[j];
-        Psh=j;
+        rysh=ryl;
+        for (int j=0; j<rn+1; j++){
+        if(ry[j]>rysh & ry[j]<ryh){
+        rysh=ry[j];
+        rPsh=j;
         }}
 
-        RVE=Pm[Pl][0];
+        RVE=rPm[rPl][0];
 
 }
 

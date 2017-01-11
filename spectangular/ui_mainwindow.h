@@ -76,6 +76,7 @@ public:
     QHBoxLayout *horizontalLayout_26;
     QCheckBox *checkBox_16;
     QLineEdit *lineEdit_18;
+    QLabel *label_34;
     QCheckBox *checkBox_18;
     QCheckBox *checkBox_17;
     QCheckBox *checkBox_35;
@@ -621,6 +622,11 @@ public:
         lineEdit_18->setSizePolicy(sizePolicy1);
 
         horizontalLayout_26->addWidget(lineEdit_18);
+
+        label_34 = new QLabel(scrollAreaWidgetContents);
+        label_34->setObjectName(QStringLiteral("label_34"));
+
+        horizontalLayout_26->addWidget(label_34);
 
         checkBox_18 = new QCheckBox(scrollAreaWidgetContents);
         checkBox_18->setObjectName(QStringLiteral("checkBox_18"));
@@ -2627,9 +2633,10 @@ public:
         checkBox_2->setText(QApplication::translate("MainWindow", "your file", 0));
         lineEdit_2->setText(QString());
         checkBox_16->setText(QApplication::translate("MainWindow", "Unknown; Times:", 0));
-        checkBox_18->setText(QApplication::translate("MainWindow", "lock P", 0));
-        checkBox_17->setText(QApplication::translate("MainWindow", "lock e", 0));
-        checkBox_35->setText(QApplication::translate("MainWindow", "lock T0", 0));
+        label_34->setText(QApplication::translate("MainWindow", "lock", 0));
+        checkBox_18->setText(QApplication::translate("MainWindow", "P", 0));
+        checkBox_17->setText(QApplication::translate("MainWindow", "e", 0));
+        checkBox_35->setText(QApplication::translate("MainWindow", "T0", 0));
         label_7->setText(QApplication::translate("MainWindow", "Common name of rebined spectra:", 0));
         lineEdit_3->setText(QString());
         label_12->setText(QApplication::translate("MainWindow", "<html><head/><body><p><span style=\" color:#000000;\">*</span></p></body></html>", 0));

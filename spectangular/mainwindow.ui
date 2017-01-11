@@ -1693,6 +1693,13 @@
                  </widget>
                 </item>
                 <item>
+                 <widget class="QLabel" name="label_34">
+                  <property name="text">
+                   <string>lock</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
                  <widget class="QCheckBox" name="checkBox_18">
                   <property name="enabled">
                    <bool>true</bool>
@@ -1762,7 +1769,7 @@
                    </palette>
                   </property>
                   <property name="text">
-                   <string>lock P</string>
+                   <string>P</string>
                   </property>
                  </widget>
                 </item>
@@ -1772,7 +1779,7 @@
                    <bool>true</bool>
                   </property>
                   <property name="text">
-                   <string>lock e</string>
+                   <string>e</string>
                   </property>
                  </widget>
                 </item>
@@ -1782,7 +1789,7 @@
                    <bool>true</bool>
                   </property>
                   <property name="text">
-                   <string>lock T0</string>
+                   <string>T0</string>
                   </property>
                  </widget>
                 </item>
