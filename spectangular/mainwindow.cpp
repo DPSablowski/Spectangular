@@ -75,7 +75,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->lineEdit_2->setText("velocities.txt");
     ui->lineEdit_3->setText("spectra2m_");
     ui->lineEdit_18->setText("times.dat");
-    ui->lineEdit_4->setText("/home/daniels/Observations/Tomer/BAT019/Disentangled");
+    ui->lineEdit_4->setText("/home/daniels/Observations/Capella/Set_10/Ha");
     qPath=ui->lineEdit_4->text();
     path = qPath.toUtf8().constData();
 
@@ -89,8 +89,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->lineEdit_17->setText("optmat_2orb.dat");
     qOptmat = ui->lineEdit_17->text();
 
-    ui->lineEdit_6->setText("nan");
-    ui->lineEdit_7->setText("nan");
+    ui->lineEdit_6->setText("0");
+    ui->lineEdit_7->setText("0");
 
     ui->checkBox->setChecked(true);
     ui->checkBox_6->setChecked(true);
@@ -130,8 +130,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->lineEdit_13->setText("SN100_2orb_diff.txt");
     ui->lineEdit_20->setText("SN100_2orb_error.txt");
     ui->lineEdit_21->setText("logfile_2orb.dat");
-    ui->lineEdit_22->setText("BAT019_conf");
-    ui->lineEdit_23->setText("BAT019_conf");
+    ui->lineEdit_22->setText("Ha2_vel_conf");
+    ui->lineEdit_23->setText("_conf");
     ui->lineEdit_24->setText("errors.dat");
 
     ui->customPlot->xAxis2->setVisible(true);
@@ -1511,6 +1511,18 @@ void MainWindow::on_pushButton_5_clicked()
     std::string file6Name = file6NameStream.str();
     ofstream file8(file6Name.c_str());
 
+    string CA = "CompmA.dat";
+    std::ostringstream file7NameStream(CA);
+    file7NameStream<<path<<"/"<<CA;
+    std::string file7Name = file7NameStream.str();
+    ofstream file9(file7Name.c_str());
+
+    string CB = "CompmB.dat";
+    std::ostringstream file8NameStream(CB);
+    file8NameStream<<path<<"/"<<CB;
+    std::string file8Name = file8NameStream.str();
+    ofstream file10(file8Name.c_str());
+
     system_clock::time_point time1 = system_clock::now();
 
     mat U, V;
@@ -1577,7 +1589,7 @@ void MainWindow::on_pushButton_5_clicked()
 
             if(res(i)>10*tsh){
             if(abs(C(i)-res(i))<C(i)/3){
-            file5<<pow(10,W(i))<<" "<<res(i)-C(i)<<endl;
+            file5<<setprecision(14)<<pow(10,W(i))<<" "<<res(i)-C(i)<<endl;
             residu+=pow((res(i)-C(i)),2);
             }
             }
@@ -1592,7 +1604,7 @@ void MainWindow::on_pushButton_5_clicked()
                 errmean[i]+=(res(i+n*logbin)-C(i+n*logbin))/num;
 
             }
-            file8<<pow(10,W(i))<<"\t"<<errmean[i]<<endl;
+            file8<<setprecision(14)<<(10,W(i))<<"\t"<<errmean[i]<<endl;
             errmean[i]=0;
         }
 
@@ -1601,23 +1613,28 @@ void MainWindow::on_pushButton_5_clicked()
 
                 if(j<bso1){
 
+                    file9<<setprecision(14)<<W(j)<<"\t"<<X(j)<<endl;
+
                     if(ui->checkBox_4->isChecked()){
                         X(j)=X(j)+(fluxratio/(fluxratio+1)-0.5);
                         }
 
-                file1<<pow(10,(W(0)+(index1-(RV3maxi+orbele[4])/dv)*difference))<<"\t"<<(X(j))<<endl;
+                file1<<setprecision(14)<<pow(10,(W(0)+(index1-(RV3maxi+orbele[4])/dv)*difference))<<"\t"<<(X(j))<<endl;
                     ++index1;
                 }
             if((j>=bso1)&(j<bso1+bso2)){
+
+                file10<<setprecision(14)<<W(j)<<"\t"<<X(j)<<endl;
+
                 if(ui->checkBox_4->isChecked()){
                 X(j)=X(j)+(1.0/(fluxratio+1)-0.5);
                 }
-                file2<<pow(10,(W(0)+(index2-(RV1maxi+orbele[4])/dv)*difference))<<"\t"<<(X(j))<<endl;
+                file2<<setprecision(14)<<pow(10,(W(0)+(index2-(RV1maxi+orbele[4])/dv)*difference))<<"\t"<<(X(j))<<endl;
                 ++index2;
             }
             if(j>=bso1+bso2){
 
-                tell<<pow(10,(W(0)+index3*difference))<<"\t"<<X(j)<<endl;
+                tell<<setprecision(14)<<pow(10,(W(0)+index3*difference))<<"\t"<<X(j)<<endl;
                 ++index3;
             }
 
@@ -1651,12 +1668,12 @@ void MainWindow::on_pushButton_5_clicked()
 
             if(i<bso1){
                 //X(i)=X(i)-0.5*(1/fluxratio+1)+1/(fluxratio+1);
-                file3<<pow(10,(W(0)+(2*index1-(RV3maxi+orbele[4])/dv)*difference))<<"\t"<<X(i)<<endl;
+                file3<<setprecision(14)<<pow(10,(W(0)+(2*index1-(RV3maxi+orbele[4])/dv)*difference))<<"\t"<<X(i)<<endl;
                 ++index1;
             }
             if((i>=bso1) & (i<bso1+bso2)){
                 //X(i)=X(i)-0.5*(1/fluxratio+1)+fluxratio/(fluxratio+1);
-                file4<<pow(10,(W(0)+(2*index2-(RV1maxi+orbele[4])/dv)*difference))<<"\t"<<X(i)<<endl;
+                file4<<setprecision(14)<<pow(10,(W(0)+(2*index2-(RV1maxi+orbele[4])/dv)*difference))<<"\t"<<X(i)<<endl;
                 ++index2;
             }
             ++i;
@@ -1805,11 +1822,17 @@ void MainWindow::Optimisation()
     std::string lFileName = lFileNameStream.str();
     ofstream LogFile;
 
+    struct tm *ts;
+    time_t t;
+
+    t = time(NULL);
+    ts = localtime(&t);
 
     if(QLFile.exists()){
         LogFile.open(lFileName.c_str(), std::ios_base::app);
         LogFile<<endl;
         LogFile<<"__________________________________________________"<<endl;
+        LogFile<<" "<<asctime(ts)<<endl;
         LogFile<<endl;
     }
 
@@ -1938,12 +1961,12 @@ void MainWindow::Optimisation()
 
         LogFile<<"Default initial step size used."<<endl;
 
-        step=1.0;
+        step=3.0;
         dP = orbele[0]/10;
         de = orbele[1]/10;
-        dKA = dv;
-        dKB = dv;
-        dGamma = dv;
+        dKA = 3*dv;
+        dKB = 3*dv;
+        dGamma = 3*dv;
         dT0 = orbele[0]/10;
         dOmega = M_PI/20;
     }
@@ -2012,7 +2035,7 @@ void MainWindow::Optimisation()
         for (int j=0; j<nu; j++){
 
         P[i][j]=P[0][j]+dv*e[i][j];
-        init2<<P[i][j]<<endl;
+        init2<<setprecision(14)<<P[i][j]<<endl;
         //cout<<P[i][j]<<" ";
         if(SB1==0){
         if(j<nu/2){
@@ -2049,7 +2072,7 @@ void MainWindow::Optimisation()
         }
 
         cout<<y[i]<<endl;
-        init<<y[i]<<endl;
+        init<<setprecision(12)<<y[i]<<endl;
         LogFile<<"Residuum of point "<<i<<": "<<y[i]<<endl;
     }
     init.close();
@@ -2227,8 +2250,6 @@ void MainWindow::Optimisation()
     LogFile<<endl;
     LogFile<<"*************************"<<endl;
     LogFile<<"Start Optimisation"<<endl;
-    LogFile<<endl;
-    LogFile<<"Iteration     Mean of Simplex     STD of Simplex"<<endl;
 
     if(ui->checkBox_32->isChecked()){
         ui->checkBox_9->setChecked(false);
@@ -2241,12 +2262,13 @@ void MainWindow::Optimisation()
         for (int t=0; t<zaehler; t++){
             ui->spinBox_4->setValue(t+1);
 
-            LogFile<<t+1<<"             ";
+            LogFile<<endl;
+            LogFile<<"Iteration: "<<t+1;
             qApp->processEvents(QEventLoop::AllEvents);
 
             cout<<endl;
             cout<<endl;
-            cout<<"Iteration: "<<t+1<<endl;
+            cout<<"Iteration: "<<t+1<<"\t";
 
         //initialize next step
         ym=0;
@@ -2295,7 +2317,7 @@ void MainWindow::Optimisation()
 
         cout<<"Simplex Mean: "<<ym<<" Simplex STD: "<<ys<<endl;
 
-        LogFile<<ym<<"          "<<ys<<endl;
+        LogFile<<"Mean: "<<ym<<"\tSTD: "<<ys<<endl;
 
         //compute centroid
         for (int j=0; j<nu; j++){
@@ -2330,11 +2352,12 @@ void MainWindow::Optimisation()
 
         if(abortt==1){
             //output results
+            LogFile<<"Optimisation aborted."<<endl;
             for(int i=0; i<nu+1;i++){
             cout<<y[i]<<endl;
-            opt1<<y[i]<<endl;
+            opt1<<setprecision(12)<<y[i]<<endl;
             for(int j=0; j<nu; j++){
-                opt2<<P[i][j]<<endl;
+                opt2<<setprecision(12)<<P[i][j]<<endl;
             }
             }
             abortt=0;
@@ -2345,7 +2368,7 @@ void MainWindow::Optimisation()
         //Alpha Branch, better than best point
         if(yi<yl){
            cout<<"expansion 1 ";
-        file<<"yi<yl ";
+        LogFile<<"yi<yl ";
         for (int i=0; i<nu; i++){
         Eo[i]=Z[i]+Gamma*(Z[i]-P[Ph][i]);  //Expansion over worst point
         if(SB1==0){
@@ -2368,17 +2391,19 @@ void MainWindow::Optimisation()
 
         if(upda==1){
             upda=0;
+            LogFile<<endl;
             LogFile<<"New RVs found."<<endl;
             LogFile<<endl;
         }
 
         if(abortt==1){
             //output results
+            LogFile<<"Optimisation aborted."<<endl;
             for(int i=0; i<nu+1;i++){
             cout<<y[i]<<endl;
-            opt1<<y[i]<<endl;
+            opt1<<setprecision(12)<<y[i]<<endl;
             for(int j=0; j<nu; j++){
-                opt2<<P[i][j]<<endl;
+                opt2<<setprecision(12)<<P[i][j]<<endl;
             }
             }
             abortt=0;
@@ -2399,11 +2424,12 @@ void MainWindow::Optimisation()
         y[Ph]=yt;//MainWindow::DivideConquer();
         if(abortt==1){
             //output results
+            LogFile<<"Optimisation aborted."<<endl;
             for(int i=0; i<nu+1;i++){
             cout<<y[i]<<endl;
-            opt1<<y[i]<<endl;
+            opt1<<setprecision(12)<<y[i]<<endl;
             for(int j=0; j<nu; j++){
-                opt2<<P[i][j]<<endl;
+                opt2<<setprecision(12)<<P[i][j]<<endl;
             }
             }
             abortt=0;
@@ -2415,6 +2441,7 @@ void MainWindow::Optimisation()
         }
         if (yt>=yl){
         cout<<"ref1 ";
+        LogFile<<"yt<=yl, reflection; ";
         for (int i=0; i<nu; i++){
         P[Ph][i]=Co[i];
         if(SB1==0){
@@ -2437,11 +2464,12 @@ void MainWindow::Optimisation()
         y[Ph]=yi;//MainWindow::DivideConquer();
         if(abortt==1){
             //output results
+            LogFile<<"Optimisation aborted."<<endl;
             for(int i=0; i<nu+1;i++){
             cout<<y[i]<<endl;
-            opt1<<y[i]<<endl;
+            opt1<<setprecision(12)<<y[i]<<endl;
             for(int j=0; j<nu; j++){
-                opt2<<P[i][j]<<endl;
+                opt2<<setprecision(12)<<P[i][j]<<endl;
             }
             }
             abortt=0;
@@ -2454,6 +2482,7 @@ void MainWindow::Optimisation()
         //Beta Branch, worse than best point
         if(yi>=yl){
         cout<<"yi>=yl ";
+        LogFile<<"yi>=yl; ";
         //Beta_2 Branch
         if(yi<=ysh){
         cout<<"ref2 ";
@@ -2479,11 +2508,12 @@ void MainWindow::Optimisation()
         y[Ph]=yi;//MainWindow::DivideConquer();
         if(abortt==1){
             //output results
+            LogFile<<"Optimisation aborted."<<endl;
             for(int i=0; i<nu+1;i++){
             cout<<y[i]<<endl;
-            opt1<<y[i]<<endl;
+            opt1<<setprecision(12)<<y[i]<<endl;
             for(int j=0; j<nu; j++){
-                opt2<<P[i][j]<<endl;
+                opt2<<setprecision(12)<<P[i][j]<<endl;
             }
             }
             abortt=0;
@@ -2496,8 +2526,10 @@ void MainWindow::Optimisation()
         //Beta_1 Branch
         if(yi>ysh){
         cout<<"yi>ysh ";
+        LogFile<<"yi>ysh; ";
         if(yi<=yh){
         cout<<"yi<=yh ref3 ";
+        LogFile<<"yi<=yh, relection 3; ";
         for(int i=0; i<nu; i++){
         P[Ph][i]=Co[i];
         if(SB1==0){
@@ -2520,11 +2552,12 @@ void MainWindow::Optimisation()
         y[Ph]=yi;//MainWindow::DivideConquer();
         if(abortt==1){
             //output results
+            LogFile<<"Optimisation aborted."<<endl;
             for(int i=0; i<nu+1;i++){
             cout<<y[i]<<endl;
-            opt1<<y[i]<<endl;
+            opt1<<setprecision(12)<<y[i]<<endl;
             for(int j=0; j<nu; j++){
-                opt2<<P[i][j]<<endl;
+                opt2<<setprecision(12)<<P[i][j]<<endl;
             }
             }
             abortt=0;
@@ -2557,17 +2590,19 @@ void MainWindow::Optimisation()
 
         if(upda==1){
             upda=0;
+            LogFile<<endl;
             LogFile<<"New RVs found."<<endl;
             LogFile<<endl;
         }
 
         if(abortt==1){
             //output results
+            LogFile<<"Optimisation aborted."<<endl;
             for(int i=0; i<nu+1;i++){
             cout<<y[i]<<endl;
-            opt1<<y[i]<<endl;
+            opt1<<setprecision(12)<<y[i]<<endl;
             for(int j=0; j<nu; j++){
-                opt2<<P[i][j]<<endl;
+                opt2<<setprecision(12)<<P[i][j]<<endl;
             }
             }
             abortt=0;
@@ -2578,6 +2613,7 @@ void MainWindow::Optimisation()
         //Beta_1_1 Branch
         if(yt>yh){
         cout<<"yt>yh tot ";
+        LogFile<<"yt>yh, total contractio, ";
         for (int j=0; j<nu+1; j++){
         for (int i=0; i<nu; i++){
 
@@ -2603,17 +2639,19 @@ void MainWindow::Optimisation()
 
         if(upda==1){
             upda=0;
+            LogFile<<endl;
             LogFile<<"New RVs found."<<endl;
             LogFile<<endl;
         }
 
         if(abortt==1){
             //output results
+            LogFile<<"Optimisation aborted."<<endl;
             for(int i=0; i<nu+1;i++){
             cout<<y[i]<<endl;
-            opt1<<y[i]<<endl;
+            opt1<<setprecision(12)<<y[i]<<endl;
             for(int j=0; j<nu; j++){
-                opt2<<P[i][j]<<endl;
+                opt2<<setprecision(12)<<P[i][j]<<endl;
             }
             }
             abortt=0;
@@ -2625,6 +2663,7 @@ void MainWindow::Optimisation()
         //Beta_1_2 Branch
         if(yt<=yh){
         cout<<"yt<=yh sco ";
+        LogFile<<"yt<=yh, single contraction ";
         for(int i=0; i<nu; i++){
         P[Ph][i]=So[i];
         if(SB1==0){
@@ -2647,11 +2686,12 @@ void MainWindow::Optimisation()
         y[Ph]=yt;//MainWindow::DivideConquer();
         if(abortt==1){
             //output results
+            LogFile<<"Optimisation aborted."<<endl;
             for(int i=0; i<nu+1;i++){
             cout<<y[i]<<endl;
-            opt1<<y[i]<<endl;
+            opt1<<setprecision(12)<<y[i]<<endl;
             for(int j=0; j<nu; j++){
-                opt2<<P[i][j]<<endl;
+                opt2<<setprecision(12)<<P[i][j]<<endl;
             }
             }
             abortt=0;
@@ -2663,6 +2703,7 @@ void MainWindow::Optimisation()
         }
 
         }
+        LogFile<<endl;
         }//end main loop
 
 
@@ -2693,9 +2734,9 @@ void MainWindow::Optimisation()
         //output results
         for(int i=0; i<nu+1;i++){
         cout<<y[i]<<endl;
-        opt1<<y[i]<<endl;
+        opt1<<setprecision(12)<<y[i]<<endl;
         for(int j=0; j<nu; j++){
-            opt2<<P[i][j]<<endl;
+            opt2<<setprecision(12)<<P[i][j]<<endl;
         }
         }
 
@@ -2726,16 +2767,19 @@ void MainWindow::Optimisation()
               if(ui->checkBox_18->isChecked()){ // lock P
                   ++add;
                   Plock = 1;
+                  LogFile<<"P locked ";
               }
 
               if(ui->checkBox_17->isChecked()){ // lock e
                   ++add;
                   elock = 1;
+                  LogFile<<"e locked ";
               }
 
               if(ui->checkBox_35->isChecked()){ // lock T0
                   ++add;
                   T0lock = 1;
+                  LogFile<<"T0 locked"<<endl;
               }
 
               nu = nu-add;
@@ -2750,6 +2794,7 @@ void MainWindow::Optimisation()
                   r1=100.0;
 
                   LogFile<<"Create new initial simplex with "<<nu+1<<" points."<<endl;
+                  LogFile<<"Elements:"<<endl;
 
                   qInitval = ui->lineEdit_14->text();
                   string file1init = qInitval.toUtf8().constData();
@@ -2818,8 +2863,10 @@ void MainWindow::Optimisation()
                           if(i==3) P[0][i]=orbele[6];
                       }
                       cout<<P[0][i]<<" ";
+                      LogFile<<P[0][i]<<" ";
                   }
                   cout<<endl;
+                  LogFile<<endl;
 
                   for(int i=0; i<nu+1; i++){
                       for(int j=0; j<nu; j++){
@@ -2974,16 +3021,20 @@ void MainWindow::Optimisation()
                           }}
                           else e[i][j]=0;
                           cout<<e[i][j]<<" ";
+                          LogFile<<e[i][j]<<" ";
                       }
                       cout<<endl;
+                      LogFile<<endl;
                   }
                   cout <<endl;
+                  LogFile<<endl;
 
                   for(int i=0; i<nu+1; i++){
                       for(int j=0; j<nu; j++){
                           P[i][j]=P[0][j]+e[i][j];
                           init2<<setprecision(14)<<P[i][j]<<endl;
                           cout<<P[i][j]<<" ";
+                          LogFile<<P[i][j]<<" ";
                           if(add==0){
                               orbele[j]=P[i][j];    // no parameter locked
                           }
@@ -3047,6 +3098,7 @@ void MainWindow::Optimisation()
                           }
 
                       }
+                      LogFile<<endl;
 
                       eval++;
                       ui->spinBox_5->setValue(eval);
@@ -3256,8 +3308,6 @@ void MainWindow::Optimisation()
               LogFile<<endl;
               LogFile<<"*************************"<<endl;
               LogFile<<"Start Optimisation"<<endl;
-              LogFile<<endl;
-              LogFile<<"Iteration     Mean of Simplex     STD of Simplex"<<endl;
 
               double ym2=0, ys2=0;
               int stagnate=0;
@@ -3272,7 +3322,10 @@ void MainWindow::Optimisation()
                   //start main loop
                   for(int t=0; t<zaehler; t++){
                       ui->spinBox_4->setValue(t+1);
-                      LogFile<<t+1<<"           ";
+
+                      LogFile<<endl;
+
+                      LogFile<<"Iteration: "<<t+1<<"; ";
                       qApp->processEvents(QEventLoop::AllEvents);
 
                       cout<<endl;
@@ -3415,9 +3468,10 @@ void MainWindow::Optimisation()
 
                           }
                           else{
-                          cout<<"Optimisation may stagnate. No change in mean and STD of simplex points since "<<stagnate<<" iterations."<<endl;
-                          QString stagn = QString::number(stagnate);
-                          ui->plainTextEdit_2->appendPlainText("Optimisation may stagnate. No change in mean and STD of simplex points since "+stagn+" iterations.");
+                              QString stagn = QString::number(stagnate);
+                              LogFile<<"Stagnation of DSM: "<<stagnate<<endl;
+                              cout<<"Optimisation may stagnate. No change in mean and STD of simplex points since "<<stagnate<<" iterations."<<endl;
+                              ui->plainTextEdit_2->appendPlainText("Optimisation may stagnate. No change in mean and STD of simplex points since "+stagn+" iterations.");
                           }
 
                           }}
@@ -3432,7 +3486,7 @@ void MainWindow::Optimisation()
                       ym2=ym;
 
                       cout<<"Simplex Mean: "<<ym<<" Simplex STD: "<<ys<<endl;
-                      LogFile<<ym<<"            "<<ys<<endl;
+                      LogFile<<"Mean: "<<ym<<"; STD: "<<ys<<endl;
 
                       //compute centroid
                       for(int j=0; j<nu; j++){
@@ -3535,6 +3589,7 @@ void MainWindow::Optimisation()
 
                       if(abortt==1){
                           //output results
+                          LogFile<<"Optimisation aborted."<<endl;
                           for(int i=0; i<nu+1; i++){
                               cout<<y[i]<<endl;
                               opt1<<setprecision(14)<<y[i]<<endl;
@@ -3553,6 +3608,7 @@ void MainWindow::Optimisation()
                       //Alpha Branch, better than best point=So[i]=So[i]
                       if(yi<yl){
                           cout<<"expansion"<<endl;
+                          LogFile<<"yi<yl, expansion; ";
                           for(int i=0; i<nu; i++){
                               Eo[i]=Z[i]+Gamma*(Co[i]-Z[i]);
                               if(add==0){
@@ -3642,6 +3698,7 @@ void MainWindow::Optimisation()
 
                           if(abortt==1){
                               //output results
+                              LogFile<<"Optimisation aborted."<<endl;
                               for(int i=0; i<nu+1; i++){
                                   cout<<y[i]<<endl;
                                   opt1<<setprecision(14)<<y[i]<<endl;
@@ -3740,6 +3797,7 @@ void MainWindow::Optimisation()
                               y[Ph]=yi;//MainWindow::DivideConquer();
                               if(abortt==1){
                                   //output results
+                                  LogFile<<"Optimisation aborted."<<endl;
                                   for(int i=0; i<nu+1; i++){
                                       cout<<y[i]<<endl;
                                       opt1<<setprecision(14)<<y[i]<<endl;
@@ -3762,8 +3820,10 @@ void MainWindow::Optimisation()
                       if(yi>=yl){
                           //Beta_2 branch
                           cout<<"yi>=yl ";
+                          LogFile<<"yi>=yl ";
                           if(yi<=ysh){
                               cout<<"& <=ysh, ref2 ";
+                              LogFile<<"& <=ysh, reflection2; ";
                               for(int i=0; i<nu; i++){
                                   P[Ph][i]=Co[i];
                               }
@@ -3778,6 +3838,7 @@ void MainWindow::Optimisation()
                               y[Ph]=yi;//MainWindow::DivideConquer();
                               if(abortt==1){
                                   //output results
+                                  LogFile<<"Optimisation aborted."<<endl;
                                   for(int i=0; i<nu+1; i++){
                                       cout<<y[i]<<endl;
                                       opt1<<setprecision(14)<<y[i]<<endl;
@@ -3797,8 +3858,10 @@ void MainWindow::Optimisation()
                           //Beta_1 branch
                           if(yi>ysh){
                               cout<<"yi>ysh ";
+                              LogFile<<"yi>ysh ";
                               if(yi<=yh){
                                   cout<<"yi<= yh ref3 ";
+                                  LogFile<<"yi <=yh, relfection3; ";
                                   for(int i=0; i<nu; i++){
                                       P[Ph][i]=Co[i];
                                   }
@@ -3813,6 +3876,7 @@ void MainWindow::Optimisation()
                                   y[Ph]=yi;//MainWindow::DivideConquer();
                                   if(abortt==1){
                                       //output results
+                                      LogFile<<"Optimisation aborted."<<endl;
                                       for(int i=0; i<nu+1; i++){
                                           cout<<y[i]<<endl;
                                           opt1<<setprecision(14)<<y[i]<<endl;
@@ -3918,6 +3982,7 @@ void MainWindow::Optimisation()
 
                               if(abortt==1){
                                   //output results
+                                  LogFile<<"Optimisation aborted."<<endl;
                                   for(int i=0; i<nu+1; i++){
                                       cout<<y[i]<<endl;
                                       opt1<<setprecision(14)<<y[i]<<endl;
@@ -3935,6 +4000,7 @@ void MainWindow::Optimisation()
                               //Beta_1_1 branch
                               if(yt>yh){
                                   cout<<"yt <yh tot ";
+                                  LogFile<<"yt>yh, total contraction; ";
                                   for(int j=0; j<nu+1; j++){
                                       for(int i =0; i<nu; i++){
                                           P[j][i]=P[Pl][i]+btot*(P[j][i]-P[Pl][i]);
@@ -4026,6 +4092,7 @@ void MainWindow::Optimisation()
 
                                       if(abortt==1){
                                           //output results
+                                          LogFile<<"Optimisation aborted."<<endl;
                                           for(int i=0; i<nu+1; i++){
                                               cout<<y[i]<<endl;
                                               opt1<<setprecision(14)<<y[i]<<endl;
@@ -4045,6 +4112,7 @@ void MainWindow::Optimisation()
                               //Beta_1_2 branch
                               if(yt<=yh){
                                   cout<<"yt<=yh sco ";
+                                  LogFile<<"yt<=yh, single contraction; ";
                                   for(int i=0; i<nu; i++){
                                       P[Ph][i]=So[i];
                                       if(add==0){
@@ -4120,6 +4188,7 @@ void MainWindow::Optimisation()
                                   y[Ph]=yt;//MainWindow::DivideConquer();
                                   if(abortt==1){
                                       //output results
+                                      LogFile<<"Optimisation aborted."<<endl;
                                       for(int i=0; i<nu+1; i++){
                                           cout<<y[i]<<endl;
                                           opt1<<setprecision(14)<<y[i]<<endl;
@@ -4188,12 +4257,12 @@ void MainWindow::Optimisation()
                   cout<<endl;
                   cout<<"Simplex Mean: "<<ym<<" Simplex STD: "<<ys<<endl;
                   cout<<endl;
-                  LogFile<<ym<<"            "<<ys<<endl;
-
-
                   cout<<"Orbitelements after "<<zaehler<<" Iterations and "<<eval<<" Evaluations:"<<endl;
                   cout<<"Period; Eccentricity; Amplitude A; Amplitude B; Systemic V.; T_peri; Omega A;"<<endl;
-                  LogFile<<"Orbitelements after "<<zaehler<<" Iterations and "<<eval<<" Evaluations:"<<endl;
+
+                  LogFile<<endl;
+                  LogFile<<"Optimisation ends after "<<zaehler<<" Iterations and "<<eval<<" Evaluations:"<<endl;;
+                  LogFile<<"Mean: "<<ym<<" and STD "<<ys<<endl;
                   LogFile<<"Period; Eccentricity; Amplitude A; Amplitude B; Systemic V.; T_peri; Omega A;"<<endl;
 
                 for(int i=0; i<7;i++){
@@ -4231,6 +4300,9 @@ void MainWindow::Optimisation()
 }
 
 
+//****************************************
+// Matrix construction for DSM
+//****************************************
 void MainWindow::ConstructMatrix(){
 
     this->setCursor(QCursor(Qt::WaitCursor));

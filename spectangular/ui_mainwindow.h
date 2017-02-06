@@ -504,6 +504,7 @@ public:
         palette6.setBrush(QPalette::Disabled, QPalette::Text, brush5);
         palette6.setBrush(QPalette::Disabled, QPalette::ButtonText, brush5);
         spinBox_2->setPalette(palette6);
+        spinBox_2->setMaximum(999);
         spinBox_2->setValue(1);
 
         horizontalLayout->addWidget(spinBox_2);

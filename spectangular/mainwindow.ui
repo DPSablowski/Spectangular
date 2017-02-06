@@ -1131,6 +1131,9 @@
                     </disabled>
                    </palette>
                   </property>
+                  <property name="maximum">
+                   <number>999</number>
+                  </property>
                   <property name="value">
                    <number>1</number>
                   </property>

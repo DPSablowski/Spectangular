@@ -8,6 +8,7 @@
 #include <QFile>
 #include <iostream>
 #include <QDebug>
+#include <iomanip>
 
 using namespace std;
 
@@ -38,13 +39,13 @@ Edit::Edit(QWidget *parent) :
     ui->doubleSpinBox_4->setValue(2.0);
     ui->doubleSpinBox_5->setValue(1);
 
-    ui->doubleSpinBox_6->setValue(104.0217);
+    ui->doubleSpinBox_6->setValue(104.02128);
     ui->doubleSpinBox_7->setValue(0.00089);
     ui->doubleSpinBox_8->setValue(25.9611);
     ui->doubleSpinBox_9->setValue(26.840);
     ui->doubleSpinBox_10->setValue(29.9378);
-    ui->doubleSpinBox_11->setValue(54389);
-    ui->doubleSpinBox_12->setValue(327.4);
+    ui->doubleSpinBox_11->setValue(48147.6);
+    ui->doubleSpinBox_12->setValue(342.6);
 
     ui->comboBox->addItem("Capella");
     ui->comboBox->addItem("Mizar");
@@ -170,13 +171,13 @@ void Edit::on_pushButton_8_clicked()
 {
     ofstream orb("orbitelements.dat");
 
-    orb<<ui->doubleSpinBox_6->value()<<endl;
-    orb<<ui->doubleSpinBox_7->value()<<endl;
-    orb<<ui->doubleSpinBox_8->value()<<endl;
-    orb<<ui->doubleSpinBox_9->value()<<endl;
-    orb<<ui->doubleSpinBox_10->value()<<endl;
-    orb<<ui->doubleSpinBox_11->value()<<endl;
-    orb<<ui->doubleSpinBox_12->value()/180*M_PI;
+    orb<<setprecision(14)<<ui->doubleSpinBox_6->value()<<endl;
+    orb<<setprecision(14)<<ui->doubleSpinBox_7->value()<<endl;
+    orb<<setprecision(14)<<ui->doubleSpinBox_8->value()<<endl;
+    orb<<setprecision(14)<<ui->doubleSpinBox_9->value()<<endl;
+    orb<<setprecision(14)<<ui->doubleSpinBox_10->value()<<endl;
+    orb<<setprecision(14)<<ui->doubleSpinBox_11->value()<<endl;
+    orb<<setprecision(14)<<ui->doubleSpinBox_12->value()/180*M_PI;
 
     orb.close();
 }
@@ -196,13 +197,13 @@ void Edit::on_pushButton_10_clicked()
 {
     // Capella
     if(ui->comboBox->currentIndex()==0){
-        ui->doubleSpinBox_6->setValue(104.0217);
+        ui->doubleSpinBox_6->setValue(104.02128);
         ui->doubleSpinBox_7->setValue(0.00089);
         ui->doubleSpinBox_8->setValue(25.9611);
         ui->doubleSpinBox_9->setValue(26.8400);
         ui->doubleSpinBox_10->setValue(29.9378);
-        ui->doubleSpinBox_11->setValue(54389);
-        ui->doubleSpinBox_12->setValue(327.40);
+        ui->doubleSpinBox_11->setValue(48147.6);
+        ui->doubleSpinBox_12->setValue(342.6);
     }
 
     // Mizar
@@ -392,19 +393,19 @@ void Edit::on_pushButton_4_clicked()
 
           ofstream outEdit(datAName.c_str());
 
-          outEdit<<ui->spinBox->value()<<endl;          //number of spectra
-          outEdit<<ui->doubleSpinBox->value()<<endl;    // opt coeff 1
-          outEdit<<ui->doubleSpinBox_2->value()<<endl;  // opt coeff 2
-          outEdit<<ui->doubleSpinBox_3->value()<<endl;  // opt coeff 3
-          outEdit<<ui->doubleSpinBox_4->value()<<endl;  // opt coeff 4
-          outEdit<<ui->doubleSpinBox_5->value()<<endl;  // step size initial simplex
-          outEdit<<ui->doubleSpinBox_13->value()<<endl;  // delta P
-          outEdit<<ui->doubleSpinBox_14->value()<<endl;  // delta e
-          outEdit<<ui->doubleSpinBox_15->value()<<endl;  // delta K1
-          outEdit<<ui->doubleSpinBox_16->value()<<endl;  // delta K2
-          outEdit<<ui->doubleSpinBox_17->value()<<endl;  // delta systemic velocity
-          outEdit<<ui->doubleSpinBox_18->value()<<endl;  // delta T0
-          outEdit<<ui->doubleSpinBox_19->value()<<endl;  // delta omega
+          outEdit<<setprecision(10)<<ui->spinBox->value()<<endl;          //number of spectra
+          outEdit<<setprecision(10)<<ui->doubleSpinBox->value()<<endl;    // opt coeff 1
+          outEdit<<setprecision(10)<<ui->doubleSpinBox_2->value()<<endl;  // opt coeff 2
+          outEdit<<setprecision(10)<<ui->doubleSpinBox_3->value()<<endl;  // opt coeff 3
+          outEdit<<setprecision(10)<<ui->doubleSpinBox_4->value()<<endl;  // opt coeff 4
+          outEdit<<setprecision(10)<<ui->doubleSpinBox_5->value()<<endl;  // step size initial simplex
+          outEdit<<setprecision(10)<<ui->doubleSpinBox_13->value()<<endl;  // delta P
+          outEdit<<setprecision(10)<<ui->doubleSpinBox_14->value()<<endl;  // delta e
+          outEdit<<setprecision(10)<<ui->doubleSpinBox_15->value()<<endl;  // delta K1
+          outEdit<<setprecision(10)<<ui->doubleSpinBox_16->value()<<endl;  // delta K2
+          outEdit<<setprecision(10)<<ui->doubleSpinBox_17->value()<<endl;  // delta systemic velocity
+          outEdit<<setprecision(10)<<ui->doubleSpinBox_18->value()<<endl;  // delta T0
+          outEdit<<setprecision(10)<<ui->doubleSpinBox_19->value()<<endl;  // delta omega
 
         } else {
           qDebug() << "Yes was *not* clicked";
@@ -416,19 +417,19 @@ void Edit::on_pushButton_4_clicked()
 
         ofstream outEdit(datAName.c_str());
 
-        outEdit<<ui->spinBox->value()<<endl;          //number of spectra
-        outEdit<<ui->doubleSpinBox->value()<<endl;    // opt coeff 1
-        outEdit<<ui->doubleSpinBox_2->value()<<endl;  // opt coeff 2
-        outEdit<<ui->doubleSpinBox_3->value()<<endl;  // opt coeff 3
-        outEdit<<ui->doubleSpinBox_4->value()<<endl;  // opt coeff 4
-        outEdit<<ui->doubleSpinBox_5->value()<<endl;  // step size initial simplex
-        outEdit<<ui->doubleSpinBox_13->value()<<endl;  // delta P
-        outEdit<<ui->doubleSpinBox_14->value()<<endl;  // delta e
-        outEdit<<ui->doubleSpinBox_15->value()<<endl;  // delta K1
-        outEdit<<ui->doubleSpinBox_16->value()<<endl;  // delta K2
-        outEdit<<ui->doubleSpinBox_17->value()<<endl;  // delta systemic velocity
-        outEdit<<ui->doubleSpinBox_18->value()<<endl;  // delta T0
-        outEdit<<ui->doubleSpinBox_19->value()<<endl;  // delta omega
+        outEdit<<setprecision(10)<<ui->spinBox->value()<<endl;          //number of spectra
+        outEdit<<setprecision(10)<<ui->doubleSpinBox->value()<<endl;    // opt coeff 1
+        outEdit<<setprecision(10)<<ui->doubleSpinBox_2->value()<<endl;  // opt coeff 2
+        outEdit<<setprecision(10)<<ui->doubleSpinBox_3->value()<<endl;  // opt coeff 3
+        outEdit<<setprecision(10)<<ui->doubleSpinBox_4->value()<<endl;  // opt coeff 4
+        outEdit<<setprecision(10)<<ui->doubleSpinBox_5->value()<<endl;  // step size initial simplex
+        outEdit<<setprecision(10)<<ui->doubleSpinBox_13->value()<<endl;  // delta P
+        outEdit<<setprecision(10)<<ui->doubleSpinBox_14->value()<<endl;  // delta e
+        outEdit<<setprecision(10)<<ui->doubleSpinBox_15->value()<<endl;  // delta K1
+        outEdit<<setprecision(10)<<ui->doubleSpinBox_16->value()<<endl;  // delta K2
+        outEdit<<setprecision(10)<<ui->doubleSpinBox_17->value()<<endl;  // delta systemic velocity
+        outEdit<<setprecision(10)<<ui->doubleSpinBox_18->value()<<endl;  // delta T0
+        outEdit<<setprecision(10)<<ui->doubleSpinBox_19->value()<<endl;  // delta omega
     }
 }
 
@@ -483,14 +484,14 @@ void Edit::on_pushButton_11_clicked()
 {
     ofstream init("initialstep.dat");
 
-    init<<ui->doubleSpinBox_5->value()<<endl;
-    init<<ui->doubleSpinBox_13->value()<<endl;
-    init<<ui->doubleSpinBox_14->value()<<endl;
-    init<<ui->doubleSpinBox_15->value()<<endl;
-    init<<ui->doubleSpinBox_16->value()<<endl;
-    init<<ui->doubleSpinBox_17->value()<<endl;
-    init<<ui->doubleSpinBox_18->value()<<endl;
-    init<<ui->doubleSpinBox_19->value()<<endl;
+    init<<setprecision(10)<<ui->doubleSpinBox_5->value()<<endl;
+    init<<setprecision(10)<<ui->doubleSpinBox_13->value()<<endl;
+    init<<setprecision(10)<<ui->doubleSpinBox_14->value()<<endl;
+    init<<setprecision(10)<<ui->doubleSpinBox_15->value()<<endl;
+    init<<setprecision(10)<<ui->doubleSpinBox_16->value()<<endl;
+    init<<setprecision(10)<<ui->doubleSpinBox_17->value()<<endl;
+    init<<setprecision(10)<<ui->doubleSpinBox_18->value()<<endl;
+    init<<setprecision(10)<<ui->doubleSpinBox_19->value()<<endl;
 }
 
 // remove initial step size
