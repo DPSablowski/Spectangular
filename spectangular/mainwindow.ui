@@ -9415,7 +9415,7 @@
              </font>
             </property>
             <property name="text">
-             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Result; &lt;span style=&quot; color:#0000ff;&quot;&gt;Comp A&lt;/span&gt; &amp;amp; &lt;span style=&quot; color:#ff0000;&quot;&gt;Comp B&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Result; &lt;span style=&quot; color:#0000ff;&quot;&gt;Comp A,&lt;/span&gt;&lt;span style=&quot; color:#ff0000;&quot;&gt;Comp B &lt;/span&gt;&lt;span style=&quot; color:#000000;&quot;&gt;&amp;amp; Error&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
            </widget>
           </item>

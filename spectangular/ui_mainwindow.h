@@ -2699,7 +2699,7 @@ public:
         label_49->setText(QApplication::translate("MainWindow", "<html><head/><body><p><span style=\" color:#000000;\">.sps</span></p></body></html>", 0));
         pushButton_8->setText(QApplication::translate("MainWindow", "Error", 0));
         pushButton->setText(QApplication::translate("MainWindow", "Close", 0));
-        label_8->setText(QApplication::translate("MainWindow", "<html><head/><body><p>Result; <span style=\" color:#0000ff;\">Comp A</span> &amp; <span style=\" color:#ff0000;\">Comp B</span></p></body></html>", 0));
+        label_8->setText(QApplication::translate("MainWindow", "<html><head/><body><p>Result; <span style=\" color:#0000ff;\">Comp A,</span><span style=\" color:#ff0000;\">Comp B </span><span style=\" color:#000000;\">&amp; Error</span></p></body></html>", 0));
         label_9->setText(QApplication::translate("MainWindow", "Telluric", 0));
         label_13->setText(QApplication::translate("MainWindow", "<html><head/><body><p>Difference; Offset:</p></body></html>", 0));
         pushButton_6->setText(QApplication::translate("MainWindow", "Plot", 0));
