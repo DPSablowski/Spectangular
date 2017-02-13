@@ -15,6 +15,7 @@ using namespace std;
 int obser;
 QString qEPath;
 string ePath;
+QVector<double> PER(1), ECC(1), AMPA(1), AMPB(1), GAM(1), PERI(1), LPERI(1);
 
 Edit::Edit(QWidget *parent) :
     QDialog(parent),
@@ -39,30 +40,68 @@ Edit::Edit(QWidget *parent) :
     ui->doubleSpinBox_4->setValue(2.0);
     ui->doubleSpinBox_5->setValue(1);
 
-    ui->doubleSpinBox_6->setValue(104.02128);
-    ui->doubleSpinBox_7->setValue(0.00089);
-    ui->doubleSpinBox_8->setValue(25.9611);
-    ui->doubleSpinBox_9->setValue(26.840);
-    ui->doubleSpinBox_10->setValue(29.9378);
-    ui->doubleSpinBox_11->setValue(48147.6);
-    ui->doubleSpinBox_12->setValue(342.6);
+    string sbin = "BinaryData.dat";
+    ifstream binaries(sbin.c_str());
 
-    ui->comboBox->addItem("Capella");
-    ui->comboBox->addItem("Mizar");
-    ui->comboBox->addItem("BAT99_12");
-    ui->comboBox->addItem("BAT99_19");
-    ui->comboBox->addItem("BAT99_32");
-    ui->comboBox->addItem("BAT99_77");
-    ui->comboBox->addItem("BAT99_92");
-    ui->comboBox->addItem("BAT99_95");
-    ui->comboBox->addItem("BAT99_99");
-    ui->comboBox->addItem("BAT99_103");
-    ui->comboBox->addItem("BAT99_113");
-    ui->comboBox->addItem("BAT99_119");
-    ui->comboBox->addItem("NGC 3603-A1");
-    ui->comboBox->addItem("NN Del");
-    ui->comboBox->addItem("PX Hya");
-    ui->comboBox->addItem("HR5110");
+    QFile qBin(sbin.c_str());
+
+    if(!qBin.exists()){
+        qDebug()<<"No data base file for orbits of binaries present.";
+        QMessageBox::information(this, "Error", "Data base of orbital elements not present.");
+    }
+
+
+    else{
+        int lines=0;
+        string zeile1, eins1, zwei1, drei1, vier1, fuenf1, sechs1, sieben1, acht1;
+
+        while(std::getline(binaries, zeile1))
+        ++ lines;
+
+        binaries.clear();
+        binaries.seekg(0, ios::beg);
+
+        QVector<string> names(lines);
+
+        PER.resize(lines);
+        ECC.resize(lines);
+        AMPA.resize(lines);
+        AMPB.resize(lines);
+        GAM.resize(lines);
+        PERI.resize(lines);
+        LPERI.resize(lines);
+
+        for(int i=0; i < lines; i++){
+            binaries >> eins1 >> zwei1 >> drei1 >> vier1 >> fuenf1 >> sechs1 >> sieben1 >> acht1;
+            istringstream str1(eins1);
+            str1 >> names[i];
+            QString qstr = QString::fromStdString(str1.str());
+            ui->comboBox->addItem(qstr);
+            istringstream str2(zwei1);
+            str2 >> PER[i];
+            istringstream str3(drei1);
+            str3 >> ECC[i];
+            istringstream str4(vier1);
+            str4 >> AMPA[i];
+            istringstream str5(fuenf1);
+            str5 >> AMPB[i];
+            istringstream str6(sechs1);
+            str6 >> GAM[i];
+            istringstream str7(sieben1);
+            str7 >> PERI[i];
+            istringstream str8(acht1);
+            str8 >> LPERI[i];
+        }
+
+        ui->doubleSpinBox_6->setValue(PER[0]);
+        ui->doubleSpinBox_7->setValue(ECC[0]);
+        ui->doubleSpinBox_8->setValue(AMPA[0]);
+        ui->doubleSpinBox_9->setValue(AMPB[0]);
+        ui->doubleSpinBox_10->setValue(GAM[0]);
+        ui->doubleSpinBox_11->setValue(PERI[0]);
+        ui->doubleSpinBox_12->setValue(LPERI[0]);
+
+    }
 
     ui->lineEdit_3->setText("/home/daniels/work1/Observations/Capella/Lithium");
     qEPath=ui->lineEdit_3->text();
@@ -195,182 +234,15 @@ void Edit::on_pushButton_9_clicked()
 //********************************************
 void Edit::on_pushButton_10_clicked(){
 
-    // Capella
-    if(ui->comboBox->currentIndex()==0){
-        ui->doubleSpinBox_6->setValue(104.02128);
-        ui->doubleSpinBox_7->setValue(0.00089);
-        ui->doubleSpinBox_8->setValue(25.9611);
-        ui->doubleSpinBox_9->setValue(26.8400);
-        ui->doubleSpinBox_10->setValue(29.9378);
-        ui->doubleSpinBox_11->setValue(2448147.6);
-        ui->doubleSpinBox_12->setValue(342.6);
-    }
+    int dey=ui->comboBox->currentIndex();
+    ui->doubleSpinBox_6->setValue(PER[dey]);
+    ui->doubleSpinBox_7->setValue(ECC[dey]);
+    ui->doubleSpinBox_8->setValue(AMPA[dey]);
+    ui->doubleSpinBox_9->setValue(AMPB[dey]);
+    ui->doubleSpinBox_10->setValue(GAM[dey]);
+    ui->doubleSpinBox_11->setValue(PERI[dey]);
+    ui->doubleSpinBox_12->setValue(LPERI[dey]);
 
-    // Mizar
-    if(ui->comboBox->currentIndex()==1){
-        ui->doubleSpinBox_6->setValue(20.54);
-        ui->doubleSpinBox_7->setValue(0.537);
-        ui->doubleSpinBox_8->setValue(68.6);
-        ui->doubleSpinBox_9->setValue(67.6);
-        ui->doubleSpinBox_10->setValue(-5.6);
-        ui->doubleSpinBox_11->setValue(2436997);
-        ui->doubleSpinBox_12->setValue(106.16);
-    }
-
-    // BAT99_12
-    if(ui->comboBox->currentIndex()==2){
-        ui->doubleSpinBox_6->setValue(3.2358);
-        ui->doubleSpinBox_7->setValue(0.34);
-        ui->doubleSpinBox_8->setValue(74);
-        ui->doubleSpinBox_9->setValue(0);
-        ui->doubleSpinBox_10->setValue(646);
-        ui->doubleSpinBox_11->setValue(52269.84);
-        ui->doubleSpinBox_12->setValue(-29);
-    }
-
-    // BAT99_19
-    if(ui->comboBox->currentIndex()==3){
-        ui->doubleSpinBox_6->setValue(17.9947);
-        ui->doubleSpinBox_7->setValue(0.34);
-        ui->doubleSpinBox_8->setValue(234);
-        ui->doubleSpinBox_9->setValue(0);
-        ui->doubleSpinBox_10->setValue(328);
-        ui->doubleSpinBox_11->setValue(52006.6737);
-        ui->doubleSpinBox_12->setValue(188.2);
-    }
-
-    // BAT99_32
-    if(ui->comboBox->currentIndex()==4){
-        ui->doubleSpinBox_6->setValue(1.90756);
-        ui->doubleSpinBox_7->setValue(0.06);
-        ui->doubleSpinBox_8->setValue(120);
-        ui->doubleSpinBox_9->setValue(0);
-        ui->doubleSpinBox_10->setValue(288);
-        ui->doubleSpinBox_11->setValue(53011.57);
-        ui->doubleSpinBox_12->setValue(250);
-    }
-
-    // BAT99_77
-    if(ui->comboBox->currentIndex()==5){
-        ui->doubleSpinBox_6->setValue(3.00303);
-        ui->doubleSpinBox_7->setValue(0.32);
-        ui->doubleSpinBox_8->setValue(144);
-        ui->doubleSpinBox_9->setValue(0);
-        ui->doubleSpinBox_10->setValue(339);
-        ui->doubleSpinBox_11->setValue(52631.87);
-        ui->doubleSpinBox_12->setValue(7);
-    }
-
-    // BAT99_92
-    if(ui->comboBox->currentIndex()==6){
-        ui->doubleSpinBox_6->setValue(4.3125);
-        ui->doubleSpinBox_7->setValue(0.02);
-        ui->doubleSpinBox_8->setValue(204);
-        ui->doubleSpinBox_9->setValue(0);
-        ui->doubleSpinBox_10->setValue(332);
-        ui->doubleSpinBox_11->setValue(52998.03);
-        ui->doubleSpinBox_12->setValue(109);
-    }
-
-    // BAT99_95
-    if(ui->comboBox->currentIndex()==7){
-        ui->doubleSpinBox_6->setValue(2.1110);
-        ui->doubleSpinBox_7->setValue(0.07);
-        ui->doubleSpinBox_8->setValue(107);
-        ui->doubleSpinBox_9->setValue(107);
-        ui->doubleSpinBox_10->setValue(274);
-        ui->doubleSpinBox_11->setValue(52999.87);
-        ui->doubleSpinBox_12->setValue(285);
-    }
-
-    // BAT99_99
-    if(ui->comboBox->currentIndex()==8){
-        ui->doubleSpinBox_6->setValue(92.60);
-        ui->doubleSpinBox_7->setValue(0);
-        ui->doubleSpinBox_8->setValue(91);
-        ui->doubleSpinBox_9->setValue(0);
-        ui->doubleSpinBox_10->setValue(337);
-        ui->doubleSpinBox_11->setValue(53007.8);
-        ui->doubleSpinBox_12->setValue(0);
-    }
-
-
-    // BAT99_103
-    if(ui->comboBox->currentIndex()==9){
-        ui->doubleSpinBox_6->setValue(2.75975);
-        ui->doubleSpinBox_7->setValue(0.23);
-        ui->doubleSpinBox_8->setValue(158);
-        ui->doubleSpinBox_9->setValue(0);
-        ui->doubleSpinBox_10->setValue(388);
-        ui->doubleSpinBox_11->setValue(53007.8);
-        ui->doubleSpinBox_12->setValue(-41);
-    }
-
-    // BAT99_113
-    if(ui->comboBox->currentIndex()==10){
-        ui->doubleSpinBox_6->setValue(4.699);
-        ui->doubleSpinBox_7->setValue(0.20);
-        ui->doubleSpinBox_8->setValue(130);
-        ui->doubleSpinBox_9->setValue(0);
-        ui->doubleSpinBox_10->setValue(390);
-        ui->doubleSpinBox_11->setValue(52993.07);
-        ui->doubleSpinBox_12->setValue(308);
-    }
-
-    // BAT99_119
-    if(ui->comboBox->currentIndex()==11){
-        ui->doubleSpinBox_6->setValue(159.62413);
-        ui->doubleSpinBox_7->setValue(0.8060);
-        ui->doubleSpinBox_8->setValue(103.6355);
-        ui->doubleSpinBox_9->setValue(117.0775);
-        ui->doubleSpinBox_10->setValue(270);
-        ui->doubleSpinBox_11->setValue(56501.2889);
-        ui->doubleSpinBox_12->setValue(230.82);
-    }
-
-    // NGC 3603-A1
-    if(ui->comboBox->currentIndex()==12){
-        ui->doubleSpinBox_6->setValue(3.7724);
-        ui->doubleSpinBox_7->setValue(0.0000);
-        ui->doubleSpinBox_8->setValue(330);
-        ui->doubleSpinBox_9->setValue(433);
-        ui->doubleSpinBox_10->setValue(153);
-        ui->doubleSpinBox_11->setValue(3765.25);
-        ui->doubleSpinBox_12->setValue(120);
-    }
-
-    // NN Del
-    if(ui->comboBox->currentIndex()==13){
-        ui->doubleSpinBox_6->setValue(99.1648477);
-        ui->doubleSpinBox_7->setValue(0.5177);
-        ui->doubleSpinBox_8->setValue(36.2432);
-        ui->doubleSpinBox_9->setValue(39.4582);
-        ui->doubleSpinBox_10->setValue(-9.4046);
-        ui->doubleSpinBox_11->setValue(2456787.1095);
-        ui->doubleSpinBox_12->setValue(350.5696);
-    }
-
-    // PX Hya
-    if(ui->comboBox->currentIndex()==14){
-        ui->doubleSpinBox_6->setValue(36.1828518);
-        ui->doubleSpinBox_7->setValue(0.5652);
-        ui->doubleSpinBox_8->setValue(57.6967);
-        ui->doubleSpinBox_9->setValue(56.5568);
-        ui->doubleSpinBox_10->setValue(-14.9896);
-        ui->doubleSpinBox_11->setValue(2456743.2661);
-        ui->doubleSpinBox_12->setValue(325.1146);
-    }
-
-    // HR5110
-    if(ui->comboBox->currentIndex()==15){
-        ui->doubleSpinBox_6->setValue(2.613214);
-        ui->doubleSpinBox_7->setValue(0.00);
-        ui->doubleSpinBox_8->setValue(8.9);
-        ui->doubleSpinBox_9->setValue(5.0);
-        ui->doubleSpinBox_10->setValue(8.6);
-        ui->doubleSpinBox_11->setValue(2445766.655);
-        ui->doubleSpinBox_12->setValue(89);
-    }
 }
 
 

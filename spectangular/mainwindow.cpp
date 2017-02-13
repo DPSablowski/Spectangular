@@ -28,7 +28,7 @@ using namespace blas;
 using std::chrono::system_clock;
 
 int reinitiate=0, mini, CDI, maxi, num, checker=0, bso1, bso2, logbin, RV1m, RV3m, RV1a, RV3a, Mn, Mm, elements, bidi=0, error=0, zaehler, abortt=0, eval=0;
-int upda;
+int upda, updac;
 unsigned int cores;
 string path, eins, zwei, line;
 QString qPath, qExtension, qWCol, qICol, qInitval, qInitmat, qOptval, qOptmat;
@@ -1904,6 +1904,7 @@ void MainWindow::Optimisation()
     system_clock::time_point time1 = system_clock::now();
 
     upda=0;
+    updac=0;
 
     ui->spinBox_4->setValue(0);
     ui->spinBox_5->setValue(0);
@@ -5313,31 +5314,31 @@ double MainWindow::DivideConquer(){
 
             string erro = "error_";
             std::ostringstream upd1NameStream(erro);
-            upd1NameStream<<path<<"/"<<erro<<eval<<".dat";
+            upd1NameStream<<path<<"/"<<erro<<updac<<".dat";
             std::string upd1Name = upd1NameStream.str();
             ofstream upda1(upd1Name.c_str());
 
             string sCA = "compa_";
             std::ostringstream upd2NameStream(sCA);
-            upd2NameStream<<path<<"/"<<sCA<<eval<<".dat";
+            upd2NameStream<<path<<"/"<<sCA<<updac<<".dat";
             std::string upd2Name = upd2NameStream.str();
             ofstream upda2(upd2Name.c_str());
 
             string sCB = "compb_";
             std::ostringstream upd3NameStream(sCB);
-            upd3NameStream<<path<<"/"<<sCB<<eval<<".dat";
+            upd3NameStream<<path<<"/"<<sCB<<updac<<".dat";
             std::string upd3Name = upd3NameStream.str();
             ofstream upda3(upd3Name.c_str());
 
             string sTel = "tellur_";
             std::ostringstream upd5NameStream(sTel);
-            upd5NameStream<<path<<"/"<<sTel<<eval<<".dat";
+            upd5NameStream<<path<<"/"<<sTel<<updac<<".dat";
             std::string upd5Name = upd5NameStream.str();
             ofstream upda5(upd5Name.c_str());
 
             string sDif = "differences_";
             std::ostringstream upd4NameStream(sDif);
-            upd4NameStream<<path<<"/"<<sDif<<eval<<".dat";
+            upd4NameStream<<path<<"/"<<sDif<<updac<<".dat";
             std::string upd4Name = upd4NameStream.str();
             ofstream upda4(upd4Name.c_str());
 
@@ -5380,7 +5381,7 @@ double MainWindow::DivideConquer(){
 
         if(ui->checkBox_19->isChecked()){
 
-            QString qEval = QString::number(eval);
+            QString qEval = QString::number(updac);
                 QString sav1="Sol_"+qEval;
                 QString save1=qPath+"/"+sav1+".png";
                 ui->customPlot->savePng(save1);
@@ -5390,6 +5391,7 @@ double MainWindow::DivideConquer(){
                 ui->customPlot_3->savePng(save2);
         }
 
+                    ++updac;
 
         if(ui->checkBox_7->isChecked()){
             std::ostringstream file1NameStream("rcomp1.txt");
