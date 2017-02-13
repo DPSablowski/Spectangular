@@ -9902,6 +9902,13 @@
              </widget>
             </item>
             <item>
+             <widget class="QCheckBox" name="checkBox_19">
+              <property name="text">
+               <string>Save all Updates</string>
+              </property>
+             </widget>
+            </item>
+            <item>
              <spacer name="horizontalSpacer_16">
               <property name="orientation">
                <enum>Qt::Horizontal</enum>

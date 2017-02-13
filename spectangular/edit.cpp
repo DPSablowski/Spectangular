@@ -193,8 +193,8 @@ void Edit::on_pushButton_9_clicked()
 //********************************************
 // apply orbit from data base
 //********************************************
-void Edit::on_pushButton_10_clicked()
-{
+void Edit::on_pushButton_10_clicked(){
+
     // Capella
     if(ui->comboBox->currentIndex()==0){
         ui->doubleSpinBox_6->setValue(104.02128);
@@ -202,7 +202,7 @@ void Edit::on_pushButton_10_clicked()
         ui->doubleSpinBox_8->setValue(25.9611);
         ui->doubleSpinBox_9->setValue(26.8400);
         ui->doubleSpinBox_10->setValue(29.9378);
-        ui->doubleSpinBox_11->setValue(48147.6);
+        ui->doubleSpinBox_11->setValue(2448147.6);
         ui->doubleSpinBox_12->setValue(342.6);
     }
 
@@ -213,7 +213,7 @@ void Edit::on_pushButton_10_clicked()
         ui->doubleSpinBox_8->setValue(68.6);
         ui->doubleSpinBox_9->setValue(67.6);
         ui->doubleSpinBox_10->setValue(-5.6);
-        ui->doubleSpinBox_11->setValue(36997);
+        ui->doubleSpinBox_11->setValue(2436997);
         ui->doubleSpinBox_12->setValue(106.16);
     }
 

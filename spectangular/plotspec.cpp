@@ -117,7 +117,10 @@ void PlotSpec::on_pushButton_2_clicked()
 {
     ui->customPlot->clearGraphs();
 
-    QPen pen1, pen2, pen3, pen4;
+    qSpPath=ui->lineEdit_5->text();
+    spPath = qSpPath.toUtf8().constData();
+
+    QPen pen1, pen2, pen3, pen4, pen5;
 
     QString plot1=ui->lineEdit->text();
     string plot11 = plot1.toUtf8().constData();
@@ -246,7 +249,6 @@ void PlotSpec::on_pushButton_2_clicked()
         ist5 >> errw[i];
         istringstream ist6(two);
         ist6 >> erry[i];
-        erry[i]=abs(erry[i]);
     }
     toplot3.close();
 
@@ -262,44 +264,38 @@ void PlotSpec::on_pushButton_2_clicked()
     QString label=ui->lineEdit_6->text();
     ui->customPlot->graph(0)->setName(label);
     }
-    if(ui->checkBox_15->isChecked()){
-        ui->customPlot->graph(0)->setLineStyle(QCPGraph::lsStepCenter);
-        ui->customPlot->graph(0)->setErrorType(QCPGraph::etValue);
-        ui->customPlot->graph(0)->setDataValueError(aps, bps, erry);
-    }
-    else{
-        ui->customPlot->graph(0)->setData(aps, bps);
-    }
+    ui->customPlot->graph(0)->setData(aps, bps);
     pen1.setColor(Qt::blue);
     pen1.setWidth(ui->spinBox_2->value());
     ui->customPlot->graph(0)->setPen(pen1);
 
     ui->customPlot->addGraph();
-    if(ui->checkBox_15->isChecked()){
-        ui->customPlot->graph(1)->setLineStyle(QCPGraph::lsStepCenter);
-        ui->customPlot->graph(1)->setErrorType(QCPGraph::etValue);
-        ui->customPlot->graph(1)->setDataValueError(cps, dps, erry);
-    }
-    else{
-        ui->customPlot->graph(1)->setData(cps, dps);
-    }
+    ui->customPlot->graph(1)->setData(cps, dps);
     pen2.setColor(Qt::red);
     pen2.setWidth(ui->spinBox_2->value());
     ui->customPlot->graph(1)->setPen(pen2);
 
+    if(ui->checkBox_15->isChecked()){
+        ui->customPlot->addGraph();
+        ui->customPlot->graph(2)->setData(errw, erry);
+        pen5.setColor(Qt::black);
+        pen5.setWidth(ui->spinBox_2->value());
+        ui->customPlot->graph(2)->setPen(pen5);
+    }
+
     if(ui->checkBox_9->isChecked()){
         ui->customPlot->addGraph();
-        ui->customPlot->graph(2)->setData(aps, eps);
+        ui->customPlot->graph(3)->setData(aps, eps);
         pen3.setColor(Qt::black);
         pen3.setWidth(ui->spinBox_2->value());
-        ui->customPlot->graph(2)->setPen(pen3);
+        ui->customPlot->graph(3)->setPen(pen3);
     }
     if(ui->checkBox_10->isChecked()){
         ui->customPlot->addGraph();
-        ui->customPlot->graph(3)->setData(cps, fps);
+        ui->customPlot->graph(4)->setData(cps, fps);
         pen4.setColor(Qt::green);
         pen4.setWidth(ui->spinBox_2->value());
-        ui->customPlot->graph(3)->setPen(pen4);;
+        ui->customPlot->graph(4)->setPen(pen4);;
     }
     ui->customPlot->xAxis->setRange(xs1, xs2);
     ui->customPlot->yAxis->setRange(ys1, ys2);
@@ -311,6 +307,9 @@ void PlotSpec::on_pushButton_2_clicked()
 //****************************************************************
 void PlotSpec::on_pushButton_3_clicked()
 {
+    qSpPath=ui->lineEdit_5->text();
+    spPath = qSpPath.toUtf8().constData();
+
     QString plot1=ui->lineEdit->text();
     string plot11 = plot1.toUtf8().constData();
     std::ostringstream datNameStream(plot11);
@@ -524,6 +523,9 @@ void PlotSpec::on_pushButton_5_clicked()
 //*******************************************************
 void PlotSpec::SNR(){
 
+    qSpPath=ui->lineEdit_5->text();
+    spPath = qSpPath.toUtf8().constData();
+
     QString plot1=ui->lineEdit->text();
     string plot11 = plot1.toUtf8().constData();
     std::ostringstream datNameStream(plot11);
@@ -587,6 +589,9 @@ void PlotSpec::SNR(){
 // compute EW in specified region
 //*******************************************************
 void PlotSpec::EW(){
+
+    qSpPath=ui->lineEdit_5->text();
+    spPath = qSpPath.toUtf8().constData();
 
     QString plot1=ui->lineEdit->text();
     string plot11 = plot1.toUtf8().constData();
@@ -698,6 +703,9 @@ void PlotSpec::on_pushButton_6_clicked()
     sdat.close();
 
     s.set_points(XC,YC);
+
+    qSpPath=ui->lineEdit_5->text();
+    spPath = qSpPath.toUtf8().constData();
 
     QString in1=ui->lineEdit->text();
     string in11 = in1.toUtf8().constData();
@@ -855,6 +863,9 @@ void PlotSpec::on_pushButton_8_clicked()
 //*******************************************************
 void PlotSpec::on_pushButton_9_clicked()
 {
+    qSpPath=ui->lineEdit_5->text();
+    spPath = qSpPath.toUtf8().constData();
+
     QString res = ui->lineEdit_8->text();
     string res1 = res.toUtf8().constData();
     std::ostringstream datNameStream(res1);
@@ -906,6 +917,9 @@ void PlotSpec::on_pushButton_10_clicked()
     }
     spdat.close();
 
+    qSpPath=ui->lineEdit_5->text();
+    spPath = qSpPath.toUtf8().constData();
+
     QString res = ui->lineEdit_10->text();
     string res1 = res.toUtf8().constData();
     std::ostringstream datNameStream(res1);
@@ -925,6 +939,9 @@ void PlotSpec::on_pushButton_10_clicked()
 void PlotSpec::on_pushButton_11_clicked()
 {
     string line, eins, zwei;
+
+    qSpPath=ui->lineEdit_5->text();
+    spPath = qSpPath.toUtf8().constData();
 
     QString res = ui->lineEdit_11->text();
     string res1 = res.toUtf8().constData();

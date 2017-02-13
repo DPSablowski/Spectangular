@@ -231,6 +231,7 @@ public:
     QDoubleSpinBox *doubleSpinBox_14;
     QLabel *label_47;
     QDoubleSpinBox *doubleSpinBox_15;
+    QCheckBox *checkBox_19;
     QSpacerItem *horizontalSpacer_16;
     QFrame *line_3;
     QMenuBar *menuBar;
@@ -2444,6 +2445,11 @@ public:
 
         horizontalLayout_20->addWidget(doubleSpinBox_15);
 
+        checkBox_19 = new QCheckBox(scrollAreaWidgetContents);
+        checkBox_19->setObjectName(QStringLiteral("checkBox_19"));
+
+        horizontalLayout_20->addWidget(checkBox_19);
+
         horizontalSpacer_16 = new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
 
         horizontalLayout_20->addItem(horizontalSpacer_16);
@@ -2706,6 +2712,7 @@ public:
         checkBox_10->setText(QApplication::translate("MainWindow", "Live Update", 0));
         checkBox_33->setText(QApplication::translate("MainWindow", "Compute Residuum from", 0));
         label_47->setText(QApplication::translate("MainWindow", "<html><head/><body><p>to</p></body></html>", 0));
+        checkBox_19->setText(QApplication::translate("MainWindow", "Save all Updates", 0));
         menuFile->setTitle(QApplication::translate("MainWindow", "File", 0));
         menuTools->setTitle(QApplication::translate("MainWindow", "Tools", 0));
         menuHelp->setTitle(QApplication::translate("MainWindow", "Help", 0));

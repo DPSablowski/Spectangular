@@ -1709,18 +1709,15 @@ void MainWindow::on_pushButton_5_clicked()
         for(int i=0; i<Mn; i++){
 
             if(res(i)>10*tsh){
+                file5<<setprecision(14)<<pow(10,W(i))<<" "<<res(i)-C(i)<<endl;
                 if(ui->checkBox_33->isChecked()){//(abs(C(i)-res(i))<C(i)/3) &
                     if((W(i)>log10(ui->doubleSpinBox_14->value())) & (W(i)<log10(ui->doubleSpinBox_15->value()))){
-                        file5<<setprecision(14)<<pow(10,W(i))<<" "<<res(i)-C(i)<<endl;
                         residu+=pow((res(i)-C(i)),2);
                     }
                 }
 
                 else{
-                    //if(abs(C(i)-res(i))<C(i)/3){
-                        file5<<setprecision(14)<<pow(10,W(i))<<" "<<res(i)-C(i)<<endl;
                         residu+=pow((res(i)-C(i)),2);
-                    //}
                 }
             }
         }
@@ -1923,7 +1920,7 @@ void MainWindow::Optimisation()
 
     qApp->processEvents(QEventLoop::AllEvents);
 
-    int Ph, Pl, Psh, SB1=0;
+    int Ph=0, Pl=0, Psh=0, SB1=0;
 
     eval=0;
 
@@ -1939,7 +1936,7 @@ void MainWindow::Optimisation()
         nu=num;
     }
 
-    ofstream file("optimization.txt");
+    //ofstream file("optimization.txt");
 
     QFileInfo lstrength("edit.dat");
 
@@ -2101,6 +2098,9 @@ void MainWindow::Optimisation()
         dOmega = M_PI/20;
     }
 
+    double ym2=0, ys2=0;
+    int stagnate=0;
+
     LogFile<<"Step: "<<step<<"; dP: "<<dP<<"; de: "<<de<<"; dKA: "<<dKA<<"; dKB: "<<dKB<<"; dGamma: "<<dGamma<<"; dT0: "<<dT0<<"; dOmega: "<<dOmega<<endl;
 
     LogFile<<endl;
@@ -2152,32 +2152,32 @@ void MainWindow::Optimisation()
     for(int i=0; i<nu+1; i++){
         for(int j=0; j<nu; j++){
 
-        if((i>0)&(i==j+1)){
-            e[i][j]=2*step;
-        }
-        else{
-            e[i][j]=0;
-        }
+            if((i>0)&(i==j+1)){
+                e[i][j]=2*step;
+            }
+            else{
+                e[i][j]=0;
+            }
         }
     }
 
     for (int i=0; i<nu+1; i++){
         for (int j=0; j<nu; j++){
 
-        P[i][j]=P[0][j]+dv*e[i][j];
-        init2<<setprecision(14)<<P[i][j]<<endl;
-        //cout<<P[i][j]<<" ";
-        if(SB1==0){
-        if(j<nu/2){
-            RV1[j]=P[i][j];
-        }
-        else{
-            RV3[j-nu/2]=P[i][j];
-        }}
-        if(SB1==1){
-           RV1[j]=P[i][j];
-        }
-
+            P[i][j]=P[0][j]+dv*e[i][j];
+            init2<<setprecision(14)<<P[i][j]<<endl;
+            //cout<<P[i][j]<<" ";
+            if(SB1==0){
+                if(j<nu/2){
+                    RV1[j]=P[i][j];
+                }
+                else{
+                    RV3[j-nu/2]=P[i][j];
+                }
+            }
+            if(SB1==1){
+                RV1[j]=P[i][j];
+            }
         }
 
         eval++;
@@ -2404,33 +2404,36 @@ void MainWindow::Optimisation()
         ym=0;
         ys=0;
         for (int i=0; i<nu; i++){
-        Z[i]=0;
+            Z[i]=0;
         }
 
         //looking for highest value
         yh=y[0];
         Ph = 0;
         for (int j=0; j<nu+1; j++){
-        if(y[j]>yh){
-        yh = y[j];
-        Ph = j;
-        }}
+            if(y[j]>yh){
+                yh = y[j];
+                Ph = j;
+            }
+        }
 
         //looking for smallest value
         yl=yh;
         for (int j=0; j<nu+1; j++){
-        if(y[j]<yl){
-        yl=y[j];
-        Pl = j;
-        }}
+            if(y[j]<yl){
+                yl=y[j];
+                Pl = j;
+            }
+        }
 
         //looking for second highest value
         ysh=yl;
         for (int j=0; j<nu+1; j++){
-        if((y[j]>ysh) & (y[j]<yh) & (y[j]>yl) & (j !=Pl)){
-        ysh=y[j];
-        Psh=j;
-        }}
+            if((y[j]>ysh) & (y[j]<yh) & (y[j]>yl) & (j !=Pl)){
+                ysh=y[j];
+                Psh=j;
+            }
+        }
 
         yh=y[Ph];
         yl=y[Pl];
@@ -2438,40 +2441,96 @@ void MainWindow::Optimisation()
 
         //computing mean and sigma
         for (int i=0; i<nu+1; i++){
-        ym+=y[i]/(nu+1);
+            ym+=y[i]/(nu+1);
         }
         for (int i=0; i<nu+1; i++){
-        ys+=sqrt(pow((y[i]-ym),2));
+            ys+=sqrt(pow((y[i]-ym),2));
         }
         ys=ys/(nu);
 
+
+        if((ys==ys2) & (ym==ym2)){
+            ++stagnate;
+
+            if(ui->checkBox_32->isChecked()){
+                cout<<"Reinitiate optimisation with current best RVs."<<endl;
+                ui->plainTextEdit_2->appendPlainText("Reinitiate optimisation with current best RVs.");
+                LogFile<<"Stagnation of DSM: "<<stagnate<<endl;
+                LogFile<<endl;
+                LogFile<<"Reinitiate optimisation with current best RV."<<endl;
+
+                string ReinV = ("rein_vel.dat");
+                std::ostringstream ReNameStream(ReinV);
+                ReNameStream<<path<<"/"<<ReinV;
+                std::string ReName = ReNameStream.str();
+                ofstream ReVel(ReName.c_str());
+
+                for(int i =0; i<nu/2; i++){
+                    ReVel<<RV1[i]<<" \t"<<RV3[i]<<endl;
+                }
+
+                ui->lineEdit_2->setText("rein_vel.dat");
+
+                ui->checkBox->setChecked(false);
+                ui->checkBox_2->setChecked(true);
+                ui->checkBox_16->setChecked(false);
+
+                ui->checkBox_9->setChecked(true);
+                ui->checkBox_11->setChecked(false);
+                ui->checkBox_12->setChecked(false);
+
+                reinitiate=1;
+
+                return;
+
+            }
+            else{
+                QString stagn = QString::number(stagnate);
+                LogFile<<"Stagnation of DSM: "<<stagnate<<endl;
+                cout<<"Optimisation may stagnate. No change in mean and STD of simplex points since "<<stagnate<<" iterations."<<endl;
+                ui->plainTextEdit_2->appendPlainText("Optimisation may stagnate. No change in mean and STD of simplex points since "+stagn+" iterations.");
+            }
+
+            }
+
+        else {
+            stagnate =0;
+        }
+
+        cout<<"Stag-Index: "<<stagnate<<endl;
+
+        ys2=ys;
+        ym2=ym;
+
         cout<<"Simplex Mean: "<<ym<<" Simplex STD: "<<ys<<endl;
 
-        LogFile<<"Mean: "<<ym<<"\tSTD: "<<ys<<endl;
+        LogFile<<setprecision(12)<<"Mean: "<<ym<<"\tSTD: "<<ys<<endl;
 
         //compute centroid
         for (int j=0; j<nu; j++){
-        for (int i=0; i<nu+1; i++){
-        if (i!=Ph){
-        Z[j]+=P[i][j]/nu;
-        }}}
+            for (int i=0; i<nu+1; i++){
+                if (i!=Ph){
+                    Z[j]+=P[i][j]/nu;
+                }
+            }
+        }
         cout<<t<<" centroid ";
 
         //reflect highest value at centroid
         cout<<"reflection at centroid..."<<endl;
         for (int i=0; i<nu; i++){
-        Co[i]=Z[i]+alpha*(Z[i]-P[Ph][i]);
-        if(SB1==0){
-        if(i<nu/2){
-            RV1[i]=Co[i];
-        }
-        else{
-            RV3[i-nu/2]=Co[i];
-        }}
-        if(SB1==1){
-            RV1[i]=Co[i];
-        }
-
+            Co[i]=Z[i]+alpha*(Z[i]-P[Ph][i]);
+            if(SB1==0){
+                if(i<nu/2){
+                    RV1[i]=Co[i];
+                }
+                else{
+                    RV3[i-nu/2]=Co[i];
+                }
+            }
+            if(SB1==1){
+                RV1[i]=Co[i];
+            }
         }
         eval++;
         ui->spinBox_5->setValue(eval);
@@ -2484,6 +2543,9 @@ void MainWindow::Optimisation()
             upda=0;
             LogFile<<endl;
             LogFile<<"New RVs found; Residuum: "<<yi<<endl;
+            for(int i = 0; i<nu/2;i++){
+                LogFile<<RV1[i]<<"\t"<<RV3[i]<<endl;
+            }
             LogFile<<endl;
         }
 
@@ -2491,67 +2553,71 @@ void MainWindow::Optimisation()
             //output results
             LogFile<<"Optimisation aborted."<<endl;
             for(int i=0; i<nu+1;i++){
-            cout<<y[i]<<endl;
-            opt1<<setprecision(12)<<y[i]<<endl;
-            for(int j=0; j<nu; j++){
-                opt2<<setprecision(12)<<P[i][j]<<endl;
+                cout<<y[i]<<endl;
+                opt1<<setprecision(12)<<y[i]<<endl;
+                for(int j=0; j<nu; j++){
+                    opt2<<setprecision(12)<<P[i][j]<<endl;
+                }
             }
-            }
-            abortt=0;
-            this->setCursor(QCursor(Qt::ArrowCursor));
-            return;
+                abortt=0;
+                this->setCursor(QCursor(Qt::ArrowCursor));
+                return;
         }
 
         //Alpha Branch, better than best point
         if(yi<yl){
            cout<<"expansion 1 ";
-        LogFile<<"yi<yl; ";
-        for (int i=0; i<nu; i++){
-        Eo[i]=Z[i]+Gamma*(Z[i]-P[Ph][i]);  //Expansion over worst point
-        if(SB1==0){
-        if(i<nu/2){
-            RV1[i]=Eo[i];
-        }
-        else{
-            RV3[i-nu/2]=Eo[i];
-        }}
-        if(SB1==1){
-            RV1[i]=Eo[i];
-        }
-        }
-        eval++;
-        ui->spinBox_5->setValue(eval);
-        qApp->processEvents(QEventLoop::AllEvents);
-        MainWindow::ConstructMatrix();
-        yt=MainWindow::DivideConquer();
-        qApp->processEvents(QEventLoop::AllEvents);
-
-        if(upda==1){
-            upda=0;
-            LogFile<<endl;
-            LogFile<<"New RVs found; Residuum: "<<yt<<endl;
-            LogFile<<endl;
-        }
-
-        if(abortt==1){
-            //output results
-            LogFile<<"Optimisation aborted."<<endl;
-            for(int i=0; i<nu+1;i++){
-            cout<<y[i]<<endl;
-            opt1<<setprecision(12)<<y[i]<<endl;
-            for(int j=0; j<nu; j++){
-                opt2<<setprecision(12)<<P[i][j]<<endl;
+            LogFile<<"yi<yl; ";
+            for (int i=0; i<nu; i++){
+                Eo[i]=Z[i]+Gamma*(Z[i]-P[Ph][i]);  //Expansion over worst point
+                if(SB1==0){
+                    if(i<nu/2){
+                        RV1[i]=Eo[i];
+                    }
+                    else{
+                        RV3[i-nu/2]=Eo[i];
+                    }
+                }
+                if(SB1==1){
+                    RV1[i]=Eo[i];
+                }
             }
+            eval++;
+            ui->spinBox_5->setValue(eval);
+            qApp->processEvents(QEventLoop::AllEvents);
+            MainWindow::ConstructMatrix();
+            yt=MainWindow::DivideConquer();
+            qApp->processEvents(QEventLoop::AllEvents);
+
+            if(upda==1){
+                upda=0;
+                LogFile<<endl;
+                LogFile<<"New RVs found; Residuum: "<<yt<<endl;
+                for(int i = 0; i<nu/2;i++){
+                    LogFile<<RV1[i]<<"\t"<<RV3[i]<<endl;
+                }
+                LogFile<<endl;
             }
-            abortt=0;
-            this->setCursor(QCursor(Qt::ArrowCursor));
-            return;
-        }
-        if(yt<yl){
-        cout<<"exp ";
-        for (int i=0; i<nu; i++){
-        P[Ph][i]=Eo[i];
-        }
+
+            if(abortt==1){
+                //output results
+                LogFile<<"Optimisation aborted."<<endl;
+                for(int i=0; i<nu+1;i++){
+                    cout<<y[i]<<endl;
+                    opt1<<setprecision(12)<<y[i]<<endl;
+                    for(int j=0; j<nu; j++){
+                        opt2<<setprecision(12)<<P[i][j]<<endl;
+                    }
+                }
+                abortt=0;
+                this->setCursor(QCursor(Qt::ArrowCursor));
+                return;
+            }
+            if(yt<yl){
+                cout<<"exp ";
+                for (int i=0; i<nu; i++){
+                    P[Ph][i]=Eo[i];
+                }
         /*
         eval++;
         ui->spinBox_5->setValue(eval);
@@ -2729,6 +2795,9 @@ void MainWindow::Optimisation()
             upda=0;
             LogFile<<endl;
             LogFile<<"New RVs found; Residuum: "<<yt<<endl;
+            for(int i = 0; i<nu/2;i++){
+                LogFile<<RV1[i]<<"\t"<<RV3[i]<<endl;
+            }
             LogFile<<endl;
         }
 
@@ -2778,6 +2847,9 @@ void MainWindow::Optimisation()
             upda=0;
             LogFile<<endl;
             LogFile<<"New RVs found; Residuum: "<<yt<<endl;
+            for(int i = 0; i<nu/2;i++){
+                LogFile<<RV1[i]<<"\t"<<RV3[i]<<endl;
+            }
             LogFile<<endl;
         }
 
@@ -3446,9 +3518,6 @@ void MainWindow::Optimisation()
               LogFile<<"*************************"<<endl;
               LogFile<<"Start Optimisation"<<endl;
 
-              double ym2=0, ys2=0;
-              int stagnate=0;
-
               if(ui->checkBox_32->isChecked()){
                   ui->checkBox_9->setChecked(false);
                   ui->checkBox_11->setChecked(true);
@@ -3519,10 +3588,9 @@ void MainWindow::Optimisation()
                       }
                       ys = ys/nu;
 
-                      if(ys==ys2 & ym==ym2){
+                      if((ys==ys2) & (ym==ym2)){
                           ++stagnate;
 
-                          if(stagnate>0){
                           if(ui->checkBox_32->isChecked()){
                               cout<<"Reinitiate optimisation with current best orbit."<<endl;
                               ui->plainTextEdit_2->appendPlainText("Reinitiate optimisation with current best orbit.");
@@ -3611,7 +3679,7 @@ void MainWindow::Optimisation()
                               ui->plainTextEdit_2->appendPlainText("Optimisation may stagnate. No change in mean and STD of simplex points since "+stagn+" iterations.");
                           }
 
-                          }}
+                          }
 
                       else {
                           stagnate =0;
@@ -3623,7 +3691,7 @@ void MainWindow::Optimisation()
                       ym2=ym;
 
                       cout<<"Simplex Mean: "<<ym<<" Simplex STD: "<<ys<<endl;
-                      LogFile<<"Mean: "<<ym<<"; STD: "<<ys<<endl;
+                      LogFile<<setprecision(12)<<"Mean: "<<ym<<"; STD: "<<ys<<endl;
 
                       //compute centroid
                       for(int j=0; j<nu; j++){
@@ -4392,7 +4460,7 @@ void MainWindow::Optimisation()
                   }
 
                   cout<<endl;
-                  cout<<"Simplex Mean: "<<ym<<" Simplex STD: "<<ys<<endl;
+                  cout<<setprecision(12)<<"Simplex Mean: "<<ym<<" Simplex STD: "<<ys<<endl;
                   cout<<endl;
                   cout<<"Orbitelements after "<<zaehler<<" Iterations and "<<eval<<" Evaluations:"<<endl;
                   cout<<"Period; Eccentricity; Amplitude A; Amplitude B; Systemic V.; T_peri; Omega A;"<<endl;
@@ -5044,6 +5112,7 @@ double MainWindow::DivideConquer(){
         int index1=0;
         int index2=0;
         int index3=0;
+
         for (j=0;j<Mm;j++) {
             s=0.0;
             if(w(j)>tsh){
@@ -5193,12 +5262,12 @@ double MainWindow::DivideConquer(){
             QVector<double> err(logbin), errmean(logbin);
 
             for(int i =0; i<logbin;i++){
+                errmean[i]=0;
                 for(int n = 0; n<num; n++){
                     errmean[i]+=(res(i+n*logbin)-C(i+n*logbin))/num;
 
                 }
                 file8<<pow(10,W(i))<<"\t"<<errmean[i]<<endl;
-                errmean[i]=0;
             }
 
 
@@ -5239,8 +5308,86 @@ double MainWindow::DivideConquer(){
             //}
         }
 
+        // Save all Updates
+        if(ui->checkBox_19->isChecked()){
+
+            string erro = "error_";
+            std::ostringstream upd1NameStream(erro);
+            upd1NameStream<<path<<"/"<<erro<<eval<<".dat";
+            std::string upd1Name = upd1NameStream.str();
+            ofstream upda1(upd1Name.c_str());
+
+            string sCA = "compa_";
+            std::ostringstream upd2NameStream(sCA);
+            upd2NameStream<<path<<"/"<<sCA<<eval<<".dat";
+            std::string upd2Name = upd2NameStream.str();
+            ofstream upda2(upd2Name.c_str());
+
+            string sCB = "compb_";
+            std::ostringstream upd3NameStream(sCB);
+            upd3NameStream<<path<<"/"<<sCB<<eval<<".dat";
+            std::string upd3Name = upd3NameStream.str();
+            ofstream upda3(upd3Name.c_str());
+
+            string sTel = "tellur_";
+            std::ostringstream upd5NameStream(sTel);
+            upd5NameStream<<path<<"/"<<sTel<<eval<<".dat";
+            std::string upd5Name = upd5NameStream.str();
+            ofstream upda5(upd5Name.c_str());
+
+            string sDif = "differences_";
+            std::ostringstream upd4NameStream(sDif);
+            upd4NameStream<<path<<"/"<<sDif<<eval<<".dat";
+            std::string upd4Name = upd4NameStream.str();
+            ofstream upda4(upd4Name.c_str());
+
+            for(int i =0; i<logbin;i++){
+                upda1<<pow(10,W(i))<<"\t"<<errmean[i]<<endl;
+                errmean[i]=0;
+            }
+
+            for (j=0;j<Mm;j++) {
+                 if(abs(X(j))>10*tsh){
+                    if(j<bso1){
+
+                        upda2<<pow(10,(W(0)+(index1-(RV3maxi+orbele[4])/dv)*difference))<<"\t"<<X(j)<<endl;
+                        ++index1;
+                    }
+                    if((j>=bso1)&(j<bso1+bso2)){
+                        upda3<<pow(10,(W(0)+(index2-(RV1maxi+orbele[4])/dv)*difference))<<"\t"<<X(j)<<endl;
+                        ++index2;
+                    }
+                    if(j>=bso1+bso2){
+                        upda5<<pow(10,(W(0)+index3*difference))<<"\t"<<X(j)<<endl;
+                        ++index3;
+                    }
+                }
+            }
+
+            index1=0;
+            index2=0;
+            index3=0;
+
+            for(int i=0; i<res.size(); i++){
+                    upda4<<pow(10,W(i))<<" "<<(res(i)-C(i))<<endl;
+            }
+
+        }
+
         if(ui->checkBox_10->isChecked()){
             MainWindow::on_pushButton_6_clicked();
+        }
+
+        if(ui->checkBox_19->isChecked()){
+
+            QString qEval = QString::number(eval);
+                QString sav1="Sol_"+qEval;
+                QString save1=qPath+"/"+sav1+".png";
+                ui->customPlot->savePng(save1);
+
+                QString sav2="Diff_"+qEval;
+                QString save2=qPath+"/"+sav2+".png";
+                ui->customPlot_3->savePng(save2);
         }
 
 
@@ -5734,7 +5881,7 @@ void MainWindow::ErrorEstimation()
 {
 
     int epara;
-    double errorA, errorB, bestr, paraA, paraB;
+    double bestr;
     string zeile, one;
 
     QString qOptval = ui->lineEdit_16->text();
@@ -7097,7 +7244,6 @@ void MainWindow::findroot(){
 
     int rn=1, rPh, rPl, rPsh, rzaehler=40, reval=0;
     double ryh, rysh, ryl, rym, ryi, rys, ryt;
-    double rsigma = 1e-5;
     double rstep=0.1;
     double rgamma=2.0;	//expansion coeff.
     double ralpha =1.0;	//reflection coeff.
@@ -7108,173 +7254,177 @@ void MainWindow::findroot(){
         //initial points
         rPm[0][0]=2*M_PI*(RVt-RVT0)/RVP-2*RVe;
         for (int i=0; i<rn+1; i++){
-        for (int j=0; j<rn; j++){
-        if(i>0 & i==j+1){
-        re[i][j]=1;
-        }
-        else{
-        re[i][j]=0;
-        }
-        if(i==0){
-
-        rXX[j]=rPm[i][j];
-        }
-        if(i!=0){
-        rPm[i][j]=rPm[0][j]+rstep*re[i][j];
-        rXX[j]=rPm[i][j];
-        }
-        }
-        ry[i]=Ofunction(rXX, RVt, RVT0, RVP, RVe);
-        reval++;
+            for (int j=0; j<rn; j++){
+                if((i>0) & (i==j+1)){
+                    re[i][j]=1;
+                }
+                else{
+                    re[i][j]=0;
+                }
+                if(i==0){
+                    rXX[j]=rPm[i][j];
+                }
+                if(i!=0){
+                    rPm[i][j]=rPm[0][j]+rstep*re[i][j];
+                    rXX[j]=rPm[i][j];
+                }
+            }
+            ry[i]=Ofunction(rXX, RVt, RVT0, RVP, RVe);
+            reval++;
         }
 
         //start main loop
         for (int tc=0; tc<rzaehler; tc++){
 
         //initialize next step
-        rym=0;
-        rys=0;
-        for (int i=0; i<rn; i++){
-        rZ[i]=0;
-        }
+            rym=0;
+            rys=0;
+            for (int i=0; i<rn; i++){
+                rZ[i]=0;
+            }
 
         //looking for highest value
-        ryh=ry[0];
-        for (int j=0; j<rn+1; j++){
-        if(ry[j]>=ryh){
-        ryh = ry[j];
-        rPh = j;
-        }}
+            ryh=ry[0];
+            for (int j=0; j<rn+1; j++){
+                if(ry[j]>=ryh){
+                    ryh = ry[j];
+                    rPh = j;
+                }
+            }
 
         //looking for smallest value
-        ryl=ryh;
-        for (int j=0; j<rn+1; j++){
-        if(ry[j]<ryl){
-        ryl=ry[j];
-        rPl = j;
-        }}
+            ryl=ryh;
+            for (int j=0; j<rn+1; j++){
+                if(ry[j]<ryl){
+                    ryl=ry[j];
+                    rPl = j;
+                }
+            }
 
         // second highest value
-        rysh=ryl;
-
-        ryh=ry[rPh];
-        ryl=ry[rPl];
-        rysh=ry[rPsh];
+            rysh=ryl;
+            ryh=ry[rPh];
+            ryl=ry[rPl];
+            rysh=ry[rPsh];
 
         //computing mean and sigma
-        for (int i=0; i<rn+1; i++){
-        rym+=ry[i]/(rn+1);
-        }
-        for (int i=0; i<rn+1; i++){
-        rys+=sqrt(pow((ry[i]-rym),2));
-        }
-        rys=rys/(rn);
+            for (int i=0; i<rn+1; i++){
+                rym+=ry[i]/(rn+1);
+            }
+            for (int i=0; i<rn+1; i++){
+                rys+=sqrt(pow((ry[i]-rym),2));
+            }
+            rys=rys/(rn);
 
         //compute centroid
-        for (int j=0; j<rn; j++){
-        for (int i=0; i<rn+1; i++){
-        if (i!=rPh){
-        rZ[j]+=rPm[i][j]/rn;
-        }}}
+            for (int j=0; j<rn; j++){
+                for (int i=0; i<rn+1; i++){
+                    if (i!=rPh){
+                        rZ[j]+=rPm[i][j]/rn;
+                    }
+                }
+            }
 
         //reflect highest value at centroid
-        for (int i=0; i<rn; i++){
-        rCX[i]=rZ[i]+ralpha*(rZ[i]-rPm[rPh][i]);
-        }
-        ryi=Ofunction(rCX, RVt, RVT0, RVP, RVe);
-        reval++;
+            for (int i=0; i<rn; i++){
+                rCX[i]=rZ[i]+ralpha*(rZ[i]-rPm[rPh][i]);
+            }
+            ryi=Ofunction(rCX, RVt, RVT0, RVP, RVe);
+            reval++;
 
-        if(ryi<ryl){
-        for (int i=0; i<rn; i++){
-        rEm[i]=rZ[i]+rgamma*(rCX[i]-rZ[i]);
-        }
-        ryt=Ofunction(rEm, RVt, RVT0, RVP, RVe);
-        reval++;
-        if(ryt<ryl){
-        for (int i=0; i<rn; i++){
-        rPm[rPh][i]=rEm[i];
-        }
-        ry[rPh]=ryt;//Ofunction(E);
-        //eval++;
-        }
-        if (ryt>=ryl){
-        for (int i=0; i<rn; i++){
-        rPm[rPh][i]=rCX[i];
-        }
-        reval++;
-        ry[rPh]=Ofunction(rCX, RVt, RVT0, RVP, RVe);
-        }}
+            if(ryi<ryl){
+                for (int i=0; i<rn; i++){
+                    rEm[i]=rZ[i]+rgamma*(rCX[i]-rZ[i]);
+                }
+                ryt=Ofunction(rEm, RVt, RVT0, RVP, RVe);
+                reval++;
+                if(ryt<ryl){
+                    for (int i=0; i<rn; i++){
+                        rPm[rPh][i]=rEm[i];
+                    }
+                    ry[rPh]=ryt;
+                }
+                if (ryt>=ryl){
+                    for (int i=0; i<rn; i++){
+                        rPm[rPh][i]=rCX[i];
+                    }
+                    reval++;
+                    ry[rPh]=Ofunction(rCX, RVt, RVT0, RVP, RVe);
+                }
+            }
 
-        if(ryi>=ryl){
-        if(ryi<=rysh){
-        for(int i=0; i<rn; i++){
-        rPm[rPh][i]=rCX[i];
-        }
-        reval++;
-        ry[rPh]=Ofunction(rCX, RVt, RVT0, RVP, RVe);
-        }
-        if(ryi>rysh){
-        if(ryi<=ryh){
-        for(int i=0; i<rn; i++){
-        rPm[rPh][i]=rCX[i];
-        }
-        reval++;
-        ry[rPh]=Ofunction(rCX, RVt, RVT0, RVP, RVe);
-        ryh=ry[rPh];
-        }
-        for(int i=0; i<rn; i++){
-        rS[i]=rZ[i]+rbeta*(rPm[rPh][i]-rZ[i]);
-        }
-        ryt=Ofunction(rS, RVt, RVT0, RVP, RVe);
-        reval++;
-        if(ryt>ryh){
-        for (int j=0; j<rn+1; j++){
-        for (int i=0; i<rn; i++){
-        rPm[j][i]=rPm[rPl][i]+rbtot*(rPm[j][i]-rPm[rPl][i]); //total contraction
-        rXX[i]=rPm[j][i];
-        }
-        ry[j]=Ofunction(rXX, RVt, RVT0, RVP, RVe);
-        reval++;
-        }}
+            if(ryi>=ryl){
+                if(ryi<=rysh){
+                    for(int i=0; i<rn; i++){
+                        rPm[rPh][i]=rCX[i];
+                    }
+                    reval++;
+                    ry[rPh]=Ofunction(rCX, RVt, RVT0, RVP, RVe);
+                }
+                if(ryi>rysh){
+                    if(ryi<=ryh){
+                        for(int i=0; i<rn; i++){
+                            rPm[rPh][i]=rCX[i];
+                        }
+                        reval++;
+                        ry[rPh]=Ofunction(rCX, RVt, RVT0, RVP, RVe);
+                        ryh=ry[rPh];
+                    }
+                    for(int i=0; i<rn; i++){
+                        rS[i]=rZ[i]+rbeta*(rPm[rPh][i]-rZ[i]);
+                    }
+                    ryt=Ofunction(rS, RVt, RVT0, RVP, RVe);
+                    reval++;
+                    if(ryt>ryh){
+                        for (int j=0; j<rn+1; j++){
+                            for (int i=0; i<rn; i++){
+                                rPm[j][i]=rPm[rPl][i]+rbtot*(rPm[j][i]-rPm[rPl][i]); //total contraction
+                                rXX[i]=rPm[j][i];
+                            }
+                            ry[j]=Ofunction(rXX, RVt, RVT0, RVP, RVe);
+                            reval++;
+                        }
+                    }
 
-        if(ryt<=ryh){
-        for(int i=0; i<rn; i++){
-        rPm[rPh][i]=rS[i];
-        }
-        reval++;
-        ry[rPh]=Ofunction(rS, RVt, RVT0, RVP, RVe);
-        }}
-
-        }
-
+                    if(ryt<=ryh){
+                        for(int i=0; i<rn; i++){
+                            rPm[rPh][i]=rS[i];
+                        }
+                        reval++;
+                        ry[rPh]=Ofunction(rS, RVt, RVT0, RVP, RVe);
+                    }
+                }
+            }
         }//end main loop
 
         //looking for highest value
         ryh=ry[0];
         for (int j=0; j<rn+1; j++){
-        if(ry[j]>=ryh){
-        ryh = ry[j];
-        rPh = j;
-        }}
+            if(ry[j]>=ryh){
+                ryh = ry[j];
+                rPh = j;
+            }
+        }
 
         //looking for smallest value
         ryl=ryh;
         for (int j=0; j<rn+1; j++){
-        if(ry[j]<ryl){
-        ryl=ry[j];
-        rPl = j;
-        }}
+            if(ry[j]<ryl){
+                ryl=ry[j];
+                rPl = j;
+            }
+        }
 
         //looking for second highest value
         rysh=ryl;
         for (int j=0; j<rn+1; j++){
-        if(ry[j]>rysh & ry[j]<ryh){
-        rysh=ry[j];
-        rPsh=j;
-        }}
+            if(ry[j]>rysh & ry[j]<ryh){
+                rysh=ry[j];
+                rPsh=j;
+            }
+        }
 
         RVE=rPm[rPl][0];
-
 }
 
 //*************************
