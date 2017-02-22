@@ -110,9 +110,6 @@ public:
     QPushButton *pushButton_11;
     QPushButton *pushButton_12;
     QFrame *line_5;
-    QHBoxLayout *horizontalLayout_10;
-    QLabel *label_13;
-    QLineEdit *lineEdit_3;
     QSpacerItem *verticalSpacer;
     QHBoxLayout *horizontalLayout_2;
     QSpacerItem *horizontalSpacer;
@@ -149,6 +146,9 @@ public:
     QPushButton *pushButton_10;
     QFrame *line_7;
     QLabel *label_22;
+    QHBoxLayout *horizontalLayout_33;
+    QLabel *label_30;
+    QLineEdit *lineEdit_3;
     QHBoxLayout *horizontalLayout_8;
     QPushButton *pushButton_5;
     QLineEdit *lineEdit_2;
@@ -163,7 +163,7 @@ public:
     {
         if (Edit->objectName().isEmpty())
             Edit->setObjectName(QStringLiteral("Edit"));
-        Edit->resize(1204, 711);
+        Edit->resize(1204, 714);
         gridLayout = new QGridLayout(Edit);
         gridLayout->setObjectName(QStringLiteral("gridLayout"));
         scrollArea = new QScrollArea(Edit);
@@ -171,7 +171,7 @@ public:
         scrollArea->setWidgetResizable(true);
         scrollAreaWidgetContents = new QWidget();
         scrollAreaWidgetContents->setObjectName(QStringLiteral("scrollAreaWidgetContents"));
-        scrollAreaWidgetContents->setGeometry(QRect(0, 0, 1174, 725));
+        scrollAreaWidgetContents->setGeometry(QRect(0, 0, 1184, 694));
         verticalLayout_6 = new QVBoxLayout(scrollAreaWidgetContents);
         verticalLayout_6->setObjectName(QStringLiteral("verticalLayout_6"));
         horizontalLayout = new QHBoxLayout();
@@ -587,23 +587,6 @@ public:
 
         verticalLayout_2->addWidget(line_5);
 
-        horizontalLayout_10 = new QHBoxLayout();
-        horizontalLayout_10->setObjectName(QStringLiteral("horizontalLayout_10"));
-        label_13 = new QLabel(scrollAreaWidgetContents);
-        label_13->setObjectName(QStringLiteral("label_13"));
-
-        horizontalLayout_10->addWidget(label_13);
-
-        lineEdit_3 = new QLineEdit(scrollAreaWidgetContents);
-        lineEdit_3->setObjectName(QStringLiteral("lineEdit_3"));
-        sizePolicy.setHeightForWidth(lineEdit_3->sizePolicy().hasHeightForWidth());
-        lineEdit_3->setSizePolicy(sizePolicy);
-
-        horizontalLayout_10->addWidget(lineEdit_3);
-
-
-        verticalLayout_2->addLayout(horizontalLayout_10);
-
         verticalSpacer = new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding);
 
         verticalLayout_2->addItem(verticalSpacer);
@@ -820,6 +803,23 @@ public:
 
         verticalLayout_7->addWidget(label_22);
 
+        horizontalLayout_33 = new QHBoxLayout();
+        horizontalLayout_33->setObjectName(QStringLiteral("horizontalLayout_33"));
+        label_30 = new QLabel(scrollAreaWidgetContents);
+        label_30->setObjectName(QStringLiteral("label_30"));
+
+        horizontalLayout_33->addWidget(label_30);
+
+        lineEdit_3 = new QLineEdit(scrollAreaWidgetContents);
+        lineEdit_3->setObjectName(QStringLiteral("lineEdit_3"));
+        sizePolicy.setHeightForWidth(lineEdit_3->sizePolicy().hasHeightForWidth());
+        lineEdit_3->setSizePolicy(sizePolicy);
+
+        horizontalLayout_33->addWidget(lineEdit_3);
+
+
+        verticalLayout_7->addLayout(horizontalLayout_33);
+
         horizontalLayout_8 = new QHBoxLayout();
         horizontalLayout_8->setObjectName(QStringLiteral("horizontalLayout_8"));
         pushButton_5 = new QPushButton(scrollAreaWidgetContents);
@@ -915,7 +915,6 @@ public:
         label_29->setText(QApplication::translate("Edit", "Longitude Peri. Passage:", 0));
         pushButton_11->setText(QApplication::translate("Edit", "Apply", 0));
         pushButton_12->setText(QApplication::translate("Edit", "Reset", 0));
-        label_13->setText(QApplication::translate("Edit", "Work Path:", 0));
         pushButton->setText(QApplication::translate("Edit", "Close", 0));
         label_14->setText(QApplication::translate("Edit", "Initial Orbit", 0));
         label_15->setText(QApplication::translate("Edit", "Period P:", 0));
@@ -929,6 +928,7 @@ public:
         pushButton_9->setText(QApplication::translate("Edit", "Reset", 0));
         pushButton_10->setText(QApplication::translate("Edit", "Load", 0));
         label_22->setText(QApplication::translate("Edit", "Save/Load Settings", 0));
+        label_30->setText(QApplication::translate("Edit", "Work Path:", 0));
         pushButton_5->setText(QApplication::translate("Edit", "Load", 0));
         label_11->setText(QApplication::translate("Edit", ".scl", 0));
         pushButton_4->setText(QApplication::translate("Edit", "Save", 0));

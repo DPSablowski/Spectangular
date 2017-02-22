@@ -103,7 +103,7 @@ Edit::Edit(QWidget *parent) :
 
     }
 
-    ui->lineEdit_3->setText("/home/daniels/work1/Observations/Capella/Lithium");
+    ui->lineEdit_3->setText("/home/");
     qEPath=ui->lineEdit_3->text();
     ePath = qEPath.toUtf8().constData();
 
@@ -151,8 +151,14 @@ void Edit::on_lineEdit_3_textChanged()
 //***************************************************
 void Edit::on_pushButton_2_clicked()
 {
-    ofstream edit("edit.dat");
+    qEPath=ui->lineEdit_3->text();
+    ePath = qEPath.toUtf8().constData();
 
+    string sedit = "edit.dat";
+    std::ostringstream dat1NameStream(sedit);
+    dat1NameStream<<ePath<<"/"<<sedit;
+    std::string dat1Name = dat1NameStream.str();
+    ofstream edit(dat1Name.c_str());
 
     obser=ui->spinBox->value();
 
@@ -177,7 +183,14 @@ void Edit::on_pushButton_2_clicked()
 //************************************************
 void Edit::on_pushButton_3_clicked()
 {
-    remove("edit.dat");
+    qEPath=ui->lineEdit_3->text();
+    ePath = qEPath.toUtf8().constData();
+
+    string sedit = "edit.dat";
+    std::ostringstream dat1NameStream(sedit);
+    dat1NameStream<<ePath<<"/"<<sedit;
+    std::string dat1Name = dat1NameStream.str();
+    remove(dat1Name.c_str());
 }
 
 //************************************************
@@ -185,7 +198,14 @@ void Edit::on_pushButton_3_clicked()
 //************************************************
 void Edit::on_pushButton_6_clicked()
 {
-    ofstream opt("optcoef.dat");
+    qEPath=ui->lineEdit_3->text();
+    ePath = qEPath.toUtf8().constData();
+
+    string sedit = "optcoef.dat";
+    std::ostringstream dat1NameStream(sedit);
+    dat1NameStream<<ePath<<"/"<<sedit;
+    std::string dat1Name = dat1NameStream.str();
+    ofstream opt(dat1Name.c_str());
 
     opt<<ui->doubleSpinBox->value()<<endl;
     opt<<ui->doubleSpinBox_2->value()<<endl;
@@ -200,7 +220,14 @@ void Edit::on_pushButton_6_clicked()
 //*********************************************
 void Edit::on_pushButton_7_clicked()
 {
-    remove("optcoef.dat");
+    qEPath=ui->lineEdit_3->text();
+    ePath = qEPath.toUtf8().constData();
+
+    string sedit = "optcoef.dat";
+    std::ostringstream dat1NameStream(sedit);
+    dat1NameStream<<ePath<<"/"<<sedit;
+    std::string dat1Name = dat1NameStream.str();
+    remove(dat1Name.c_str());
 }
 
 //*********************************************
@@ -208,7 +235,14 @@ void Edit::on_pushButton_7_clicked()
 //*********************************************
 void Edit::on_pushButton_8_clicked()
 {
-    ofstream orb("orbitelements.dat");
+    qEPath=ui->lineEdit_3->text();
+    ePath = qEPath.toUtf8().constData();
+
+    string sedit = "orbitelements.dat";
+    std::ostringstream dat1NameStream(sedit);
+    dat1NameStream<<ePath<<"/"<<sedit;
+    std::string dat1Name = dat1NameStream.str();
+    ofstream orb(dat1Name.c_str());
 
     orb<<setprecision(14)<<ui->doubleSpinBox_6->value()<<endl;
     orb<<setprecision(14)<<ui->doubleSpinBox_7->value()<<endl;
@@ -226,7 +260,14 @@ void Edit::on_pushButton_8_clicked()
 //********************************************
 void Edit::on_pushButton_9_clicked()
 {
-    remove("orbitelements.dat");
+    qEPath=ui->lineEdit_3->text();
+    ePath = qEPath.toUtf8().constData();
+
+    string sedit = "orbitelements.dat";
+    std::ostringstream dat1NameStream(sedit);
+    dat1NameStream<<ePath<<"/"<<sedit;
+    std::string dat1Name = dat1NameStream.str();
+    remove(dat1Name.c_str());
 }
 
 //********************************************
@@ -249,6 +290,9 @@ void Edit::on_pushButton_10_clicked(){
 //Save
 void Edit::on_pushButton_4_clicked()
 {
+    qEPath=ui->lineEdit_3->text();
+    ePath = qEPath.toUtf8().constData();
+
     QFile SCL(qEPath+"/"+ui->lineEdit->text()+".scl");
     QString qSCL = ui->lineEdit->text();
     string scl = qSCL.toUtf8().constData();
@@ -354,7 +398,14 @@ void Edit::on_pushButton_5_clicked()
 // apply initial steps size
 void Edit::on_pushButton_11_clicked()
 {
-    ofstream init("initialstep.dat");
+    qEPath=ui->lineEdit_3->text();
+    ePath = qEPath.toUtf8().constData();
+
+    string sedit = "initialstep.dat";
+    std::ostringstream dat1NameStream(sedit);
+    dat1NameStream<<ePath<<"/"<<sedit;
+    std::string dat1Name = dat1NameStream.str();
+    ofstream init(dat1Name.c_str());
 
     init<<setprecision(10)<<ui->doubleSpinBox_5->value()<<endl;
     init<<setprecision(10)<<ui->doubleSpinBox_13->value()<<endl;
@@ -369,5 +420,12 @@ void Edit::on_pushButton_11_clicked()
 // remove initial step size
 void Edit::on_pushButton_12_clicked()
 {
-    remove("initialstep.dat");
+    qEPath=ui->lineEdit_3->text();
+    ePath = qEPath.toUtf8().constData();
+
+    string sedit = "initialstep.dat";
+    std::ostringstream dat1NameStream(sedit);
+    dat1NameStream<<ePath<<"/"<<sedit;
+    std::string dat1Name = dat1NameStream.str();
+    remove(dat1Name.c_str());
 }

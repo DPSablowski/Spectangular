@@ -120,6 +120,12 @@ public:
     QCheckBox *checkBox_6;
     QPushButton *pushButton_3;
     QSpacerItem *horizontalSpacer_11;
+    QHBoxLayout *horizontalLayout_9;
+    QPushButton *pushButton_12;
+    QCheckBox *checkBox_20;
+    QCheckBox *checkBox_21;
+    QLineEdit *lineEdit_27;
+    QSpacerItem *horizontalSpacer_10;
     QSpacerItem *verticalSpacer_2;
     QVBoxLayout *verticalLayout_3;
     QVBoxLayout *verticalLayout;
@@ -355,7 +361,7 @@ public:
         scrollArea->setWidgetResizable(true);
         scrollAreaWidgetContents = new QWidget();
         scrollAreaWidgetContents->setObjectName(QStringLiteral("scrollAreaWidgetContents"));
-        scrollAreaWidgetContents->setGeometry(QRect(0, 0, 1795, 1016));
+        scrollAreaWidgetContents->setGeometry(QRect(0, -27, 1782, 1043));
         gridLayout_2 = new QGridLayout(scrollAreaWidgetContents);
         gridLayout_2->setSpacing(6);
         gridLayout_2->setContentsMargins(11, 11, 11, 11);
@@ -1243,6 +1249,42 @@ public:
 
 
         verticalLayout_4->addLayout(horizontalLayout_11);
+
+        horizontalLayout_9 = new QHBoxLayout();
+        horizontalLayout_9->setSpacing(6);
+        horizontalLayout_9->setObjectName(QStringLiteral("horizontalLayout_9"));
+        pushButton_12 = new QPushButton(scrollAreaWidgetContents);
+        pushButton_12->setObjectName(QStringLiteral("pushButton_12"));
+
+        horizontalLayout_9->addWidget(pushButton_12);
+
+        checkBox_20 = new QCheckBox(scrollAreaWidgetContents);
+        checkBox_20->setObjectName(QStringLiteral("checkBox_20"));
+        sizePolicy1.setHeightForWidth(checkBox_20->sizePolicy().hasHeightForWidth());
+        checkBox_20->setSizePolicy(sizePolicy1);
+
+        horizontalLayout_9->addWidget(checkBox_20);
+
+        checkBox_21 = new QCheckBox(scrollAreaWidgetContents);
+        checkBox_21->setObjectName(QStringLiteral("checkBox_21"));
+        sizePolicy1.setHeightForWidth(checkBox_21->sizePolicy().hasHeightForWidth());
+        checkBox_21->setSizePolicy(sizePolicy1);
+
+        horizontalLayout_9->addWidget(checkBox_21);
+
+        lineEdit_27 = new QLineEdit(scrollAreaWidgetContents);
+        lineEdit_27->setObjectName(QStringLiteral("lineEdit_27"));
+        sizePolicy1.setHeightForWidth(lineEdit_27->sizePolicy().hasHeightForWidth());
+        lineEdit_27->setSizePolicy(sizePolicy1);
+
+        horizontalLayout_9->addWidget(lineEdit_27);
+
+        horizontalSpacer_10 = new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
+
+        horizontalLayout_9->addItem(horizontalSpacer_10);
+
+
+        verticalLayout_4->addLayout(horizontalLayout_9);
 
         verticalSpacer_2 = new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding);
 
@@ -2666,6 +2708,9 @@ public:
         checkBox_5->setText(QApplication::translate("MainWindow", "standard", 0));
         checkBox_6->setText(QApplication::translate("MainWindow", "divide-and-conquer", 0));
         pushButton_3->setText(QApplication::translate("MainWindow", "SVD", 0));
+        pushButton_12->setText(QApplication::translate("MainWindow", "Subtract", 0));
+        checkBox_20->setText(QApplication::translate("MainWindow", "A", 0));
+        checkBox_21->setText(QApplication::translate("MainWindow", "B", 0));
         label_5->setText(QApplication::translate("MainWindow", "max. RV of component 1", 0));
         label_6->setText(QApplication::translate("MainWindow", "max. RV of component 2", 0));
         plainTextEdit->setPlainText(QString());
