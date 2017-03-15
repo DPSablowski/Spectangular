@@ -15,6 +15,9 @@ public:
     explicit correlation(QWidget *parent = 0);
     ~correlation();
 
+public slots:
+    void seData(QString str, QString str1);
+
 private slots:
     void on_pushButton_2_clicked();
 

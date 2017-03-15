@@ -241,7 +241,6 @@ public:
     QSpacerItem *horizontalSpacer_16;
     QFrame *line_3;
     QMenuBar *menuBar;
-    QMenu *menuFile;
     QMenu *menuTools;
     QMenu *menuHelp;
     QToolBar *mainToolBar;
@@ -1728,6 +1727,8 @@ public:
         palette42.setBrush(QPalette::Disabled, QPalette::Text, brush);
         palette42.setBrush(QPalette::Disabled, QPalette::ButtonText, brush);
         spinBox_7->setPalette(palette42);
+        spinBox_7->setMinimum(1);
+        spinBox_7->setMaximum(9999);
 
         horizontalLayout_16->addWidget(spinBox_7);
 
@@ -1746,7 +1747,7 @@ public:
 
         spinBox_8 = new QSpinBox(scrollAreaWidgetContents);
         spinBox_8->setObjectName(QStringLiteral("spinBox_8"));
-        spinBox_8->setEnabled(false);
+        spinBox_8->setEnabled(true);
         QPalette palette44;
         palette44.setBrush(QPalette::Active, QPalette::Text, brush);
         palette44.setBrush(QPalette::Active, QPalette::ButtonText, brush);
@@ -1755,6 +1756,8 @@ public:
         palette44.setBrush(QPalette::Disabled, QPalette::Text, brush);
         palette44.setBrush(QPalette::Disabled, QPalette::ButtonText, brush);
         spinBox_8->setPalette(palette44);
+        spinBox_8->setMinimum(1);
+        spinBox_8->setMaximum(9999);
 
         horizontalLayout_16->addWidget(spinBox_8);
 
@@ -2565,8 +2568,6 @@ public:
         menuBar = new QMenuBar(MainWindow);
         menuBar->setObjectName(QStringLiteral("menuBar"));
         menuBar->setGeometry(QRect(0, 0, 1815, 27));
-        menuFile = new QMenu(menuBar);
-        menuFile->setObjectName(QStringLiteral("menuFile"));
         menuTools = new QMenu(menuBar);
         menuTools->setObjectName(QStringLiteral("menuTools"));
         menuHelp = new QMenu(menuBar);
@@ -2643,7 +2644,6 @@ public:
         QWidget::setTabOrder(lineEdit_4, pushButton);
         QWidget::setTabOrder(pushButton, plainTextEdit);
 
-        menuBar->addAction(menuFile->menuAction());
         menuBar->addAction(menuTools->menuAction());
         menuBar->addAction(menuHelp->menuAction());
         menuTools->addAction(actionSpectrum_Plotter);
@@ -2758,7 +2758,6 @@ public:
         checkBox_33->setText(QApplication::translate("MainWindow", "Compute Residuum from", 0));
         label_47->setText(QApplication::translate("MainWindow", "<html><head/><body><p>to</p></body></html>", 0));
         checkBox_19->setText(QApplication::translate("MainWindow", "Save all Updates", 0));
-        menuFile->setTitle(QApplication::translate("MainWindow", "File", 0));
         menuTools->setTitle(QApplication::translate("MainWindow", "Tools", 0));
         menuHelp->setTitle(QApplication::translate("MainWindow", "Help", 0));
     } // retranslateUi

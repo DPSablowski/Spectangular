@@ -63,23 +63,23 @@ QT_MOC_LITERAL(30, 692, 21), // "on_checkBox_3_clicked"
 QT_MOC_LITERAL(31, 714, 22), // "on_checkBox_14_clicked"
 QT_MOC_LITERAL(32, 737, 22), // "on_checkBox_15_clicked"
 QT_MOC_LITERAL(33, 760, 25), // "on_actionEditor_triggered"
-QT_MOC_LITERAL(34, 786, 25), // "on_spinBox_8_valueChanged"
-QT_MOC_LITERAL(35, 812, 22), // "on_checkBox_16_clicked"
-QT_MOC_LITERAL(36, 835, 11), // "VAmplitudeA"
-QT_MOC_LITERAL(37, 847, 11), // "VAmplitudeB"
-QT_MOC_LITERAL(38, 859, 29), // "on_actionArithmetic_triggered"
-QT_MOC_LITERAL(39, 889, 25), // "on_actionManual_triggered"
-QT_MOC_LITERAL(40, 915, 15), // "ErrorEstimation"
-QT_MOC_LITERAL(41, 931, 23), // "on_pushButton_8_clicked"
-QT_MOC_LITERAL(42, 955, 18), // "ComputeDifferences"
-QT_MOC_LITERAL(43, 974, 12), // "Optimisation"
-QT_MOC_LITERAL(44, 987, 23), // "on_pushButton_4_clicked"
-QT_MOC_LITERAL(45, 1011, 22), // "on_checkBox_34_clicked"
-QT_MOC_LITERAL(46, 1034, 23), // "on_pushButton_9_clicked"
-QT_MOC_LITERAL(47, 1058, 24), // "on_pushButton_10_clicked"
-QT_MOC_LITERAL(48, 1083, 8), // "findroot"
-QT_MOC_LITERAL(49, 1092, 24), // "on_pushButton_11_clicked"
-QT_MOC_LITERAL(50, 1117, 24) // "on_pushButton_12_clicked"
+QT_MOC_LITERAL(34, 786, 22), // "on_checkBox_16_clicked"
+QT_MOC_LITERAL(35, 809, 11), // "VAmplitudeA"
+QT_MOC_LITERAL(36, 821, 11), // "VAmplitudeB"
+QT_MOC_LITERAL(37, 833, 29), // "on_actionArithmetic_triggered"
+QT_MOC_LITERAL(38, 863, 25), // "on_actionManual_triggered"
+QT_MOC_LITERAL(39, 889, 15), // "ErrorEstimation"
+QT_MOC_LITERAL(40, 905, 23), // "on_pushButton_8_clicked"
+QT_MOC_LITERAL(41, 929, 18), // "ComputeDifferences"
+QT_MOC_LITERAL(42, 948, 12), // "Optimisation"
+QT_MOC_LITERAL(43, 961, 23), // "on_pushButton_4_clicked"
+QT_MOC_LITERAL(44, 985, 22), // "on_checkBox_34_clicked"
+QT_MOC_LITERAL(45, 1008, 23), // "on_pushButton_9_clicked"
+QT_MOC_LITERAL(46, 1032, 24), // "on_pushButton_10_clicked"
+QT_MOC_LITERAL(47, 1057, 8), // "findroot"
+QT_MOC_LITERAL(48, 1066, 24), // "on_pushButton_11_clicked"
+QT_MOC_LITERAL(49, 1091, 24), // "on_pushButton_12_clicked"
+QT_MOC_LITERAL(50, 1116, 25) // "on_spinBox_8_valueChanged"
 
     },
     "MainWindow\0on_checkBox_clicked\0\0"
@@ -105,7 +105,6 @@ QT_MOC_LITERAL(50, 1117, 24) // "on_pushButton_12_clicked"
     "on_checkBox_4_clicked\0on_checkBox_3_clicked\0"
     "on_checkBox_14_clicked\0on_checkBox_15_clicked\0"
     "on_actionEditor_triggered\0"
-    "on_spinBox_8_valueChanged\0"
     "on_checkBox_16_clicked\0VAmplitudeA\0"
     "VAmplitudeB\0on_actionArithmetic_triggered\0"
     "on_actionManual_triggered\0ErrorEstimation\0"
@@ -114,7 +113,8 @@ QT_MOC_LITERAL(50, 1117, 24) // "on_pushButton_12_clicked"
     "on_checkBox_34_clicked\0on_pushButton_9_clicked\0"
     "on_pushButton_10_clicked\0findroot\0"
     "on_pushButton_11_clicked\0"
-    "on_pushButton_12_clicked"
+    "on_pushButton_12_clicked\0"
+    "on_spinBox_8_valueChanged"
 };
 #undef QT_MOC_LITERAL
 
@@ -275,23 +275,23 @@ void MainWindow::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, 
         case 29: _t->on_checkBox_14_clicked(); break;
         case 30: _t->on_checkBox_15_clicked(); break;
         case 31: _t->on_actionEditor_triggered(); break;
-        case 32: _t->on_spinBox_8_valueChanged(); break;
-        case 33: _t->on_checkBox_16_clicked(); break;
-        case 34: _t->VAmplitudeA(); break;
-        case 35: _t->VAmplitudeB(); break;
-        case 36: _t->on_actionArithmetic_triggered(); break;
-        case 37: _t->on_actionManual_triggered(); break;
-        case 38: _t->ErrorEstimation(); break;
-        case 39: _t->on_pushButton_8_clicked(); break;
-        case 40: _t->ComputeDifferences(); break;
-        case 41: _t->Optimisation(); break;
-        case 42: _t->on_pushButton_4_clicked(); break;
-        case 43: _t->on_checkBox_34_clicked(); break;
-        case 44: _t->on_pushButton_9_clicked(); break;
-        case 45: _t->on_pushButton_10_clicked(); break;
-        case 46: _t->findroot(); break;
-        case 47: _t->on_pushButton_11_clicked(); break;
-        case 48: _t->on_pushButton_12_clicked(); break;
+        case 32: _t->on_checkBox_16_clicked(); break;
+        case 33: _t->VAmplitudeA(); break;
+        case 34: _t->VAmplitudeB(); break;
+        case 35: _t->on_actionArithmetic_triggered(); break;
+        case 36: _t->on_actionManual_triggered(); break;
+        case 37: _t->ErrorEstimation(); break;
+        case 38: _t->on_pushButton_8_clicked(); break;
+        case 39: _t->ComputeDifferences(); break;
+        case 40: _t->Optimisation(); break;
+        case 41: _t->on_pushButton_4_clicked(); break;
+        case 42: _t->on_checkBox_34_clicked(); break;
+        case 43: _t->on_pushButton_9_clicked(); break;
+        case 44: _t->on_pushButton_10_clicked(); break;
+        case 45: _t->findroot(); break;
+        case 46: _t->on_pushButton_11_clicked(); break;
+        case 47: _t->on_pushButton_12_clicked(); break;
+        case 48: _t->on_spinBox_8_valueChanged(); break;
         default: ;
         }
     }

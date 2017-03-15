@@ -15,6 +15,9 @@ public:
     explicit Arithmetic(QWidget *parent = 0);
     ~Arithmetic();
 
+public slots:
+    void seData(QString str);
+
 private slots:
     void on_pushButton_2_clicked();
 

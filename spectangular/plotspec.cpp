@@ -37,16 +37,11 @@ PlotSpec::PlotSpec(QWidget *parent) :
 
     ui->checkBox_16->setChecked(true);
 
-    connect(ui->customPlot, SIGNAL(mouseMove(QMouseEvent*)), this ,SLOT(showPointToolTip(QMouseEvent*)));
-    connect(ui->customPlot, SIGNAL(mousePress(QMouseEvent*)), this,SLOT(writeCoords(QMouseEvent*)));
+    connect(ui->customPlot, SIGNAL(mouseMove(QMouseEvent*)), this, SLOT(showPointToolTip(QMouseEvent*)));
+    connect(ui->customPlot, SIGNAL(mousePress(QMouseEvent*)), this, SLOT(writeCoords(QMouseEvent*)));
 
-    ui->lineEdit->setText("95_orb_1.txt");
-    ui->lineEdit_7->setText("comp2.txt");
     ui->customPlot->xAxis->setLabel("Wavelength [A]");
     ui->checkBox->setChecked(true);
-    ui->lineEdit_5->setText("/home/daniels/Observations/CTIO/BAT99_95");
-    qSpPath=ui->lineEdit_5->text();
-    spPath = qSpPath.toUtf8().constData();
 
     ui->checkBox_14->setChecked(true);
     ui->doubleSpinBox_19->setValue(1);
@@ -66,6 +61,16 @@ PlotSpec::PlotSpec(QWidget *parent) :
 PlotSpec::~PlotSpec()
 {
     delete ui;
+}
+
+void PlotSpec::seData(QString str, QString str2, QString str3, QString str4)
+{
+    ui->lineEdit_5->setText(str);
+    ui->lineEdit->setText(str2);
+    ui->lineEdit_7->setText(str3);
+    ui->lineEdit_12->setText(str4);
+    qSpPath=ui->lineEdit_5->text();
+    spPath = qSpPath.toUtf8().constData();
 }
 
 //********************************************************

@@ -20,12 +20,6 @@ Arithmetic::Arithmetic(QWidget *parent) :
     ui->setupUi(this);
 
     this->setWindowTitle("Arithmetic");
-
-    ui->lineEdit_4->setText("/home/daniels/Observations/CTIO/BAT99_32");
-    qAPath=ui->lineEdit_4->text();
-    aPath = qAPath.toUtf8().constData();
-
-
 }
 
 Arithmetic::~Arithmetic()
@@ -33,6 +27,12 @@ Arithmetic::~Arithmetic()
     delete ui;
 }
 
+void Arithmetic::seData(QString str)
+{
+    ui->lineEdit_4->setText(str);
+    qAPath=ui->lineEdit_4->text();
+    aPath = qAPath.toUtf8().constData();
+}
 
 // A + B
 void Arithmetic::on_pushButton_2_clicked()

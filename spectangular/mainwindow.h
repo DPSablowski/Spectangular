@@ -84,8 +84,6 @@ private slots:
 
     void on_actionEditor_triggered();
 
-    void on_spinBox_8_valueChanged();
-
     void on_checkBox_16_clicked();
 
     void VAmplitudeA();
@@ -117,6 +115,8 @@ private slots:
     void on_pushButton_11_clicked();
 
     void on_pushButton_12_clicked();
+
+    void on_spinBox_8_valueChanged();
 
 private:
     Ui::MainWindow *ui;

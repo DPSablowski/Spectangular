@@ -15,10 +15,14 @@ public:
     explicit PlotSpec(QWidget *parent = 0);
     ~PlotSpec();
 
-private slots:
+public slots:
+    void seData(QString str, QString str2, QString str3, QString str4);
+
     void on_pushButton_2_clicked();
 
     void on_pushButton_3_clicked();
+
+private slots:
 
     void on_doubleSpinBox_valueChanged();
 

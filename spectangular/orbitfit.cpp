@@ -28,6 +28,9 @@ OrbitFit::~OrbitFit()
 
 void OrbitFit::on_pushButton_2_clicked()
 {
+    qOFPath=ui->lineEdit_2->text();
+    OFPath = qOFPath.toUtf8().constData();
+
     // SB1 data
     if(ui->checkBox->isChecked()){
 

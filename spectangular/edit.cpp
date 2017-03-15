@@ -103,15 +103,19 @@ Edit::Edit(QWidget *parent) :
 
     }
 
-    ui->lineEdit_3->setText("/home/");
-    qEPath=ui->lineEdit_3->text();
-    ePath = qEPath.toUtf8().constData();
-
 }
 
 Edit::~Edit()
 {
     delete ui;
+}
+
+void Edit::seData(QString str, int g)
+{
+    ui->lineEdit_3->setText(str);
+    ui->spinBox->setValue(g);
+    qEPath=ui->lineEdit_3->text();
+    ePath = qEPath.toUtf8().constData();
 }
 
 //**************************************************

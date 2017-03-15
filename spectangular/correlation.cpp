@@ -23,13 +23,8 @@ correlation::correlation(QWidget *parent) :
 
     this->setWindowTitle("Correlation");
 
-    ui->lineEdit->setText("comp1.txt");
     ui->lineEdit_2->setText("tempmA.txt");
     ui->lineEdit_3->setText("result.txt");
-    ui->lineEdit_4->setText("/home/daniels/work1/Disentangling/Template_Method/Log/Qt_LogCC/Data");
-    qPathCor=ui->lineEdit_4->text();
-    pathCor = qPathCor.toUtf8().constData();
-
 }
 
 correlation::~correlation()
@@ -37,6 +32,13 @@ correlation::~correlation()
     delete ui;
 }
 
+void correlation::seData(QString str, QString str2)
+{
+    ui->lineEdit_4->setText(str);
+    ui->lineEdit->setText(str2);
+    qPathCor=ui->lineEdit_4->text();
+    pathCor = qPathCor.toUtf8().constData();
+}
 
 //correlation
 void correlation::on_pushButton_2_clicked()

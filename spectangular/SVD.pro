@@ -19,9 +19,11 @@ LIBS += -lcfitsio
 LIBS += -lCCfits
 LIBS += -lm
 LIBS += -lstdc++
+#LIBS += -lopenblas
 
 QMAKE_CFLAGS_RELEASE    = -O2
 QMAKE_CXXFLAGS += -std=c++11
+
 
 SOURCES += main.cpp\
         mainwindow.cpp \

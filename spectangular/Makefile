@@ -5202,11 +5202,12 @@ orbitfit.o: orbitfit.cpp orbitfit.h \
 		../../../Qt/5.5/gcc_64/include/QtCore/qregularexpression.h \
 		../../../Qt/5.5/gcc_64/include/QtWidgets/QFrame \
 		../../../Qt/5.5/gcc_64/include/QtWidgets/qframe.h \
-		../../../Qt/5.5/gcc_64/include/QtWidgets/QHBoxLayout \
-		../../../Qt/5.5/gcc_64/include/QtWidgets/qboxlayout.h \
+		../../../Qt/5.5/gcc_64/include/QtWidgets/QGridLayout \
+		../../../Qt/5.5/gcc_64/include/QtWidgets/qgridlayout.h \
 		../../../Qt/5.5/gcc_64/include/QtWidgets/qlayout.h \
 		../../../Qt/5.5/gcc_64/include/QtWidgets/qlayoutitem.h \
-		../../../Qt/5.5/gcc_64/include/QtWidgets/qgridlayout.h \
+		../../../Qt/5.5/gcc_64/include/QtWidgets/qboxlayout.h \
+		../../../Qt/5.5/gcc_64/include/QtWidgets/QHBoxLayout \
 		../../../Qt/5.5/gcc_64/include/QtWidgets/QHeaderView \
 		../../../Qt/5.5/gcc_64/include/QtWidgets/qheaderview.h \
 		../../../Qt/5.5/gcc_64/include/QtWidgets/qabstractitemview.h \
@@ -5232,7 +5233,6 @@ orbitfit.o: orbitfit.cpp orbitfit.h \
 		../../../Qt/5.5/gcc_64/include/QtWidgets/QPushButton \
 		../../../Qt/5.5/gcc_64/include/QtWidgets/qpushbutton.h \
 		../../../Qt/5.5/gcc_64/include/QtWidgets/QVBoxLayout \
-		../../../Qt/5.5/gcc_64/include/QtWidgets/QWidget \
 		../../../Qt/5.5/gcc_64/include/QtCore/QFile \
 		../../../Qt/5.5/gcc_64/include/QtWidgets/QMessageBox \
 		../../../Qt/5.5/gcc_64/include/QtWidgets/qmessagebox.h

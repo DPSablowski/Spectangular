@@ -20,6 +20,7 @@
 #include <chrono>
 #include <thread>
 #include <QFileInfo>
+//#include <openblas/cblas.h>
 
 using namespace std;
 using namespace arma;
@@ -28,7 +29,7 @@ using namespace blas;
 using std::chrono::system_clock;
 
 int reinitiate=0, mini, CDI, maxi, num, checker=0, bso1, bso2, logbin, RV1m, RV3m, RV1a, RV3a, Mn, Mm, elements, bidi=0, error=0, zaehler, abortt=0, eval=0;
-int upda, updac;
+int upda, updac, inrein=0;
 unsigned int cores;
 string path, eins, zwei, line;
 QString qPath, qExtension, qWCol, qICol, qInitval, qInitmat, qOptval, qOptmat;
@@ -75,7 +76,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->lineEdit_2->setText("velocities.txt");
     ui->lineEdit_3->setText("spectra2m_");
     ui->lineEdit_18->setText("times.dat");
-    ui->lineEdit_4->setText("/home/daniels/Observations/Capella/Set_10/Ha");
+    ui->lineEdit_4->setText("/home/daniels/Disentangling/Artificial/Pulsation");
     qPath=ui->lineEdit_4->text();
     path = qPath.toUtf8().constData();
 
@@ -282,7 +283,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->checkBox_18->setStyleSheet("QCheckBox{background: transparent; color: black;}");
     ui->checkBox_32->setStyleSheet("QCheckBox{background: transparent; color: black;}");
     ui->checkBox_33->setStyleSheet("QCheckBox{background: transparent; color: black;}");
-    ui->checkBox_35->setStyleSheet("QCheckBox{background: transparent; color: black;}");
+    ui->checkBox_35->setStyleSheet("QCheckBox{background: transparent; color: black;}");    
 
     cores = thread::hardware_concurrency();
     ui->spinBox_7->setValue(cores);
@@ -1069,15 +1070,19 @@ void MainWindow::read_data(){
     else {
         for(int i=0; i<num; i++){
             Mtel[i]=1.0;
-            Mval1[i]=1.0;
-            Mval2[i]=1.0;
+            Mval1[i]=1.0/(1+ui->doubleSpinBox_4->value());
+            Mval2[i]=ui->doubleSpinBox_4->value()/(1+ui->doubleSpinBox_4->value());
         }
+         cout<<"Elements A:\t"<<Mval1[0]<<endl;
+         cout<<"Elements B:\t"<<Mval2[0]<<endl;
+         cout<<"Elements staic:\t"<<Mtel[0]<<endl;
     }
+
 
     // matrix for SB2 system
     if(ui->checkBox_4->isChecked()){
 
-        //constructing initial transformation matrix with tellric lines
+        //constructing initial transformation matrix with telluric lines
         if(ui->checkBox_8->isChecked()){
 
             for (int n=0; n<num*logbin; n++){//num*logbin
@@ -1485,34 +1490,36 @@ void MainWindow::on_pushButton_3_clicked()
         int index1=0;
         int index2=0;
         int index3=0;
+
         for (j=0;j<Mm;j++) {
             s=0.0;
             for (jj=0;jj<Mm;jj++) s += V(j,jj)*tmp(jj);
-            X(j)=s;
-            if(X(j)>10*tsh){
-            if(j<bso1){
-                if(ui->checkBox_4->isChecked()){
-                    X(j)=X(j)+(fluxratio/(fluxratio+1)-0.5);
+                X(j)=s;
+                if(X(j)>10*tsh){
+
+                    if(j<bso1){
+                        //if(ui->checkBox_4->isChecked()){
+                        //    X(j)=X(j)+(fluxratio/(fluxratio+1)-0.5);
+                        //}
+                        file1<<pow(10,(W(0)+(index1+RV1min/dv)*difference))<<"\t"<<X(j)<<endl;
+                        ++index1;
                     }
-                file1<<pow(10,(W(0)+(index1+RV1min/dv)*difference))<<"\t"<<X(j)<<endl;
-                ++index1;
-            }
-            if((j>=bso1) & (j<bso1+bso2)){
-                if(ui->checkBox_4->isChecked()){
-                    X(j)=X(j)+(1.0/(fluxratio+1)-0.5);
+                    if((j>=bso1) & (j<bso1+bso2)){
+                        //if(ui->checkBox_4->isChecked()){
+                        //    X(j)=X(j)+(1.0/(fluxratio+1)-0.5);
+                        //}
+                        file2<<pow(10,(W(0)+(index2+RV3min/dv)*difference))<<"\t"<<X(j)<<endl;
+                        ++index2;
                     }
-                file2<<pow(10,(W(0)+(index2+RV3min/dv)*difference))<<"\t"<<X(j)<<endl;
-                ++index2;
+                    if(j>=bso1+bso2){
+                        tell<<pow(10,(W(0)+index3*difference))<<"\t"<<X(j)<<endl;
+                        ++index3;
+                    }
+                }
             }
-            if(j>=bso1+bso2){
-                tell<<pow(10,(W(0)+index3*difference))<<"\t"<<X(j)<<endl;
-                ++index3;
-            }
-            }
-        }
-        index1=0;
-        index2=0;
-        index3=0;
+            index1=0;
+            index2=0;
+            index3=0;
 
         if(ui->checkBox_7->isChecked()){
             index1=0;
@@ -1555,10 +1562,8 @@ void MainWindow::on_pushButton_3_clicked()
         for(int i=0; i<Mn; i++){
 
             if(res(i)>10*tsh){
-            if((C(i)-res(i))<C(i)/3){
-            file5<<pow(10,W(i))<<" "<<res(i)-C(i)<<endl;
-            residu+=pow((res(i)-C(i)),2);
-            }
+                file5<<pow(10,W(i))<<" "<<res(i)-C(i)<<endl;
+                residu+=pow((res(i)-C(i)),2);
             }
         }
 
@@ -1599,6 +1604,9 @@ void MainWindow::on_pushButton_3_clicked()
 void MainWindow::on_actionSpectrum_Plotter_triggered()
 {
     pSpec =new PlotSpec(this);
+    pSpec->seData(ui->lineEdit_4->text(), ui->lineEdit_5->text(), ui->lineEdit_8->text(), ui->lineEdit_20->text());
+    pSpec->on_pushButton_3_clicked();
+    pSpec->on_pushButton_2_clicked();
     pSpec->show();
 }
 
@@ -1764,6 +1772,7 @@ void MainWindow::on_pushButton_5_clicked()
                 else{
                         residu+=pow((res(i)-C(i)),2);
                 }
+
             }
         }
 
@@ -1774,7 +1783,6 @@ void MainWindow::on_pushButton_5_clicked()
         for(int i =0; i<logbin;i++){
             for(int n = 0; n<num; n++){
                 errmean[i]+=(res(i+n*logbin)-C(i+n*logbin))/num;
-
             }
             file8<<setprecision(14)<<pow(10,W(i))<<"\t"<<errmean[i]<<endl;
             errmean[i]=0;
@@ -1787,9 +1795,9 @@ void MainWindow::on_pushButton_5_clicked()
 
                     file9<<setprecision(14)<<W(j)<<"\t"<<X(j)<<endl;
 
-                    if(ui->checkBox_4->isChecked()){
-                        X(j)=X(j)+(fluxratio/(fluxratio+1)-0.5);
-                     }
+                    //if(ui->checkBox_4->isChecked()){
+                    //    X(j)=X(j)+(fluxratio/(fluxratio+1)-0.5);
+                    //}
 
                     file1<<setprecision(14)<<pow(10,(W(0)+(index1-(RV3maxi+orbele[4])/dv)*difference))<<"\t"<<(X(j))<<endl;
                     ++index1;
@@ -1798,9 +1806,9 @@ void MainWindow::on_pushButton_5_clicked()
 
                     file10<<setprecision(14)<<W(j)<<"\t"<<X(j)<<endl;
 
-                    if(ui->checkBox_4->isChecked()){
-                        X(j)=X(j)+(1.0/(fluxratio+1)-0.5);
-                    }
+                    //if(ui->checkBox_4->isChecked()){
+                    //    X(j)=X(j)+(1.0/(fluxratio+1)-0.5);
+                    //}
                     file2<<setprecision(14)<<pow(10,(W(0)+(index2-(RV1maxi+orbele[4])/dv)*difference))<<"\t"<<(X(j))<<endl;
                     ++index2;
                 }
@@ -1904,6 +1912,7 @@ void MainWindow::on_lineEdit_4_editingFinished()
 void MainWindow::on_actionCorrelation_triggered()
 {
     qCorr =new correlation(this);
+    qCorr->seData(ui->lineEdit_4->text(), ui->lineEdit_5->text());
     qCorr->show();
 }
 
@@ -1972,7 +1981,7 @@ void MainWindow::Optimisation()
 
     if(ui->checkBox_3->isChecked()){
             SB1=1;
-}
+    }
 
     zaehler=ui->spinBox_3->value();
     double yh, ysh, yl, ym, yi, ys, yt;
@@ -2062,8 +2071,8 @@ void MainWindow::Optimisation()
 
         for(int i=0; i<num; i++){
             Mtel[i]=1.0;
-            Mval1[i]=1.0;
-            Mval2[i]=1.0;
+            Mval1[i]=1/(1+ui->doubleSpinBox_4->value());
+            Mval2[i]=ui->doubleSpinBox_4->value()/(1+ui->doubleSpinBox_4->value());
         }
     }
 
@@ -2160,7 +2169,6 @@ void MainWindow::Optimisation()
     int stagnate=0;
 
     LogFile<<"Step: "<<step<<"; dP: "<<dP<<"; de: "<<de<<"; dKA: "<<dKA<<"; dKB: "<<dKB<<"; dGamma: "<<dGamma<<"; dT0: "<<dT0<<"; dOmega: "<<dOmega<<endl;
-
     LogFile<<endl;
 
     if(ui->checkBox->isChecked() or ui->checkBox_2->isChecked()){
@@ -2169,7 +2177,8 @@ void MainWindow::Optimisation()
 
         LogFile<<endl;
 
-        double y[nu+1], P[nu+1][nu], Z[nu], Co[nu], So[nu], Eo[nu], e[nu+1][nu];
+        double y[nu+1], Z[nu], Co[nu], So[nu], Eo[nu];
+        mat P(nu+1,nu), e(nu+1,nu);
 
     //create new initial data
     if(ui->checkBox_9->isChecked()){
@@ -2193,7 +2202,7 @@ void MainWindow::Optimisation()
             QFile QIn(file1Name.c_str());
             QFile QIn2(file2Name.c_str());
 
-            if(QIn.exists() or QIn2.exists()){
+            if(inrein==0 & (QIn.exists() or QIn2.exists())){
                 QMessageBox::StandardButton reply;
                 reply = QMessageBox::question(this, "Warning!", "The file already exists. \n\n Do you want to overwrite it?",
                                           QMessageBox::Yes|QMessageBox::No);
@@ -2213,6 +2222,7 @@ void MainWindow::Optimisation()
         }
         else{
             cout<<"Create new initial data."<<endl;
+            inrein=0;
         }
         
         ofstream init(file1Name.c_str());
@@ -2223,14 +2233,14 @@ void MainWindow::Optimisation()
     for(int i=0; i<nu; i++){
         if(SB1==0){
         if(i<nu/2){
-        P[0][i]=RV1[i];
+        P(0,i)=RV1[i];
         }
         else{
-        P[0][i]=RV3[i-nu/2];
+        P(0,i)=RV3[i-nu/2];
         }
         }
         if(SB1==1){
-            P[0][i]=RV1[i];
+            P(0,i)=RV1[i];
         }
     }
 
@@ -2238,10 +2248,10 @@ void MainWindow::Optimisation()
         for(int j=0; j<nu; j++){
 
             if((i>0)&(i==j+1)){
-                e[i][j]=2*step;
+                e(i,j)=2*step;
             }
             else{
-                e[i][j]=0;
+                e(i,j)=0;
             }
         }
     }
@@ -2249,19 +2259,19 @@ void MainWindow::Optimisation()
     for (int i=0; i<nu+1; i++){
         for (int j=0; j<nu; j++){
 
-            P[i][j]=P[0][j]+dv*e[i][j];
-            init2<<setprecision(14)<<P[i][j]<<endl;
+            P(i,j)=P(0,j)+dv*e(i,j);
+            init2<<setprecision(14)<<P(i,j)<<endl;
             //cout<<P[i][j]<<" ";
             if(SB1==0){
                 if(j<nu/2){
-                    RV1[j]=P[i][j];
+                    RV1[j]=P(i,j);
                 }
                 else{
-                    RV3[j-nu/2]=P[i][j];
+                    RV3[j-nu/2]=P(i,j);
                 }
             }
             if(SB1==1){
-                RV1[j]=P[i][j];
+                RV1[j]=P(i,j);
             }
         }
 
@@ -2280,10 +2290,9 @@ void MainWindow::Optimisation()
         }
         if(y[i]<r1){
             r1=y[i];
-        }
-
-        if(ui->checkBox_10->isChecked()){
-            MainWindow::on_pushButton_6_clicked();
+            if(ui->checkBox_10->isChecked()){
+                MainWindow::on_pushButton_6_clicked();
+            }
         }
 
         cout<<y[i]<<endl;
@@ -2361,8 +2370,8 @@ void MainWindow::Optimisation()
         for (int i=0; i<number_of_lines*nu; i++){
         initiate2 >> one;
         istringstream ist(one);
-        ist >> P[coun][i-coun*nu];
-        cout<<"P["<<coun<<"]["<<i-coun*nu<<"]: "<<P[coun][i-coun*nu]<<" ";
+        ist >> P(coun,i-coun*nu);
+        cout<<"P["<<coun<<"]["<<i-coun*nu<<"]: "<<P(coun,i-coun*nu)<<" ";
         if(i==coun*nu+nu-1){
             cout<<endl;
             ++coun;
@@ -2437,8 +2446,8 @@ void MainWindow::Optimisation()
         for (int i=0; i<number_of_lines*nu; i++){
         initiate2 >> one;
         istringstream ist(one);
-        ist >> P[coun][i-coun*nu];
-        cout<<"P["<<coun<<"]["<<i-coun*nu<<"]: "<<P[coun][i-coun*nu]<<" ";
+        ist >> P(coun,i-coun*nu);
+        cout<<"P["<<coun<<"]["<<i-coun*nu<<"]: "<<P(coun,i-coun*nu)<<" ";
         if(i==coun*nu+nu-1){
             cout<<endl;
             ++coun;
@@ -2550,8 +2559,15 @@ void MainWindow::Optimisation()
                 std::string ReName = ReNameStream.str();
                 ofstream ReVel(ReName.c_str());
 
-                for(int i =0; i<nu/2; i++){
-                    ReVel<<RV1[i]<<" \t"<<RV3[i]<<endl;
+                if(ui->checkBox_3->isChecked()){
+                    for(int i = 0; i<nu;i++){
+                        ReVel<<P(Pl,i)<<endl;
+                    }
+                }
+                if(ui->checkBox_4->isChecked()){
+                    for(int i = 0; i<nu/2;i++){
+                        ReVel<<P(Pl,i)<<"\t"<<P(Pl,i+nu/2)<<endl;
+                    }
                 }
 
                 ui->lineEdit_2->setText("rein_vel.dat");
@@ -2595,7 +2611,7 @@ void MainWindow::Optimisation()
         for (int j=0; j<nu; j++){
             for (int i=0; i<nu+1; i++){
                 if (i!=Ph){
-                    Z[j]+=P[i][j]/nu;
+                    Z[j]+=P(i,j)/nu;
                 }
             }
         }
@@ -2604,7 +2620,7 @@ void MainWindow::Optimisation()
         //reflect highest value at centroid
         cout<<"reflection at centroid..."<<endl;
         for (int i=0; i<nu; i++){
-            Co[i]=Z[i]+alpha*(Z[i]-P[Ph][i]);
+            Co[i]=Z[i]+alpha*(Z[i]-P(Ph,i));
             if(SB1==0){
                 if(i<nu/2){
                     RV1[i]=Co[i];
@@ -2628,20 +2644,38 @@ void MainWindow::Optimisation()
             upda=0;
             LogFile<<endl;
             LogFile<<"New RVs found; Residuum: "<<yi<<endl;
-            for(int i = 0; i<nu/2;i++){
-                LogFile<<RV1[i]<<"\t"<<RV3[i]<<endl;
+            if(ui->checkBox_3->isChecked()){
+                for(int i = 0; i<nu;i++){
+                    LogFile<<RV1[i]<<endl;
+                }
+            }
+            if(ui->checkBox_4->isChecked()){
+                for(int i = 0; i<nu/2;i++){
+                    LogFile<<RV1[i]<<"\t"<<RV3[i]<<endl;
+                }
             }
             LogFile<<endl;
         }
 
         if(abortt==1){
             //output results
-            LogFile<<"Optimisation aborted."<<endl;
+            LogFile<<"Optimisation aborted. Current best RVs:"<<endl;
+            if(ui->checkBox_3->isChecked()){
+                for(int i = 0; i<nu;i++){
+                    LogFile<<P(Pl,i)<<endl;
+                }
+            }
+            if(ui->checkBox_4->isChecked()){
+                for(int i = 0; i<nu/2;i++){
+                    LogFile<<P(Pl,i)<<"\t"<<P(Pl,i+nu/2)<<endl;
+                }
+            }
+            LogFile<<endl;
             for(int i=0; i<nu+1;i++){
                 cout<<y[i]<<endl;
                 opt1<<setprecision(12)<<y[i]<<endl;
                 for(int j=0; j<nu; j++){
-                    opt2<<setprecision(12)<<P[i][j]<<endl;
+                    opt2<<setprecision(12)<<P(i,j)<<endl;
                 }
             }
                 abortt=0;
@@ -2654,7 +2688,7 @@ void MainWindow::Optimisation()
            cout<<"expansion 1 ";
             LogFile<<"yi<yl; ";
             for (int i=0; i<nu; i++){
-                Eo[i]=Z[i]+Gamma*(Z[i]-P[Ph][i]);  //Expansion over worst point
+                Eo[i]=Z[i]+Gamma*(Z[i]-P(Ph,i));  //Expansion over worst point
                 if(SB1==0){
                     if(i<nu/2){
                         RV1[i]=Eo[i];
@@ -2678,20 +2712,38 @@ void MainWindow::Optimisation()
                 upda=0;
                 LogFile<<endl;
                 LogFile<<"New RVs found; Residuum: "<<yt<<endl;
-                for(int i = 0; i<nu/2;i++){
-                    LogFile<<RV1[i]<<"\t"<<RV3[i]<<endl;
+                if(ui->checkBox_3->isChecked()){
+                    for(int i = 0; i<nu;i++){
+                        LogFile<<RV1[i]<<endl;
+                    }
+                }
+                if(ui->checkBox_4->isChecked()){
+                    for(int i = 0; i<nu/2;i++){
+                        LogFile<<RV1[i]<<"\t"<<RV3[i]<<endl;
+                    }
                 }
                 LogFile<<endl;
             }
 
             if(abortt==1){
                 //output results
-                LogFile<<"Optimisation aborted."<<endl;
+                LogFile<<"Optimisation aborted. Current best RVs:"<<endl;
+                if(ui->checkBox_3->isChecked()){
+                    for(int i = 0; i<nu;i++){
+                        LogFile<<P(Pl,i)<<endl;
+                    }
+                }
+                if(ui->checkBox_4->isChecked()){
+                    for(int i = 0; i<nu/2;i++){
+                        LogFile<<P(Pl,i)<<"\t"<<P(Pl,i+nu/2)<<endl;
+                    }
+                }
+                LogFile<<endl;
                 for(int i=0; i<nu+1;i++){
                     cout<<y[i]<<endl;
                     opt1<<setprecision(12)<<y[i]<<endl;
                     for(int j=0; j<nu; j++){
-                        opt2<<setprecision(12)<<P[i][j]<<endl;
+                        opt2<<setprecision(12)<<P(i,j)<<endl;
                     }
                 }
                 abortt=0;
@@ -2701,7 +2753,7 @@ void MainWindow::Optimisation()
             if(yt<yl){
                 cout<<"exp ";
                 for (int i=0; i<nu; i++){
-                    P[Ph][i]=Eo[i];
+                    P(Ph,i)=Eo[i];
                 }
         /*
         eval++;
@@ -2712,12 +2764,23 @@ void MainWindow::Optimisation()
             y[Ph]=yt;//MainWindow::DivideConquer();
             if(abortt==1){
                 //output results
-                LogFile<<"Optimisation aborted."<<endl;
+                LogFile<<"Optimisation aborted. Current best RVs:"<<endl;
+                if(ui->checkBox_3->isChecked()){
+                    for(int i = 0; i<nu;i++){
+                        LogFile<<P(Pl,i)<<endl;
+                    }
+                }
+                if(ui->checkBox_4->isChecked()){
+                    for(int i = 0; i<nu/2;i++){
+                        LogFile<<P(Pl,i)<<"\t"<<P(Pl,i+nu/2)<<endl;
+                    }
+                }
+                LogFile<<endl;
                 for(int i=0; i<nu+1;i++){
                     cout<<y[i]<<endl;
                     opt1<<setprecision(12)<<y[i]<<endl;
                     for(int j=0; j<nu; j++){
-                        opt2<<setprecision(12)<<P[i][j]<<endl;
+                        opt2<<setprecision(12)<<P(i,j)<<endl;
                     }
                 }
                 abortt=0;
@@ -2731,7 +2794,7 @@ void MainWindow::Optimisation()
             cout<<"ref1 ";
             LogFile<<"yt<=yl, reflection; ";
             for (int i=0; i<nu; i++){
-                P[Ph][i]=Co[i];
+                P(Ph,i)=Co[i];
                 if(SB1==0){
                     if(i<nu/2){
                         RV1[i]=Co[i];
@@ -2753,12 +2816,23 @@ void MainWindow::Optimisation()
             y[Ph]=yi;//MainWindow::DivideConquer();
             if(abortt==1){
                 //output results
-                LogFile<<"Optimisation aborted."<<endl;
+                LogFile<<"Optimisation aborted. Current best RVs:"<<endl;
+                if(ui->checkBox_3->isChecked()){
+                    for(int i = 0; i<nu;i++){
+                        LogFile<<P(Pl,i)<<endl;
+                    }
+                }
+                if(ui->checkBox_4->isChecked()){
+                    for(int i = 0; i<nu/2;i++){
+                        LogFile<<P(Pl,i)<<"\t"<<P(Pl,i+nu/2)<<endl;
+                    }
+                }
+                LogFile<<endl;
                 for(int i=0; i<nu+1;i++){
                     cout<<y[i]<<endl;
                     opt1<<setprecision(12)<<y[i]<<endl;
                     for(int j=0; j<nu; j++){
-                        opt2<<setprecision(12)<<P[i][j]<<endl;
+                        opt2<<setprecision(12)<<P(i,j)<<endl;
                     }
                 }
                 abortt=0;
@@ -2777,7 +2851,7 @@ void MainWindow::Optimisation()
             if(yi<=ysh){
                 cout<<"ref2 ";
                 for(int i=0; i<nu; i++){
-                    P[Ph][i]=Co[i];
+                    P(Ph,i)=Co[i];
                     if(SB1==0){
                         if(i<nu/2){
                             RV1[i]=Co[i];
@@ -2799,12 +2873,23 @@ void MainWindow::Optimisation()
             y[Ph]=yi;//MainWindow::DivideConquer();
             if(abortt==1){
                 //output results
-                LogFile<<"Optimisation aborted."<<endl;
+                LogFile<<"Optimisation aborted. Current best RVs:"<<endl;
+                if(ui->checkBox_3->isChecked()){
+                    for(int i = 0; i<nu;i++){
+                        LogFile<<P(Pl,i)<<endl;
+                    }
+                }
+                if(ui->checkBox_4->isChecked()){
+                    for(int i = 0; i<nu/2;i++){
+                        LogFile<<P(Pl,i)<<"\t"<<P(Pl,i+nu/2)<<endl;
+                    }
+                }
+                LogFile<<endl;
                 for(int i=0; i<nu+1;i++){
                     cout<<y[i]<<endl;
                     opt1<<setprecision(12)<<y[i]<<endl;
                     for(int j=0; j<nu; j++){
-                        opt2<<setprecision(12)<<P[i][j]<<endl;
+                        opt2<<setprecision(12)<<P(i,j)<<endl;
                     }
                 }
                 abortt=0;
@@ -2822,7 +2907,7 @@ void MainWindow::Optimisation()
                 cout<<"yi<=yh ref3 ";
                 LogFile<<"yi<=yh, reflection 3; ";
                 for(int i=0; i<nu; i++){
-                    P[Ph][i]=Co[i];
+                    P(Ph,i)=Co[i];
                     if(SB1==0){
                         if(i<nu/2){
                             RV1[i]=Co[i];
@@ -2844,12 +2929,23 @@ void MainWindow::Optimisation()
             y[Ph]=yi;//MainWindow::DivideConquer();
             if(abortt==1){
                 //output results
-                LogFile<<"Optimisation aborted."<<endl;
+                LogFile<<"Optimisation aborted. Current best RVs:"<<endl;
+                if(ui->checkBox_3->isChecked()){
+                    for(int i = 0; i<nu;i++){
+                        LogFile<<P(Pl,i)<<endl;
+                    }
+                }
+                if(ui->checkBox_4->isChecked()){
+                    for(int i = 0; i<nu/2;i++){
+                        LogFile<<P(Pl,i)<<"\t"<<P(Pl,i+nu/2)<<endl;
+                    }
+                }
+                LogFile<<endl;
                 for(int i=0; i<nu+1;i++){
                     cout<<y[i]<<endl;
                     opt1<<setprecision(12)<<y[i]<<endl;
                     for(int j=0; j<nu; j++){
-                        opt2<<setprecision(12)<<P[i][j]<<endl;
+                        opt2<<setprecision(12)<<P(i,j)<<endl;
                     }
                 }
                 abortt=0;
@@ -2861,7 +2957,7 @@ void MainWindow::Optimisation()
         }
 
         for(int i=0; i<nu; i++){
-            So[i]=Z[i]+beta*(P[Ph][i]-Z[i]); //simple contraction
+            So[i]=Z[i]+beta*(P(Ph,i)-Z[i]); //simple contraction
             if(SB1==0){
                 if(i<nu/2){
                     RV1[i]=So[i];
@@ -2885,20 +2981,38 @@ void MainWindow::Optimisation()
             upda=0;
             LogFile<<endl;
             LogFile<<"New RVs found; Residuum: "<<yt<<endl;
-            for(int i = 0; i<nu/2;i++){
-                LogFile<<RV1[i]<<"\t"<<RV3[i]<<endl;
+            if(ui->checkBox_3->isChecked()){
+                for(int i = 0; i<nu;i++){
+                    LogFile<<RV1[i]<<endl;
+                }
+            }
+            if(ui->checkBox_4->isChecked()){
+                for(int i = 0; i<nu/2;i++){
+                    LogFile<<RV1[i]<<"\t"<<RV3[i]<<endl;
+                }
             }
             LogFile<<endl;
         }
 
         if(abortt==1){
             //output results
-            LogFile<<"Optimisation aborted."<<endl;
+            LogFile<<"Optimisation aborted. Current best RVs:"<<endl;
+            if(ui->checkBox_3->isChecked()){
+                for(int i = 0; i<nu;i++){
+                    LogFile<<P(Pl,i)<<endl;
+                }
+            }
+            if(ui->checkBox_4->isChecked()){
+                for(int i = 0; i<nu/2;i++){
+                    LogFile<<P(Pl,i)<<"\t"<<P(Pl,i+nu/2)<<endl;
+                }
+            }
+            LogFile<<endl;
             for(int i=0; i<nu+1;i++){
                 cout<<y[i]<<endl;
                 opt1<<setprecision(12)<<y[i]<<endl;
                     for(int j=0; j<nu; j++){
-                        opt2<<setprecision(12)<<P[i][j]<<endl;
+                        opt2<<setprecision(12)<<P(i,j)<<endl;
                     }
                 }
                 abortt=0;
@@ -2913,17 +3027,17 @@ void MainWindow::Optimisation()
             for (int j=0; j<nu+1; j++){
                 for (int i=0; i<nu; i++){
 
-                    P[j][i]=P[Pl][i]+btot*(P[j][i]-P[Pl][i]); //total contraction
+                    P(j,i)=P(Pl,i)+btot*(P(j,i)-P(Pl,i)); //total contraction
                     if(SB1==0){
                         if(i<nu/2){
-                            RV1[i]=P[j][i];
+                            RV1[i]=P(j,i);
                         }
                         else{
-                            RV3[i-nu/2]=P[j][i];
+                            RV3[i-nu/2]=P(j,i);
                         }
                     }
                     if(SB1==1){
-                        RV1[i]=P[j][i];
+                        RV1[i]=P(j,i);
                     }
                 }
 
@@ -2938,20 +3052,38 @@ void MainWindow::Optimisation()
             upda=0;
             LogFile<<endl;
             LogFile<<"New RVs found; Residuum: "<<yt<<endl;
-            for(int i = 0; i<nu/2;i++){
-                LogFile<<RV1[i]<<"\t"<<RV3[i]<<endl;
+            if(ui->checkBox_3->isChecked()){
+                for(int i = 0; i<nu;i++){
+                    LogFile<<RV1[i]<<endl;
+                }
+            }
+            if(ui->checkBox_4->isChecked()){
+                for(int i = 0; i<nu/2;i++){
+                    LogFile<<RV1[i]<<"\t"<<RV3[i]<<endl;
+                }
             }
             LogFile<<endl;
         }
 
         if(abortt==1){
             //output results
-            LogFile<<"Optimisation aborted."<<endl;
+            LogFile<<"Optimisation aborted. Current best RVs:"<<endl;
+            if(ui->checkBox_3->isChecked()){
+                for(int i = 0; i<nu;i++){
+                    LogFile<<P(Pl,i)<<endl;
+                }
+            }
+            if(ui->checkBox_4->isChecked()){
+                for(int i = 0; i<nu/2;i++){
+                    LogFile<<P(Pl,i)<<"\t"<<P(Pl,i+nu/2)<<endl;
+                }
+            }
+            LogFile<<endl;
             for(int i=0; i<nu+1;i++){
                 cout<<y[i]<<endl;
                 opt1<<setprecision(12)<<y[i]<<endl;
                 for(int j=0; j<nu; j++){
-                    opt2<<setprecision(12)<<P[i][j]<<endl;
+                    opt2<<setprecision(12)<<P(i,j)<<endl;
                 }
             }
             abortt=0;
@@ -2966,7 +3098,7 @@ void MainWindow::Optimisation()
             cout<<"yt<=yh, sco ";
             LogFile<<"yt<=yh, single contraction ";
             for(int i=0; i<nu; i++){
-                P[Ph][i]=So[i];
+                P(Ph,i)=So[i];
                 if(SB1==0){
                     if(i<nu/2){
                         RV1[i]=So[i];
@@ -2988,12 +3120,23 @@ void MainWindow::Optimisation()
         y[Ph]=yt;//MainWindow::DivideConquer();
         if(abortt==1){
             //output results
-            LogFile<<"Optimisation aborted."<<endl;
+            LogFile<<"Optimisation aborted. Current best RVs:"<<endl;
+            if(ui->checkBox_3->isChecked()){
+                for(int i = 0; i<nu;i++){
+                    LogFile<<P(Pl,i)<<endl;
+                }
+            }
+            if(ui->checkBox_4->isChecked()){
+                for(int i = 0; i<nu/2;i++){
+                    LogFile<<P(Pl,i)<<"\t"<<P(Pl,i+nu/2)<<endl;
+                }
+            }
+            LogFile<<endl;
             for(int i=0; i<nu+1;i++){
                 cout<<y[i]<<endl;
                 opt1<<setprecision(12)<<y[i]<<endl;
                     for(int j=0; j<nu; j++){
-                        opt2<<setprecision(12)<<P[i][j]<<endl;
+                        opt2<<setprecision(12)<<P(i,j)<<endl;
                     }
                 }
                 abortt=0;
@@ -3041,21 +3184,28 @@ void MainWindow::Optimisation()
             cout<<y[i]<<endl;
             opt1<<setprecision(12)<<y[i]<<endl;
             for(int j=0; j<nu; j++){
-                opt2<<setprecision(12)<<P[i][j]<<endl;
+                opt2<<setprecision(12)<<P(i,j)<<endl;
             }
         }
 
         LogFile<<ym<<"          "<<ys<<endl;
         LogFile<<" End Optimisation "<<endl;
         LogFile<<" RVs after "<<zaehler<<" Iterations and "<<eval<<" Evaluations of Optimisation: "<<endl;
-        for(int i =0; i<nu/2; i++){
-            LogFile<<P[Pl][i]<<" "<<P[Pl][i+nu/2]<<endl;
+        if(ui->checkBox_3->isChecked()){
+            for(int i = 0; i<nu;i++){
+                LogFile<<P(Pl,i)<<endl;
+            }
+        }
+        if(ui->checkBox_4->isChecked()){
+            for(int i = 0; i<nu/2;i++){
+                LogFile<<P(Pl,i)<<" "<<P(Pl,i+nu/2)<<endl;
+            }
         }
         LogFile.close();
 
         cout<<"RV's after "<<zaehler<<" Iterations and "<<eval<<" Evaluations:"<<endl;
         for(int i=0; i<nu/2;i++){
-            cout<<P[Pl][i]<<" "<<P[Pl][i+nu/2]<<endl;
+            cout<<P(Pl,i)<<" "<<P(Pl,i+nu/2)<<endl;
         }
     }
 
@@ -3115,7 +3265,7 @@ void MainWindow::Optimisation()
                     QFile QIn(file1Name.c_str());
                     QFile QIn2(file2Name.c_str());
 
-                    if(QIn.exists() or QIn2.exists()){
+                    if(inrein==0 & (QIn.exists() or QIn2.exists())){
                         QMessageBox::StandardButton reply;
                         reply = QMessageBox::question(this, "Warning!", "The file already exists. \n\n Do you want to overwrite it?",
                                                     QMessageBox::Yes|QMessageBox::No);
@@ -3140,6 +3290,7 @@ void MainWindow::Optimisation()
                       cout<<"Create new initial data."<<endl;
                       LogFile<<"Create new initial simplex with "<<nu+1<<" points."<<endl;
                       LogFile<<"Elements:"<<endl;
+                      inrein=0;
                   }
 
                   ofstream init(file1Name.c_str());
@@ -3921,7 +4072,11 @@ void MainWindow::Optimisation()
 
                       if(abortt==1){
                           //output results
-                          LogFile<<"Optimisation aborted."<<endl;
+                          LogFile<<"Optimisation aborted. Current best Elements:"<<endl;
+                              for(int i = 0; i<nu;i++){
+                                  LogFile<<P[Pl][i]<<endl;
+                              }
+                          LogFile<<endl;
                           for(int i=0; i<nu+1; i++){
                               cout<<y[i]<<endl;
                               opt1<<setprecision(14)<<y[i]<<endl;
@@ -4030,7 +4185,10 @@ void MainWindow::Optimisation()
 
                           if(abortt==1){
                               //output results
-                              LogFile<<"Optimisation aborted."<<endl;
+                              LogFile<<"Optimisation aborted. Current best Elements:"<<endl;
+                                  for(int i = 0; i<nu;i++){
+                                      LogFile<<P[Pl][i]<<endl;
+                                  }
                               for(int i=0; i<nu+1; i++){
                                   cout<<y[i]<<endl;
                                   opt1<<setprecision(14)<<y[i]<<endl;
@@ -4129,7 +4287,10 @@ void MainWindow::Optimisation()
                               y[Ph]=yi;//MainWindow::DivideConquer();
                               if(abortt==1){
                                   //output results
-                                  LogFile<<"Optimisation aborted."<<endl;
+                                  LogFile<<"Optimisation aborted. Current best Elements:"<<endl;
+                                      for(int i = 0; i<nu;i++){
+                                          LogFile<<P[Pl][i]<<endl;
+                                      }
                                   for(int i=0; i<nu+1; i++){
                                       cout<<y[i]<<endl;
                                       opt1<<setprecision(14)<<y[i]<<endl;
@@ -4170,7 +4331,10 @@ void MainWindow::Optimisation()
                               y[Ph]=yi;//MainWindow::DivideConquer();
                               if(abortt==1){
                                   //output results
-                                  LogFile<<"Optimisation aborted."<<endl;
+                                  LogFile<<"Optimisation aborted. Current best Elements:"<<endl;
+                                      for(int i = 0; i<nu;i++){
+                                          LogFile<<P[Pl][i]<<endl;
+                                      }
                                   for(int i=0; i<nu+1; i++){
                                       cout<<y[i]<<endl;
                                       opt1<<setprecision(14)<<y[i]<<endl;
@@ -4208,7 +4372,10 @@ void MainWindow::Optimisation()
                                   y[Ph]=yi;//MainWindow::DivideConquer();
                                   if(abortt==1){
                                       //output results
-                                      LogFile<<"Optimisation aborted."<<endl;
+                                      LogFile<<"Optimisation aborted. Current best Elements:"<<endl;
+                                          for(int i = 0; i<nu;i++){
+                                              LogFile<<P[Pl][i]<<endl;
+                                          }
                                       for(int i=0; i<nu+1; i++){
                                           cout<<y[i]<<endl;
                                           opt1<<setprecision(14)<<y[i]<<endl;
@@ -4314,7 +4481,10 @@ void MainWindow::Optimisation()
 
                               if(abortt==1){
                                   //output results
-                                  LogFile<<"Optimisation aborted."<<endl;
+                                  LogFile<<"Optimisation aborted. Current best Elements:"<<endl;
+                                      for(int i = 0; i<nu;i++){
+                                          LogFile<<P[Pl][i]<<endl;
+                                      }
                                   for(int i=0; i<nu+1; i++){
                                       cout<<y[i]<<endl;
                                       opt1<<setprecision(14)<<y[i]<<endl;
@@ -4424,7 +4594,10 @@ void MainWindow::Optimisation()
 
                                       if(abortt==1){
                                           //output results
-                                          LogFile<<"Optimisation aborted."<<endl;
+                                          LogFile<<"Optimisation aborted. Current best Elements:"<<endl;
+                                              for(int i = 0; i<nu;i++){
+                                                  LogFile<<P[Pl][i]<<endl;
+                                              }
                                           for(int i=0; i<nu+1; i++){
                                               cout<<y[i]<<endl;
                                               opt1<<setprecision(14)<<y[i]<<endl;
@@ -4520,7 +4693,10 @@ void MainWindow::Optimisation()
                                   y[Ph]=yt;//MainWindow::DivideConquer();
                                   if(abortt==1){
                                       //output results
-                                      LogFile<<"Optimisation aborted."<<endl;
+                                      LogFile<<"Optimisation aborted. Current best Elements:"<<endl;
+                                          for(int i = 0; i<nu;i++){
+                                              LogFile<<P[Pl][i]<<endl;
+                                          }
                                       for(int i=0; i<nu+1; i++){
                                           cout<<y[i]<<endl;
                                           opt1<<setprecision(14)<<y[i]<<endl;
@@ -4586,6 +4762,70 @@ void MainWindow::Optimisation()
                         }
                   }
 
+               for(int i =0; i<nu; i++){
+                  if(add==0){
+                      orbele[i]=P[Pl][i];    // no parameter locked
+                  }
+                  if(add==1){   // one parameter locked
+                      if(Plock==1){
+                          orbele[i+1]=P[Pl][i];
+                      }
+                      if(elock==1){
+                          if(i==0){
+                              orbele[0]=P[Pl][i];
+                          }
+                          if(i>0){
+                              orbele[i+1]=P[Pl][i];
+                          }
+                      }
+                      if(T0lock==1){
+                          if(i==5){
+                              orbele[6]=P[Pl][i];
+                          }
+                          else orbele[i]=P[Pl][i];
+                      }
+                  }
+                  if(add==2){   // two parameters locked
+                      if((Plock==1) & (elock==1)){
+                          orbele[i+2]=P[Pl][i];
+                      }
+                      if((Plock==1) & (T0lock==1)){
+                          if(i==4){
+                              orbele[6]=P[Pl][i];
+                          }
+                          else{
+                              orbele[i+1]=P[Pl][i];
+                          }
+                      }
+                      if((elock==1) & (T0lock==1)){
+                          if(i==0){
+                              orbele[0]=So[i];
+                          }
+                          if(i==1) orbele[2]=P[Pl][i];
+                          if(i==2) orbele[3]=P[Pl][i];
+                          if(i==3) orbele[4]=P[Pl][i];
+                          if(i==4){
+                              orbele[6]=P[Pl][i];
+                          }
+                      }
+                  }
+                  if(add==3){      // three parameters locked
+                      if(i==0){
+                          orbele[2]=P[Pl][i];
+                      }
+                      if(i==1){
+                          orbele[3]=P[Pl][i];
+                      }
+                      if(i==2){
+                          orbele[4]=P[Pl][i];
+                      }
+                      if(i==3){
+                          orbele[6]=P[Pl][i];
+                      }
+
+                  }
+              }
+
                   cout<<endl;
                   cout<<setprecision(12)<<"Simplex Mean: "<<ym<<" Simplex STD: "<<ys<<endl;
                   cout<<endl;
@@ -4597,10 +4837,10 @@ void MainWindow::Optimisation()
                   LogFile<<"Mean: "<<ym<<" and STD "<<ys<<endl;
                   LogFile<<"Period; Eccentricity; Amplitude A; Amplitude B; Systemic V.; T_peri; Omega A;"<<endl;
 
-                for(int i=0; i<7;i++){
-                    cout<<orbele[i]<<" ";
-                    LogFile<<orbele[i]<<" ";
-                }
+                      for(int i = 0; i<nu;i++){
+                          cout<<orbele[i]<<";\t";
+                          LogFile<<orbele[i]<<";\t";
+                      }
 
                 cout<<endl;
                 LogFile<<endl;
@@ -5258,7 +5498,6 @@ double MainWindow::DivideConquer(){
 
                 if(ui->checkBox_33->isChecked()){
                     if(ui->checkBox_14->isChecked()){
-                            // (abs(C(i)-res(i))<C(i)/3)
                         if((W(i)>log10(ui->doubleSpinBox_14->value())) & (W(i)<log10(ui->doubleSpinBox_15->value()))){
                             ++resbins;
                             residu+=pow((res(i)-C(i)),2);
@@ -5274,11 +5513,8 @@ double MainWindow::DivideConquer(){
 
                 else{
             if(ui->checkBox_14->isChecked()){
-
-                //if(abs(C(i)-res(i))<C(i)/3){
                     ++resbins;
                     residu+=pow((res(i)-C(i)),2);
-                //}
             }
 
                 else{
@@ -5307,10 +5543,16 @@ double MainWindow::DivideConquer(){
 
             for(int i=0; i<num; i++){
                 QString index= QString::number(i);
-                QString velocity=QString::number(RV1[i]);
-                QString sum=QString::number(RV3[i]);
-                ui->plainTextEdit->appendPlainText(index+" "+velocity+" "+sum);
+                if(ui->checkBox_3->isChecked()){
+                    QString velocity=QString::number(RV1[i]);
+                    ui->plainTextEdit->appendPlainText(index+" "+velocity);
                 }
+                if(ui->checkBox_4->isChecked()){
+                    QString velocity=QString::number(RV1[i]);
+                    QString sum=QString::number(RV3[i]);
+                    ui->plainTextEdit->appendPlainText(index+" "+velocity+" "+sum);
+                }
+             }
 
             if(ui->checkBox_16->isChecked()){
             cout<<"New Parameters found:"<<endl;
@@ -5401,17 +5643,17 @@ double MainWindow::DivideConquer(){
             for (j=0;j<Mm;j++) {
                  if(abs(X(j))>10*tsh){
                     if(j<bso1){
-                        if(ui->checkBox_4->isChecked()){
-                            X(j)=X(j)+(fluxratio/(fluxratio+1)-0.5);
-                        }
+                        //if(ui->checkBox_4->isChecked()){
+                        //    X(j)=X(j)+(fluxratio/(fluxratio+1)-0.5);
+                        //}
 
                         file1<<pow(10,(W(0)+(index1-(RV3maxi+orbele[4])/dv)*difference))<<"\t"<<X(j)<<endl;
                         ++index1;
                     }
                     if((j>=bso1)&(j<bso1+bso2)){
-                        if(ui->checkBox_4->isChecked()){
-                            X(j)=X(j)+(1.0/(fluxratio+1)-0.5);
-                        }
+                        //if(ui->checkBox_4->isChecked()){
+                        //    X(j)=X(j)+(1.0/(fluxratio+1)-0.5);
+                        //}
                         file2<<pow(10,(W(0)+(index2-(RV1maxi+orbele[4])/dv)*difference))<<"\t"<<X(j)<<endl;
                         ++index2;
                     }
@@ -5430,9 +5672,7 @@ double MainWindow::DivideConquer(){
         index3=0;
 
         for(int i=0; i<res.size(); i++){
-            //if(abs(C(i)-res(i))<C(i)/3){
                 file5<<pow(10,W(i))<<" "<<(res(i)-C(i))<<endl;
-            //}
         }
 
         // Save all Updates
@@ -5758,6 +5998,7 @@ void MainWindow::on_pushButton_6_clicked()
 
      double offset = ui->doubleSpinBox_5->value();
      int index = 0;
+     double sres=0, sres2=0;
 
      a.resize(number_of_lines);
      b.resize(number_of_lines);
@@ -5767,10 +6008,26 @@ void MainWindow::on_pushButton_6_clicked()
         istringstream ist(one);
         ist >> a[i];
         istringstream ist2(two);
+        ist2 >> b[i];
         if((i>0) & (a[i]<a[i-1])){
+            cout<<sres<<"\t"<<sres2<<endl;
+            sres = 0;
+            sres2 = 0;
             ++index;
         }
-        ist2 >> b[i];
+        if(ui->checkBox_13->isChecked()){
+            if(a[i]>ui->doubleSpinBox_14->value() & (a[i]<ui->doubleSpinBox_15->value())){
+                sres+=b[i];
+                sres2+=pow(b[i],2);
+            }
+            else{
+                // do nothing...
+            }
+        }
+        else{
+            sres+=b[i];
+            sres2+=pow(b[i],2);
+        }
         b[i]=b[i]+index*offset;
      }
 
@@ -5912,14 +6169,12 @@ void MainWindow::on_checkBox_15_clicked()
 
 void MainWindow::on_actionEditor_triggered()
 {
+    int hgh = ui->spinBox_2->value() - ui->spinBox->value() + 1;
     qEdit =new Edit(this);
+    qEdit->seData(ui->lineEdit_4->text(), hgh);
     qEdit->show();
 }
 
-void MainWindow::on_spinBox_8_valueChanged()
-{
-
-}
 
 void MainWindow::on_checkBox_16_clicked()
 {
@@ -5994,6 +6249,7 @@ void MainWindow::VAmplitudeB()
 void MainWindow::on_actionArithmetic_triggered()
 {
     qArith =new Arithmetic(this);
+    qArith->seData(ui->lineEdit_4->text());
     qArith->show();
 }
 
@@ -6515,6 +6771,7 @@ void MainWindow::on_pushButton_4_clicked()
 
     if(reinitiate==1){
         reinitiate=0;
+        inrein=1;
         MainWindow::on_pushButton_4_clicked();
     }
     this->setCursor(QCursor(Qt::ArrowCursor));
@@ -7742,4 +7999,21 @@ void MainWindow::on_pushButton_12_clicked()
      }
 
      this->setCursor(QCursor(Qt::ArrowCursor));
+}
+
+void MainWindow::on_spinBox_8_valueChanged()
+{
+
+/*
+    cores = ui->spinBox_8->value();
+
+    if(cores>ui->spinBox_7->value()){
+        QString qcores = QString::number(ui->spinBox_7->value());
+        QMessageBox::information(this, "Error", "Set number of cores <= "+qcores+".");
+        return;
+    }
+
+    openblas_set_num_threads(cores);
+    */
+
 }

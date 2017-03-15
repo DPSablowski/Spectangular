@@ -15,6 +15,9 @@ public:
     explicit Edit(QWidget *parent = 0);
     ~Edit();
 
+public slots:
+    void seData(QString str, int g);
+
 private slots:
     void on_spinBox_valueChanged();
 

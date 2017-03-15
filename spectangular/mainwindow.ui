@@ -7137,6 +7137,12 @@
                   </disabled>
                  </palette>
                 </property>
+                <property name="minimum">
+                 <number>1</number>
+                </property>
+                <property name="maximum">
+                 <number>9999</number>
+                </property>
                </widget>
               </item>
               <item>
@@ -7213,7 +7219,7 @@
               <item>
                <widget class="QSpinBox" name="spinBox_8">
                 <property name="enabled">
-                 <bool>false</bool>
+                 <bool>true</bool>
                 </property>
                 <property name="palette">
                  <palette>
@@ -7278,6 +7284,12 @@
                    </colorrole>
                   </disabled>
                  </palette>
+                </property>
+                <property name="minimum">
+                 <number>1</number>
+                </property>
+                <property name="maximum">
+                 <number>9999</number>
                 </property>
                </widget>
               </item>
@@ -10428,11 +10440,6 @@
      <height>27</height>
     </rect>
    </property>
-   <widget class="QMenu" name="menuFile">
-    <property name="title">
-     <string>File</string>
-    </property>
-   </widget>
    <widget class="QMenu" name="menuTools">
     <property name="title">
      <string>Tools</string>
@@ -10450,7 +10457,6 @@
     <addaction name="actionBug_Report"/>
     <addaction name="actionManual"/>
    </widget>
-   <addaction name="menuFile"/>
    <addaction name="menuTools"/>
    <addaction name="menuHelp"/>
   </widget>
