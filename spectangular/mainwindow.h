@@ -118,6 +118,8 @@ private slots:
 
     void on_spinBox_8_valueChanged();
 
+    void on_checkBox_22_clicked();
+
 private:
     Ui::MainWindow *ui;
     PlotSpec *pSpec;

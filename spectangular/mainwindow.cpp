@@ -76,7 +76,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->lineEdit_2->setText("velocities.txt");
     ui->lineEdit_3->setText("spectra2m_");
     ui->lineEdit_18->setText("times.dat");
-    ui->lineEdit_4->setText("/home/daniels/Disentangling/Artificial/Pulsation");
+    ui->lineEdit_4->setText(QDir::currentPath());
     qPath=ui->lineEdit_4->text();
     path = qPath.toUtf8().constData();
 
@@ -95,13 +95,18 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->checkBox->setChecked(true);
     ui->checkBox_6->setChecked(true);
-    ui->doubleSpinBox->setEnabled(false);
-    ui->doubleSpinBox_2->setEnabled(false);
     ui->checkBox_7->setChecked(false);
     ui->checkBox_4->setChecked(true);
+    ui->checkBox_10->setChecked(true);
+    ui->checkBox_11->setChecked(true);
+    ui->checkBox_14->setChecked(true);
+    ui->checkBox_22->setChecked(false);
 
     ui->comboBox->addItem("fits");
     ui->comboBox->addItem("ASCII");
+
+    ui->doubleSpinBox->setEnabled(false);
+    ui->doubleSpinBox_2->setEnabled(false);
 
     ui->lineEdit_9->setText("DataVector");
     qExtension=ui->lineEdit_9->text();
@@ -120,10 +125,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->doubleSpinBox_4->setValue(1);
     fluxratio=ui->doubleSpinBox_4->value();
-
-    ui->checkBox_10->setChecked(true);
-    ui->checkBox_11->setChecked(true);
-    ui->checkBox_14->setChecked(true);
 
     ui->lineEdit_5->setText("SN100_2orb_1.txt");
     ui->lineEdit_8->setText("SN100_2orb_2.txt");
@@ -163,6 +164,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->customPlot_2->yAxis->setTickLabelColor(Qt::black);
     ui->customPlot_2->yAxis->setLabel("rel. Flux");
     ui->customPlot_2->xAxis->setLabel("Wavelength");
+
+    ui->customPlot_2->hide();
 
     ui->customPlot_3->xAxis2->setVisible(true);
     ui->customPlot_3->xAxis2->setTickLabels(false);
@@ -239,7 +242,6 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->label_6->setStyleSheet("QLabel{background: transparent; color: black;}");
     ui->label_7->setStyleSheet("QLabel{background: transparent; color: black;}");
     ui->label_8->setStyleSheet("QLabel{background: transparent; color: black;}");
-    ui->label_9->setStyleSheet("QLabel{background: transparent; color: black;}");
     ui->label_10->setStyleSheet("QLabel{background: transparent; color: black;}");
     ui->label_11->setStyleSheet("QLabel{background: transparent; color: black;}");
     ui->label_12->setStyleSheet("QLabel{background: transparent; color: black;}");
@@ -2281,6 +2283,22 @@ void MainWindow::Optimisation()
         MainWindow::ConstructMatrix();
         y[i]=MainWindow::DivideConquer();
         qApp->processEvents(QEventLoop::AllEvents);
+        if(upda==1){
+            upda=0;
+            LogFile<<endl;
+            LogFile<<"New RVs found; Residuum: "<<yi<<endl;
+            if(ui->checkBox_3->isChecked()){
+                for(int i = 0; i<nu;i++){
+                    LogFile<<RV1[i]<<endl;
+                }
+            }
+            if(ui->checkBox_4->isChecked()){
+                for(int i = 0; i<nu/2;i++){
+                    LogFile<<RV1[i]<<"\t"<<RV3[i]<<endl;
+                }
+            }
+            LogFile<<endl;
+        }
 
         if(abortt==1){
             LogFile<<"Initiation was aborted."<<endl;
@@ -3047,6 +3065,7 @@ void MainWindow::Optimisation()
         MainWindow::ConstructMatrix();
         y[j]=MainWindow::DivideConquer();
         qApp->processEvents(QEventLoop::AllEvents);
+        cout<<j<<" from "<<nu+1<<" points contracted."<<endl;
 
         if(upda==1){
             upda=0;
@@ -8016,4 +8035,14 @@ void MainWindow::on_spinBox_8_valueChanged()
     openblas_set_num_threads(cores);
     */
 
+}
+
+void MainWindow::on_checkBox_22_clicked()
+{
+    if(ui->checkBox_22->isChecked()){
+        ui->customPlot_2->show();
+    }
+    else{
+        ui->customPlot_2->hide();
+    }
 }

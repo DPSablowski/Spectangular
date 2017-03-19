@@ -7219,7 +7219,7 @@
               <item>
                <widget class="QSpinBox" name="spinBox_8">
                 <property name="enabled">
-                 <bool>true</bool>
+                 <bool>false</bool>
                 </property>
                 <property name="palette">
                  <palette>
@@ -9508,15 +9508,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QLabel" name="label_9">
-            <property name="font">
-             <font>
-              <family>Bitstream Charter</family>
-              <weight>75</weight>
-              <italic>true</italic>
-              <bold>true</bold>
-             </font>
-            </property>
+           <widget class="QCheckBox" name="checkBox_22">
             <property name="text">
              <string>Telluric</string>
             </property>

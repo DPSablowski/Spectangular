@@ -222,7 +222,7 @@ public:
     QVBoxLayout *verticalLayout_5;
     QLabel *label_8;
     QCustomPlot *customPlot;
-    QLabel *label_9;
+    QCheckBox *checkBox_22;
     QCustomPlot *customPlot_2;
     QHBoxLayout *horizontalLayout_21;
     QLabel *label_13;
@@ -1747,7 +1747,7 @@ public:
 
         spinBox_8 = new QSpinBox(scrollAreaWidgetContents);
         spinBox_8->setObjectName(QStringLiteral("spinBox_8"));
-        spinBox_8->setEnabled(true);
+        spinBox_8->setEnabled(false);
         QPalette palette44;
         palette44.setBrush(QPalette::Active, QPalette::Text, brush);
         palette44.setBrush(QPalette::Active, QPalette::ButtonText, brush);
@@ -2355,11 +2355,10 @@ public:
 
         verticalLayout_5->addWidget(customPlot);
 
-        label_9 = new QLabel(scrollAreaWidgetContents);
-        label_9->setObjectName(QStringLiteral("label_9"));
-        label_9->setFont(font);
+        checkBox_22 = new QCheckBox(scrollAreaWidgetContents);
+        checkBox_22->setObjectName(QStringLiteral("checkBox_22"));
 
-        verticalLayout_5->addWidget(label_9);
+        verticalLayout_5->addWidget(checkBox_22);
 
         customPlot_2 = new QCustomPlot(scrollAreaWidgetContents);
         customPlot_2->setObjectName(QStringLiteral("customPlot_2"));
@@ -2751,7 +2750,7 @@ public:
         pushButton_8->setText(QApplication::translate("MainWindow", "Error", 0));
         pushButton->setText(QApplication::translate("MainWindow", "Close", 0));
         label_8->setText(QApplication::translate("MainWindow", "<html><head/><body><p>Result; <span style=\" color:#0000ff;\">Comp A,</span><span style=\" color:#ff0000;\">Comp B </span><span style=\" color:#000000;\">&amp; Error</span></p></body></html>", 0));
-        label_9->setText(QApplication::translate("MainWindow", "Telluric", 0));
+        checkBox_22->setText(QApplication::translate("MainWindow", "Telluric", 0));
         label_13->setText(QApplication::translate("MainWindow", "<html><head/><body><p>Difference; Offset:</p></body></html>", 0));
         pushButton_6->setText(QApplication::translate("MainWindow", "Plot", 0));
         checkBox_10->setText(QApplication::translate("MainWindow", "Live Update", 0));
