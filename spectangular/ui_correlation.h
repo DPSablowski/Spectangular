@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'correlation.ui'
 **
-** Created by: Qt User Interface Compiler version 5.5.1
+** Created by: Qt User Interface Compiler version 5.8.0
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
 ********************************************************************************/
@@ -441,23 +441,23 @@ public:
 
     void retranslateUi(QDialog *correlation)
     {
-        correlation->setWindowTitle(QApplication::translate("correlation", "Dialog", 0));
-        label->setText(QApplication::translate("correlation", "Spectrum:", 0));
-        checkBox_2->setText(QApplication::translate("correlation", "Log(x)", 0));
-        label_8->setText(QApplication::translate("correlation", "Continuum:", 0));
-        checkBox->setText(QApplication::translate("correlation", "Bidiagonal Matrix used", 0));
-        label_2->setText(QApplication::translate("correlation", "Template:", 0));
-        checkBox_3->setText(QApplication::translate("correlation", "Log(x)", 0));
-        label_9->setText(QApplication::translate("correlation", "Continuum:", 0));
-        label_3->setText(QApplication::translate("correlation", "Correlation Shift:", 0));
-        pushButton_2->setText(QApplication::translate("correlation", "Correlation", 0));
-        label_4->setText(QApplication::translate("correlation", "Result [pix]:", 0));
-        label_6->setText(QApplication::translate("correlation", "Result [log(A)]:", 0));
-        label_5->setText(QApplication::translate("correlation", "Correct Spectrum by [pix]:", 0));
-        pushButton_4->setText(QApplication::translate("correlation", "Correct", 0));
-        pushButton_3->setText(QApplication::translate("correlation", "Save as:", 0));
-        label_7->setText(QApplication::translate("correlation", "Work Path:", 0));
-        pushButton->setText(QApplication::translate("correlation", "Close", 0));
+        correlation->setWindowTitle(QApplication::translate("correlation", "Dialog", Q_NULLPTR));
+        label->setText(QApplication::translate("correlation", "Spectrum:", Q_NULLPTR));
+        checkBox_2->setText(QApplication::translate("correlation", "Log(x)", Q_NULLPTR));
+        label_8->setText(QApplication::translate("correlation", "Continuum:", Q_NULLPTR));
+        checkBox->setText(QApplication::translate("correlation", "Bidiagonal Matrix used", Q_NULLPTR));
+        label_2->setText(QApplication::translate("correlation", "Template:", Q_NULLPTR));
+        checkBox_3->setText(QApplication::translate("correlation", "Log(x)", Q_NULLPTR));
+        label_9->setText(QApplication::translate("correlation", "Continuum:", Q_NULLPTR));
+        label_3->setText(QApplication::translate("correlation", "Correlation Shift:", Q_NULLPTR));
+        pushButton_2->setText(QApplication::translate("correlation", "Correlation", Q_NULLPTR));
+        label_4->setText(QApplication::translate("correlation", "Result [pix]:", Q_NULLPTR));
+        label_6->setText(QApplication::translate("correlation", "Result [log(A)]:", Q_NULLPTR));
+        label_5->setText(QApplication::translate("correlation", "Correct Spectrum by [pix]:", Q_NULLPTR));
+        pushButton_4->setText(QApplication::translate("correlation", "Correct", Q_NULLPTR));
+        pushButton_3->setText(QApplication::translate("correlation", "Save as:", Q_NULLPTR));
+        label_7->setText(QApplication::translate("correlation", "Work Path:", Q_NULLPTR));
+        pushButton->setText(QApplication::translate("correlation", "Close", Q_NULLPTR));
     } // retranslateUi
 
 };

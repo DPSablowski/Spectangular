@@ -29,7 +29,10 @@ using namespace blas;
 using std::chrono::system_clock;
 
 int reinitiate=0, mini, CDI, maxi, num, checker=0, bso1, bso2, logbin, RV1m, RV3m, RV1a, RV3a, Mn, Mm, elements, bidi=0, error=0, zaehler, abortt=0, eval=0;
-int upda, updac, inrein=0;
+int upda;       // live update
+int updac;      // save all updates
+int inrein=0;   // reinitiate
+int abauto=0;   // auto abort
 unsigned int cores;
 string path, eins, zwei, line;
 QString qPath, qExtension, qWCol, qICol, qInitval, qInitmat, qOptval, qOptmat;
@@ -265,7 +268,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->label_30->setStyleSheet("QLabel{background: transparent; color: black;}");
     ui->label_31->setStyleSheet("QLabel{background: transparent; color: black;}");
 
-    ui->checkBox->setStyleSheet("QCheckBox{background: transparent; color: black;}");
+    /*
+    ui->checkBox->setStyleSheet("QCheckBox{color: black;}");
     ui->checkBox_2->setStyleSheet("QCheckBox{background: transparent; color: black;}");
     ui->checkBox_3->setStyleSheet("QCheckBox{background: transparent; color: black;}");
     ui->checkBox_4->setStyleSheet("QCheckBox{background: transparent; color: black;}");
@@ -285,7 +289,9 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->checkBox_18->setStyleSheet("QCheckBox{background: transparent; color: black;}");
     ui->checkBox_32->setStyleSheet("QCheckBox{background: transparent; color: black;}");
     ui->checkBox_33->setStyleSheet("QCheckBox{background: transparent; color: black;}");
-    ui->checkBox_35->setStyleSheet("QCheckBox{background: transparent; color: black;}");    
+    ui->checkBox_35->setStyleSheet("QCheckBox{background: transparent; color: black;}");
+    */
+
 
     cores = thread::hardware_concurrency();
     ui->spinBox_7->setValue(cores);
@@ -1961,6 +1967,7 @@ void MainWindow::Optimisation()
 
     upda=0;
     updac=0;
+    abauto=0;
 
     ui->spinBox_4->setValue(0);
     ui->spinBox_5->setValue(0);
@@ -2022,6 +2029,14 @@ void MainWindow::Optimisation()
         LogFile<<"  Optimisation LogFile"<<endl;
         LogFile<<"******************************"<<endl;
     }
+
+    if(ui->checkBox_33->isChecked()){
+        LogFile<<"Compute Residuum from "<<ui->doubleSpinBox_14->value()<<" to "<<ui->doubleSpinBox_15->value()<<"."<<endl;
+    }
+    else{
+        LogFile<<"Compute Residuum in full range."<<endl;
+    }
+    LogFile<<endl;
 
     string sstrength = "edit.dat";
     std::ostringstream ediNameStream(sstrength);
@@ -2184,7 +2199,7 @@ void MainWindow::Optimisation()
 
     //create new initial data
     if(ui->checkBox_9->isChecked()){
-        r1=100.0;
+        r1=0.0;
 
         LogFile<<"Creating new initial simplex with "<<nu+1<<" points."<<endl;
 
@@ -2206,7 +2221,7 @@ void MainWindow::Optimisation()
 
             if(inrein==0 & (QIn.exists() or QIn2.exists())){
                 QMessageBox::StandardButton reply;
-                reply = QMessageBox::question(this, "Warning!", "The file already exists. \n\n Do you want to overwrite it?",
+                reply = QMessageBox::question(this, "Warning!", "The optimisation files already exists. \n\n Do you want to overwrite it?",
                                           QMessageBox::Yes|QMessageBox::No);
                 if (reply == QMessageBox::Yes) {
                 qDebug() << "Overwrite initial data.";
@@ -2285,6 +2300,7 @@ void MainWindow::Optimisation()
         qApp->processEvents(QEventLoop::AllEvents);
         if(upda==1){
             upda=0;
+            abauto += 1;
             LogFile<<endl;
             LogFile<<"New RVs found; Residuum: "<<yi<<endl;
             if(ui->checkBox_3->isChecked()){
@@ -2306,7 +2322,11 @@ void MainWindow::Optimisation()
             this->setCursor(QCursor(Qt::ArrowCursor));
             return;
         }
-        if(y[i]<r1){
+        if(i==0){
+            r1 = y[i];
+            MainWindow::on_pushButton_6_clicked();
+        }
+        if(y[i] < r1){
             r1=y[i];
             if(ui->checkBox_10->isChecked()){
                 MainWindow::on_pushButton_6_clicked();
@@ -2373,14 +2393,14 @@ void MainWindow::Optimisation()
         }
 
         for (int i=0; i<number_of_lines; i++){
-        initiate1 >> one;
-        istringstream ist(one);
-        ist >> y[i];
-        if(i==0) r1=y[0];
-        if(y[i]<r1){
-            r1=y[i];
-        }
-        }
+            initiate1 >> one;
+            istringstream ist(one);
+            ist >> y[i];
+            if(i==0) r1=y[0];
+                if(y[i]<r1){
+                    r1=y[i];
+                }
+            }
         initiate1.close();
 
         int coun=0;
@@ -2449,15 +2469,15 @@ void MainWindow::Optimisation()
         }
 
         for (int i=0; i<number_of_lines; i++){
-        initiate1 >> one;
-        istringstream ist(one);
-        ist >> y[i];
-        if(i==0) r1=y[0];
-        if(y[i]<r1){
-            r1=y[i];
-        }
-        }
-        initiate1.close();
+            initiate1 >> one;
+            istringstream ist(one);
+            ist >> y[i];
+            if(i==0) r1=y[0];
+                if(y[i]<r1){
+                    r1=y[i];
+                }
+            }
+            initiate1.close();
 
         int coun=0;
 
@@ -2564,7 +2584,14 @@ void MainWindow::Optimisation()
         if((ys==ys2) & (ym==ym2)){
             ++stagnate;
 
+            if(abauto==1 & ui->checkBox_23->isChecked()){
+                cout<<"Optimisatin stopped; no better parameters found; stagnating."<<endl;
+                LogFile<<"Optimisatin stopped; no better parameters found; stagnating."<<endl;
+                return;
+            }
+
             if(ui->checkBox_32->isChecked()){
+
                 cout<<"Reinitiate optimisation with current best RVs."<<endl;
                 ui->plainTextEdit_2->appendPlainText("Reinitiate optimisation with current best RVs.");
                 LogFile<<"Stagnation of DSM: "<<stagnate<<endl;
@@ -3065,7 +3092,7 @@ void MainWindow::Optimisation()
         MainWindow::ConstructMatrix();
         y[j]=MainWindow::DivideConquer();
         qApp->processEvents(QEventLoop::AllEvents);
-        cout<<j<<" from "<<nu+1<<" points contracted."<<endl;
+        cout<<j+1<<" from "<<nu+1<<" points contracted."<<endl;
 
         if(upda==1){
             upda=0;
@@ -3265,7 +3292,7 @@ void MainWindow::Optimisation()
 
               //create new initial data
               if(ui->checkBox_9->isChecked()){
-                  r1=100.0;
+                  r1=0.0;
 
                   qInitval = ui->lineEdit_14->text();
                   string file1init = qInitval.toUtf8().constData();
@@ -3637,16 +3664,21 @@ void MainWindow::Optimisation()
                           this->setCursor(QCursor(Qt::ArrowCursor));
                           return;
                       }
-                      if(i==0) r1=y[0];
-                      if(y[i]<r1) r1 = y[i];
-
-                      if(ui->checkBox_10->isChecked()){
+                      if(i==0){
+                          r1=y[0];
                           MainWindow::on_pushButton_6_clicked();
+                      }
+                      if(y[i] < r1){
+                        r1 = y[i];
+                        if(ui->checkBox_10->isChecked()){
+                            MainWindow::on_pushButton_6_clicked();
+                        }
                       }
 
                       cout<<setprecision(12)<<y[i]<<endl;
                       init<<setprecision(14)<<y[i]<<endl;
-                  }}
+                  }
+              }
 
               //continue with optimised data
               if(ui->checkBox_11->isChecked()){
@@ -4595,6 +4627,7 @@ void MainWindow::Optimisation()
                                       MainWindow::ConstructMatrix();
                                       y[j]=MainWindow::DivideConquer();
                                       qApp->processEvents(QEventLoop::AllEvents);
+                                      cout<<j+1<<" points from "<<nu+1<<" contracted."<<endl;
 
                                       if(upda==1){
                                           upda=0;
@@ -5555,7 +5588,7 @@ double MainWindow::DivideConquer(){
         cout<<"  r/Bins: "<<residu/resbins<<endl;
 
         // better value found, write data to files.
-        if(residu<r1){
+        if((residu<r1) or (r1==0.0)){
 
             r1=residu;
             upda=1;

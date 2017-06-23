@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'arithmetic.ui'
 **
-** Created by: Qt User Interface Compiler version 5.5.1
+** Created by: Qt User Interface Compiler version 5.8.0
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
 ********************************************************************************/
@@ -232,19 +232,19 @@ public:
 
     void retranslateUi(QDialog *Arithmetic)
     {
-        Arithmetic->setWindowTitle(QApplication::translate("Arithmetic", "Dialog", 0));
-        label->setText(QApplication::translate("Arithmetic", "A:", 0));
-        checkBox->setText(QApplication::translate("Arithmetic", "A+B", 0));
-        checkBox_2->setText(QApplication::translate("Arithmetic", "A-B", 0));
-        checkBox_3->setText(QApplication::translate("Arithmetic", "A*B", 0));
-        checkBox_4->setText(QApplication::translate("Arithmetic", "A/B", 0));
-        label_2->setText(QApplication::translate("Arithmetic", "B:", 0));
-        checkBox_5->setText(QApplication::translate("Arithmetic", "A +", 0));
-        checkBox_6->setText(QApplication::translate("Arithmetic", "A *", 0));
-        label_3->setText(QApplication::translate("Arithmetic", "Out:", 0));
-        label_4->setText(QApplication::translate("Arithmetic", "Work Path:", 0));
-        pushButton_2->setText(QApplication::translate("Arithmetic", "Do", 0));
-        pushButton->setText(QApplication::translate("Arithmetic", "Close", 0));
+        Arithmetic->setWindowTitle(QApplication::translate("Arithmetic", "Dialog", Q_NULLPTR));
+        label->setText(QApplication::translate("Arithmetic", "A:", Q_NULLPTR));
+        checkBox->setText(QApplication::translate("Arithmetic", "A+B", Q_NULLPTR));
+        checkBox_2->setText(QApplication::translate("Arithmetic", "A-B", Q_NULLPTR));
+        checkBox_3->setText(QApplication::translate("Arithmetic", "A*B", Q_NULLPTR));
+        checkBox_4->setText(QApplication::translate("Arithmetic", "A/B", Q_NULLPTR));
+        label_2->setText(QApplication::translate("Arithmetic", "B:", Q_NULLPTR));
+        checkBox_5->setText(QApplication::translate("Arithmetic", "A +", Q_NULLPTR));
+        checkBox_6->setText(QApplication::translate("Arithmetic", "A *", Q_NULLPTR));
+        label_3->setText(QApplication::translate("Arithmetic", "Out:", Q_NULLPTR));
+        label_4->setText(QApplication::translate("Arithmetic", "Work Path:", Q_NULLPTR));
+        pushButton_2->setText(QApplication::translate("Arithmetic", "Do", Q_NULLPTR));
+        pushButton->setText(QApplication::translate("Arithmetic", "Close", Q_NULLPTR));
     } // retranslateUi
 
 };

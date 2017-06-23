@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'plotspec.ui'
 **
-** Created by: Qt User Interface Compiler version 5.5.1
+** Created by: Qt User Interface Compiler version 5.8.0
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
 ********************************************************************************/
@@ -884,53 +884,53 @@ public:
 
     void retranslateUi(QDialog *PlotSpec)
     {
-        PlotSpec->setWindowTitle(QApplication::translate("PlotSpec", "Dialog", 0));
-        pushButton_12->setText(QApplication::translate("PlotSpec", "SNR", 0));
-        pushButton_13->setText(QApplication::translate("PlotSpec", "EW", 0));
-        label_15->setText(QApplication::translate("PlotSpec", "<html><head/><body><p><span style=\" font-size:12pt; font-weight:600;\">Normalization</span></p></body></html>", 0));
-        checkBox_16->setText(QApplication::translate("PlotSpec", "Yes", 0));
-        checkBox_14->setText(QApplication::translate("PlotSpec", "correct to ratio:", 0));
-        checkBox_13->setText(QApplication::translate("PlotSpec", "divide", 0));
-        pushButton_6->setText(QApplication::translate("PlotSpec", "Apply", 0));
-        pushButton_8->setText(QApplication::translate("PlotSpec", "Show", 0));
-        pushButton_7->setText(QApplication::translate("PlotSpec", "Reset", 0));
-        label_16->setText(QApplication::translate("PlotSpec", "File 1:", 0));
-        label_17->setText(QApplication::translate("PlotSpec", "File 2:", 0));
-        pushButton_9->setText(QApplication::translate("PlotSpec", "Save:", 0));
-        label_18->setText(QApplication::translate("PlotSpec", "Spline Data", 0));
-        pushButton_10->setText(QApplication::translate("PlotSpec", "Save", 0));
-        pushButton_11->setText(QApplication::translate("PlotSpec", "Load", 0));
-        label_2->setText(QApplication::translate("PlotSpec", "x1:", 0));
-        label_3->setText(QApplication::translate("PlotSpec", "x2:", 0));
-        label_5->setText(QApplication::translate("PlotSpec", "y1:", 0));
-        label_4->setText(QApplication::translate("PlotSpec", "y2:", 0));
-        checkBox_4->setText(QApplication::translate("PlotSpec", "legend", 0));
-        pushButton_3->setText(QApplication::translate("PlotSpec", "find values", 0));
-        pushButton_2->setText(QApplication::translate("PlotSpec", "Plot", 0));
-        label_6->setText(QApplication::translate("PlotSpec", "x Label", 0));
-        label_7->setText(QApplication::translate("PlotSpec", "y Label", 0));
-        label_9->setText(QApplication::translate("PlotSpec", "work path", 0));
-        pushButton_4->setText(QApplication::translate("PlotSpec", "Save as:", 0));
-        checkBox->setText(QApplication::translate("PlotSpec", "pdf", 0));
-        checkBox_2->setText(QApplication::translate("PlotSpec", "png", 0));
-        checkBox_3->setText(QApplication::translate("PlotSpec", "jpg", 0));
-        label_11->setText(QApplication::translate("PlotSpec", "Font Size:", 0));
-        label_13->setText(QApplication::translate("PlotSpec", "Line Width", 0));
-        label->setText(QApplication::translate("PlotSpec", "<html><head/><body><p><span style=\" font-weight:600; color:#0c3ff2;\">File 1</span></p></body></html>", 0));
-        checkBox_5->setText(QApplication::translate("PlotSpec", "y*", 0));
-        checkBox_6->setText(QApplication::translate("PlotSpec", "y+", 0));
-        checkBox_11->setText(QApplication::translate("PlotSpec", "x+", 0));
-        checkBox_9->setText(QApplication::translate("PlotSpec", "f(x)=", 0));
-        label_8->setText(QApplication::translate("PlotSpec", "+(x-x0)*", 0));
-        pushButton_5->setText(QApplication::translate("PlotSpec", "Add 1-f", 0));
-        label_10->setText(QApplication::translate("PlotSpec", "<html><head/><body><p><span style=\" font-weight:600; color:#e30b0b;\">File 2</span></p></body></html>", 0));
-        checkBox_7->setText(QApplication::translate("PlotSpec", "y*", 0));
-        checkBox_8->setText(QApplication::translate("PlotSpec", "y+", 0));
-        checkBox_12->setText(QApplication::translate("PlotSpec", "x+", 0));
-        checkBox_10->setText(QApplication::translate("PlotSpec", "f(x)=", 0));
-        label_12->setText(QApplication::translate("PlotSpec", "+(x-x0)*", 0));
-        checkBox_15->setText(QApplication::translate("PlotSpec", "Error", 0));
-        pushButton->setText(QApplication::translate("PlotSpec", "Close", 0));
+        PlotSpec->setWindowTitle(QApplication::translate("PlotSpec", "Dialog", Q_NULLPTR));
+        pushButton_12->setText(QApplication::translate("PlotSpec", "SNR", Q_NULLPTR));
+        pushButton_13->setText(QApplication::translate("PlotSpec", "EW", Q_NULLPTR));
+        label_15->setText(QApplication::translate("PlotSpec", "<html><head/><body><p><span style=\" font-size:12pt; font-weight:600;\">Normalization</span></p></body></html>", Q_NULLPTR));
+        checkBox_16->setText(QApplication::translate("PlotSpec", "Yes", Q_NULLPTR));
+        checkBox_14->setText(QApplication::translate("PlotSpec", "correct to ratio:", Q_NULLPTR));
+        checkBox_13->setText(QApplication::translate("PlotSpec", "divide", Q_NULLPTR));
+        pushButton_6->setText(QApplication::translate("PlotSpec", "Apply", Q_NULLPTR));
+        pushButton_8->setText(QApplication::translate("PlotSpec", "Show", Q_NULLPTR));
+        pushButton_7->setText(QApplication::translate("PlotSpec", "Reset", Q_NULLPTR));
+        label_16->setText(QApplication::translate("PlotSpec", "File 1:", Q_NULLPTR));
+        label_17->setText(QApplication::translate("PlotSpec", "File 2:", Q_NULLPTR));
+        pushButton_9->setText(QApplication::translate("PlotSpec", "Save:", Q_NULLPTR));
+        label_18->setText(QApplication::translate("PlotSpec", "Spline Data", Q_NULLPTR));
+        pushButton_10->setText(QApplication::translate("PlotSpec", "Save", Q_NULLPTR));
+        pushButton_11->setText(QApplication::translate("PlotSpec", "Load", Q_NULLPTR));
+        label_2->setText(QApplication::translate("PlotSpec", "x1:", Q_NULLPTR));
+        label_3->setText(QApplication::translate("PlotSpec", "x2:", Q_NULLPTR));
+        label_5->setText(QApplication::translate("PlotSpec", "y1:", Q_NULLPTR));
+        label_4->setText(QApplication::translate("PlotSpec", "y2:", Q_NULLPTR));
+        checkBox_4->setText(QApplication::translate("PlotSpec", "legend", Q_NULLPTR));
+        pushButton_3->setText(QApplication::translate("PlotSpec", "find values", Q_NULLPTR));
+        pushButton_2->setText(QApplication::translate("PlotSpec", "Plot", Q_NULLPTR));
+        label_6->setText(QApplication::translate("PlotSpec", "x Label", Q_NULLPTR));
+        label_7->setText(QApplication::translate("PlotSpec", "y Label", Q_NULLPTR));
+        label_9->setText(QApplication::translate("PlotSpec", "work path", Q_NULLPTR));
+        pushButton_4->setText(QApplication::translate("PlotSpec", "Save as:", Q_NULLPTR));
+        checkBox->setText(QApplication::translate("PlotSpec", "pdf", Q_NULLPTR));
+        checkBox_2->setText(QApplication::translate("PlotSpec", "png", Q_NULLPTR));
+        checkBox_3->setText(QApplication::translate("PlotSpec", "jpg", Q_NULLPTR));
+        label_11->setText(QApplication::translate("PlotSpec", "Font Size:", Q_NULLPTR));
+        label_13->setText(QApplication::translate("PlotSpec", "Line Width", Q_NULLPTR));
+        label->setText(QApplication::translate("PlotSpec", "<html><head/><body><p><span style=\" font-weight:600; color:#0c3ff2;\">File 1</span></p></body></html>", Q_NULLPTR));
+        checkBox_5->setText(QApplication::translate("PlotSpec", "y*", Q_NULLPTR));
+        checkBox_6->setText(QApplication::translate("PlotSpec", "y+", Q_NULLPTR));
+        checkBox_11->setText(QApplication::translate("PlotSpec", "x+", Q_NULLPTR));
+        checkBox_9->setText(QApplication::translate("PlotSpec", "f(x)=", Q_NULLPTR));
+        label_8->setText(QApplication::translate("PlotSpec", "+(x-x0)*", Q_NULLPTR));
+        pushButton_5->setText(QApplication::translate("PlotSpec", "Add 1-f", Q_NULLPTR));
+        label_10->setText(QApplication::translate("PlotSpec", "<html><head/><body><p><span style=\" font-weight:600; color:#e30b0b;\">File 2</span></p></body></html>", Q_NULLPTR));
+        checkBox_7->setText(QApplication::translate("PlotSpec", "y*", Q_NULLPTR));
+        checkBox_8->setText(QApplication::translate("PlotSpec", "y+", Q_NULLPTR));
+        checkBox_12->setText(QApplication::translate("PlotSpec", "x+", Q_NULLPTR));
+        checkBox_10->setText(QApplication::translate("PlotSpec", "f(x)=", Q_NULLPTR));
+        label_12->setText(QApplication::translate("PlotSpec", "+(x-x0)*", Q_NULLPTR));
+        checkBox_15->setText(QApplication::translate("PlotSpec", "Error", Q_NULLPTR));
+        pushButton->setText(QApplication::translate("PlotSpec", "Close", Q_NULLPTR));
     } // retranslateUi
 
 };

@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'simplesubtraction.ui'
 **
-** Created by: Qt User Interface Compiler version 5.5.1
+** Created by: Qt User Interface Compiler version 5.8.0
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
 ********************************************************************************/
@@ -296,21 +296,21 @@ public:
 
     void retranslateUi(QDialog *SimpleSubtraction)
     {
-        SimpleSubtraction->setWindowTitle(QApplication::translate("SimpleSubtraction", "Dialog", 0));
-        label->setText(QApplication::translate("SimpleSubtraction", "Spectrum 1:", 0));
-        label_3->setText(QApplication::translate("SimpleSubtraction", "RV A:", 0));
-        label_4->setText(QApplication::translate("SimpleSubtraction", "RV B:", 0));
-        label_2->setText(QApplication::translate("SimpleSubtraction", "Spectrum 2:", 0));
-        label_5->setText(QApplication::translate("SimpleSubtraction", "RV A:", 0));
-        label_6->setText(QApplication::translate("SimpleSubtraction", "RV B:", 0));
-        label_7->setText(QApplication::translate("SimpleSubtraction", "Extension", 0));
-        label_8->setText(QApplication::translate("SimpleSubtraction", "W.Col.", 0));
-        label_9->setText(QApplication::translate("SimpleSubtraction", "I.Col.", 0));
-        label_10->setText(QApplication::translate("SimpleSubtraction", "Output A:", 0));
-        label_11->setText(QApplication::translate("SimpleSubtraction", "Output B:", 0));
-        label_12->setText(QApplication::translate("SimpleSubtraction", "Work Path:", 0));
-        pushButton_2->setText(QApplication::translate("SimpleSubtraction", "Do It", 0));
-        pushButton->setText(QApplication::translate("SimpleSubtraction", "Close", 0));
+        SimpleSubtraction->setWindowTitle(QApplication::translate("SimpleSubtraction", "Dialog", Q_NULLPTR));
+        label->setText(QApplication::translate("SimpleSubtraction", "Spectrum 1:", Q_NULLPTR));
+        label_3->setText(QApplication::translate("SimpleSubtraction", "RV A:", Q_NULLPTR));
+        label_4->setText(QApplication::translate("SimpleSubtraction", "RV B:", Q_NULLPTR));
+        label_2->setText(QApplication::translate("SimpleSubtraction", "Spectrum 2:", Q_NULLPTR));
+        label_5->setText(QApplication::translate("SimpleSubtraction", "RV A:", Q_NULLPTR));
+        label_6->setText(QApplication::translate("SimpleSubtraction", "RV B:", Q_NULLPTR));
+        label_7->setText(QApplication::translate("SimpleSubtraction", "Extension", Q_NULLPTR));
+        label_8->setText(QApplication::translate("SimpleSubtraction", "W.Col.", Q_NULLPTR));
+        label_9->setText(QApplication::translate("SimpleSubtraction", "I.Col.", Q_NULLPTR));
+        label_10->setText(QApplication::translate("SimpleSubtraction", "Output A:", Q_NULLPTR));
+        label_11->setText(QApplication::translate("SimpleSubtraction", "Output B:", Q_NULLPTR));
+        label_12->setText(QApplication::translate("SimpleSubtraction", "Work Path:", Q_NULLPTR));
+        pushButton_2->setText(QApplication::translate("SimpleSubtraction", "Do It", Q_NULLPTR));
+        pushButton->setText(QApplication::translate("SimpleSubtraction", "Close", Q_NULLPTR));
     } // retranslateUi
 
 };
