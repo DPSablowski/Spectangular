@@ -469,8 +469,8 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>2199</width>
-         <height>1193</height>
+         <width>1795</width>
+         <height>1020</height>
         </rect>
        </property>
        <layout class="QGridLayout" name="gridLayout_2">
@@ -1538,7 +1538,7 @@
                    </palette>
                   </property>
                   <property name="decimals">
-                   <number>3</number>
+                   <number>5</number>
                   </property>
                   <property name="singleStep">
                    <double>0.020000000000000</double>
@@ -3155,6 +3155,20 @@
                  </widget>
                 </item>
                 <item>
+                 <widget class="QCheckBox" name="checkBox_24">
+                  <property name="text">
+                   <string>shift A</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QCheckBox" name="checkBox_25">
+                  <property name="text">
+                   <string>shift B</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
                  <spacer name="horizontalSpacer_10">
                   <property name="orientation">
                    <enum>Qt::Horizontal</enum>
@@ -4119,7 +4133,7 @@
                  </palette>
                 </property>
                 <property name="maximum">
-                 <number>999</number>
+                 <number>9999</number>
                 </property>
                 <property name="value">
                  <number>3</number>
@@ -4290,7 +4304,7 @@
                  </font>
                 </property>
                 <property name="text">
-                 <string>Abort</string>
+                 <string>Stop</string>
                 </property>
                </widget>
               </item>
@@ -4405,7 +4419,7 @@
                  </palette>
                 </property>
                 <property name="maximum">
-                 <number>999</number>
+                 <number>9999</number>
                 </property>
                </widget>
               </item>
@@ -4500,7 +4514,7 @@
                  </palette>
                 </property>
                 <property name="maximum">
-                 <number>9999</number>
+                 <number>99999</number>
                 </property>
                </widget>
               </item>
@@ -7863,7 +7877,7 @@
      <x>0</x>
      <y>0</y>
      <width>1815</width>
-     <height>30</height>
+     <height>24</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuTools">
@@ -7975,8 +7989,8 @@
    <slot>close()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>106</x>
-     <y>1156</y>
+     <x>107</x>
+     <y>1268</y>
     </hint>
     <hint type="destinationlabel">
      <x>22</x>

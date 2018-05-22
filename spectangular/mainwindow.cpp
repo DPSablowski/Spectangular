@@ -20,7 +20,8 @@
 #include <chrono>
 #include <thread>
 #include <QFileInfo>
-//#include <openblas/cblas.h>
+#include <openblas/cblas.h>
+#include <omp.h>
 
 using namespace std;
 using namespace arma;
@@ -33,6 +34,8 @@ int upda;       // live update
 int updac;      // save all updates
 int inrein=0;   // reinitiate
 int abauto=0;   // auto abort
+int runow=0;    // start optimisation from terminal without windows; 1 for yes, 0 for no.
+int overw=0;    //
 unsigned int cores;
 string path, eins, zwei, line;
 QString qPath, qExtension, qWCol, qICol, qInitval, qInitmat, qOptval, qOptmat;
@@ -135,9 +138,16 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->lineEdit_13->setText("SN100_2orb_diff.txt");
     ui->lineEdit_20->setText("SN100_2orb_error.txt");
     ui->lineEdit_21->setText("logfile_2orb.dat");
-    ui->lineEdit_22->setText("Ha_vel_conf");
-    ui->lineEdit_23->setText("Ha_vel_conf");
+
+    string slfile = "Ha_vel_conf";
+    QString qslfile = QString::fromStdString(slfile);
+
+    ui->lineEdit_22->setText(qslfile);
+    ui->lineEdit_23->setText(qslfile);
+
     ui->lineEdit_24->setText("errors.dat");
+
+    ui->checkBox_32->setChecked(true);
 
     ui->customPlot->xAxis2->setVisible(true);
     ui->customPlot->xAxis2->setTickLabels(false);
@@ -292,16 +302,71 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->checkBox_35->setStyleSheet("QCheckBox{background: transparent; color: black;}");
     */
 
+    connect(ui->customPlot, SIGNAL(mouseMove(QMouseEvent*)), this ,SLOT(showPointToolTip(QMouseEvent*)));
+    connect(ui->customPlot_3, SIGNAL(mouseMove(QMouseEvent*)), this ,SLOT(showPointToolTip_3(QMouseEvent*)));
 
-    cores = thread::hardware_concurrency();
+
+
+    //openblas_set_num_threads(2);
+    cores =thread::hardware_concurrency();
+
+
     ui->spinBox_7->setValue(cores);
     ui->spinBox_8->setValue(cores);
 
+    //cout<<"Run optimisation now? 0 no, 1 yes: "<<endl;
+    //cin>>runow;
+    //runow=1;
+
+    if(runow==1){
+        MainWindow::Input();
+    }
+    else{
+        cout<<"Open GUI."<<endl;
+    }
+}
+
+void MainWindow::Input()
+{
+    string slfile;
+    cout<<"Name of config file:"<<endl;
+    cin>>slfile;
+    QString qslfile = QString::fromStdString(slfile);
+    ui->lineEdit_22->setText(qslfile);
+    ui->lineEdit_23->setText(qslfile);
+    MainWindow::on_pushButton_10_clicked();     // load Data
+    //MainWindow::on_pushButton_5_clicked();      // ECON SVD
+    MainWindow::on_pushButton_4_clicked();      // optimise
+    cout<<"The END."<<endl;
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+//********************************************************
+//show mouse coordinates
+//********************************************************
+void MainWindow::showPointToolTip(QMouseEvent *event)
+{
+
+    double xc = ui->customPlot->xAxis->pixelToCoord(event->pos().x());
+    double yc = ui->customPlot->yAxis->pixelToCoord(event->pos().y());
+
+    setToolTip(QString("%1 , %2").arg(xc).arg(yc));
+}
+
+//********************************************************
+//show mouse coordinates
+//********************************************************
+void MainWindow::showPointToolTip_3(QMouseEvent *event)
+{
+
+    double xc = ui->customPlot_3->xAxis->pixelToCoord(event->pos().x());
+    double yc = ui->customPlot_3->yAxis->pixelToCoord(event->pos().y());
+
+    setToolTip(QString("%1 , %2").arg(xc).arg(yc));
 }
 
 //**********************************************************
@@ -344,7 +409,13 @@ void MainWindow::read_data(){
             if(!checkfile1.exists()){
                 qDebug()<<"The file "<<checkfile1.fileName()<<" does not exist.";
                 QString fError= QString::number(g);
-                QMessageBox::information(this, "Error", "Error 1: File"+qPath+"/"+input+fError+".txt does not exist!");
+                if(runow==0){
+                    QMessageBox::information(this, "Error", "Error 1: File"+qPath+"/"+input+fError+".txt does not exist!");
+                }
+                else{
+                    cout<<"Error 1: File "<<path<<"/"<<data1<<g<<" does not exist!"<<endl;
+                    MainWindow::Input();
+                }
                 this->setCursor(QCursor(Qt::ArrowCursor));
                 error=1;
                 return;
@@ -393,7 +464,13 @@ void MainWindow::read_data(){
 
         if(!checkfile2.exists()){
             qDebug()<<"The file "<<checkfile2.fileName()<<" does not exist.";
-            QMessageBox::information(this, "Error", "Error 2: File "+qPath+"/"+input2+" does not exist!");
+            if(runow==0){
+                QMessageBox::information(this, "Error", "Error 2: File "+qPath+"/"+input2+" does not exist!");
+            }
+            else{
+                cout<<"Error 2: File "<<path<<"/"<<data2<<" does not exist!"<<endl;
+                MainWindow::Input();
+            }
             this->setCursor(QCursor(Qt::ArrowCursor));
             error=1;
            return;
@@ -409,7 +486,13 @@ void MainWindow::read_data(){
         dat2.seekg(0, ios::beg);
 
         if(entries!=num){
-            QMessageBox::information(this, "Error", "Time file "+qPath+"/"+input2+" does not match to the number of observations.");
+            if(runow==0){
+                QMessageBox::information(this, "Error", "Error 3: Time file "+qPath+"/"+input2+" does not match to the number of observations.");
+            }
+            else{
+                cout<<"Error 3: File "<<path<<"/"<<data2<<" does not match to the number of observations."<<endl;
+                MainWindow::Input();
+            }
             error=1;
             this->setCursor(QCursor(Qt::ArrowCursor));
             return;
@@ -453,7 +536,13 @@ void MainWindow::read_data(){
 
             if(!checkfile2.exists()){
                 qDebug()<<"The file "<<checkfile2.fileName()<<" does not exist.";
-                QMessageBox::information(this, "Error", "Error 2: File"+qPath+"/"+inputt+" does not exist!");
+                if(runow==0){
+                    QMessageBox::information(this, "Error", "Error 4: File"+qPath+"/"+inputt+" does not exist!");
+                }
+                else{
+                    cout<<"Error 4: File "<<path<<"/"<<times<<" does not exist!"<<endl;
+                    MainWindow::Input();
+                }
                 this->setCursor(QCursor(Qt::ArrowCursor));
                 error=1;
                return;
@@ -469,7 +558,13 @@ void MainWindow::read_data(){
             dat.seekg(0, ios::beg);
 
             if(entries!=num){
-                QMessageBox::information(this, "Error", "Error 3: Time file "+qPath+"/"+inputt+" does not match to the number of observations.");
+                if(runow==0){
+                    QMessageBox::information(this, "Error", "Error 5: Time file "+qPath+"/"+inputt+" does not match to the number of observations.");
+                }
+                else{
+                    cout<<"Error 5: File "<<path<<"/"<<times<<" does not match to the number of observations."<<endl;
+                    MainWindow::Input();
+                }
                 error=1;
                 this->setCursor(QCursor(Qt::ArrowCursor));
                 return;
@@ -491,7 +586,13 @@ void MainWindow::read_data(){
 
             if(!checkorb.exists()){
                 qDebug()<<"The file "<<checkorb.fileName()<<" does not exist.";
-                QMessageBox::information(this, "Error", "Error 3: File "+checkorb.fileName()+" does not exist! You need to set the orbital elements via Editor.");
+                if(runow==0){
+                    QMessageBox::information(this, "Error", "Error 6: File "+checkorb.fileName()+" does not exist! Set the orbital elements via the Editor.");
+                }
+                else{
+                    cout<<"Error 6: File "<<path<<"/"<<orbit<<" does not exist! Set the orbital elements via the Editor."<<endl;
+                    MainWindow::Input();
+                }
                 this->setCursor(QCursor(Qt::ArrowCursor));
                 error=1;
                return;
@@ -584,7 +685,13 @@ void MainWindow::read_data(){
                 if(!checkfile1.exists()){
                     qDebug()<<"The file "<<checkfile1.fileName()<<" does not exist.";
                     QString fError= QString::number(g);
-                    QMessageBox::information(this, "Error", "Error 1: File"+qPath+"/"+input+fError+".txt does not exist!");
+                    if(runow==0){
+                        QMessageBox::information(this, "Error", "Error 7: File"+qPath+"/"+input+fError+".txt does not exist!");
+                    }
+                    else{
+                        cout<<"Error 7: File "<<path<<"/"<<data1<<g<<" does not exist!"<<endl;
+                        MainWindow::Input();
+                    }
                     this->setCursor(QCursor(Qt::ArrowCursor));
                     error=1;
                     return;
@@ -623,7 +730,13 @@ void MainWindow::read_data(){
 
             if(!checkfile2.exists()){
                 qDebug()<<"The file "<<checkfile2.fileName()<<" does not exist.";
-                QMessageBox::information(this, "Error", "Error 2: File"+qPath+"/"+input2+" does not exist!");
+                if(runow==0){
+                    QMessageBox::information(this, "Error", "Error 8: File"+qPath+"/"+input2+" does not exist!");
+                }
+                else{
+                    cout<<"Error 8: File "<<path<<"/"<<data2<<" does not exist!"<<endl;
+                    MainWindow::Input();
+                }
                 this->setCursor(QCursor(Qt::ArrowCursor));
                 error=1;
                return;
@@ -639,7 +752,13 @@ void MainWindow::read_data(){
             dat2.seekg(0, ios::beg);
 
             if(entries!=num){
-                QMessageBox::information(this, "Error", "Time file "+qPath+"/"+input2+" does not match to the number of observations.");
+                if(runow==0){
+                    QMessageBox::information(this, "Error", "Error 9: Time file "+qPath+"/"+input2+" does not match to the number of observations.");
+                }
+                else{
+                    cout<<"Error 9: File "<<path<<"/"<<data2<<" does not match to the number of observations."<<endl;
+                    MainWindow::Input();
+                }
                 error=1;
                 this->setCursor(QCursor(Qt::ArrowCursor));
                 return;
@@ -681,7 +800,13 @@ void MainWindow::read_data(){
 
                 if(!checkfile2.exists()){
                     qDebug()<<"The file "<<checkfile2.fileName()<<" does not exist.";
-                    QMessageBox::information(this, "Error", "Error 2: File"+qPath+"/"+inputt+" does not exist!");
+                    if(runow==0){
+                        QMessageBox::information(this, "Error", "Error 10: File"+qPath+"/"+inputt+" does not exist!");
+                    }
+                    else{
+                        cout<<"Error 10: File "<<path<<"/"<<times<<" does not exist!"<<endl;
+                        MainWindow::Input();
+                    }
                     this->setCursor(QCursor(Qt::ArrowCursor));
                     error=1;
                    return;
@@ -697,7 +822,13 @@ void MainWindow::read_data(){
                 dat.seekg(0, ios::beg);
 
                 if(entries!=num){
-                    QMessageBox::information(this, "Error", "Time file "+qPath+"/"+inputt+" does not match to the number of observations.");
+                    if(runow==0){
+                        QMessageBox::information(this, "Error", "Error 11: Time file "+qPath+"/"+inputt+" does not match to the number of observations.");
+                    }
+                    else{
+                        cout<<"Error 1: File "<<path<<"/"<<times<<" does not match to the number of observations."<<endl;
+                        MainWindow::Input();
+                    }
                     error=1;
                     this->setCursor(QCursor(Qt::ArrowCursor));
                     return;
@@ -718,7 +849,13 @@ void MainWindow::read_data(){
 
                 if(!checkorb2.exists()){
                     qDebug()<<"The file "<<checkorb2.fileName()<<" does not exist.";
-                    QMessageBox::information(this, "Error", "Error 3: File "+checkorb2.fileName()+" does not exist! You need to set the orbital elements via Editor.");
+                    if(runow==0){
+                        QMessageBox::information(this, "Error", "Error 12: File "+checkorb2.fileName()+" does not exist! Set the orbital elements via the Editor.");
+                    }
+                    else{
+                        cout<<"Error 12: File "<<path<<"/"<<orbit<<" does not exist! Set the orbital elements via the Editor."<<endl;
+                        MainWindow::Input();
+                    }
                     this->setCursor(QCursor(Qt::ArrowCursor));
                     error=1;
                    return;
@@ -769,7 +906,13 @@ void MainWindow::read_data(){
         ui->doubleSpinBox_2->setValue(RV3max);
 
         if(checker==1){
-            QMessageBox::information(this,"Choose Input", "Error 3: Please choose input file.");
+            if(runow==0){
+                QMessageBox::information(this,"Choose Input", "Error 13: Please choose input file.");
+            }
+            else{
+                cout<<"Error 13: Please choose intput file."<<endl;
+                MainWindow::Input();
+            }
             this->setCursor(QCursor(Qt::ArrowCursor));
             error=1;
             return;
@@ -777,7 +920,13 @@ void MainWindow::read_data(){
 
 
     if(checker==0){
-        QMessageBox::information(this,"Choose Input", "Error 4: Please choose input data from file or unknown (via global optimization).");
+        if(runow==0){
+            QMessageBox::information(this,"Choose Input", "Error 14: Please choose input data from file or unknown (via global optimization).");
+        }
+        else{
+            cout<<"Error 14: Please choose input data from file or unknown (via global optimization)."<<endl;
+            MainWindow::Input();
+        }
         this->setCursor(QCursor(Qt::ArrowCursor));
         error=1;
         return;
@@ -786,7 +935,11 @@ void MainWindow::read_data(){
 
     //read measurements and write to solution vector
 
-    ofstream file1("output.txt");
+    string outM = "matrixconstr.dat";
+    std::ostringstream MNameStream(outM);
+    MNameStream<<path<<"/"<<outM;
+    std::string MName = MNameStream.str();
+    ofstream file1(MName.c_str());
 
     QString fext=ui->lineEdit_19->text();
     string sfext = fext.toUtf8().constData();
@@ -808,7 +961,13 @@ void MainWindow::read_data(){
         if(!checkfile3.exists()){
             qDebug()<<"The file "<<checkfile3.fileName()<<" does not exist.";
             QString fError= QString::number(g);
-            QMessageBox::information(this, "Error", "Error 5: Spectrum "+qPath+"/"+input3+fError+fext+" does not exist!");
+            if(runow==0){
+                QMessageBox::information(this, "Error", "Error 15: Spectrum "+qPath+"/"+input3+fError+fext+" does not exist!");
+            }
+            else{
+                cout<<"Error 15: File "<<path<<"/"<<data3<<g<<" does not exist!"<<endl;
+                MainWindow::Input();
+            }
             this->setCursor(QCursor(Qt::ArrowCursor));
             error=1;
            return;
@@ -844,6 +1003,20 @@ void MainWindow::read_data(){
               C[i]=intens[grar];
               ++grar;
               }
+              if(ui->checkBox_33->isChecked() & (g==mini)){
+                  if(ui->doubleSpinBox_14->value()<W[0] or (ui->doubleSpinBox_14->value()>W[logbin-1]) or (ui->doubleSpinBox_15->value()<W[0]) or (ui->doubleSpinBox_15->value()>W[logbin-1])){
+                      if(runow==0){
+                        QMessageBox::information(this, "Error", "Error 16: Please check the wavelength range for residuum computation.");
+                      }
+                      else{
+                          cout<<"Error 16: Please check the wavelength range for residuum computation."<<endl;
+                          MainWindow::Input();
+                      }
+                      error=1;
+                      this->setCursor(QCursor(Qt::ArrowCursor));
+                      return;
+                  }
+              }
 
         }
             catch (CCfits::FitsException&)
@@ -858,47 +1031,62 @@ void MainWindow::read_data(){
 
     //input as ASCII-file
     if(ui->comboBox->currentIndex()==1){
-    for(int g=mini; g<=maxi; g++){
-    QString input3=ui->lineEdit_3->text();
-    string data3 = input3.toUtf8().constData();
-    std::ostringstream dat3NameStream(data3);
-    dat3NameStream<<path<<"/"<<data3<<g<<sfext;
-    std::string dat3Name = dat3NameStream.str();
-    ifstream dat3(dat3Name.c_str());
+        for(int g=mini; g<=maxi; g++){
+            QString input3=ui->lineEdit_3->text();
+            string data3 = input3.toUtf8().constData();
+            std::ostringstream dat3NameStream(data3);
+            dat3NameStream<<path<<"/"<<data3<<g<<sfext;
+            std::string dat3Name = dat3NameStream.str();
+            ifstream dat3(dat3Name.c_str());
 
-    QFile checkfile3(dat3Name.c_str());
+            QFile checkfile3(dat3Name.c_str());
 
-    if(!checkfile3.exists()){
-        qDebug()<<"The file "<<checkfile3.fileName()<<" does not exist.";
-        QString fError= QString::number(g);
-        QMessageBox::information(this, "Error", "Error 6: Spectrum "+qPath+"/"+input3+fError+fext+" does not exist!");
-        this->setCursor(QCursor(Qt::ArrowCursor));
-        error=1;
-       return;
-    }
+            if(!checkfile3.exists()){
+                qDebug()<<"The file "<<checkfile3.fileName()<<" does not exist.";
+                QString fError= QString::number(g);
+                if(runow==0){
+                    QMessageBox::information(this, "Error", "Error 17: Spectrum "+qPath+"/"+input3+fError+fext+" does not exist!");
+                }
+                else{
+                    cout<<"Error 17: File "<<path<<"/"<<data3<<g<<sfext<<" does not exist!"<<endl;
+                    MainWindow::Input();
+                }
+                this->setCursor(QCursor(Qt::ArrowCursor));
+                error=1;
+                return;
+            }
 
-    this->setCursor(QCursor(Qt::WaitCursor));
+            this->setCursor(QCursor(Qt::WaitCursor));
 
-    logbin=0;
+            logbin=0;
 
-    while(std::getline(dat3, line))
-       ++logbin;
+            while(std::getline(dat3, line))
+            ++logbin;
 
-    dat3.clear();
-    dat3.seekg(0, ios::beg);
+            dat3.clear();
+            dat3.seekg(0, ios::beg);
 
-    C.resize(logbin*num);
-    W.resize(logbin*num);
+            C.resize(logbin*num);
+            W.resize(logbin*num);
 
-    for(int i=(g-mini)*logbin; i<(g-mini+1)*logbin; i++){
-    dat3 >> eins >>zwei;
-    istringstream ist3(eins);
-    ist3 >> W(i);
-    istringstream ist4(zwei);
-    ist4 >> C(i);
+            for(int i=(g-mini)*logbin; i<(g-mini+1)*logbin; i++){
+                dat3 >> eins >>zwei;
+                istringstream ist3(eins);
+                ist3 >> W(i);
+                istringstream ist4(zwei);
+                ist4 >> C(i);
 
-    }
-    }
+            }
+            /*
+            if(ui->checkBox_33->isChecked() & (g==mini)){
+                if(ui->doubleSpinBox_14->value()<W[0] or (ui->doubleSpinBox_14->value()>W[logbin-1]) or (ui->doubleSpinBox_15->value()<W[0]) or (ui->doubleSpinBox_15->value()>W[logbin-1])){
+                    QMessageBox::information(this, "Warning", "Please check the wavelength range for residuum computation.");
+                    error=1;
+                    this->setCursor(QCursor(Qt::ArrowCursor));
+                    return;
+                }
+            }*/
+        }
     }
 
     /*ofstream file4("observation.txt");
@@ -923,7 +1111,7 @@ void MainWindow::read_data(){
         RV3a=RV3[j]/dv;
         RV1b[j]=abs(RV1[j])/dv-abs(RV1a);
         RV3b[j]=abs(RV3[j])/dv-abs(RV3a);
-        //file1<<RV1[j]<<"\t"<<RV3[j]<<"\t"<<RV1b[j]<<"\t"<<RV3b[j]<<"\t";
+        file1<<RV1[j]<<"\t"<<RV3[j]<<"\t"<<RV1a<<"\t"<<RV3a<<"\t"<<RV1b[j]<<"\t"<<RV3b[j]<<"\t";
 
         if(RV1b[j]>=0.5){
             if(RV1[j]>=0){
@@ -976,18 +1164,19 @@ void MainWindow::read_data(){
                 RV3m = abs(RV3c[j]);
             }
         }
+
+        file1<<RV1c[j]<<"\t"<<RV3c[j]<<"\t"<<endl;
     }
+    file1<<endl;
+    file1<<RV1cmin<<"\t"<<RV1cmax<<"\t"<<RV2cmin<<"\t"<<RV2cmax<<"\t"<<RV1m<<"\t"<<RV3m<<endl;
 
     RV1a=RV1c[0];
     RV3a=RV3c[0];
     file1<<endl;
-    file1<<dv<<" "<<RV1m<<" "<<RV3m<<" "<<RV1a<<" "<<RV3a<<" "<<logbin<<endl;
-    file1<<"M is a "<<num*logbin<<" x "<<bso1+bso2<<" Matrix."<<endl;
-    file1<<endl;
 
     if(RV1cmin<0){
         if(RV1cmax<0){
-        bso1=logbin+abs(RV1cmin);
+            bso1=logbin+abs(RV1cmin);
         }
         else{
             bso1=logbin+abs(RV1cmin)+RV1cmax;
@@ -1014,6 +1203,9 @@ void MainWindow::read_data(){
 
     cout<<"bso1 "<<bso1<<endl;
     cout<<"bso2 "<<bso2<<endl;
+
+    file1<<"M is a "<<num*logbin<<" x "<<bso1+bso2<<" Matrix."<<endl;
+    file1<<endl;
 
     Mn=num*logbin;
     if(ui->checkBox_8->isChecked()){
@@ -1053,7 +1245,13 @@ void MainWindow::read_data(){
                 edit.seekg(0, ios::beg);
 
                 if(num_lines1!=3*num){
-                    QMessageBox::information(this, "Error", "Edit file does not match to specified number of observations.");
+                    if(runow==0){
+                        QMessageBox::information(this, "Error", "Error 18: Edit file does not match to specified number of observations.");
+                    }
+                    else{
+                        cout<<"Error 18: Edit file does not match to specified number of observations."<<endl;
+                        MainWindow::Input();
+                    }
                     this->setCursor(QCursor(Qt::ArrowCursor));
                     error=1;
                     return;
@@ -1078,12 +1276,12 @@ void MainWindow::read_data(){
     else {
         for(int i=0; i<num; i++){
             Mtel[i]=1.0;
-            Mval1[i]=1.0/(1+ui->doubleSpinBox_4->value());
-            Mval2[i]=ui->doubleSpinBox_4->value()/(1+ui->doubleSpinBox_4->value());
+            Mval2[i]=1.0/(1.0+ui->doubleSpinBox_4->value());
+            Mval1[i]=ui->doubleSpinBox_4->value()/(1.0+ui->doubleSpinBox_4->value());
         }
          cout<<"Elements A:\t"<<Mval1[0]<<endl;
          cout<<"Elements B:\t"<<Mval2[0]<<endl;
-         cout<<"Elements staic:\t"<<Mtel[0]<<endl;
+         cout<<"Elements static:\t"<<Mtel[0]<<endl;
     }
 
 
@@ -1419,7 +1617,13 @@ void MainWindow::on_pushButton_3_clicked()
 
     this->setCursor(QCursor(Qt::WaitCursor));
     if(ui->spinBox_2->value()-ui->spinBox->value()<1){
-        QMessageBox::information(this, "Error", "Error 7: Please read RV data first. At least two observations at (hopefully) different phases are necessary.");
+        if(runow==0){
+            QMessageBox::information(this, "Error", "Error 19: At least two observations at (hopefully) different phases are necessary.");
+        }
+        else{
+            cout<<"Error 19: At least two observations at (hopefully) different phases are necessary."<<endl;
+            MainWindow::Input();
+        }
         return;
     }
 
@@ -1509,18 +1713,18 @@ void MainWindow::on_pushButton_3_clicked()
                         //if(ui->checkBox_4->isChecked()){
                         //    X(j)=X(j)+(fluxratio/(fluxratio+1)-0.5);
                         //}
-                        file1<<pow(10,(W(0)+(index1+RV1min/dv)*difference))<<"\t"<<X(j)<<endl;
+                        file1<<setprecision(14)<<pow(10,(W(0)+(index1+RV1min/dv)*difference))<<"\t"<<X(j)<<endl;
                         ++index1;
                     }
                     if((j>=bso1) & (j<bso1+bso2)){
                         //if(ui->checkBox_4->isChecked()){
                         //    X(j)=X(j)+(1.0/(fluxratio+1)-0.5);
                         //}
-                        file2<<pow(10,(W(0)+(index2+RV3min/dv)*difference))<<"\t"<<X(j)<<endl;
+                        file2<<setprecision(14)<<pow(10,(W(0)+(index2+RV3min/dv)*difference))<<"\t"<<X(j)<<endl;
                         ++index2;
                     }
                     if(j>=bso1+bso2){
-                        tell<<pow(10,(W(0)+index3*difference))<<"\t"<<X(j)<<endl;
+                        tell<<setprecision(14)<<pow(10,(W(0)+index3*difference))<<"\t"<<X(j)<<endl;
                         ++index3;
                     }
                 }
@@ -1546,16 +1750,16 @@ void MainWindow::on_pushButton_3_clicked()
             X(i)=(X(i)+X(i+1))/2;
             if(i<bso1){
 
-            file3<<pow(10,(W(0)+(2*index1-RV1maxi/dv)*difference))<<"\t"<<X(i)<<endl;
+            file3<<setprecision(14)<<pow(10,(W(0)+(2*index1-RV1maxi/dv)*difference))<<"\t"<<X(i)<<endl;
             ++index1;
             }
             if((i>=bso1) & (i<bso1+bso2)){
 
-                file4<<pow(10,(W(0)+(index2*2+-RV3maxi/dv)*difference))<<"\t"<<X(i)<<endl;
+                file4<<setprecision(14)<<pow(10,(W(0)+(index2*2+-RV3maxi/dv)*difference))<<"\t"<<X(i)<<endl;
                 ++index2;
             }
             if(i>=bso1+bso2){
-                tell<<pow(10,(W(0)+2*index3*difference))<<"\t"<<X(i)<<endl;
+                tell<<setprecision(14)<<pow(10,(W(0)+2*index3*difference))<<"\t"<<X(i)<<endl;
                 ++index3;
             }
             i=i+2;
@@ -1570,7 +1774,7 @@ void MainWindow::on_pushButton_3_clicked()
         for(int i=0; i<Mn; i++){
 
             if(res(i)>10*tsh){
-                file5<<pow(10,W(i))<<" "<<res(i)-C(i)<<endl;
+                file5<<setprecision(14)<<pow(10,W(i))<<" "<<res(i)-C(i)<<endl;
                 residu+=pow((res(i)-C(i)),2);
             }
         }
@@ -1638,7 +1842,13 @@ void MainWindow::on_pushButton_5_clicked()
 {
 
     if(ui->spinBox_2->value()-ui->spinBox->value()<1){
-        QMessageBox::information(this, "Error", "Error 8: Please read RV data first. At least two observations at (hopefully) different phases are necessary.");
+        if(runow==0){
+            QMessageBox::information(this, "Error", "Error 20: At least two observations at (hopefully) different phases are necessary.");
+        }
+        else{
+            cout<<"Error 20: At least two observations at (hopefully) different phases are necessary."<<endl;
+            MainWindow::Input();
+        }
         return;
     }
 
@@ -1729,7 +1939,13 @@ void MainWindow::on_pushButton_5_clicked()
     else ++cBS;
 
     if(cBS == 0){
-        QMessageBox::information(this, "Error", "Select method for ECON.");
+        if(runow==0){
+            QMessageBox::information(this, "Error", "Error 21: Select method for ECON.");
+        }
+        else{
+            cout<<"Error 21: Select method for ECON."<<endl;
+            MainWindow::Input();
+        }
         return;
     }
 
@@ -2061,7 +2277,13 @@ void MainWindow::Optimisation()
                 edit.seekg(0, ios::beg);
 
                 if(num_lines1!=3*num){
-                    QMessageBox::information(this, "Error", "Edit file does not match to specified number of observations.");
+                    if(runow==0){
+                        QMessageBox::information(this, "Error", "Error 22: Edit file does not match to specified number of observations.");
+                    }
+                    else{
+                        cout<<"Error 22: Edit file does not match to specified number of observations."<<endl;
+                        MainWindow::Input();
+                    }
                     error=1;
                     return;
                 }
@@ -2219,17 +2441,30 @@ void MainWindow::Optimisation()
             QFile QIn(file1Name.c_str());
             QFile QIn2(file2Name.c_str());
 
-            if(inrein==0 & (QIn.exists() or QIn2.exists())){
-                QMessageBox::StandardButton reply;
-                reply = QMessageBox::question(this, "Warning!", "The optimisation files already exists. \n\n Do you want to overwrite it?",
+            if((inrein==0) & (QIn.exists() or QIn2.exists())){
+                if(runow==0){
+                    QMessageBox::StandardButton reply;
+                    reply = QMessageBox::question(this, "Warning!", "The optimisation files already exists. \n\n Do you want to overwrite it?",
                                           QMessageBox::Yes|QMessageBox::No);
-                if (reply == QMessageBox::Yes) {
-                qDebug() << "Overwrite initial data.";
+                    if (reply == QMessageBox::Yes) {
+                    qDebug() << "Overwrite initial data.";
+                    }
+                    else{
+                        qDebug()<< "Initiation aborted.";
+                        this->setCursor(QCursor(Qt::ArrowCursor));
+                        return;
+                    }
                 }
                 else{
-                    qDebug()<< "Initiation aborted.";
-                    this->setCursor(QCursor(Qt::ArrowCursor));
-                    return;
+                    cout<<"Warning: The optimisation files already exists. Do you want to overwrite it? 0 no, yes 1: "<<endl;
+                    cin >> overw;
+                    if(overw==0){
+                        this->setCursor(QCursor(Qt::ArrowCursor));
+                        return;
+                    }
+                    else{
+                        qDebug() << "Overwrite initial data.";
+                    }
                 }
             }
             else{
@@ -2302,7 +2537,7 @@ void MainWindow::Optimisation()
             upda=0;
             abauto += 1;
             LogFile<<endl;
-            LogFile<<"New RVs found; Residuum: "<<yi<<endl;
+            LogFile<<"New RVs found; Residuum: "<<y[i]<<endl;
             if(ui->checkBox_3->isChecked()){
                 for(int i = 0; i<nu;i++){
                     LogFile<<RV1[i]<<endl;
@@ -2370,7 +2605,13 @@ void MainWindow::Optimisation()
 
         if(!checkfile.exists()){
             qDebug()<<"The optimisation file "<<checkfile.fileName()<<" does not exist.";
-            QMessageBox::information(this, "Error", "The optimisation file does not exist! When running optimization the first time for a given set of data, the optimization needs to be initiated first.");
+            if(runow==0){
+            QMessageBox::information(this, "Error", "Error 23: The optimisation file does not exist! When running optimization the first time for a given set of data, the optimization needs to be initiated first.");
+            }
+            else{
+                cout<<"Error 23: The optimisation file does not exist! When running optimization the first time for a given set of data, the optimization needs to be initiated first."<<endl;
+                MainWindow::Input();
+            }
            this->setCursor(QCursor(Qt::ArrowCursor));
             LogFile<<"The optimisation file does not exist! When running optimization the first time for a given set of data, the optimization needs to be initiated first."<<endl;
             return;
@@ -2386,7 +2627,13 @@ void MainWindow::Optimisation()
 
         if(number_of_lines!=nu+1){
             qDebug()<<"Wrong optimisation file.";
-            QMessageBox::information(this, "Error", "The optimisation file does not match to the data! When running optimization the first time for a given set of data, the optimization needs to be initiated first.");
+            if(runow==0){
+                QMessageBox::information(this, "Error", "Error 24: The optimisation file does not match to the data! When running optimization the first time for a given set of data, the optimization needs to be initiated first.");
+            }
+            else{
+                cout<<"Error 24: The optimisation file does not exist! When running optimization the first time for a given set of data, the optimization needs to be initiated first."<<endl;
+                MainWindow::Input();
+            }
            this->setCursor(QCursor(Qt::ArrowCursor));
             LogFile<<"The optimisation file does not match to the data! When running optimization the first time for a given set of data, the optimization needs to be initiated first."<<endl;
             return;
@@ -2446,9 +2693,15 @@ void MainWindow::Optimisation()
 
         if(!checkfile.exists()){
             qDebug()<<"The initiation file "<<checkfile.fileName()<<" does not exist.";
-            QMessageBox::information(this, "Error", "The initiation file does not exist! When running optimization the first time for a given set of data, the optimization needs to be initiated first.");
+            if(runow==0){
+                QMessageBox::information(this, "Error", "Error 25: The initiation file does not exist! When running optimisation the first time for a given set of data, the optimisation needs to be initiated first.");
+            }
+            else{
+                cout<<"Error 25: The initiation file does not exist! When running optimisation the first time for a given set of data, the optimisation needs to be initiated first."<<endl;
+                MainWindow::Input();
+            }
            this->setCursor(QCursor(Qt::ArrowCursor));
-            LogFile<<"The initiation file does not exist! When running optimization the first time for a given set of data, the optimization needs to be initiated first."<<endl;
+            LogFile<<"The initiation file does not exist! When running optimization the first time for a given set of data, the optimisation needs to be initiated first."<<endl;
             return;
         }
 
@@ -2462,9 +2715,15 @@ void MainWindow::Optimisation()
 
         if(number_of_lines!=nu+1){
             qDebug()<<"Wrong initiate file.";
-            QMessageBox::information(this, "Error", "The initiation file does not match to the data! When running optimization the first time for a given set of data, the optimization needs to be initiated first.");
+            if(runow==0){
+                QMessageBox::information(this, "Error", "Error 26: The initiation file does not match to the data! When running optimization the first time for a given set of data, the optimisation needs to be initiated first.");
+            }
+            else{
+                cout<<"Error 26: The initiation file does not exist! When running optimisation the first time for a given set of data, the optimisation needs to be initiated first."<<endl;
+                MainWindow::Input();
+            }
            this->setCursor(QCursor(Qt::ArrowCursor));
-            LogFile<<"The initiation file does not match to the data! When running optimization the first time for a given set of data, the optimization needs to be initiated first."<<endl;
+            LogFile<<"The initiation file does not match to the data! When running optimization the first time for a given set of data, the optimisation needs to be initiated first."<<endl;
             return;
         }
 
@@ -2495,6 +2754,8 @@ void MainWindow::Optimisation()
 
         LogFile<<"Initial data successfully loaded."<<endl;
     }
+
+
     qOptval = ui->lineEdit_16->text();
     string file1opt = qOptval.toUtf8().constData();
     std::ostringstream file1NameStream(file1opt);
@@ -2508,6 +2769,7 @@ void MainWindow::Optimisation()
     file2NameStream<<path<<"/"<<file2opt;
     std::string file2Name = file2NameStream.str();
     ofstream opt2(file2Name.c_str());
+
 
     LogFile<<endl;
     LogFile<<"*************************"<<endl;
@@ -2523,6 +2785,27 @@ void MainWindow::Optimisation()
     //start main loop
         for (int t=0; t<zaehler; t++){
             ui->spinBox_4->setValue(t+1);
+
+            string optback1 = "optval_vel_backup.dat";
+            std::ostringstream back1NameStream(optback1);
+            back1NameStream<<path<<"/"<<optback1;
+            std::string back1Name = back1NameStream.str();
+            ofstream back1(back1Name.c_str());
+
+
+            string optback2 = "optmat_vel_backup.dat";
+            std::ostringstream back2NameStream(optback2);
+            back2NameStream<<path<<"/"<<optback2;
+            std::string back2Name = back2NameStream.str();
+            ofstream back2(back2Name.c_str());
+
+            for(int i=0; i<nu+1;i++){
+                //cout<<y[i]<<endl;
+                back1<<setprecision(12)<<y[i]<<endl;
+                for(int j=0; j<nu; j++){
+                    back2<<setprecision(12)<<P(i,j)<<endl;
+                }
+            }
 
             LogFile<<endl;
             LogFile<<"Iteration: "<<t+1<<endl;
@@ -2648,7 +2931,7 @@ void MainWindow::Optimisation()
         ys2=ys;
         ym2=ym;
 
-        cout<<"Simplex Mean: "<<ym<<" Simplex STD: "<<ys<<endl;
+        cout<<"Simplex Mean: "<<ym<<"; Simplex STD: "<<ys<<endl;
 
         LogFile<<setprecision(12)<<"Mean: "<<ym<<"\tSTD: "<<ys<<endl;
 
@@ -2660,7 +2943,6 @@ void MainWindow::Optimisation()
                 }
             }
         }
-        cout<<t<<" centroid ";
 
         //reflect highest value at centroid
         cout<<"reflection at centroid..."<<endl;
@@ -3092,12 +3374,12 @@ void MainWindow::Optimisation()
         MainWindow::ConstructMatrix();
         y[j]=MainWindow::DivideConquer();
         qApp->processEvents(QEventLoop::AllEvents);
-        cout<<j+1<<" from "<<nu+1<<" points contracted."<<endl;
+        cout<<j+1<<" of "<<nu+1<<" points contracted."<<endl;
 
         if(upda==1){
             upda=0;
             LogFile<<endl;
-            LogFile<<"New RVs found; Residuum: "<<yt<<endl;
+            LogFile<<"New RVs found; Residuum: "<<y[j]<<endl;
             if(ui->checkBox_3->isChecked()){
                 for(int i = 0; i<nu;i++){
                     LogFile<<RV1[i]<<endl;
@@ -3312,18 +3594,34 @@ void MainWindow::Optimisation()
                     QFile QIn2(file2Name.c_str());
 
                     if(inrein==0 & (QIn.exists() or QIn2.exists())){
-                        QMessageBox::StandardButton reply;
-                        reply = QMessageBox::question(this, "Warning!", "The file already exists. \n\n Do you want to overwrite it?",
+                        if(runow==0){
+                            QMessageBox::StandardButton reply;
+                            reply = QMessageBox::question(this, "Warning!", "The file already exists. \n\n Do you want to overwrite it?",
                                                     QMessageBox::Yes|QMessageBox::No);
-                        if (reply == QMessageBox::Yes) {
-                            qDebug() << "Overwrite initial data.";
-                            LogFile<<"Create new initial simplex with "<<nu+1<<" points."<<endl;
-                            LogFile<<"Elements:"<<endl;
+                            if (reply == QMessageBox::Yes) {
+                                qDebug() << "Overwrite initial data.";
+                                LogFile<<"Create new initial simplex with "<<nu+1<<" points."<<endl;
+                                LogFile<<"Elements:"<<endl;
+                            }
+                            else{
+                                qDebug()<< "Initiation aborted.";
+                                this->setCursor(QCursor(Qt::ArrowCursor));
+                                return;
+                            }
                         }
                         else{
-                            qDebug()<< "Initiation aborted.";
-                            this->setCursor(QCursor(Qt::ArrowCursor));
-                            return;
+                            cout<<"Warning: The optimisation files already exists. Do you want to overwrite it? 0 no, yes 1: "<<endl;
+                            cin >> overw;
+                            if(overw==0){
+                                qDebug()<< "Initiation aborted.";
+                                this->setCursor(QCursor(Qt::ArrowCursor));
+                                return;
+                            }
+                            else{
+                                qDebug() << "Overwrite initial data.";
+                                LogFile<<"Create new initial simplex with "<<nu+1<<" points."<<endl;
+                                LogFile<<"Elements:"<<endl;
+                            }
                         }
                     }
                     else{
@@ -3704,9 +4002,15 @@ void MainWindow::Optimisation()
 
                   if(!checkfile.exists()){
                       qDebug()<<"The optimisation file "<<checkfile.fileName()<<" does not exist.";
-                      QMessageBox::information(this, "Error", "The optimisation file does not exist! When running optimisation the first time for a given set of data, the optimization needs to be initiated first.");
+                      if(runow==0){
+                        QMessageBox::information(this, "Error", "The optimisation file does not exist! When running optimisation the first time for a given set of data, the optimisation needs to be initiated first.");
+                      }
+                      else{
+                          cout<<"The optimisation file does not exist! When running optimisation the first time for a given set of data, the optimisation needs to be initiated first."<<endl;
+                          MainWindow::Input();
+                      }
                      this->setCursor(QCursor(Qt::ArrowCursor));
-                      LogFile<<"The optimisation file does not exist! When running optimisation the first time for a given set of data, the optimization needs to be initiated first."<<endl;
+                      LogFile<<"The optimisation file does not exist! When running optimisation the first time for a given set of data, the optimisation needs to be initiated first."<<endl;
                       return;
                   }
 
@@ -3720,9 +4024,15 @@ void MainWindow::Optimisation()
 
                   if(number_of_lines!=nu+1){
                       qDebug()<<"Wrong optimisation file.";
-                      QMessageBox::information(this, "Error", "The optimisation file does not match to the data! When running optimisation the first time for a given set of data, the optimization needs to be initiated first.");
+                      if(runow==0){
+                        QMessageBox::information(this, "Error", "The optimisation file does not match to the data! When running optimisation the first time for a given set of data, the optimisation needs to be initiated first.");
+                      }
+                      else{
+                          cout<<"The optimisation file does match to the data! When running optimisation the first time for a given set of data, the optimisation needs to be initiated first."<<endl;
+                          MainWindow::Input();
+                      }
                      this->setCursor(QCursor(Qt::ArrowCursor));
-                      LogFile<<"The optimisation file does not match to the data! When running optimisation the first time for a given set of data, the optimization needs to be initiated first."<<endl;
+                      LogFile<<"The optimisation file does not match to the data! When running optimisation the first time for a given set of data, the optimisation needs to be initiated first."<<endl;
                       return;
                   }
 
@@ -3779,9 +4089,15 @@ void MainWindow::Optimisation()
 
                   if(!checkfile.exists()){
                       qDebug()<<"The initiation file "<<checkfile.fileName()<<" does not exist.";
-                      QMessageBox::information(this, "Error", "The initiation file does not exist! When running optimization the first time for a given set of data, the optimization needs to be initiated first.");
+                      if(runow==0){
+                        QMessageBox::information(this, "Error", "The initiation file does not exist! When running optimisation the first time for a given set of data, the optimisation needs to be initiated first.");
+                      }
+                      else{
+                          cout<<"The initiation file does not exist! When running optimisation the first time for a given set of data, the optimisation needs to be initiated first."<<endl;
+                          MainWindow::Input();
+                      }
                      this->setCursor(QCursor(Qt::ArrowCursor));
-                      LogFile<<"The initiation file does not exist! When running optimisation the first time for a given set of data, the optimization needs to be initiated first."<<endl;
+                      LogFile<<"The initiation file does not exist! When running optimisation the first time for a given set of data, the optimisation needs to be initiated first."<<endl;
                       return;
                   }
 
@@ -3795,10 +4111,15 @@ void MainWindow::Optimisation()
 
                   if(number_of_lines!=nu+1){
                       qDebug()<<"Wrong initiate file.";
-                      QMessageBox::information(this, "Error", "The initiation file does not match to the data! When running optimization the first time for a given set of data, the optimization needs to be initiated first.");
+                      if(runow==0){
+                        QMessageBox::information(this, "Error", "The initiation file does not match to the data! When running optimisation the first time for a given set of data, the optimisation needs to be initiated first.");
+                      }
+                      else{
+                          cout<<"The initiation file does not match to the data! When running optimisation the first time for a given set of data, the optimisation needs to be initiated first."<<endl;
+                      }
                      this->setCursor(QCursor(Qt::ArrowCursor));
                       cout<<number_of_lines<<endl;
-                      LogFile<<"The initiation file does not match to the data! When running optimisation the first time for a given set of data, the optimization needs to be initiated first."<<endl;
+                      LogFile<<"The initiation file does not match to the data! When running optimisation the first time for a given set of data, the optimisation needs to be initiated first."<<endl;
                       return;
                   }
 
@@ -3857,6 +4178,27 @@ void MainWindow::Optimisation()
                   //start main loop
                   for(int t=0; t<zaehler; t++){
                       ui->spinBox_4->setValue(t+1);
+
+                      string optback1 = "optval_vel_backup.dat";
+                      std::ostringstream back1NameStream(optback1);
+                      back1NameStream<<path<<"/"<<optback1;
+                      std::string back1Name = back1NameStream.str();
+                      ofstream back1(back1Name.c_str());
+
+
+                      string optback2 = "optmat_vel_backup.dat";
+                      std::ostringstream back2NameStream(optback2);
+                      back2NameStream<<path<<"/"<<optback2;
+                      std::string back2Name = back2NameStream.str();
+                      ofstream back2(back2Name.c_str());
+
+                      for(int i=0; i<nu+1;i++){
+                          //cout<<y[i]<<endl;
+                          back1<<setprecision(12)<<y[i]<<endl;
+                          for(int j=0; j<nu; j++){
+                              back2<<setprecision(12)<<P[i][j]<<endl;
+                          }
+                      }
 
                       LogFile<<endl;
 
@@ -3927,7 +4269,11 @@ void MainWindow::Optimisation()
                               LogFile<<endl;
                               LogFile<<"Reinitiate optimisation with current best orbit."<<endl;
 
-                              ofstream borbit("orbitelements.dat");
+                              string filerein = "orbitelements.dat";
+                              std::ostringstream reinNameStream(filerein);
+                              reinNameStream<<path<<"/"<<filerein;
+                              std::string reinName = reinNameStream.str();
+                              ofstream borbit(reinName.c_str());
 
                               if(add==0){
                               for(int k=0; k<7; k++){
@@ -4111,13 +4457,13 @@ void MainWindow::Optimisation()
                           upda=0;
                           LogFile<<"New Parameters found."<<endl;
                           LogFile<<"Residuum: "<<r1<<endl;
-                          LogFile<<scientific<<"P: "<<orbele[0]<<endl;
-                          LogFile<<scientific<<"e: "<<orbele[1]<<endl;
-                          LogFile<<scientific<<"KA: "<<orbele[2]<<endl;
-                          LogFile<<scientific<<"KB: "<<orbele[3]<<endl;
-                          LogFile<<scientific<<"Gamma: "<<orbele[4]<<endl;
-                          LogFile<<scientific<<"T0: "<<orbele[5]<<endl;
-                          LogFile<<scientific<<"Omega: "<<orbele[6]<<endl;
+                          LogFile<<setprecision(14)<<"P: "<<orbele[0]<<endl;
+                          LogFile<<setprecision(14)<<"e: "<<orbele[1]<<endl;
+                          LogFile<<setprecision(14)<<"KA: "<<orbele[2]<<endl;
+                          LogFile<<setprecision(14)<<"KB: "<<orbele[3]<<endl;
+                          LogFile<<setprecision(14)<<"Gamma: "<<orbele[4]<<endl;
+                          LogFile<<setprecision(14)<<"T0: "<<orbele[5]<<endl;
+                          LogFile<<setprecision(14)<<"Omega: "<<orbele[6]<<endl;
                           LogFile<<endl;
                       }
 
@@ -4125,7 +4471,7 @@ void MainWindow::Optimisation()
                           //output results
                           LogFile<<"Optimisation aborted. Current best Elements:"<<endl;
                               for(int i = 0; i<nu;i++){
-                                  LogFile<<P[Pl][i]<<endl;
+                                  LogFile<<setprecision(14)<<P[Pl][i]<<endl;
                               }
                           LogFile<<endl;
                           for(int i=0; i<nu+1; i++){
@@ -4224,13 +4570,13 @@ void MainWindow::Optimisation()
                               upda=0;
                               LogFile<<"New Parameters found."<<endl;
                               LogFile<<"Residuum: "<<r1<<endl;
-                              LogFile<<scientific<<"P: "<<orbele[0]<<endl;
-                              LogFile<<scientific<<"e: "<<orbele[1]<<endl;
-                              LogFile<<scientific<<"KA: "<<orbele[2]<<endl;
-                              LogFile<<scientific<<"KB: "<<orbele[3]<<endl;
-                              LogFile<<scientific<<"Gamma: "<<orbele[4]<<endl;
-                              LogFile<<scientific<<"T0: "<<orbele[5]<<endl;
-                              LogFile<<scientific<<"Omega: "<<orbele[6]<<endl;
+                              LogFile<<setprecision(14)<<"P: "<<orbele[0]<<endl;
+                              LogFile<<setprecision(14)<<"e: "<<orbele[1]<<endl;
+                              LogFile<<setprecision(14)<<"KA: "<<orbele[2]<<endl;
+                              LogFile<<setprecision(14)<<"KB: "<<orbele[3]<<endl;
+                              LogFile<<setprecision(14)<<"Gamma: "<<orbele[4]<<endl;
+                              LogFile<<setprecision(14)<<"T0: "<<orbele[5]<<endl;
+                              LogFile<<setprecision(14)<<"Omega: "<<orbele[6]<<endl;
                               LogFile<<endl;
                           }
 
@@ -4238,7 +4584,7 @@ void MainWindow::Optimisation()
                               //output results
                               LogFile<<"Optimisation aborted. Current best Elements:"<<endl;
                                   for(int i = 0; i<nu;i++){
-                                      LogFile<<P[Pl][i]<<endl;
+                                      LogFile<<setprecision(14)<<P[Pl][i]<<endl;
                                   }
                               for(int i=0; i<nu+1; i++){
                                   cout<<y[i]<<endl;
@@ -4340,7 +4686,7 @@ void MainWindow::Optimisation()
                                   //output results
                                   LogFile<<"Optimisation aborted. Current best Elements:"<<endl;
                                       for(int i = 0; i<nu;i++){
-                                          LogFile<<P[Pl][i]<<endl;
+                                          LogFile<<setprecision(14)<<P[Pl][i]<<endl;
                                       }
                                   for(int i=0; i<nu+1; i++){
                                       cout<<y[i]<<endl;
@@ -4384,7 +4730,7 @@ void MainWindow::Optimisation()
                                   //output results
                                   LogFile<<"Optimisation aborted. Current best Elements:"<<endl;
                                       for(int i = 0; i<nu;i++){
-                                          LogFile<<P[Pl][i]<<endl;
+                                          LogFile<<setprecision(14)<<P[Pl][i]<<endl;
                                       }
                                   for(int i=0; i<nu+1; i++){
                                       cout<<y[i]<<endl;
@@ -4425,7 +4771,7 @@ void MainWindow::Optimisation()
                                       //output results
                                       LogFile<<"Optimisation aborted. Current best Elements:"<<endl;
                                           for(int i = 0; i<nu;i++){
-                                              LogFile<<P[Pl][i]<<endl;
+                                              LogFile<<setprecision(14)<<P[Pl][i]<<endl;
                                           }
                                       for(int i=0; i<nu+1; i++){
                                           cout<<y[i]<<endl;
@@ -4520,13 +4866,13 @@ void MainWindow::Optimisation()
                                   upda=0;
                                   LogFile<<"New Parameters found."<<endl;
                                   LogFile<<"Residuum: "<<r1<<endl;
-                                  LogFile<<scientific<<"P: "<<orbele[0]<<endl;
-                                  LogFile<<scientific<<"e: "<<orbele[1]<<endl;
-                                  LogFile<<scientific<<"KA: "<<orbele[2]<<endl;
-                                  LogFile<<scientific<<"KB: "<<orbele[3]<<endl;
-                                  LogFile<<scientific<<"Gamma: "<<orbele[4]<<endl;
-                                  LogFile<<scientific<<"T0: "<<orbele[5]<<endl;
-                                  LogFile<<scientific<<"Omega: "<<orbele[6]<<endl;
+                                  LogFile<<setprecision(14)<<"P: "<<orbele[0]<<endl;
+                                  LogFile<<setprecision(14)<<"e: "<<orbele[1]<<endl;
+                                  LogFile<<setprecision(14)<<"KA: "<<orbele[2]<<endl;
+                                  LogFile<<setprecision(14)<<"KB: "<<orbele[3]<<endl;
+                                  LogFile<<setprecision(14)<<"Gamma: "<<orbele[4]<<endl;
+                                  LogFile<<setprecision(14)<<"T0: "<<orbele[5]<<endl;
+                                  LogFile<<setprecision(14)<<"Omega: "<<orbele[6]<<endl;
                                   LogFile<<endl;
                               }
 
@@ -4534,7 +4880,7 @@ void MainWindow::Optimisation()
                                   //output results
                                   LogFile<<"Optimisation aborted. Current best Elements:"<<endl;
                                       for(int i = 0; i<nu;i++){
-                                          LogFile<<P[Pl][i]<<endl;
+                                          LogFile<<setprecision(14)<<P[Pl][i]<<endl;
                                       }
                                   for(int i=0; i<nu+1; i++){
                                       cout<<y[i]<<endl;
@@ -4627,20 +4973,20 @@ void MainWindow::Optimisation()
                                       MainWindow::ConstructMatrix();
                                       y[j]=MainWindow::DivideConquer();
                                       qApp->processEvents(QEventLoop::AllEvents);
-                                      cout<<j+1<<" points from "<<nu+1<<" contracted."<<endl;
+                                      cout<<j+1<<" of "<<nu+1<<" points contracted."<<endl;
 
                                       if(upda==1){
                                           upda=0;
 
                                           LogFile<<"New Parameters found."<<endl;
                                           LogFile<<"Residuum: "<<r1<<endl;
-                                          LogFile<<scientific<<"P: "<<orbele[0]<<endl;
-                                          LogFile<<scientific<<"e: "<<orbele[1]<<endl;
-                                          LogFile<<scientific<<"KA: "<<orbele[2]<<endl;
-                                          LogFile<<scientific<<"KB: "<<orbele[3]<<endl;
-                                          LogFile<<scientific<<"Gamma: "<<orbele[4]<<endl;
-                                          LogFile<<scientific<<"T0: "<<orbele[5]<<endl;
-                                          LogFile<<scientific<<"Omega: "<<orbele[6]<<endl;
+                                          LogFile<<setprecision(14)<<"P: "<<orbele[0]<<endl;
+                                          LogFile<<setprecision(14)<<"e: "<<orbele[1]<<endl;
+                                          LogFile<<setprecision(14)<<"KA: "<<orbele[2]<<endl;
+                                          LogFile<<setprecision(14)<<"KB: "<<orbele[3]<<endl;
+                                          LogFile<<setprecision(14)<<"Gamma: "<<orbele[4]<<endl;
+                                          LogFile<<setprecision(14)<<"T0: "<<orbele[5]<<endl;
+                                          LogFile<<setprecision(14)<<"Omega: "<<orbele[6]<<endl;
                                           LogFile<<endl;
                                       }
 
@@ -4648,7 +4994,7 @@ void MainWindow::Optimisation()
                                           //output results
                                           LogFile<<"Optimisation aborted. Current best Elements:"<<endl;
                                               for(int i = 0; i<nu;i++){
-                                                  LogFile<<P[Pl][i]<<endl;
+                                                  LogFile<<setprecision(14)<<P[Pl][i]<<endl;
                                               }
                                           for(int i=0; i<nu+1; i++){
                                               cout<<y[i]<<endl;
@@ -4747,7 +5093,7 @@ void MainWindow::Optimisation()
                                       //output results
                                       LogFile<<"Optimisation aborted. Current best Elements:"<<endl;
                                           for(int i = 0; i<nu;i++){
-                                              LogFile<<P[Pl][i]<<endl;
+                                              LogFile<<setprecision(14)<<P[Pl][i]<<endl;
                                           }
                                       for(int i=0; i<nu+1; i++){
                                           cout<<y[i]<<endl;
@@ -4890,8 +5236,8 @@ void MainWindow::Optimisation()
                   LogFile<<"Period; Eccentricity; Amplitude A; Amplitude B; Systemic V.; T_peri; Omega A;"<<endl;
 
                       for(int i = 0; i<nu;i++){
-                          cout<<orbele[i]<<";\t";
-                          LogFile<<orbele[i]<<";\t";
+                          cout<<setprecision(14)<<orbele[i]<<";\t";
+                          LogFile<<setprecision(14)<<orbele[i]<<";\t";
                       }
 
                 cout<<endl;
@@ -5507,7 +5853,13 @@ double MainWindow::DivideConquer(){
     else ++cBS;
 
     if(cBS == 0){
-        QMessageBox::information(this, "Error", "Select method for ECON.");
+        if(runow==0){
+            QMessageBox::information(this, "Error", "Select method for ECON.");
+        }
+        else{
+            cout<<"Select method for ECON."<<endl;
+            MainWindow::Input();
+        }
         abortt=1;
         return 0;
     }
@@ -5699,18 +6051,18 @@ double MainWindow::DivideConquer(){
                         //    X(j)=X(j)+(fluxratio/(fluxratio+1)-0.5);
                         //}
 
-                        file1<<pow(10,(W(0)+(index1-(RV3maxi+orbele[4])/dv)*difference))<<"\t"<<X(j)<<endl;
+                        file1<<setprecision(14)<<pow(10,(W(0)+(index1-(RV3maxi+orbele[4])/dv)*difference))<<"\t"<<X(j)<<endl;
                         ++index1;
                     }
                     if((j>=bso1)&(j<bso1+bso2)){
                         //if(ui->checkBox_4->isChecked()){
                         //    X(j)=X(j)+(1.0/(fluxratio+1)-0.5);
                         //}
-                        file2<<pow(10,(W(0)+(index2-(RV1maxi+orbele[4])/dv)*difference))<<"\t"<<X(j)<<endl;
+                        file2<<setprecision(14)<<pow(10,(W(0)+(index2-(RV1maxi+orbele[4])/dv)*difference))<<"\t"<<X(j)<<endl;
                         ++index2;
                     }
                     if(j>=bso1+bso2){
-                        tell<<pow(10,(W(0)+index3*difference))<<"\t"<<X(j)<<endl;
+                        tell<<setprecision(14)<<pow(10,(W(0)+index3*difference))<<"\t"<<X(j)<<endl;
                         ++index3;
                     }
                 }
@@ -5724,7 +6076,7 @@ double MainWindow::DivideConquer(){
         index3=0;
 
         for(int i=0; i<res.size(); i++){
-                file5<<pow(10,W(i))<<" "<<(res(i)-C(i))<<endl;
+                file5<<setprecision(14)<<pow(10,W(i))<<" "<<(res(i)-C(i))<<endl;
         }
 
         // Save all Updates
@@ -5769,15 +6121,15 @@ double MainWindow::DivideConquer(){
                  if(abs(X(j))>10*tsh){
                     if(j<bso1){
 
-                        upda2<<pow(10,(W(0)+(index1-(RV3maxi+orbele[4])/dv)*difference))<<"\t"<<X(j)<<endl;
+                        upda2<<setprecision(14)<<pow(10,(W(0)+(index1-(RV3maxi+orbele[4])/dv)*difference))<<"\t"<<X(j)<<endl;
                         ++index1;
                     }
                     if((j>=bso1)&(j<bso1+bso2)){
-                        upda3<<pow(10,(W(0)+(index2-(RV1maxi+orbele[4])/dv)*difference))<<"\t"<<X(j)<<endl;
+                        upda3<<setprecision(14)<<pow(10,(W(0)+(index2-(RV1maxi+orbele[4])/dv)*difference))<<"\t"<<X(j)<<endl;
                         ++index2;
                     }
                     if(j>=bso1+bso2){
-                        upda5<<pow(10,(W(0)+index3*difference))<<"\t"<<X(j)<<endl;
+                        upda5<<setprecision(14)<<pow(10,(W(0)+index3*difference))<<"\t"<<X(j)<<endl;
                         ++index3;
                     }
                 }
@@ -5827,11 +6179,11 @@ double MainWindow::DivideConquer(){
             for(int i=0; i<Mm-1; i++){
                 Xr[index3]=(X(i)+X(i+1))/2;
                 if(i<bso1){
-                    file3<<pow(10,(W(0)+(2*index1-(RV3maxi+orbele[4])/dv)*difference))<<"\t"<<Xr[index3]<<endl;
+                    file3<<setprecision(14)<<pow(10,(W(0)+(2*index1-(RV3maxi+orbele[4])/dv)*difference))<<"\t"<<Xr[index3]<<endl;
                     ++index1;
                 }
                 if((i>=bso1) & (i<bso1+bso2)){
-                    file4<<pow(10,(W(0)+(2*index2-(RV1maxi+orbele[4])/dv)*difference))<<"\t"<<Xr[index3]<<endl;
+                    file4<<setprecision(14)<<pow(10,(W(0)+(2*index2-(RV1maxi+orbele[4])/dv)*difference))<<"\t"<<Xr[index3]<<endl;
                     ++index2;
                 }
                 ++i;
@@ -5849,253 +6201,254 @@ double MainWindow::DivideConquer(){
 //*******************************************************
 void MainWindow::on_pushButton_6_clicked()
 {
-    ui->customPlot->clearGraphs();
-    ui->customPlot_2->clearGraphs();
-    ui->customPlot_3->clearGraphs();
+    if(runow==0){       //plot only of in GUI-mode
+        ui->customPlot->clearGraphs();
+        ui->customPlot_2->clearGraphs();
+        ui->customPlot_3->clearGraphs();
 
-    double xs1, xs2, ys1, ys2;
-    string zeile, one, two;
-    QString plot1=ui->lineEdit_5->text();
-    string plot11 = plot1.toUtf8().constData();
-    std::ostringstream datNameStream(plot11);
-    datNameStream<<path<<"/"<<plot11;
-    std::string datName = datNameStream.str();
-    ifstream toplot1(datName.c_str());
+        double xs1, xs2, ys1, ys2;
+        string zeile, one, two;
+        QString plot1=ui->lineEdit_5->text();
+        string plot11 = plot1.toUtf8().constData();
+        std::ostringstream datNameStream(plot11);
+        datNameStream<<path<<"/"<<plot11;
+        std::string datName = datNameStream.str();
+        ifstream toplot1(datName.c_str());
 
-    QFile checkfile(datName.c_str());
+        QFile checkfile(datName.c_str());
 
-    if(!checkfile.exists()){
-        qDebug()<<"The file "<<checkfile.fileName()<<" does not exist.";
-        QMessageBox::information(this, "Error", "File "+qPath+"/"+plot1+" does not exist!");
-       return;
-    }
+        if(!checkfile.exists()){
+            qDebug()<<"The file "<<checkfile.fileName()<<" does not exist.";
+            QMessageBox::information(this, "Error", "File "+qPath+"/"+plot1+" does not exist!");
+            return;
+        }
 
-    QString plot2=ui->lineEdit_8->text();
-    string plot12 = plot2.toUtf8().constData();
-    std::ostringstream dat2NameStream(plot12);
-    dat2NameStream<<path<<"/"<<plot12;
-    std::string dat2Name = dat2NameStream.str();
-    ifstream toplot2(dat2Name.c_str());
+        QString plot2=ui->lineEdit_8->text();
+        string plot12 = plot2.toUtf8().constData();
+        std::ostringstream dat2NameStream(plot12);
+        dat2NameStream<<path<<"/"<<plot12;
+        std::string dat2Name = dat2NameStream.str();
+        ifstream toplot2(dat2Name.c_str());
 
-    QFile checkfile2(dat2Name.c_str());
+        QFile checkfile2(dat2Name.c_str());
 
-    if(!checkfile2.exists()){
-        qDebug()<<"The file "<<checkfile2.fileName()<<" does not exist.";
-        QMessageBox::information(this, "Error", "File "+qPath+"/"+plot2+" does not exist!");
-       return;
-    }
+        if(!checkfile2.exists()){
+            qDebug()<<"The file "<<checkfile2.fileName()<<" does not exist.";
+            QMessageBox::information(this, "Error", "File "+qPath+"/"+plot2+" does not exist!");
+            return;
+        }
 
-    QString qError=ui->lineEdit_20->text();
-    string errorf=qError.toUtf8().constData();
-    std::ostringstream dat4NameStream(errorf);
-    dat4NameStream<<path<<"/"<<errorf;
-    std::string dat4Name = dat4NameStream.str();
-    ifstream errors(dat4Name.c_str());
+        QString qError=ui->lineEdit_20->text();
+        string errorf=qError.toUtf8().constData();
+        std::ostringstream dat4NameStream(errorf);
+        dat4NameStream<<path<<"/"<<errorf;
+        std::string dat4Name = dat4NameStream.str();
+        ifstream errors(dat4Name.c_str());
 
-    QFile checkfile4(dat4Name.c_str());
+        QFile checkfile4(dat4Name.c_str());
 
-    if(!checkfile4.exists()){
-        qDebug()<<"The file "<<checkfile4.fileName()<<" does not exist.";
-        QMessageBox::information(this, "Error", "File "+qPath+"/"+qError+" does not exist!");
-       return;
-    }
+        if(!checkfile4.exists()){
+            qDebug()<<"The file "<<checkfile4.fileName()<<" does not exist.";
+            QMessageBox::information(this, "Error", "File "+qPath+"/"+qError+" does not exist!");
+            return;
+        }
 
-    int number_of_lines=0;
+        int number_of_lines=0;
 
-    while(std::getline(toplot1, zeile))
+        while(std::getline(toplot1, zeile))
+            ++ number_of_lines;
+
+        toplot1.clear();
+        toplot1.seekg(0, ios::beg);
+
+        QVector<double> a(number_of_lines), b(number_of_lines);
+
+        for (int i=0; i<number_of_lines; i++){
+            toplot1 >> one >>two;
+            istringstream ist(one);
+            ist >> a[i];
+            istringstream ist2(two);
+            ist2 >> b[i];
+        }
+        toplot1.close();
+
+        xs1=a[0];
+        xs2=a[number_of_lines-1];
+        for(int i=0; i<number_of_lines; i++){
+            if(a[i]<xs1){
+                xs1=a[i];
+            }
+        }
+
+        for(int i=0; i<number_of_lines; i++){
+            if(a[i]>xs2){
+                xs2=a[i];
+            }
+        }
+
+
+        ys1=b[0];
+        ys2=b[number_of_lines-1];
+        for(int i=0; i<number_of_lines; i++){
+            if(b[i]<ys1){
+                ys1=b[i];
+            }
+        }
+        for(int i=0; i<number_of_lines; i++){
+            if(b[i]>ys2){
+                ys2=b[i];
+            }
+        }
+
+
+        number_of_lines=0;
+
+        while(std::getline(toplot2, zeile))
+            ++ number_of_lines;
+
+        toplot2.clear();
+        toplot2.seekg(0, ios::beg);
+
+        QVector<double> c(number_of_lines), d(number_of_lines);
+
+        for (int i=0; i<number_of_lines; i++){
+            toplot2 >> one >>two;
+            istringstream ist(one);
+            ist >> c[i];
+            istringstream ist2(two);
+            ist2 >> d[i];
+        }
+        toplot2.close();
+
+        for(int i=0; i<number_of_lines; i++){
+            if(c[i]<xs1){
+                xs1=c[i];
+            }
+        }
+
+        for(int i=0; i<number_of_lines; i++){
+            if(c[i]>xs2){
+                xs2=c[i];
+            }
+        }
+
+        for(int i=0; i<number_of_lines; i++){
+            if(d[i]<ys1){
+                ys1=d[i];
+            }
+        }
+        for(int i=0; i<number_of_lines; i++){
+            if(d[i]>ys2){
+                ys2=d[i];
+            }
+        }
+
+        number_of_lines=0;
+
+        while(std::getline(errors, zeile))
        ++ number_of_lines;
 
-    toplot1.clear();
-    toplot1.seekg(0, ios::beg);
+        errors.clear();
+        errors.seekg(0, ios::beg);
 
-    QVector<double> a(number_of_lines), b(number_of_lines);
+        QVector<double> e(number_of_lines), f(number_of_lines);
 
-    for (int i=0; i<number_of_lines; i++){
-        toplot1 >> one >>two;
-        istringstream ist(one);
-        ist >> a[i];
-        istringstream ist2(two);
-        ist2 >> b[i];
-    }
-    toplot1.close();
-
-    xs1=a[0];
-    xs2=a[number_of_lines-1];
-    for(int i=0; i<number_of_lines; i++){
-        if(a[i]<xs1){
-            xs1=a[i];
+        for (int i=0; i<number_of_lines; i++){
+            errors >> one >>two;
+            istringstream ist(one);
+            ist >> e[i];
+            istringstream ist2(two);
+            ist2 >> f[i];
         }
-    }
+        errors.close();
 
-    for(int i=0; i<number_of_lines; i++){
-        if(a[i]>xs2){
-            xs2=a[i];
+        ui->customPlot->addGraph();
+        ui->customPlot->graph(0)->setData(a, b);
+        ui->customPlot->graph(0)->rescaleAxes();
+        ui->customPlot->graph(0)->setPen(QPen(Qt::blue));
+        ui->customPlot->addGraph();
+        ui->customPlot->graph(1)->setData(c, d);
+        ui->customPlot->graph(1)->rescaleAxes(true);
+        ui->customPlot->graph(1)->setPen(QPen(Qt::red));
+        ui->customPlot->addGraph();
+        ui->customPlot->graph(2)->setData(e, f);
+        ui->customPlot->yAxis->rescale(true);
+        ui->customPlot->graph(2)->setPen(QPen(Qt::black));
+        ui->customPlot->replot();
+
+        //Differences
+        QString plot3=ui->lineEdit_13->text();
+        string plot13 = plot3.toUtf8().constData();
+        std::ostringstream dat3NameStream(plot13);
+        dat3NameStream<<path<<"/"<<plot13;
+        std::string dat3Name = dat3NameStream.str();
+        ifstream toplot3(dat3Name.c_str());
+
+        QFile checkfile3(datName.c_str());
+
+        if(!checkfile3.exists()){
+            qDebug()<<"The file "<<checkfile3.fileName()<<" does not exist.";
+            QMessageBox::information(this, "Error", "File "+qPath+"/"+plot3+" does not exist!");
+            return;
         }
-    }
 
 
-    ys1=b[0];
-    ys2=b[number_of_lines-1];
-    for(int i=0; i<number_of_lines; i++){
-        if(b[i]<ys1){
-            ys1=b[i];
-        }
-    }
-    for(int i=0; i<number_of_lines; i++){
-        if(b[i]>ys2){
-            ys2=b[i];
-        }
-    }
+        number_of_lines=0;
 
-
-    number_of_lines=0;
-
-    while(std::getline(toplot2, zeile))
-       ++ number_of_lines;
-
-    toplot2.clear();
-    toplot2.seekg(0, ios::beg);
-
-    QVector<double> c(number_of_lines), d(number_of_lines);
-
-    for (int i=0; i<number_of_lines; i++){
-        toplot2 >> one >>two;
-        istringstream ist(one);
-        ist >> c[i];
-        istringstream ist2(two);
-        ist2 >> d[i];
-    }
-    toplot2.close();
-
-    for(int i=0; i<number_of_lines; i++){
-        if(c[i]<xs1){
-            xs1=c[i];
-        }
-    }
-
-    for(int i=0; i<number_of_lines; i++){
-        if(c[i]>xs2){
-            xs2=c[i];
-        }
-    }
-
-    for(int i=0; i<number_of_lines; i++){
-        if(d[i]<ys1){
-            ys1=d[i];
-        }
-    }
-    for(int i=0; i<number_of_lines; i++){
-        if(d[i]>ys2){
-            ys2=d[i];
-        }
-    }
-
-    number_of_lines=0;
-
-    while(std::getline(errors, zeile))
-       ++ number_of_lines;
-
-    errors.clear();
-    errors.seekg(0, ios::beg);
-
-    QVector<double> e(number_of_lines), f(number_of_lines);
-
-    for (int i=0; i<number_of_lines; i++){
-        errors >> one >>two;
-        istringstream ist(one);
-        ist >> e[i];
-        istringstream ist2(two);
-        ist2 >> f[i];
-    }
-    errors.close();
-
-     ui->customPlot->addGraph();
-     ui->customPlot->graph(0)->setData(a, b);
-     ui->customPlot->graph(0)->rescaleAxes();
-     ui->customPlot->graph(0)->setPen(QPen(Qt::blue));
-     ui->customPlot->addGraph();
-     ui->customPlot->graph(1)->setData(c, d);
-     ui->customPlot->graph(1)->rescaleAxes(true);
-     ui->customPlot->graph(1)->setPen(QPen(Qt::red));
-     ui->customPlot->addGraph();
-     ui->customPlot->graph(2)->setData(e, f);
-     ui->customPlot->yAxis->rescale(true);
-     ui->customPlot->graph(2)->setPen(QPen(Qt::black));
-     ui->customPlot->replot();
-
-     //Differences
-     QString plot3=ui->lineEdit_13->text();
-     string plot13 = plot3.toUtf8().constData();
-     std::ostringstream dat3NameStream(plot13);
-     dat3NameStream<<path<<"/"<<plot13;
-     std::string dat3Name = dat3NameStream.str();
-     ifstream toplot3(dat3Name.c_str());
-
-     QFile checkfile3(datName.c_str());
-
-     if(!checkfile3.exists()){
-         qDebug()<<"The file "<<checkfile3.fileName()<<" does not exist.";
-         QMessageBox::information(this, "Error", "File "+qPath+"/"+plot3+" does not exist!");
-        return;
-     }
-
-
-     number_of_lines=0;
-
-     while(std::getline(toplot3, zeile))
+        while(std::getline(toplot3, zeile))
         ++ number_of_lines;
 
-     toplot3.clear();
-     toplot3.seekg(0, ios::beg);
+        toplot3.clear();
+        toplot3.seekg(0, ios::beg);
 
-     double offset = ui->doubleSpinBox_5->value();
-     int index = 0;
-     double sres=0, sres2=0;
+        double offset = ui->doubleSpinBox_5->value();
+        int index = 0;
+        double sres=0, sres2=0;
 
-     a.resize(number_of_lines);
-     b.resize(number_of_lines);
+        a.resize(number_of_lines);
+        b.resize(number_of_lines);
 
-     for (int i=0; i<number_of_lines; i++){
-        toplot3 >> one >>two;
-        istringstream ist(one);
-        ist >> a[i];
-        istringstream ist2(two);
-        ist2 >> b[i];
-        if((i>0) & (a[i]<a[i-1])){
-            cout<<sres<<"\t"<<sres2<<endl;
-            sres = 0;
-            sres2 = 0;
-            ++index;
-        }
-        if(ui->checkBox_13->isChecked()){
-            if(a[i]>ui->doubleSpinBox_14->value() & (a[i]<ui->doubleSpinBox_15->value())){
+        for (int i=0; i<number_of_lines; i++){
+            toplot3 >> one >>two;
+            istringstream ist(one);
+            ist >> a[i];
+            istringstream ist2(two);
+            ist2 >> b[i];
+            if((i>0) & (a[i]<a[i-1])){
+                cout<<sres<<"\t"<<sres2<<endl;
+                sres = 0;
+                sres2 = 0;
+                ++index;
+            }
+            if(ui->checkBox_33->isChecked()){
+                if(a[i]>ui->doubleSpinBox_14->value() & (a[i]<ui->doubleSpinBox_15->value())){
+                    sres+=b[i];
+                    sres2+=pow(b[i],2);
+                }
+                else{
+                    // do nothing...
+                }
+            }
+            else{
                 sres+=b[i];
                 sres2+=pow(b[i],2);
             }
-            else{
-                // do nothing...
-            }
+            b[i]=b[i]+index*offset;
         }
-        else{
-            sres+=b[i];
-            sres2+=pow(b[i],2);
-        }
-        b[i]=b[i]+index*offset;
-     }
 
-     toplot3.close();
+        toplot3.close();
 
-      ui->customPlot_3->addGraph();
-      ui->customPlot_3->graph(0)->setData(a, b);
-      ui->customPlot_3->graph(0)->setPen(QPen(Qt::red));
-      ui->customPlot_3->graph(0)->setLineStyle(QCPGraph::lsNone);
-      ui->customPlot_3->graph(0)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, 2));
-      ui->customPlot_3->xAxis->setRange(xs1, xs2);
-      ui->customPlot_3->yAxis->setRange(-0.5, 0.5+index*offset);
-      ui->customPlot_3->replot();
+        ui->customPlot_3->addGraph();
+        ui->customPlot_3->graph(0)->setData(a, b);
+        ui->customPlot_3->graph(0)->setPen(QPen(Qt::red));
+        ui->customPlot_3->graph(0)->setLineStyle(QCPGraph::lsNone);
+        ui->customPlot_3->graph(0)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, 2));
+        ui->customPlot_3->xAxis->setRange(xs1, xs2);
+        ui->customPlot_3->yAxis->setRange(-0.5, 0.5+index*offset);
+        ui->customPlot_3->replot();
 
-      //telluric lines
-      if(ui->checkBox_8->isChecked()){
+        //telluric lines
+        if(ui->checkBox_8->isChecked()){
 
           QString plot5=ui->lineEdit_10->text();
           string plot15 = plot5.toUtf8().constData();
@@ -6141,6 +6494,10 @@ void MainWindow::on_pushButton_6_clicked()
           ui->customPlot_2->replot();
 
       }
+    }
+    else{
+        // nothing to be plotted
+    }
 
 }
 
@@ -6223,7 +6580,7 @@ void MainWindow::on_actionEditor_triggered()
 {
     int hgh = ui->spinBox_2->value() - ui->spinBox->value() + 1;
     qEdit =new Edit(this);
-    qEdit->seData(ui->lineEdit_4->text(), hgh);
+    qEdit->seData(ui->lineEdit_4->text(), hgh, ui->doubleSpinBox_4->value());
     qEdit->show();
 }
 
@@ -6331,7 +6688,12 @@ void MainWindow::ErrorEstimation()
 
     if(!checkfile5.exists()){
         qDebug()<<"The file "<<checkfile5.fileName()<<" does not exist.";
-        QMessageBox::information(this, "Error", "File "+qPath+"/"+qOptval+" does not exist!");
+        if(runow==0){
+            QMessageBox::information(this, "Error", "File "+qPath+"/"+qOptval+" does not exist!");
+        }
+        else{
+            cout<<"Error: File "<<path<<"/"<<file1opt<<" does not exist!"<<endl;
+        }
        return;
     }
 
@@ -6388,7 +6750,12 @@ void MainWindow::ErrorEstimation()
 
         if(!checkfile1.exists()){
             qDebug()<<"The optimisation file "<<checkfile1.fileName()<<" does not exist.";
-            QMessageBox::information(this, "Error", "The optimisation data "+qPath+"/"+qOptval+" does not exist.");
+            if(runow==0){
+                QMessageBox::information(this, "Error", "The optimisation data "+qPath+"/"+qOptval+" does not exist.");
+            }
+            else{
+                cout<<"Error: The optimisation data "<<path<<"/"<<file1opt<<" does not exist!"<<endl;
+            }
            this->setCursor(QCursor(Qt::ArrowCursor));
             return;
         }
@@ -6404,7 +6771,12 @@ void MainWindow::ErrorEstimation()
 
         if(!checkfile.exists()){
             qDebug()<<"The optimisation file "<<checkfile.fileName()<<" does not exist.";
-            QMessageBox::information(this, "Error", "The optimisation data "+qPath+"/"+qOptm+" does not exist.");
+            if(runow==0){
+                QMessageBox::information(this, "Error", "The optimisation data "+qPath+"/"+qOptm+" does not exist.");
+            }
+            else{
+                cout<<"Error: The optimisation data "<<path<<"/"<<file2opt<<" does not exist!"<<endl;
+            }
            this->setCursor(QCursor(Qt::ArrowCursor));
             return;
         }
@@ -6435,7 +6807,12 @@ void MainWindow::ErrorEstimation()
 
         if(epara!=NVar1+1){
             qDebug()<<"Wrong optimisation file.";
-            QMessageBox::information(this, "Error", "The optimisation data "+qPath+"/"+qOptval+" does not match to specifications in main window.");
+            if(runow==0){
+                QMessageBox::information(this, "Error", "The optimisation data "+qPath+"/"+qOptval+" does not match to specifications in main window.");
+            }
+            else{
+                cout<<"Error: The optimisation data "<<path<<"/"<<file1opt<<" does not match to the specification in main window."<<endl;
+            }
            this->setCursor(QCursor(Qt::ArrowCursor));
             return;
         }
@@ -6469,7 +6846,12 @@ void MainWindow::ErrorEstimation()
 
         if(number_of_lines!=NVar1*(NVar1+1)){
             qDebug()<<"Wrong optimisation file.";
-            QMessageBox::information(this, "Error", "The optimisation data "+qPath+"/"+qOptm+" does not match to specifications in main window.");
+            if(runow==0){
+                QMessageBox::information(this, "Error", "The optimisation data "+qPath+"/"+qOptm+" does not match to specifications in main window.");
+            }
+            else{
+                cout<<"Error: The optimisation data "<<path<<"/"<<file2opt<<" does not match to the specification in main window."<<endl;
+            }
            this->setCursor(QCursor(Qt::ArrowCursor));
             return;
         }
@@ -6494,35 +6876,61 @@ void MainWindow::ErrorEstimation()
                     ++indicat;
                 }
             }
+            /*
             if(indicat==NVar1){
                 QString ftar = QString::number(e);
-                QMessageBox::StandardButton reply;
-                reply = QMessageBox::question(this, "Warning!", "Parameter "+ftar+" has not changed. This will lead to a singular matrix inversion. Do you want to vary it?",
+                if(runow==0){
+                    QMessageBox::StandardButton reply;
+                    reply = QMessageBox::question(this, "Warning!", "Parameter "+ftar+" has not changed. This will lead to a singular matrix inversion. Do you want to vary it?",
                                               QMessageBox::Yes|QMessageBox::No);
-                if (reply == QMessageBox::Yes) {    // Variing parameters
-                  qDebug() << "Variing Parameter "+ftar;
-                    if(e+add==0){
+                    if (reply == QMessageBox::Yes) {    // Variing parameters
+                        qDebug() << "Variing Parameter "+ftar;
+                        if(e+add==0){
 
+                        }
+                        if(e+add==1){
+
+                        }
+                        if(e+add==2){
+
+                        }
+                        if(e+add==3){
+
+                        }
                     }
-                    if(e+add==1){
 
+                    else{    //abort error estimation
+                        qDebug() << "Error estimation via curvature matrix aborted.";
+                        return;
                     }
-                    if(e+add==2){
-
+                }
+                else{
+                    cout<<"Parameter "<<e<<" has not changed. This will lead to a singular matrix inversion. Do you want to vary it? 0 no, 1 yes: "<<endl;
+                    cin >> overw;
+                    if(overw==0){
+                        qDebug() << "Error estimation via curvature matrix aborted.";
+                        return;
                     }
-                    if(e+add==3){
+                    else{
+                        qDebug() << "Variing Parameter "+ftar;
+                        if(e+add==0){
 
+                        }
+                        if(e+add==1){
+
+                        }
+                        if(e+add==2){
+
+                        }
+                        if(e+add==3){
+
+                        }
                     }
-
-
-                } else {    //abort error estimation
-                  qDebug() << "Error estimation via curvature matrix aborted.";
-                  return;
                 }
             }
             else{
                 indicat=0;
-            }
+            }*/
         }
 
         int laufa=0, laufb=0, laufc=0;
@@ -6611,7 +7019,9 @@ void MainWindow::ErrorEstimation()
                 qApp->processEvents(QEventLoop::AllEvents);
                 if(abortt==1){
                     abortt=0;
-                    QMessageBox::information(this, "Abort", "Error estimation aborted.");
+                    if(runow==0){
+                        QMessageBox::information(this, "Abort", "Error estimation aborted.");
+                    }
                     return;
                 }
 
@@ -6684,7 +7094,9 @@ void MainWindow::ErrorEstimation()
                 }
             }
             if(laufa==NVar1-1){
-                QMessageBox::information(this, "Error", "Inversion of Matrix Q appears to be singular.");
+                if(runow==0){
+                    QMessageBox::information(this, "Error", "Inversion of Matrix Q appears to be singular.");
+                }
                 ui->plainTextEdit_2->appendPlainText("Inversion of Matrix Q appears to be singular.");
                 return;
             }
@@ -6838,7 +7250,9 @@ void MainWindow::on_checkBox_34_clicked()
     ui->checkBox_8->setEnabled(false);
 }
 
+//************************************************
 // Save settings
+//************************************************
 void MainWindow::on_pushButton_9_clicked()
 {
     QFile SPS(qPath+"/"+ui->lineEdit_22->text()+".sps");
@@ -7394,7 +7808,9 @@ void MainWindow::on_pushButton_9_clicked()
     }
 }
 
+//****************************************
 // load
+//****************************************
 void MainWindow::on_pushButton_10_clicked()
 {
     QString qSPS = qPath+"/"+ ui->lineEdit_23->text() +".sps";
@@ -7406,8 +7822,14 @@ void MainWindow::on_pushButton_10_clicked()
     std::string datAName = datANameStream.str();
 
     if(!SPS.exists()){
-        QMessageBox::information(this, "Error", "File "+ qSPS +" does not exist.");
-        return;
+        if(runow==0){
+            QMessageBox::information(this, "Error", "File "+ qSPS +" does not exist.");
+            return;
+        }
+        else{
+            cout<<"File "<<datAName<<" does not exist."<<endl;
+            MainWindow::Input();
+        }
     }
     else{
         int SetP = 58, SetN=14, SetH=22, SetB=22;
@@ -7886,6 +8308,9 @@ void MainWindow::on_pushButton_11_clicked()
     ui->lineEdit_23->setText(cName+"_conf");
 }
 
+//*******************************************
+// subtract disentangled from observations
+//*******************************************
 void MainWindow::on_pushButton_12_clicked()
 {
     this->setCursor(QCursor(Qt::WaitCursor));
@@ -7899,156 +8324,276 @@ void MainWindow::on_pushButton_12_clicked()
      int mlo = (smax-smin+1)*logbin, zlin=0;
      string liner, ein1, zwei2;
 
+     vec sol1(mlo), wav(bso1+bso2), sol2(bso1+bso2), diff(mlo);
+
      QString fext=ui->lineEdit_19->text();
      string sfext = fext.toUtf8().constData();
 
-     // subtract A
+     // use matrix
+
      if(ui->checkBox_20->isChecked()){
-         mat MA(mlo, bso1);
-         vec sol1(mlo), wav(bso1), sol2(bso1), diff(mlo);
 
+         QString input=ui->lineEdit_5->text();
+         string in = input.toUtf8().constData();
+         std::ostringstream inNameStream(in);
+         inNameStream<<path<<"/compl.txt";//<<in;
+         std::string inName = inNameStream.str();
 
-             for(int i = 0; i<mlo; i++){
-                 for(int n = 0; n<bso1; n++){
-                     MA(i,n) = M(i,n);
-                 }
+         QFile checkfile1(inName.c_str());
+
+         if(!checkfile1.exists()){
+             qDebug()<<"The file "<<checkfile1.fileName()<<" does not exist.";
+             QMessageBox::information(this, "Error", "Error 1: File"+qPath+"/"+input+" does not exist!");
+             this->setCursor(QCursor(Qt::ArrowCursor));
+             return;
+         }
+         ifstream file1(inName.c_str());
+
+         while(std::getline(file1, liner))
+            ++zlin;
+
+         file1.clear();
+         file1.seekg(0, ios::beg);
+
+         for(int i =0;i <bso1+bso2; i++){
+             file1 >> ein1 >>zwei2;
+             istringstream ist(ein1);
+             istringstream ist2(zwei2);
+
+             if(i<bso1){
+                ist >> wav[i];
+                ist2 >> sol2[i];
              }
-
-
-
-             QString input=ui->lineEdit_5->text();
-             string in = input.toUtf8().constData();
-             std::ostringstream inNameStream(in);
-             inNameStream<<path<<"/"<<in;
-             std::string inName = inNameStream.str();
-             ifstream file1(inName.c_str());
-
-             QFile checkfile1(inName.c_str());
-
-             if(!checkfile1.exists()){
-                 qDebug()<<"The file "<<checkfile1.fileName()<<" does not exist.";
-                 QMessageBox::information(this, "Error", "Error 1: File"+qPath+"/"+input+".txt does not exist!");
-                 this->setCursor(QCursor(Qt::ArrowCursor));
-                 return;
+             else{
+                 wav[i]=0;
+                 sol2[i]=0;
              }
-
-             while(std::getline(file1, liner))
-                ++zlin;
-
-             file1.clear();
-             file1.seekg(0, ios::beg);
-
-             for(int i =0;i <zlin; i++){
-                 if(i<bso1){
-                 file1 >> ein1 >>zwei2;
-                 istringstream ist(ein1);
-                 ist >> wav[i];
-                 istringstream ist2(zwei2);
-                 ist2 >> sol2[i];
-                 }
-                 else{
-                     wav[i]=0;
-                     sol2[i]=0;
-                 }
-             }
-
-
-             sol1 = MA*sol2;
-             diff = C-sol1;
-
-             cout<<C<<endl;
-             cout<<endl;
-
-             for(int e = 0; e<smax-smin+1; e++){
-                QString output=ui->lineEdit_27->text();
-                string out = output.toUtf8().constData();
-                std::ostringstream file1NameStream(out);
-                file1NameStream<<path<<"/"<<out<<"_"<<e<<sfext;
-                std::string file1Name = file1NameStream.str();
-                ofstream file2(file1Name.c_str());
-
-                for(int i=e*logbin; i< (e+1)*logbin; i++){
-                     if(pow(10,W[i])>1){
-                        file2<<setprecision(14)<<pow(10,(W[i]))<<"\t"<<diff[i]<<endl;
-                    }
-                }
-                file2.close();
-             }
-
+         }
      }
 
-     // subtract B
-     if(ui->checkBox_21->isChecked()){
-         mat MA(mlo, bso2);
-         vec sol1(mlo), wav(bso2), sol2(bso2), diff(mlo);
+     else{
+         QString input=ui->lineEdit_8->text();
+         string in = input.toUtf8().constData();
+         std::ostringstream inNameStream(in);
+         inNameStream<<path<<"/compl.txt";//<<in;
+         std::string inName = inNameStream.str();
 
+         QFile checkfile1(inName.c_str());
 
-             for(int i = 0; i<mlo; i++){
-                 for(int n = 0; n<bso2; n++){
-                     MA(i,n) = M(i,n+bso1);
-                 }
+         if(!checkfile1.exists()){
+             qDebug()<<"The file "<<checkfile1.fileName()<<" does not exist.";
+             QMessageBox::information(this, "Error", "Error 1: File"+qPath+"/"+input+" does not exist!");
+             this->setCursor(QCursor(Qt::ArrowCursor));
+             return;
+         }
+         ifstream file1(inName.c_str());
+
+         while(std::getline(file1, liner))
+            ++zlin;
+
+         file1.clear();
+         file1.seekg(0, ios::beg);
+
+         for(int i =0;i <bso1+bso2; i++){
+             file1 >> ein1 >>zwei2;
+             istringstream ist(ein1);
+             istringstream ist2(zwei2);
+
+             if(i>=bso1){
+                ist >> wav[i];
+                ist2 >> sol2[i];
              }
-
-             QString input=ui->lineEdit_8->text();
-             string in = input.toUtf8().constData();
-             std::ostringstream inNameStream(in);
-             inNameStream<<path<<"/"<<in;
-             std::string inName = inNameStream.str();
-             ifstream file1(inName.c_str());
-
-             QFile checkfile1(inName.c_str());
-
-             if(!checkfile1.exists()){
-                 qDebug()<<"The file "<<checkfile1.fileName()<<" does not exist.";
-                 QMessageBox::information(this, "Error", "Error 1: File"+qPath+"/"+input+".txt does not exist!");
-                 this->setCursor(QCursor(Qt::ArrowCursor));
-                 return;
+             else{
+                 wav[i]=0;
+                 sol2[i]=0;
              }
+         }
+     }
 
-             while(std::getline(file1, liner))
-                ++zlin;
+     sol1 = M*sol2;
+     diff=C-sol1;
 
-             file1.clear();
-             file1.seekg(0, ios::beg);
+     for(int e = 0; e<smax-smin+1; e++){
+        QString output=ui->lineEdit_27->text();
+        string out = output.toUtf8().constData();
+        std::ostringstream file1NameStream(out);
+        file1NameStream<<path<<"/"<<out<<"_"<<e+smin<<sfext;
+        std::string file1Name = file1NameStream.str();
+        ofstream file2(file1Name.c_str());
 
-             for(int i =0;i <zlin; i++){
-                 if(i<bso2){
-                 file1 >> ein1 >>zwei2;
-                 istringstream ist(ein1);
-                 ist >> wav[i];
-                 istringstream ist2(zwei2);
-                 ist2 >> sol2[i];
-                 }
-                 else{
-                     wav[i]=0;
-                     sol2[i]=0;
-                 }
-             }
+        for(int i=e*logbin; i< (e+1)*logbin; i++){
+            if(pow(10,W[i])>1){
+                if(ui->checkBox_24->isChecked()){
+                   file2<<setprecision(14)<<pow(10,(W[i]))*(1-RV3[e]/c0)<<"\t"<<diff[i]<<endl;
+                }
+                else{
+                    if(ui->checkBox_25->isChecked()){
+                        file2<<setprecision(14)<<pow(10,(W[i]))*(1-RV1[e]/c0)<<"\t"<<diff[i]<<endl;
 
-
-             sol1 = MA*sol2;
-             diff = C-sol1;
-
-             cout<<C<<endl;
-             cout<<endl;
-
-             for(int e = 0; e<smax-smin+1; e++){
-                QString output=ui->lineEdit_27->text();
-                string out = output.toUtf8().constData();
-                std::ostringstream file1NameStream(out);
-                file1NameStream<<path<<"/"<<out<<"_"<<e<<sfext;
-                std::string file1Name = file1NameStream.str();
-                ofstream file2(file1Name.c_str());
-
-                for(int i=e*logbin; i< (e+1)*logbin; i++){
-                     if(pow(10,W[i])>1){
-                        file2<<setprecision(14)<<pow(10,(W[i]))<<"\t"<<diff[i]<<endl;
+                    }
+                    else{
+                       file2<<setprecision(14)<<pow(10,(W[i]))<<"\t"<<diff[i]<<endl;
                     }
                 }
-                file2.close();
-             }
-
+            }
+        }
      }
+
+     // without matrix
+/*
+     QVector<double> disw(1), disi(1),disw2(1), obsw(1), obsi(1);
+     int zlin2=0;
+
+     if(ui->checkBox_20->isChecked()){
+
+         QString input=ui->lineEdit_5->text();
+         string in = input.toUtf8().constData();
+         std::ostringstream inNameStream(in);
+         inNameStream<<path<<"/compl.txt";//<<in;
+         std::string inName = inNameStream.str();
+
+         QFile checkfile1(inName.c_str());
+
+         if(!checkfile1.exists()){
+             qDebug()<<"The file "<<checkfile1.fileName()<<" does not exist.";
+             QMessageBox::information(this, "Error", "Error 1: File"+qPath+"/"+input+" does not exist!");
+             this->setCursor(QCursor(Qt::ArrowCursor));
+             return;
+         }
+         ifstream file1(inName.c_str());
+
+         while(std::getline(file1, liner))
+            ++zlin2;
+
+         disw.resize(zlin2);
+         disw2.resize(zlin2);
+         disi.resize(zlin2);
+
+         file1.clear();
+         file1.seekg(0, ios::beg);
+
+         for(int i =0;i <zlin2; i++){
+
+             file1 >> ein1 >>zwei2;
+             istringstream ist(ein1);
+             ist >> disw[i];
+             istringstream ist2(zwei2);
+             ist2 >> disi[i];
+             disi[i]=disi[i]/(1+ui->doubleSpinBox_4->value());
+
+         }
+     }
+
+     else{
+         QString input=ui->lineEdit_8->text();
+         string in = input.toUtf8().constData();
+         std::ostringstream inNameStream(in);
+         inNameStream<<path<<"/compl.txt";//<<in;
+         std::string inName = inNameStream.str();
+
+         QFile checkfile1(inName.c_str());
+
+         if(!checkfile1.exists()){
+             qDebug()<<"The file "<<checkfile1.fileName()<<" does not exist.";
+             QMessageBox::information(this, "Error", "Error 1: File"+qPath+"/"+input+" does not exist!");
+             this->setCursor(QCursor(Qt::ArrowCursor));
+             return;
+         }
+         ifstream file1(inName.c_str());
+
+         while(std::getline(file1, liner))
+            ++zlin2;
+
+         disw.resize(zlin2);
+         disi.resize(zlin2);
+         disw2.resize(zlin2);
+
+         file1.clear();
+         file1.seekg(0, ios::beg);
+
+         for(int i =0;i <zlin2; i++){
+             file1 >> ein1 >>zwei2;
+             istringstream ist(ein1);
+             ist >> disw[i];
+             istringstream ist2(zwei2);
+             ist2 >> disi[i];
+             disi[i]=disi[i]*ui->doubleSpinBox_4->value()/(1+ui->doubleSpinBox_4->value());
+
+         }
+     }
+     double DI=0;
+
+     for(int i = 0; i<smax-smin+1; i++){
+
+         for(int e =0; e<zlin2; e++){
+             if(ui->checkBox_24->isChecked()){
+                 cout<<disw[e]<<"\t";
+                disw2[e]=disw[e]*(1+RV1[i]/c0);
+                cout<<disw2[e]<<endl;
+             }
+             else{
+                if(ui->checkBox_25->isChecked()){
+                    disw2[e]=disw[e]*(1+RV3[i]/c0);
+                }
+             }
+         }
+
+
+         zlin=0;
+
+         QString input=ui->lineEdit_3->text();
+         string in = input.toUtf8().constData();
+         std::ostringstream fileNameStream(in);
+         fileNameStream<<path<<"/"<<in<<i+smin<<sfext;
+         std::string fileName = fileNameStream.str();
+
+         QFile checkfile1(fileName.c_str());
+
+         if(!checkfile1.exists()){
+             qDebug()<<"The file "<<checkfile1.fileName()<<" does not exist.";
+             QString fers = QString::number(i+smin);
+             QMessageBox::information(this, "Error", "Error 1: File"+qPath+"/"+input+fers+fext+" does not exist!");
+             this->setCursor(QCursor(Qt::ArrowCursor));
+             return;
+         }
+         ifstream file1(fileName.c_str());
+
+         while(std::getline(file1, liner))
+            ++zlin;
+
+         obsw.resize(zlin);
+         obsi.resize(zlin);
+
+         file1.clear();
+         file1.seekg(0, ios::beg);
+
+         for(int i =0;i <zlin; i++){
+             file1 >> ein1 >>zwei2;
+             istringstream ist(ein1);
+             ist >> obsw[i];
+             istringstream ist2(zwei2);
+             ist2 >> obsi[i];
+         }
+
+         QString output=ui->lineEdit_27->text();
+         string out = output.toUtf8().constData();
+         std::ostringstream file1NameStream(out);
+         file1NameStream<<path<<"/"<<out<<"_"<<i+smin<<sfext;
+         std::string file1Name = file1NameStream.str();
+         ofstream file2(file1Name.c_str());
+
+         for(int e =0; e<zlin; e++){
+
+             for(int n =0; n<zlin2; n++){
+                 if(disw2[n]<=obsw[e] & disw2[n+1]>obsw[e]){
+                     DI = disi[n]+(obsw[e]-disw2[n])/(disw2[n+1]-disw2[n])*(disi[n+1]-disi[n]);
+                 }
+             }
+             file2<<obsw[e]<<"\t"<<obsi[e]-DI<<endl;
+
+         }
+
+     }*/
 
      this->setCursor(QCursor(Qt::ArrowCursor));
 }
@@ -8077,5 +8622,45 @@ void MainWindow::on_checkBox_22_clicked()
     }
     else{
         ui->customPlot_2->hide();
+    }
+}
+
+void MainWindow::on_checkBox_20_clicked()
+{
+    if(ui->checkBox_20->isChecked()){
+        ui->checkBox_21->setChecked(false);
+    }
+    else{
+        ui->checkBox_21->setChecked(true);
+    }
+}
+
+void MainWindow::on_checkBox_21_clicked()
+{
+    if(ui->checkBox_21->isChecked()){
+        ui->checkBox_20->setChecked(false);
+    }
+    else{
+        ui->checkBox_20->setChecked(true);
+    }
+}
+
+void MainWindow::on_checkBox_24_clicked()
+{
+    if(ui->checkBox_24->isChecked()){
+        ui->checkBox_25->setChecked(false);
+    }
+    else{
+        ui->checkBox_25->setChecked(true);
+    }
+}
+
+void MainWindow::on_checkBox_25_clicked()
+{
+    if(ui->checkBox_25->isChecked()){
+        ui->checkBox_24->setChecked(false);
+    }
+    else{
+        ui->checkBox_24->setChecked(true);
     }
 }

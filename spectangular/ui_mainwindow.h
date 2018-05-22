@@ -125,6 +125,8 @@ public:
     QCheckBox *checkBox_20;
     QCheckBox *checkBox_21;
     QLineEdit *lineEdit_27;
+    QCheckBox *checkBox_24;
+    QCheckBox *checkBox_25;
     QSpacerItem *horizontalSpacer_10;
     QSpacerItem *verticalSpacer_2;
     QVBoxLayout *verticalLayout_3;
@@ -353,7 +355,7 @@ public:
         scrollArea->setWidgetResizable(true);
         scrollAreaWidgetContents = new QWidget();
         scrollAreaWidgetContents->setObjectName(QStringLiteral("scrollAreaWidgetContents"));
-        scrollAreaWidgetContents->setGeometry(QRect(0, 0, 2199, 1193));
+        scrollAreaWidgetContents->setGeometry(QRect(0, 0, 1795, 1020));
         gridLayout_2 = new QGridLayout(scrollAreaWidgetContents);
         gridLayout_2->setSpacing(6);
         gridLayout_2->setContentsMargins(11, 11, 11, 11);
@@ -676,7 +678,7 @@ public:
         palette7.setBrush(QPalette::Disabled, QPalette::Text, brush5);
         palette7.setBrush(QPalette::Disabled, QPalette::ButtonText, brush5);
         doubleSpinBox_4->setPalette(palette7);
-        doubleSpinBox_4->setDecimals(3);
+        doubleSpinBox_4->setDecimals(5);
         doubleSpinBox_4->setSingleStep(0.02);
 
         horizontalLayout_22->addWidget(doubleSpinBox_4);
@@ -1048,6 +1050,16 @@ public:
 
         horizontalLayout_9->addWidget(lineEdit_27);
 
+        checkBox_24 = new QCheckBox(scrollAreaWidgetContents);
+        checkBox_24->setObjectName(QStringLiteral("checkBox_24"));
+
+        horizontalLayout_9->addWidget(checkBox_24);
+
+        checkBox_25 = new QCheckBox(scrollAreaWidgetContents);
+        checkBox_25->setObjectName(QStringLiteral("checkBox_25"));
+
+        horizontalLayout_9->addWidget(checkBox_25);
+
         horizontalSpacer_10 = new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
 
         horizontalLayout_9->addItem(horizontalSpacer_10);
@@ -1277,7 +1289,7 @@ public:
         palette21.setBrush(QPalette::Disabled, QPalette::Text, brush5);
         palette21.setBrush(QPalette::Disabled, QPalette::ButtonText, brush5);
         spinBox_3->setPalette(palette21);
-        spinBox_3->setMaximum(999);
+        spinBox_3->setMaximum(9999);
         spinBox_3->setValue(3);
 
         horizontalLayout_19->addWidget(spinBox_3);
@@ -1363,7 +1375,7 @@ public:
         palette23.setBrush(QPalette::Disabled, QPalette::Text, brush);
         palette23.setBrush(QPalette::Disabled, QPalette::ButtonText, brush);
         spinBox_4->setPalette(palette23);
-        spinBox_4->setMaximum(999);
+        spinBox_4->setMaximum(9999);
 
         horizontalLayout_16->addWidget(spinBox_4);
 
@@ -1386,7 +1398,7 @@ public:
         palette24.setBrush(QPalette::Disabled, QPalette::Text, brush);
         palette24.setBrush(QPalette::Disabled, QPalette::ButtonText, brush);
         spinBox_5->setPalette(palette24);
-        spinBox_5->setMaximum(9999);
+        spinBox_5->setMaximum(99999);
 
         horizontalLayout_16->addWidget(spinBox_5);
 
@@ -2259,7 +2271,7 @@ public:
         MainWindow->setCentralWidget(centralWidget);
         menuBar = new QMenuBar(MainWindow);
         menuBar->setObjectName(QStringLiteral("menuBar"));
-        menuBar->setGeometry(QRect(0, 0, 1815, 30));
+        menuBar->setGeometry(QRect(0, 0, 1815, 24));
         menuTools = new QMenu(menuBar);
         menuTools->setObjectName(QStringLiteral("menuTools"));
         menuHelp = new QMenu(menuBar);
@@ -2350,6 +2362,8 @@ public:
         pushButton_12->setText(QApplication::translate("MainWindow", "Subtract", Q_NULLPTR));
         checkBox_20->setText(QApplication::translate("MainWindow", "A", Q_NULLPTR));
         checkBox_21->setText(QApplication::translate("MainWindow", "B", Q_NULLPTR));
+        checkBox_24->setText(QApplication::translate("MainWindow", "shift A", Q_NULLPTR));
+        checkBox_25->setText(QApplication::translate("MainWindow", "shift B", Q_NULLPTR));
         label_5->setText(QApplication::translate("MainWindow", "max. RV of component 1", Q_NULLPTR));
         label_6->setText(QApplication::translate("MainWindow", "max. RV of component 2", Q_NULLPTR));
         plainTextEdit->setPlainText(QString());
@@ -2360,7 +2374,7 @@ public:
         checkBox_12->setText(QApplication::translate("MainWindow", "Initial", Q_NULLPTR));
         checkBox_32->setText(QApplication::translate("MainWindow", "Reinitiate", Q_NULLPTR));
         checkBox_23->setText(QApplication::translate("MainWindow", "Auto Stop", Q_NULLPTR));
-        pushButton_7->setText(QApplication::translate("MainWindow", "Abort", Q_NULLPTR));
+        pushButton_7->setText(QApplication::translate("MainWindow", "Stop", Q_NULLPTR));
         label_18->setText(QApplication::translate("MainWindow", "Iteration:", Q_NULLPTR));
         label_21->setText(QApplication::translate("MainWindow", "Evaluation:", Q_NULLPTR));
         label_25->setText(QApplication::translate("MainWindow", "Criterion:", Q_NULLPTR));

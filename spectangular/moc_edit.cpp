@@ -21,8 +21,8 @@ QT_BEGIN_MOC_NAMESPACE
 QT_WARNING_PUSH
 QT_WARNING_DISABLE_DEPRECATED
 struct qt_meta_stringdata_Edit_t {
-    QByteArrayData data[18];
-    char stringdata0[336];
+    QByteArrayData data[19];
+    char stringdata0[338];
 };
 #define QT_MOC_LITERAL(idx, ofs, len) \
     Q_STATIC_BYTE_ARRAY_DATA_HEADER_INITIALIZER_WITH_OFFSET(len, \
@@ -36,22 +36,23 @@ QT_MOC_LITERAL(1, 5, 6), // "seData"
 QT_MOC_LITERAL(2, 12, 0), // ""
 QT_MOC_LITERAL(3, 13, 3), // "str"
 QT_MOC_LITERAL(4, 17, 1), // "g"
-QT_MOC_LITERAL(5, 19, 23), // "on_spinBox_valueChanged"
-QT_MOC_LITERAL(6, 43, 25), // "on_lineEdit_3_textChanged"
-QT_MOC_LITERAL(7, 69, 23), // "on_pushButton_2_clicked"
-QT_MOC_LITERAL(8, 93, 23), // "on_pushButton_3_clicked"
-QT_MOC_LITERAL(9, 117, 23), // "on_pushButton_6_clicked"
-QT_MOC_LITERAL(10, 141, 23), // "on_pushButton_7_clicked"
-QT_MOC_LITERAL(11, 165, 23), // "on_pushButton_8_clicked"
-QT_MOC_LITERAL(12, 189, 23), // "on_pushButton_9_clicked"
-QT_MOC_LITERAL(13, 213, 24), // "on_pushButton_10_clicked"
-QT_MOC_LITERAL(14, 238, 23), // "on_pushButton_4_clicked"
-QT_MOC_LITERAL(15, 262, 23), // "on_pushButton_5_clicked"
-QT_MOC_LITERAL(16, 286, 24), // "on_pushButton_11_clicked"
-QT_MOC_LITERAL(17, 311, 24) // "on_pushButton_12_clicked"
+QT_MOC_LITERAL(5, 19, 1), // "k"
+QT_MOC_LITERAL(6, 21, 23), // "on_spinBox_valueChanged"
+QT_MOC_LITERAL(7, 45, 25), // "on_lineEdit_3_textChanged"
+QT_MOC_LITERAL(8, 71, 23), // "on_pushButton_2_clicked"
+QT_MOC_LITERAL(9, 95, 23), // "on_pushButton_3_clicked"
+QT_MOC_LITERAL(10, 119, 23), // "on_pushButton_6_clicked"
+QT_MOC_LITERAL(11, 143, 23), // "on_pushButton_7_clicked"
+QT_MOC_LITERAL(12, 167, 23), // "on_pushButton_8_clicked"
+QT_MOC_LITERAL(13, 191, 23), // "on_pushButton_9_clicked"
+QT_MOC_LITERAL(14, 215, 24), // "on_pushButton_10_clicked"
+QT_MOC_LITERAL(15, 240, 23), // "on_pushButton_4_clicked"
+QT_MOC_LITERAL(16, 264, 23), // "on_pushButton_5_clicked"
+QT_MOC_LITERAL(17, 288, 24), // "on_pushButton_11_clicked"
+QT_MOC_LITERAL(18, 313, 24) // "on_pushButton_12_clicked"
 
     },
-    "Edit\0seData\0\0str\0g\0on_spinBox_valueChanged\0"
+    "Edit\0seData\0\0str\0g\0k\0on_spinBox_valueChanged\0"
     "on_lineEdit_3_textChanged\0"
     "on_pushButton_2_clicked\0on_pushButton_3_clicked\0"
     "on_pushButton_6_clicked\0on_pushButton_7_clicked\0"
@@ -77,23 +78,23 @@ static const uint qt_meta_data_Edit[] = {
        0,       // signalCount
 
  // slots: name, argc, parameters, tag, flags
-       1,    2,   84,    2, 0x0a /* Public */,
-       5,    0,   89,    2, 0x08 /* Private */,
-       6,    0,   90,    2, 0x08 /* Private */,
-       7,    0,   91,    2, 0x08 /* Private */,
-       8,    0,   92,    2, 0x08 /* Private */,
-       9,    0,   93,    2, 0x08 /* Private */,
-      10,    0,   94,    2, 0x08 /* Private */,
-      11,    0,   95,    2, 0x08 /* Private */,
-      12,    0,   96,    2, 0x08 /* Private */,
-      13,    0,   97,    2, 0x08 /* Private */,
-      14,    0,   98,    2, 0x08 /* Private */,
-      15,    0,   99,    2, 0x08 /* Private */,
-      16,    0,  100,    2, 0x08 /* Private */,
-      17,    0,  101,    2, 0x08 /* Private */,
+       1,    3,   84,    2, 0x0a /* Public */,
+       6,    0,   91,    2, 0x08 /* Private */,
+       7,    0,   92,    2, 0x08 /* Private */,
+       8,    0,   93,    2, 0x08 /* Private */,
+       9,    0,   94,    2, 0x08 /* Private */,
+      10,    0,   95,    2, 0x08 /* Private */,
+      11,    0,   96,    2, 0x08 /* Private */,
+      12,    0,   97,    2, 0x08 /* Private */,
+      13,    0,   98,    2, 0x08 /* Private */,
+      14,    0,   99,    2, 0x08 /* Private */,
+      15,    0,  100,    2, 0x08 /* Private */,
+      16,    0,  101,    2, 0x08 /* Private */,
+      17,    0,  102,    2, 0x08 /* Private */,
+      18,    0,  103,    2, 0x08 /* Private */,
 
  // slots: parameters
-    QMetaType::Void, QMetaType::QString, QMetaType::Int,    3,    4,
+    QMetaType::Void, QMetaType::QString, QMetaType::Int, QMetaType::Double,    3,    4,    5,
     QMetaType::Void,
     QMetaType::Void,
     QMetaType::Void,
@@ -117,7 +118,7 @@ void Edit::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void *
         Edit *_t = static_cast<Edit *>(_o);
         Q_UNUSED(_t)
         switch (_id) {
-        case 0: _t->seData((*reinterpret_cast< QString(*)>(_a[1])),(*reinterpret_cast< int(*)>(_a[2]))); break;
+        case 0: _t->seData((*reinterpret_cast< QString(*)>(_a[1])),(*reinterpret_cast< int(*)>(_a[2])),(*reinterpret_cast< double(*)>(_a[3]))); break;
         case 1: _t->on_spinBox_valueChanged(); break;
         case 2: _t->on_lineEdit_3_textChanged(); break;
         case 3: _t->on_pushButton_2_clicked(); break;

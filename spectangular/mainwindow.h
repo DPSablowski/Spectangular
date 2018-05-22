@@ -20,6 +20,8 @@ public:
     ~MainWindow();
 
 private slots:
+    void Input();
+
     void on_checkBox_clicked();
 
     void on_checkBox_2_clicked();
@@ -119,6 +121,18 @@ private slots:
     void on_spinBox_8_valueChanged();
 
     void on_checkBox_22_clicked();
+
+    void on_checkBox_20_clicked();
+
+    void on_checkBox_21_clicked();
+
+    void on_checkBox_24_clicked();
+
+    void on_checkBox_25_clicked();
+
+    void showPointToolTip(QMouseEvent *event);
+
+    void showPointToolTip_3(QMouseEvent *event);
 
 private:
     Ui::MainWindow *ui;

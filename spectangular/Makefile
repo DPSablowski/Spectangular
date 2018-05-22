@@ -233,6 +233,7 @@ DIST          = ../../../Qt/5.8/gcc_64/mkspecs/features/spec_pre.prf \
 		../../../Qt/5.8/gcc_64/mkspecs/features/qt_config.prf \
 		../../../Qt/5.8/gcc_64/mkspecs/linux-g++/qmake.conf \
 		../../../Qt/5.8/gcc_64/mkspecs/features/spec_post.prf \
+		.qmake.stash \
 		../../../Qt/5.8/gcc_64/mkspecs/features/exclusive_builds.prf \
 		../../../Qt/5.8/gcc_64/mkspecs/features/toolchain.prf \
 		../../../Qt/5.8/gcc_64/mkspecs/features/default_pre.prf \
@@ -428,6 +429,7 @@ Makefile: SVD.pro ../../../Qt/5.8/gcc_64/mkspecs/linux-g++/qmake.conf ../../../Q
 		../../../Qt/5.8/gcc_64/mkspecs/features/qt_config.prf \
 		../../../Qt/5.8/gcc_64/mkspecs/linux-g++/qmake.conf \
 		../../../Qt/5.8/gcc_64/mkspecs/features/spec_post.prf \
+		.qmake.stash \
 		../../../Qt/5.8/gcc_64/mkspecs/features/exclusive_builds.prf \
 		../../../Qt/5.8/gcc_64/mkspecs/features/toolchain.prf \
 		../../../Qt/5.8/gcc_64/mkspecs/features/default_pre.prf \
@@ -605,6 +607,7 @@ Makefile: SVD.pro ../../../Qt/5.8/gcc_64/mkspecs/linux-g++/qmake.conf ../../../Q
 ../../../Qt/5.8/gcc_64/mkspecs/features/qt_config.prf:
 ../../../Qt/5.8/gcc_64/mkspecs/linux-g++/qmake.conf:
 ../../../Qt/5.8/gcc_64/mkspecs/features/spec_post.prf:
+.qmake.stash:
 ../../../Qt/5.8/gcc_64/mkspecs/features/exclusive_builds.prf:
 ../../../Qt/5.8/gcc_64/mkspecs/features/toolchain.prf:
 ../../../Qt/5.8/gcc_64/mkspecs/features/default_pre.prf:
@@ -3054,7 +3057,8 @@ main.o: main.cpp mainwindow.h \
 		../../../Qt/5.8/gcc_64/include/QtCore/qeventloop.h \
 		../../../Qt/5.8/gcc_64/include/QtWidgets/qdesktopwidget.h \
 		../../../Qt/5.8/gcc_64/include/QtGui/qguiapplication.h \
-		../../../Qt/5.8/gcc_64/include/QtGui/qinputmethod.h
+		../../../Qt/5.8/gcc_64/include/QtGui/qinputmethod.h \
+		../../../Qt/5.8/gcc_64/include/QtCore/QDebug
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o main.o main.cpp
 
 mainwindow.o: mainwindow.cpp mainwindow.h \
@@ -3727,14 +3731,16 @@ plotspec.o: plotspec.cpp plotspec.h \
 		../../../Qt/5.8/gcc_64/include/QtGui/qtextoption.h \
 		../../../Qt/5.8/gcc_64/include/QtWidgets/QPushButton \
 		../../../Qt/5.8/gcc_64/include/QtWidgets/qpushbutton.h \
+		../../../Qt/5.8/gcc_64/include/QtWidgets/QScrollArea \
+		../../../Qt/5.8/gcc_64/include/QtWidgets/qscrollarea.h \
 		../../../Qt/5.8/gcc_64/include/QtWidgets/QSpacerItem \
 		../../../Qt/5.8/gcc_64/include/QtWidgets/QSpinBox \
 		../../../Qt/5.8/gcc_64/include/QtWidgets/QVBoxLayout \
+		../../../Qt/5.8/gcc_64/include/QtWidgets/QWidget \
 		qcustomplot.h \
 		../../../Qt/5.8/gcc_64/include/QtCore/QObject \
 		../../../Qt/5.8/gcc_64/include/QtCore/QPointer \
 		../../../Qt/5.8/gcc_64/include/QtCore/qpointer.h \
-		../../../Qt/5.8/gcc_64/include/QtWidgets/QWidget \
 		../../../Qt/5.8/gcc_64/include/QtGui/QPainter \
 		../../../Qt/5.8/gcc_64/include/QtGui/qpainter.h \
 		../../../Qt/5.8/gcc_64/include/QtGui/QPaintEvent \
@@ -3998,7 +4004,6 @@ plotspec.o: plotspec.cpp plotspec.h \
 		../../../Qt/5.8/gcc_64/include/QtWidgets/qgraphicstransform.h \
 		../../../Qt/5.8/gcc_64/include/QtGui/QVector3D \
 		../../../Qt/5.8/gcc_64/include/QtWidgets/qgraphicsview.h \
-		../../../Qt/5.8/gcc_64/include/QtWidgets/qscrollarea.h \
 		../../../Qt/5.8/gcc_64/include/QtWidgets/qgroupbox.h \
 		../../../Qt/5.8/gcc_64/include/QtWidgets/qinputdialog.h \
 		../../../Qt/5.8/gcc_64/include/QtWidgets/qitemdelegate.h \

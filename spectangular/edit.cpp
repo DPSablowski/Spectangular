@@ -110,9 +110,10 @@ Edit::~Edit()
     delete ui;
 }
 
-void Edit::seData(QString str, int g)
+void Edit::seData(QString str, int g, double k)
 {
     ui->lineEdit_3->setText(str);
+    ui->doubleSpinBox_20->setValue(k);
     ui->spinBox->setValue(g);
     qEPath=ui->lineEdit_3->text();
     ePath = qEPath.toUtf8().constData();
@@ -128,16 +129,18 @@ void Edit::on_spinBox_valueChanged()
     ui->tableWidget->setRowCount(obser);
     ui->tableWidget_2->setRowCount(obser);
     ui->tableWidget_3->setRowCount(obser);
+    double FA = ui->doubleSpinBox_20->value()/(ui->doubleSpinBox_20->value()+1.0);
+    double FB = 1.0/(ui->doubleSpinBox_20->value()+1.0);
 
     for(int i=0; i<obser; i++){
         ui->tableWidget->setItem(i,0,new QTableWidgetItem("1"));
         ui->tableWidget->setItem(i,0,new QTableWidgetItem("1.0"));
 
         ui->tableWidget_2->setItem(i,0,new QTableWidgetItem("1"));
-        ui->tableWidget_2->setItem(i,0,new QTableWidgetItem("1.0"));
+        ui->tableWidget_2->setItem(i,0,new QTableWidgetItem(QString::number(FA)));
 
         ui->tableWidget_3->setItem(i,0,new QTableWidgetItem("1"));
-        ui->tableWidget_3->setItem(i,0,new QTableWidgetItem("1.0"));
+        ui->tableWidget_3->setItem(i,0,new QTableWidgetItem(QString::number(FB)));
     }
 }
 

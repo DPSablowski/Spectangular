@@ -16,7 +16,7 @@ public:
     ~Edit();
 
 public slots:
-    void seData(QString str, int g);
+    void seData(QString str, int g, double k);
 
 private slots:
     void on_spinBox_valueChanged();

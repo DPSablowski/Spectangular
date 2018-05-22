@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'edit.ui'
 **
-** Created by: Qt User Interface Compiler version 5.5.1
+** Created by: Qt User Interface Compiler version 5.8.0
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
 ********************************************************************************/
@@ -42,6 +42,8 @@ public:
     QHBoxLayout *horizontalLayout;
     QLabel *label_2;
     QSpinBox *spinBox;
+    QLabel *label_13;
+    QDoubleSpinBox *doubleSpinBox_20;
     QSpacerItem *horizontalSpacer_2;
     QFrame *line;
     QHBoxLayout *horizontalLayout_22;
@@ -191,6 +193,17 @@ public:
         spinBox->setMaximum(999);
 
         horizontalLayout->addWidget(spinBox);
+
+        label_13 = new QLabel(scrollAreaWidgetContents);
+        label_13->setObjectName(QStringLiteral("label_13"));
+
+        horizontalLayout->addWidget(label_13);
+
+        doubleSpinBox_20 = new QDoubleSpinBox(scrollAreaWidgetContents);
+        doubleSpinBox_20->setObjectName(QStringLiteral("doubleSpinBox_20"));
+        doubleSpinBox_20->setDecimals(5);
+
+        horizontalLayout->addWidget(doubleSpinBox_20);
 
         horizontalSpacer_2 = new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
 
@@ -725,7 +738,7 @@ public:
         doubleSpinBox_11 = new QDoubleSpinBox(scrollAreaWidgetContents);
         doubleSpinBox_11->setObjectName(QStringLiteral("doubleSpinBox_11"));
         doubleSpinBox_11->setDecimals(6);
-        doubleSpinBox_11->setMaximum(1e+07);
+        doubleSpinBox_11->setMaximum(1e+7);
 
         horizontalLayout_16->addWidget(doubleSpinBox_11);
 
@@ -891,48 +904,49 @@ public:
 
     void retranslateUi(QDialog *Edit)
     {
-        Edit->setWindowTitle(QApplication::translate("Edit", "Dialog", 0));
-        label_2->setText(QApplication::translate("Edit", "Number of Spectra:", 0));
-        label->setText(QApplication::translate("Edit", "Telluric Line Depths", 0));
-        label_3->setText(QApplication::translate("Edit", "Strength of Component A", 0));
-        label_4->setText(QApplication::translate("Edit", "Strength of Component B", 0));
-        pushButton_2->setText(QApplication::translate("Edit", "Apply", 0));
-        pushButton_3->setText(QApplication::translate("Edit", "Reset", 0));
-        label_5->setText(QApplication::translate("Edit", "Optimization Settings", 0));
-        label_6->setText(QApplication::translate("Edit", "Reflection Coef.", 0));
-        label_7->setText(QApplication::translate("Edit", "Contraction Coef.", 0));
-        label_8->setText(QApplication::translate("Edit", "Total Contraction Coef.", 0));
-        label_9->setText(QApplication::translate("Edit", "Expansion Coef.", 0));
-        pushButton_6->setText(QApplication::translate("Edit", "Apply", 0));
-        pushButton_7->setText(QApplication::translate("Edit", "Reset", 0));
-        label_10->setText(QApplication::translate("Edit", "Step Size Initial Construction:", 0));
-        label_23->setText(QApplication::translate("Edit", "delta P:", 0));
-        label_24->setText(QApplication::translate("Edit", "delta e:", 0));
-        label_25->setText(QApplication::translate("Edit", "delta K1:", 0));
-        label_26->setText(QApplication::translate("Edit", "delta K2:", 0));
-        label_27->setText(QApplication::translate("Edit", "delta System Vel.:", 0));
-        label_28->setText(QApplication::translate("Edit", "Peri. Passage:", 0));
-        label_29->setText(QApplication::translate("Edit", "Longitude Peri. Passage:", 0));
-        pushButton_11->setText(QApplication::translate("Edit", "Apply", 0));
-        pushButton_12->setText(QApplication::translate("Edit", "Reset", 0));
-        pushButton->setText(QApplication::translate("Edit", "Close", 0));
-        label_14->setText(QApplication::translate("Edit", "Initial Orbit", 0));
-        label_15->setText(QApplication::translate("Edit", "Period P:", 0));
-        label_21->setText(QApplication::translate("Edit", "Eccentricity:", 0));
-        label_16->setText(QApplication::translate("Edit", "Amplitude K1:", 0));
-        label_17->setText(QApplication::translate("Edit", "Amplitude K2:", 0));
-        label_18->setText(QApplication::translate("Edit", "<html><head/><body><p>Systemic Velocity:</p></body></html>", 0));
-        label_19->setText(QApplication::translate("Edit", "Periastron Passage:", 0));
-        label_20->setText(QApplication::translate("Edit", "Longitude Periastron A:", 0));
-        pushButton_8->setText(QApplication::translate("Edit", "Apply", 0));
-        pushButton_9->setText(QApplication::translate("Edit", "Reset", 0));
-        pushButton_10->setText(QApplication::translate("Edit", "Load", 0));
-        label_22->setText(QApplication::translate("Edit", "Save/Load Settings", 0));
-        label_30->setText(QApplication::translate("Edit", "Work Path:", 0));
-        pushButton_5->setText(QApplication::translate("Edit", "Load", 0));
-        label_11->setText(QApplication::translate("Edit", ".scl", 0));
-        pushButton_4->setText(QApplication::translate("Edit", "Save", 0));
-        label_12->setText(QApplication::translate("Edit", ".scl", 0));
+        Edit->setWindowTitle(QApplication::translate("Edit", "Dialog", Q_NULLPTR));
+        label_2->setText(QApplication::translate("Edit", "Number of Spectra:", Q_NULLPTR));
+        label_13->setText(QApplication::translate("Edit", "Ratio", Q_NULLPTR));
+        label->setText(QApplication::translate("Edit", "Telluric Line Depths", Q_NULLPTR));
+        label_3->setText(QApplication::translate("Edit", "Strength of Component A", Q_NULLPTR));
+        label_4->setText(QApplication::translate("Edit", "Strength of Component B", Q_NULLPTR));
+        pushButton_2->setText(QApplication::translate("Edit", "Apply", Q_NULLPTR));
+        pushButton_3->setText(QApplication::translate("Edit", "Reset", Q_NULLPTR));
+        label_5->setText(QApplication::translate("Edit", "Optimization Settings", Q_NULLPTR));
+        label_6->setText(QApplication::translate("Edit", "Reflection Coef.", Q_NULLPTR));
+        label_7->setText(QApplication::translate("Edit", "Contraction Coef.", Q_NULLPTR));
+        label_8->setText(QApplication::translate("Edit", "Total Contraction Coef.", Q_NULLPTR));
+        label_9->setText(QApplication::translate("Edit", "Expansion Coef.", Q_NULLPTR));
+        pushButton_6->setText(QApplication::translate("Edit", "Apply", Q_NULLPTR));
+        pushButton_7->setText(QApplication::translate("Edit", "Reset", Q_NULLPTR));
+        label_10->setText(QApplication::translate("Edit", "Step Size Initial Construction:", Q_NULLPTR));
+        label_23->setText(QApplication::translate("Edit", "delta P:", Q_NULLPTR));
+        label_24->setText(QApplication::translate("Edit", "delta e:", Q_NULLPTR));
+        label_25->setText(QApplication::translate("Edit", "delta K1:", Q_NULLPTR));
+        label_26->setText(QApplication::translate("Edit", "delta K2:", Q_NULLPTR));
+        label_27->setText(QApplication::translate("Edit", "delta System Vel.:", Q_NULLPTR));
+        label_28->setText(QApplication::translate("Edit", "Peri. Passage:", Q_NULLPTR));
+        label_29->setText(QApplication::translate("Edit", "Longitude Peri. Passage:", Q_NULLPTR));
+        pushButton_11->setText(QApplication::translate("Edit", "Apply", Q_NULLPTR));
+        pushButton_12->setText(QApplication::translate("Edit", "Reset", Q_NULLPTR));
+        pushButton->setText(QApplication::translate("Edit", "Close", Q_NULLPTR));
+        label_14->setText(QApplication::translate("Edit", "Initial Orbit", Q_NULLPTR));
+        label_15->setText(QApplication::translate("Edit", "Period P:", Q_NULLPTR));
+        label_21->setText(QApplication::translate("Edit", "Eccentricity:", Q_NULLPTR));
+        label_16->setText(QApplication::translate("Edit", "Amplitude K1:", Q_NULLPTR));
+        label_17->setText(QApplication::translate("Edit", "Amplitude K2:", Q_NULLPTR));
+        label_18->setText(QApplication::translate("Edit", "<html><head/><body><p>Systemic Velocity:</p></body></html>", Q_NULLPTR));
+        label_19->setText(QApplication::translate("Edit", "Periastron Passage:", Q_NULLPTR));
+        label_20->setText(QApplication::translate("Edit", "Longitude Periastron A:", Q_NULLPTR));
+        pushButton_8->setText(QApplication::translate("Edit", "Apply", Q_NULLPTR));
+        pushButton_9->setText(QApplication::translate("Edit", "Reset", Q_NULLPTR));
+        pushButton_10->setText(QApplication::translate("Edit", "Load", Q_NULLPTR));
+        label_22->setText(QApplication::translate("Edit", "Save/Load Settings", Q_NULLPTR));
+        label_30->setText(QApplication::translate("Edit", "Work Path:", Q_NULLPTR));
+        pushButton_5->setText(QApplication::translate("Edit", "Load", Q_NULLPTR));
+        label_11->setText(QApplication::translate("Edit", ".scl", Q_NULLPTR));
+        pushButton_4->setText(QApplication::translate("Edit", "Save", Q_NULLPTR));
+        label_12->setText(QApplication::translate("Edit", ".scl", Q_NULLPTR));
     } // retranslateUi
 
 };

@@ -19,12 +19,11 @@
 
 using namespace std;
 
-QString qSpPath;
-string spPath;
+QString qSpPath, QSpline="spline.dat";
+string spPath, spline="spline.dat";
 QVector<double> aps(1), bps(1), cps(1), dps(1), eps(1), fps(1), d1ps(1), d2ps(1), asc(1), bsc(1), sc(1), csc(1), dsc(1), errw(1), erry(1);
 int clicks=0, slength, EWstat=0;
 double xc, yc;
-ofstream spline("spline.dat");
 tk::spline s;
 
 PlotSpec::PlotSpec(QWidget *parent) :
@@ -42,9 +41,13 @@ PlotSpec::PlotSpec(QWidget *parent) :
 
     ui->customPlot->xAxis->setLabel("Wavelength [A]");
     ui->checkBox->setChecked(true);
+    ui->checkBox_17->setChecked(true);
 
     ui->checkBox_14->setChecked(true);
     ui->doubleSpinBox_19->setValue(1);
+
+    ui->lineEdit_8->setText("Ha_ad_2.txt");
+    ui->lineEdit_9->setText("Ha_ad_1.txt");
 
     QFont legendFont = font();
     legendFont.setPointSize(16);
@@ -93,10 +96,26 @@ void PlotSpec::writeCoords(QMouseEvent *event){
     xc = ui->customPlot->xAxis->pixelToCoord(event->pos().x());
     yc = ui->customPlot->yAxis->pixelToCoord(event->pos().y());
 
-    if(ui->checkBox_16->isChecked()){
-    spline<<xc<<" "<<yc<<endl;
+    QString qlfile = qSpPath+"/"+QSpline;
+    QFileInfo qlFile(qlfile);
 
-    ++clicks;
+    ostringstream spName(spline);
+    spName<<spPath<<"/"<<spline;
+    string spname = spName.str();
+
+    ofstream spfile;
+
+    if(ui->checkBox_16->isChecked()){
+
+        if(qlFile.exists()){
+            spfile.open(spname.c_str(), std::ios_base::app);
+        }
+        else{
+            spfile.open(spname.c_str());
+        }
+        spfile<<xc<<" "<<yc<<endl;
+
+        ++clicks;
     }
     else{
         if(EWstat==0){
@@ -156,21 +175,21 @@ void PlotSpec::on_pushButton_2_clicked()
     d1ps.resize(number_of_lines);
 
     for (int i=0; i<number_of_lines; i++){
-    toplot1 >> one >>two;
-    istringstream ist(one);
-    ist >> aps[i];
-    if(ui->checkBox_11->isChecked()){
-        aps[i]=aps[i]+ui->doubleSpinBox_13->value();
-    }
-    istringstream ist2(two);
-    ist2 >> bps[i];
-    if(ui->checkBox_5->isChecked()){
-        bps[i]=bps[i]*ui->doubleSpinBox_5->value();
-    }
-    if(ui->checkBox_6->isChecked()){
-        bps[i]=bps[i]+ui->doubleSpinBox_6->value();
-    }
-    eps[i]=ui->doubleSpinBox_9->value()+(aps[i]-aps[0])*ui->doubleSpinBox_10->value();
+        toplot1 >> one >>two;
+        istringstream ist(one);
+        ist >> aps[i];
+        if(ui->checkBox_11->isChecked()){
+            aps[i]=aps[i]+ui->doubleSpinBox_13->value();
+        }
+        istringstream ist2(two);
+        ist2 >> bps[i];
+        if(ui->checkBox_5->isChecked()){
+            bps[i]=bps[i]*ui->doubleSpinBox_5->value();
+        }
+        if(ui->checkBox_6->isChecked()){
+            bps[i]=bps[i]+ui->doubleSpinBox_6->value();
+        }
+        eps[i]=ui->doubleSpinBox_9->value()+(aps[i]-aps[0])*ui->doubleSpinBox_10->value();
     }
     toplot1.close();
 
@@ -279,28 +298,31 @@ void PlotSpec::on_pushButton_2_clicked()
     pen2.setColor(Qt::red);
     pen2.setWidth(ui->spinBox_2->value());
     ui->customPlot->graph(1)->setPen(pen2);
+    int n=2;
 
     if(ui->checkBox_15->isChecked()){
         ui->customPlot->addGraph();
-        ui->customPlot->graph(2)->setData(errw, erry);
+        ui->customPlot->graph(n)->setData(errw, erry);
         pen5.setColor(Qt::black);
         pen5.setWidth(ui->spinBox_2->value());
-        ui->customPlot->graph(2)->setPen(pen5);
+        ui->customPlot->graph(n)->setPen(pen5);
+        ++n;
     }
 
     if(ui->checkBox_9->isChecked()){
         ui->customPlot->addGraph();
-        ui->customPlot->graph(3)->setData(aps, eps);
+        ui->customPlot->graph(n)->setData(aps, eps);
         pen3.setColor(Qt::black);
         pen3.setWidth(ui->spinBox_2->value());
-        ui->customPlot->graph(3)->setPen(pen3);
+        ui->customPlot->graph(n)->setPen(pen3);
+        ++n;
     }
     if(ui->checkBox_10->isChecked()){
         ui->customPlot->addGraph();
-        ui->customPlot->graph(4)->setData(cps, fps);
+        ui->customPlot->graph(n)->setData(cps, fps);
         pen4.setColor(Qt::green);
         pen4.setWidth(ui->spinBox_2->value());
-        ui->customPlot->graph(4)->setPen(pen4);;
+        ui->customPlot->graph(n)->setPen(pen4);;
     }
     ui->customPlot->xAxis->setRange(xs1, xs2);
     ui->customPlot->yAxis->setRange(ys1, ys2);
@@ -507,13 +529,32 @@ void PlotSpec::on_pushButton_5_clicked()
 {
     ui->customPlot->clearGraphs();
 
+    QString plot2=ui->lineEdit_13->text();
+    string plot12 = plot2.toUtf8().constData();
+    std::ostringstream dat2NameStream(plot12);
+    dat2NameStream<<spPath<<"/"<<plot12;
+    std::string dat2Name = dat2NameStream.str();
+    ofstream toplot2(dat2Name.c_str());
+
+    QString plot1=ui->lineEdit_14->text();
+    string plot11 = plot1.toUtf8().constData();
+    std::ostringstream datNameStream(plot11);
+    datNameStream<<spPath<<"/"<<plot11;
+    std::string datName = datNameStream.str();
+    ofstream toplot1(datName.c_str());
+
     for(int i=0; i<aps.size(); i++){
         d1ps[i]=bps[i]+(1-eps[i]);
+        toplot1<<aps[i]<<"\t"<<d1ps[i]<<endl;
+
     }
 
     for(int i=0; i<cps.size(); i++){
-        d2ps[i]=dps[i]+(1-fps[i]);
+        d2ps[i]=dps[i]-(1-eps[i]);
+        toplot2<<aps[i]<<"\t"<<d2ps[i]<<endl;
     }
+    toplot1.close();
+    toplot2.close();
 
     ui->customPlot->addGraph();
     ui->customPlot->graph(0)->setData(aps, d1ps);
@@ -557,7 +598,7 @@ void PlotSpec::SNR(){
     QVector<double> a(number_of_lines), b(number_of_lines);
 
     double loww=ui->doubleSpinBox_17->value();
-    double hiw=ui->doubleSpinBox_18->value(), mean=0, signr=0;
+    double hiw=ui->doubleSpinBox_18->value(), mean=0, signr=0, wleft, wright, ileft, iright, steig, ab;
     int points=0;
 
     for (int i=0; i<number_of_lines; i++){
@@ -566,12 +607,30 @@ void PlotSpec::SNR(){
     ist >> a[i];
     istringstream ist2(two);
     ist2 >> b[i];
-    if(a[i]>=loww & a[i]<=hiw){
-        mean +=b[i];
-        ++points;
-    }
     }
     toplot1.close();
+
+    for(int i =0; i<number_of_lines; i++){
+        if(a[i]<=loww & a[i+1]>loww){
+            wleft=a[i];
+            ileft=b[i];
+        }
+        if(a[i]<=hiw & a[i+1]>hiw){
+            wright=a[i];
+            iright=b[i];
+        }
+    }
+
+    steig=(iright-ileft)/(wright-wleft);
+    ab = ileft-steig*wleft;
+
+    for(int i=0; i<number_of_lines; i++){
+        if(a[i]>=loww & a[i]<=hiw){
+            b[i]=b[i]+(ileft-(steig*a[i]+ab));
+            mean +=b[i];
+            ++points;
+        }
+    }
 
     mean = mean/points;
 
@@ -584,6 +643,7 @@ void PlotSpec::SNR(){
     }
 
     signr = sqrt(signr/(points-1));
+    cout<<"stabw: "<<signr<<endl;
 
     signr = mean/signr;
 
@@ -674,7 +734,20 @@ void PlotSpec::on_pushButton_6_clicked()
     int points=0;
     string line, eins, zwei;
 
-    ifstream sdat("spline.dat");
+    string st3line="spline.dat";
+    ostringstream st3Name(st3line);
+    st3Name<<spPath<<"/"<<st3line;
+    string s3Name = st3Name.str();
+
+    QFile checkfile0(s3Name.c_str());
+
+    if(!checkfile0.exists()){
+        qDebug()<<"The file "<<checkfile0.fileName()<<" does not exist.";
+        QMessageBox::information(this, "Error", "File "+checkfile0.fileName()+" does not exist!");
+       return;
+    }
+
+    ifstream sdat(s3Name.c_str());
 
     while(std::getline(sdat, line))
        ++ points;
@@ -687,23 +760,28 @@ void PlotSpec::on_pushButton_6_clicked()
         return;
     }
 
+    /*
     if(points != clicks){
         QMessageBox::information(this, "Error", "Old data in file. Reset data first.");
         return;
-    }
+    }*/
 
 
     vector<double> XC(points), YC(points);
     QVector<double> Xc(points), Yc(points);
 
     for (int i=0; i<points; i++){
-    sdat >> eins >>zwei;
-    istringstream ist(eins);
-    ist >> XC[i];
-    Xc[i]=XC[i];
-    istringstream ist2(zwei);
-    ist2 >> YC[i];
-    Yc[i]=YC[i];
+        sdat >> eins >>zwei;
+        istringstream ist(eins);
+        ist >> XC[i];
+        Xc[i]=XC[i];
+        if((i>0) & (XC[i]<XC[i-1])){
+            QMessageBox::information(this, "Error", "Spline data not ordered in increasing wavelength at position "+i);
+            return;
+        }
+        istringstream ist2(zwei);
+        ist2 >> YC[i];
+        Yc[i]=YC[i];
     }
     sdat.close();
 
@@ -717,7 +795,6 @@ void PlotSpec::on_pushButton_6_clicked()
     std::ostringstream datNameStream(in11);
     datNameStream<<spPath<<"/"<<in11;
     std::string datName = datNameStream.str();
-    ifstream toplot1(datName.c_str());
 
     QFile checkfile(datName.c_str());
 
@@ -726,6 +803,7 @@ void PlotSpec::on_pushButton_6_clicked()
         QMessageBox::information(this, "Error", "File "+qSpPath+"/"+in1+" does not exist!");
        return;
     }
+    ifstream toplot1(datName.c_str());
 
     slength=0;
     double x;
@@ -740,75 +818,93 @@ void PlotSpec::on_pushButton_6_clicked()
     bsc.resize(slength);
     sc.resize(slength);
 
-    ofstream sline("splineline.dat");
+    string st2line="splineline.dat";
+    ostringstream st2Name(st2line);
+    st2Name<<spPath<<"/"<<st2line;
+    string s2Name = st2Name.str();
+    ofstream sline(s2Name.c_str());
 
     for (int i=0; i<slength; i++){
-    toplot1 >> one >>two;
-    istringstream ist(one);
-    ist >> asc[i];
-    x=asc[i];
-    sline<<x<<" "<<s(x)<<endl;
-    istringstream ist2(two);
-    ist2 >> bsc[i];
-    if(ui->checkBox_13->isChecked()){
-    bsc[i]=bsc[i]/s(x);
-    }
-    if(ui->checkBox_14->isChecked()){
-        bsc[i]=bsc[i]+(1/(ui->doubleSpinBox_19->value()+1)-s(x));
-    }
+        toplot1 >> one >>two;
+        istringstream ist(one);
+        ist >> asc[i];
+        x=asc[i];
+        sline<<x<<" "<<s(x)<<endl;
+        istringstream ist2(two);
+        ist2 >> bsc[i];
+        if(ui->checkBox_13->isChecked()){
+            bsc[i]=bsc[i]/s(x);
+        }
+        if(ui->checkBox_14->isChecked()){
+            bsc[i]=bsc[i]+(1/(ui->doubleSpinBox_19->value()+1)-s(x));
+        }
     }
     toplot1.close();
 
-    QString in2=ui->lineEdit_7->text();
-    string in12 = in2.toUtf8().constData();
-    std::ostringstream dat2NameStream(in12);
-    dat2NameStream<<spPath<<"/"<<in12;
-    std::string dat2Name = dat2NameStream.str();
-    ifstream toplot2(dat2Name.c_str());
+    if(ui->checkBox_17->isChecked()){
+        QString in2=ui->lineEdit_7->text();
+        string in12 = in2.toUtf8().constData();
+        std::ostringstream dat2NameStream(in12);
+        dat2NameStream<<spPath<<"/"<<in12;
+        std::string dat2Name = dat2NameStream.str();
 
-    QFile checkfile2(dat2Name.c_str());
+        QFile checkfile2(dat2Name.c_str());
 
-    if(!checkfile2.exists()){
-        qDebug()<<"The file "<<checkfile2.fileName()<<" does not exist.";
-        QMessageBox::information(this, "Error", "File "+qSpPath+"/"+in2+" does not exist!");
-       return;
+        if(!checkfile2.exists()){
+            qDebug()<<"The file "<<checkfile2.fileName()<<" does not exist.";
+            QMessageBox::information(this, "Error", "File "+qSpPath+"/"+in2+" does not exist!");
+            return;
+        }
+
+        ifstream toplot2(dat2Name.c_str());
+
+        slength=0;
+
+        while(std::getline(toplot2, zeile))
+            ++slength;
+
+        toplot2.clear();
+        toplot2.seekg(0, ios::beg);
+
+        csc.resize(slength);
+        dsc.resize(slength);
+        sc.resize(slength);
+
+        string stline="splineline2.dat";
+        ostringstream stName(stline);
+        stName<<spPath<<"/"<<stline;
+        string sName = stName.str();
+        ofstream sline2(sName.c_str());
+
+        for (int i=0; i<slength; i++){
+            toplot2 >> one >>two;
+            istringstream ist(one);
+            ist >> csc[i];
+            x=csc[i];
+            sline2<<x<<" "<<s(x)<<endl;
+            istringstream ist2(two);
+            ist2 >> dsc[i];
+            if(ui->checkBox_13->isChecked()){
+                dsc[i]=dsc[i]/(2-s(x));
+            }
+            if(ui->checkBox_14->isChecked()){
+                dsc[i]=dsc[i]+(s(x)-1/(ui->doubleSpinBox_19->value()+1));
+            }
+        }
+        toplot1.close();
     }
-
-    slength=0;
-
-    while(std::getline(toplot2, zeile))
-       ++ slength;
-
-    toplot2.clear();
-    toplot2.seekg(0, ios::beg);
-
-    csc.resize(slength);
-    dsc.resize(slength);
-    sc.resize(slength);
-
-    ofstream sline2("splineline2.dat");
-
-    for (int i=0; i<slength; i++){
-    toplot2 >> one >>two;
-    istringstream ist(one);
-    ist >> csc[i];
-    x=csc[i];
-    sline2<<x<<" "<<s(x)<<endl;
-    istringstream ist2(two);
-    ist2 >> dsc[i];
-    if(ui->checkBox_13->isChecked()){
-    dsc[i]=dsc[i]/s(x);
-    }
-    if(ui->checkBox_14->isChecked()){
-        dsc[i]=dsc[i]+(s(x)-1/(ui->doubleSpinBox_19->value()+1));
-    }
-    }
-    toplot1.close();
 
     ui->customPlot->addGraph();
     ui->customPlot->graph(0)->setData(asc, bsc);
     ui->customPlot->xAxis->rescale(true);
     ui->customPlot->yAxis->rescale(true);
+    if(ui->checkBox_17->isChecked()){
+        ui->customPlot->addGraph();
+        ui->customPlot->graph(1)->setData(csc, dsc);
+        ui->customPlot->graph(1)->setPen(QPen(Qt::red));
+        ui->customPlot->xAxis->rescale(true);
+        ui->customPlot->yAxis->rescale(true);
+    }
     ui->customPlot->replot();
 }
 
@@ -817,17 +913,11 @@ void PlotSpec::on_pushButton_6_clicked()
 //*******************************************************
 void PlotSpec::on_pushButton_7_clicked()
 {
-    spline.close();
-    spline.open("spline.dat", fstream::out);
-
-    for(int i=0; i<clicks; i++){
-        spline<<endl;
-    }
-
-    spline.clear();
-    spline.seekp(0, ios::beg);
-
-    clicks=0;
+    string stline="spline.dat";
+    ostringstream stName(stline);
+    stName<<spPath<<"/"<<stline;
+    string sName = stName.str();
+    remove(sName.c_str());
 
 }
 
@@ -838,12 +928,34 @@ void PlotSpec::on_pushButton_8_clicked()
 {
     ui->customPlot->clearGraphs();
 
-    ifstream input("splineline.dat");
-    string zeilen, eins, zwei;
+    string stline="splineline.dat";
+    ostringstream stName(stline);
+    stName<<spPath<<"/"<<stline;
+    string sName = stName.str();
 
-    QVector<double> f(slength), g(slength);
+    QFile checkfile(sName.c_str());
 
-    for(int i=0; i<slength; i++){
+    if(!checkfile.exists()){
+        qDebug()<<"The file "<<checkfile.fileName()<<" does not exist.";
+        QMessageBox::information(this, "Error", "File "+checkfile.fileName()+" does not exist!");
+        return;
+    }
+
+    ifstream input(sName.c_str());
+
+    int ssp=0;
+    string line;
+    while(std::getline(input, line))
+       ++ ssp;
+
+    input.clear();
+    input.seekg(0, ios::beg);
+
+    string eins, zwei;
+
+    QVector<double> f(ssp), g(ssp);
+
+    for(int i=0; i<ssp; i++){
         input >> eins >> zwei;
         istringstream stri(eins);
         stri >> f[i];
@@ -876,22 +988,58 @@ void PlotSpec::on_pushButton_9_clicked()
     std::ostringstream datNameStream(res1);
     datNameStream<<spPath<<"/"<<res1;
     std::string datName = datNameStream.str();
-    ofstream out(datName.c_str());
-
-    for(int i=0; i<asc.size(); i++){
-        out<<asc[i]<<" "<<bsc[i]<<endl;
-    }
 
     QString res2 = ui->lineEdit_9->text();
     string res12 = res2.toUtf8().constData();
     std::ostringstream dat2NameStream(res12);
     dat2NameStream<<spPath<<"/"<<res12;
     std::string dat2Name = dat2NameStream.str();
-    ofstream out2(dat2Name.c_str());
 
-    for(int i=0; i<asc.size(); i++){
-        out2<<csc[i]<<" "<<dsc[i]<<endl;
+     QFile QIn1(datName.c_str());
+     QFile QIn2(dat2Name.c_str());
+
+    if((QIn1.exists() or QIn2.exists())){
+            QMessageBox::StandardButton reply;
+            reply = QMessageBox::question(this, "Warning!", "The files already exists. \n\n Do you want to overwrite it?",
+                                  QMessageBox::Yes|QMessageBox::No);
+            if (reply == QMessageBox::Yes) {
+                qDebug() << "Overwrite file.";
+                ofstream out(datName.c_str());
+                ofstream out2(dat2Name.c_str());
+
+                for(int i=0; i<asc.size(); i++){
+                    out<<asc[i]<<" "<<bsc[i]<<endl;
+                }
+
+                for(int i=0; i<asc.size(); i++){
+                    out2<<csc[i]<<" "<<dsc[i]<<endl;
+                }
+                out.close();
+                out2.close();
+            }
+            else{
+                qDebug()<< "Save file aborted.";
+                this->setCursor(QCursor(Qt::ArrowCursor));
+                return;
+            }
+
     }
+
+    else{
+        ofstream out(datName.c_str());
+        ofstream out2(dat2Name.c_str());
+
+        for(int i=0; i<asc.size(); i++){
+            out<<asc[i]<<" "<<bsc[i]<<endl;
+        }
+
+        for(int i=0; i<asc.size(); i++){
+            out2<<csc[i]<<" "<<dsc[i]<<endl;
+        }
+        out.close();
+        out2.close();
+    }
+
 }
 
 //*******************************************************
@@ -901,7 +1049,20 @@ void PlotSpec::on_pushButton_10_clicked()
 {
     string line, eins, zwei;
 
-    ifstream spdat("spline.dat");
+    string stline="spline.dat";
+    ostringstream stName(stline);
+    stName<<spPath<<"/"<<stline;
+    string sName = stName.str();
+
+    QFile checkfile(sName.c_str());
+
+    if(!checkfile.exists()){
+        qDebug()<<"The file "<<checkfile.fileName()<<" does not exist.";
+        QMessageBox::information(this, "Error", "File "+qSpPath+"/"+checkfile.fileName()+" does not exist!");
+        return;
+    }
+
+    ifstream spdat(sName.c_str());
 
     int spoin=0;
 
@@ -930,11 +1091,40 @@ void PlotSpec::on_pushButton_10_clicked()
     std::ostringstream datNameStream(res1);
     datNameStream<<spPath<<"/"<<res1;
     std::string datName = datNameStream.str();
-    ofstream out(datName.c_str());
 
-    for(int i=0; i<ass.size(); i++){
-        out<<ass[i]<<" "<<bss[i]<<endl;
-    }
+    QFile QIn1(datName.c_str());
+
+   if(QIn1.exists() ){
+           QMessageBox::StandardButton reply;
+           reply = QMessageBox::question(this, "Warning!", "The files already exists. \n\n Do you want to overwrite it?",
+                                 QMessageBox::Yes|QMessageBox::No);
+           if (reply == QMessageBox::Yes) {
+               qDebug() << "Overwrite file.";
+               ofstream out(datName.c_str());
+
+               for(int i=0; i<ass.size(); i++){
+                   out<<ass[i]<<" "<<bss[i]<<endl;
+               }
+               out.close();
+           }
+           else{
+               qDebug()<< "Save file aborted.";
+               this->setCursor(QCursor(Qt::ArrowCursor));
+               return;
+           }
+
+   }
+
+   else{
+       ofstream out(datName.c_str());
+
+       for(int i=0; i<ass.size(); i++){
+           out<<ass[i]<<" "<<bss[i]<<endl;
+       }
+       out.close();
+   }
+
+
 
 }
 
@@ -953,6 +1143,15 @@ void PlotSpec::on_pushButton_11_clicked()
     std::ostringstream datNameStream(res1);
     datNameStream<<spPath<<"/"<<res1;
     std::string datName = datNameStream.str();
+
+    QFile checkfile(datName.c_str());
+
+    if(!checkfile.exists()){
+        qDebug()<<"The file "<<checkfile.fileName()<<" does not exist.";
+        QMessageBox::information(this, "Error", "File "+qSpPath+"/"+checkfile.fileName()+" does not exist!");
+        return;
+    }
+
     ifstream out(datName.c_str());
 
     int spoin=0;
@@ -974,11 +1173,16 @@ void PlotSpec::on_pushButton_11_clicked()
     }
     out.close();
 
-    ofstream spdat("spline.dat");
+    string stline="spline.dat";
+    ostringstream stName(stline);
+    stName<<spPath<<"/"<<stline;
+    string sName = stName.str();
+    ofstream spdat(sName.c_str());
 
     for(int i=0; i<ass.size(); i++){
         spdat<<ass[i]<<" "<<bss[i]<<endl;
     }
+    spdat.close();
 
 }
 
@@ -993,4 +1197,24 @@ void PlotSpec::on_pushButton_12_clicked()
 void PlotSpec::on_pushButton_13_clicked()
 {
     PlotSpec::EW();
+}
+
+void PlotSpec::on_checkBox_14_clicked()
+{
+    if(ui->checkBox_14->isChecked()){
+        ui->checkBox_13->setChecked(false);
+    }
+    else{
+        ui->checkBox_13->setChecked(true);
+    }
+}
+
+void PlotSpec::on_checkBox_13_clicked()
+{
+    if(ui->checkBox_13->isChecked()){
+        ui->checkBox_14->setChecked(false);
+    }
+    else{
+        ui->checkBox_14->setChecked(true);
+    }
 }
