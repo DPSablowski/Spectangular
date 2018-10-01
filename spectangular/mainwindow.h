@@ -134,6 +134,14 @@ private slots:
 
     void showPointToolTip_3(QMouseEvent *event);
 
+    void on_checkBox_27_clicked();
+
+    void plot_functionvalues();
+
+    void on_checkBox_26_clicked();
+
+    void on_checkBox_28_clicked();
+
 private:
     Ui::MainWindow *ui;
     PlotSpec *pSpec;

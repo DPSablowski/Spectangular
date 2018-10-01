@@ -67,6 +67,7 @@ public:
     QSpinBox *spinBox;
     QLabel *label_3;
     QSpinBox *spinBox_2;
+    QCheckBox *checkBox_27;
     QCheckBox *checkBox_13;
     QSpacerItem *horizontalSpacer_17;
     QHBoxLayout *horizontalLayout_2;
@@ -84,6 +85,9 @@ public:
     QHBoxLayout *horizontalLayout_7;
     QLabel *label_7;
     QLineEdit *lineEdit_3;
+    QSpinBox *spinBox_9;
+    QLabel *label_9;
+    QSpinBox *spinBox_10;
     QLabel *label_12;
     QLineEdit *lineEdit_19;
     QSpacerItem *horizontalSpacer_4;
@@ -127,6 +131,9 @@ public:
     QLineEdit *lineEdit_27;
     QCheckBox *checkBox_24;
     QCheckBox *checkBox_25;
+    QCheckBox *checkBox_26;
+    QCheckBox *checkBox_28;
+    QLineEdit *lineEdit_28;
     QSpacerItem *horizontalSpacer_10;
     QSpacerItem *verticalSpacer_2;
     QVBoxLayout *verticalLayout_3;
@@ -212,16 +219,20 @@ public:
     QLabel *label_49;
     QSpacerItem *horizontalSpacer_25;
     QFrame *line_2;
-    QHBoxLayout *horizontalLayout_14;
+    QHBoxLayout *horizontalLayout_28;
+    QVBoxLayout *verticalLayout_7;
+    QHBoxLayout *horizontalLayout_27;
     QPushButton *pushButton_8;
     QLineEdit *lineEdit_24;
     QSpacerItem *horizontalSpacer_8;
-    QHBoxLayout *horizontalLayout_35;
     QPlainTextEdit *plainTextEdit_2;
+    QCustomPlot *customPlot_4;
+    QHBoxLayout *horizontalLayout_14;
     QSpacerItem *verticalSpacer;
     QHBoxLayout *horizontalLayout_6;
     QPushButton *pushButton;
     QSpacerItem *horizontalSpacer_3;
+    QFrame *line_3;
     QVBoxLayout *verticalLayout_5;
     QLabel *label_8;
     QCustomPlot *customPlot;
@@ -242,7 +253,6 @@ public:
     QDoubleSpinBox *doubleSpinBox_15;
     QCheckBox *checkBox_19;
     QSpacerItem *horizontalSpacer_16;
-    QFrame *line_3;
     QMenuBar *menuBar;
     QMenu *menuTools;
     QMenu *menuHelp;
@@ -253,7 +263,7 @@ public:
     {
         if (MainWindow->objectName().isEmpty())
             MainWindow->setObjectName(QStringLiteral("MainWindow"));
-        MainWindow->resize(1815, 1127);
+        MainWindow->resize(2307, 1354);
         QPalette palette;
         QBrush brush(QColor(0, 0, 0, 255));
         brush.setStyle(Qt::SolidPattern);
@@ -355,7 +365,7 @@ public:
         scrollArea->setWidgetResizable(true);
         scrollAreaWidgetContents = new QWidget();
         scrollAreaWidgetContents->setObjectName(QStringLiteral("scrollAreaWidgetContents"));
-        scrollAreaWidgetContents->setGeometry(QRect(0, 0, 1795, 1020));
+        scrollAreaWidgetContents->setGeometry(QRect(0, 0, 2287, 1245));
         gridLayout_2 = new QGridLayout(scrollAreaWidgetContents);
         gridLayout_2->setSpacing(6);
         gridLayout_2->setContentsMargins(11, 11, 11, 11);
@@ -495,6 +505,11 @@ public:
         spinBox_2->setValue(1);
 
         horizontalLayout->addWidget(spinBox_2);
+
+        checkBox_27 = new QCheckBox(scrollAreaWidgetContents);
+        checkBox_27->setObjectName(QStringLiteral("checkBox_27"));
+
+        horizontalLayout->addWidget(checkBox_27);
 
         checkBox_13 = new QCheckBox(scrollAreaWidgetContents);
         checkBox_13->setObjectName(QStringLiteral("checkBox_13"));
@@ -637,6 +652,22 @@ public:
         lineEdit_3->setFont(font);
 
         horizontalLayout_7->addWidget(lineEdit_3);
+
+        spinBox_9 = new QSpinBox(scrollAreaWidgetContents);
+        spinBox_9->setObjectName(QStringLiteral("spinBox_9"));
+
+        horizontalLayout_7->addWidget(spinBox_9);
+
+        label_9 = new QLabel(scrollAreaWidgetContents);
+        label_9->setObjectName(QStringLiteral("label_9"));
+
+        horizontalLayout_7->addWidget(label_9);
+
+        spinBox_10 = new QSpinBox(scrollAreaWidgetContents);
+        spinBox_10->setObjectName(QStringLiteral("spinBox_10"));
+        spinBox_10->setMaximum(999);
+
+        horizontalLayout_7->addWidget(spinBox_10);
 
         label_12 = new QLabel(scrollAreaWidgetContents);
         label_12->setObjectName(QStringLiteral("label_12"));
@@ -1059,6 +1090,21 @@ public:
         checkBox_25->setObjectName(QStringLiteral("checkBox_25"));
 
         horizontalLayout_9->addWidget(checkBox_25);
+
+        checkBox_26 = new QCheckBox(scrollAreaWidgetContents);
+        checkBox_26->setObjectName(QStringLiteral("checkBox_26"));
+
+        horizontalLayout_9->addWidget(checkBox_26);
+
+        checkBox_28 = new QCheckBox(scrollAreaWidgetContents);
+        checkBox_28->setObjectName(QStringLiteral("checkBox_28"));
+
+        horizontalLayout_9->addWidget(checkBox_28);
+
+        lineEdit_28 = new QLineEdit(scrollAreaWidgetContents);
+        lineEdit_28->setObjectName(QStringLiteral("lineEdit_28"));
+
+        horizontalLayout_9->addWidget(lineEdit_28);
 
         horizontalSpacer_10 = new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
 
@@ -1972,34 +2018,37 @@ public:
 
         verticalLayout_2->addWidget(line_2);
 
-        horizontalLayout_14 = new QHBoxLayout();
-        horizontalLayout_14->setSpacing(6);
-        horizontalLayout_14->setObjectName(QStringLiteral("horizontalLayout_14"));
+        horizontalLayout_28 = new QHBoxLayout();
+        horizontalLayout_28->setSpacing(6);
+        horizontalLayout_28->setObjectName(QStringLiteral("horizontalLayout_28"));
+        verticalLayout_7 = new QVBoxLayout();
+        verticalLayout_7->setSpacing(6);
+        verticalLayout_7->setObjectName(QStringLiteral("verticalLayout_7"));
+        horizontalLayout_27 = new QHBoxLayout();
+        horizontalLayout_27->setSpacing(6);
+        horizontalLayout_27->setObjectName(QStringLiteral("horizontalLayout_27"));
         pushButton_8 = new QPushButton(scrollAreaWidgetContents);
         pushButton_8->setObjectName(QStringLiteral("pushButton_8"));
         sizePolicy1.setHeightForWidth(pushButton_8->sizePolicy().hasHeightForWidth());
         pushButton_8->setSizePolicy(sizePolicy1);
         pushButton_8->setIcon(icon3);
 
-        horizontalLayout_14->addWidget(pushButton_8);
+        horizontalLayout_27->addWidget(pushButton_8);
 
         lineEdit_24 = new QLineEdit(scrollAreaWidgetContents);
         lineEdit_24->setObjectName(QStringLiteral("lineEdit_24"));
         sizePolicy1.setHeightForWidth(lineEdit_24->sizePolicy().hasHeightForWidth());
         lineEdit_24->setSizePolicy(sizePolicy1);
 
-        horizontalLayout_14->addWidget(lineEdit_24);
+        horizontalLayout_27->addWidget(lineEdit_24);
 
-        horizontalSpacer_8 = new QSpacerItem(40, 20, QSizePolicy::Preferred, QSizePolicy::Minimum);
+        horizontalSpacer_8 = new QSpacerItem(158, 17, QSizePolicy::Preferred, QSizePolicy::Minimum);
 
-        horizontalLayout_14->addItem(horizontalSpacer_8);
+        horizontalLayout_27->addItem(horizontalSpacer_8);
 
 
-        verticalLayout_2->addLayout(horizontalLayout_14);
+        verticalLayout_7->addLayout(horizontalLayout_27);
 
-        horizontalLayout_35 = new QHBoxLayout();
-        horizontalLayout_35->setSpacing(6);
-        horizontalLayout_35->setObjectName(QStringLiteral("horizontalLayout_35"));
         plainTextEdit_2 = new QPlainTextEdit(scrollAreaWidgetContents);
         plainTextEdit_2->setObjectName(QStringLiteral("plainTextEdit_2"));
         sizePolicy3.setHeightForWidth(plainTextEdit_2->sizePolicy().hasHeightForWidth());
@@ -2013,10 +2062,24 @@ public:
         palette45.setBrush(QPalette::Disabled, QPalette::ButtonText, brush);
         plainTextEdit_2->setPalette(palette45);
 
-        horizontalLayout_35->addWidget(plainTextEdit_2);
+        verticalLayout_7->addWidget(plainTextEdit_2);
 
 
-        verticalLayout_2->addLayout(horizontalLayout_35);
+        horizontalLayout_28->addLayout(verticalLayout_7);
+
+        customPlot_4 = new QCustomPlot(scrollAreaWidgetContents);
+        customPlot_4->setObjectName(QStringLiteral("customPlot_4"));
+
+        horizontalLayout_28->addWidget(customPlot_4);
+
+
+        verticalLayout_2->addLayout(horizontalLayout_28);
+
+        horizontalLayout_14 = new QHBoxLayout();
+        horizontalLayout_14->setSpacing(6);
+        horizontalLayout_14->setObjectName(QStringLiteral("horizontalLayout_14"));
+
+        verticalLayout_2->addLayout(horizontalLayout_14);
 
         verticalSpacer = new QSpacerItem(539, 13, QSizePolicy::Minimum, QSizePolicy::Expanding);
 
@@ -2053,6 +2116,61 @@ public:
 
 
         gridLayout_2->addLayout(verticalLayout_6, 0, 0, 1, 1);
+
+        line_3 = new QFrame(scrollAreaWidgetContents);
+        line_3->setObjectName(QStringLiteral("line_3"));
+        QPalette palette47;
+        palette47.setBrush(QPalette::Active, QPalette::WindowText, brush);
+        palette47.setBrush(QPalette::Active, QPalette::Button, brush10);
+        palette47.setBrush(QPalette::Active, QPalette::Light, brush11);
+        palette47.setBrush(QPalette::Active, QPalette::Midlight, brush12);
+        palette47.setBrush(QPalette::Active, QPalette::Dark, brush13);
+        palette47.setBrush(QPalette::Active, QPalette::Mid, brush14);
+        palette47.setBrush(QPalette::Active, QPalette::Text, brush);
+        palette47.setBrush(QPalette::Active, QPalette::BrightText, brush1);
+        palette47.setBrush(QPalette::Active, QPalette::ButtonText, brush);
+        palette47.setBrush(QPalette::Active, QPalette::Base, brush1);
+        palette47.setBrush(QPalette::Active, QPalette::Window, brush10);
+        palette47.setBrush(QPalette::Active, QPalette::Shadow, brush);
+        palette47.setBrush(QPalette::Active, QPalette::AlternateBase, brush15);
+        palette47.setBrush(QPalette::Active, QPalette::ToolTipBase, brush4);
+        palette47.setBrush(QPalette::Active, QPalette::ToolTipText, brush);
+        palette47.setBrush(QPalette::Inactive, QPalette::WindowText, brush);
+        palette47.setBrush(QPalette::Inactive, QPalette::Button, brush10);
+        palette47.setBrush(QPalette::Inactive, QPalette::Light, brush11);
+        palette47.setBrush(QPalette::Inactive, QPalette::Midlight, brush12);
+        palette47.setBrush(QPalette::Inactive, QPalette::Dark, brush13);
+        palette47.setBrush(QPalette::Inactive, QPalette::Mid, brush14);
+        palette47.setBrush(QPalette::Inactive, QPalette::Text, brush);
+        palette47.setBrush(QPalette::Inactive, QPalette::BrightText, brush1);
+        palette47.setBrush(QPalette::Inactive, QPalette::ButtonText, brush);
+        palette47.setBrush(QPalette::Inactive, QPalette::Base, brush1);
+        palette47.setBrush(QPalette::Inactive, QPalette::Window, brush10);
+        palette47.setBrush(QPalette::Inactive, QPalette::Shadow, brush);
+        palette47.setBrush(QPalette::Inactive, QPalette::AlternateBase, brush15);
+        palette47.setBrush(QPalette::Inactive, QPalette::ToolTipBase, brush4);
+        palette47.setBrush(QPalette::Inactive, QPalette::ToolTipText, brush);
+        palette47.setBrush(QPalette::Disabled, QPalette::WindowText, brush13);
+        palette47.setBrush(QPalette::Disabled, QPalette::Button, brush10);
+        palette47.setBrush(QPalette::Disabled, QPalette::Light, brush11);
+        palette47.setBrush(QPalette::Disabled, QPalette::Midlight, brush12);
+        palette47.setBrush(QPalette::Disabled, QPalette::Dark, brush13);
+        palette47.setBrush(QPalette::Disabled, QPalette::Mid, brush14);
+        palette47.setBrush(QPalette::Disabled, QPalette::Text, brush13);
+        palette47.setBrush(QPalette::Disabled, QPalette::BrightText, brush1);
+        palette47.setBrush(QPalette::Disabled, QPalette::ButtonText, brush13);
+        palette47.setBrush(QPalette::Disabled, QPalette::Base, brush10);
+        palette47.setBrush(QPalette::Disabled, QPalette::Window, brush10);
+        palette47.setBrush(QPalette::Disabled, QPalette::Shadow, brush);
+        palette47.setBrush(QPalette::Disabled, QPalette::AlternateBase, brush10);
+        palette47.setBrush(QPalette::Disabled, QPalette::ToolTipBase, brush4);
+        palette47.setBrush(QPalette::Disabled, QPalette::ToolTipText, brush);
+        line_3->setPalette(palette47);
+        line_3->setFrameShadow(QFrame::Raised);
+        line_3->setLineWidth(2);
+        line_3->setFrameShape(QFrame::VLine);
+
+        gridLayout_2->addWidget(line_3, 0, 1, 1, 1);
 
         verticalLayout_5 = new QVBoxLayout();
         verticalLayout_5->setSpacing(6);
@@ -2100,14 +2218,14 @@ public:
         doubleSpinBox_5->setObjectName(QStringLiteral("doubleSpinBox_5"));
         sizePolicy1.setHeightForWidth(doubleSpinBox_5->sizePolicy().hasHeightForWidth());
         doubleSpinBox_5->setSizePolicy(sizePolicy1);
-        QPalette palette47;
-        palette47.setBrush(QPalette::Active, QPalette::Text, brush);
-        palette47.setBrush(QPalette::Active, QPalette::ButtonText, brush);
-        palette47.setBrush(QPalette::Inactive, QPalette::Text, brush);
-        palette47.setBrush(QPalette::Inactive, QPalette::ButtonText, brush);
-        palette47.setBrush(QPalette::Disabled, QPalette::Text, brush5);
-        palette47.setBrush(QPalette::Disabled, QPalette::ButtonText, brush5);
-        doubleSpinBox_5->setPalette(palette47);
+        QPalette palette48;
+        palette48.setBrush(QPalette::Active, QPalette::Text, brush);
+        palette48.setBrush(QPalette::Active, QPalette::ButtonText, brush);
+        palette48.setBrush(QPalette::Inactive, QPalette::Text, brush);
+        palette48.setBrush(QPalette::Inactive, QPalette::ButtonText, brush);
+        palette48.setBrush(QPalette::Disabled, QPalette::Text, brush5);
+        palette48.setBrush(QPalette::Disabled, QPalette::ButtonText, brush5);
+        doubleSpinBox_5->setPalette(palette48);
         doubleSpinBox_5->setSingleStep(0.1);
         doubleSpinBox_5->setValue(0.3);
 
@@ -2153,14 +2271,14 @@ public:
         spinBox_6 = new QSpinBox(scrollAreaWidgetContents);
         spinBox_6->setObjectName(QStringLiteral("spinBox_6"));
         spinBox_6->setEnabled(false);
-        QPalette palette48;
-        palette48.setBrush(QPalette::Active, QPalette::Text, brush);
-        palette48.setBrush(QPalette::Active, QPalette::ButtonText, brush);
-        palette48.setBrush(QPalette::Inactive, QPalette::Text, brush);
-        palette48.setBrush(QPalette::Inactive, QPalette::ButtonText, brush);
-        palette48.setBrush(QPalette::Disabled, QPalette::Text, brush);
-        palette48.setBrush(QPalette::Disabled, QPalette::ButtonText, brush);
-        spinBox_6->setPalette(palette48);
+        QPalette palette49;
+        palette49.setBrush(QPalette::Active, QPalette::Text, brush);
+        palette49.setBrush(QPalette::Active, QPalette::ButtonText, brush);
+        palette49.setBrush(QPalette::Inactive, QPalette::Text, brush);
+        palette49.setBrush(QPalette::Inactive, QPalette::ButtonText, brush);
+        palette49.setBrush(QPalette::Disabled, QPalette::Text, brush);
+        palette49.setBrush(QPalette::Disabled, QPalette::ButtonText, brush);
+        spinBox_6->setPalette(palette49);
         spinBox_6->setMaximum(9999);
 
         horizontalLayout_20->addWidget(spinBox_6);
@@ -2179,11 +2297,11 @@ public:
 
         label_47 = new QLabel(scrollAreaWidgetContents);
         label_47->setObjectName(QStringLiteral("label_47"));
-        QPalette palette49;
-        palette49.setBrush(QPalette::Active, QPalette::WindowText, brush);
-        palette49.setBrush(QPalette::Inactive, QPalette::WindowText, brush);
-        palette49.setBrush(QPalette::Disabled, QPalette::WindowText, brush17);
-        label_47->setPalette(palette49);
+        QPalette palette50;
+        palette50.setBrush(QPalette::Active, QPalette::WindowText, brush);
+        palette50.setBrush(QPalette::Inactive, QPalette::WindowText, brush);
+        palette50.setBrush(QPalette::Disabled, QPalette::WindowText, brush17);
+        label_47->setPalette(palette50);
 
         horizontalLayout_20->addWidget(label_47);
 
@@ -2209,61 +2327,6 @@ public:
 
         gridLayout_2->addLayout(verticalLayout_5, 0, 2, 1, 1);
 
-        line_3 = new QFrame(scrollAreaWidgetContents);
-        line_3->setObjectName(QStringLiteral("line_3"));
-        QPalette palette50;
-        palette50.setBrush(QPalette::Active, QPalette::WindowText, brush);
-        palette50.setBrush(QPalette::Active, QPalette::Button, brush10);
-        palette50.setBrush(QPalette::Active, QPalette::Light, brush11);
-        palette50.setBrush(QPalette::Active, QPalette::Midlight, brush12);
-        palette50.setBrush(QPalette::Active, QPalette::Dark, brush13);
-        palette50.setBrush(QPalette::Active, QPalette::Mid, brush14);
-        palette50.setBrush(QPalette::Active, QPalette::Text, brush);
-        palette50.setBrush(QPalette::Active, QPalette::BrightText, brush1);
-        palette50.setBrush(QPalette::Active, QPalette::ButtonText, brush);
-        palette50.setBrush(QPalette::Active, QPalette::Base, brush1);
-        palette50.setBrush(QPalette::Active, QPalette::Window, brush10);
-        palette50.setBrush(QPalette::Active, QPalette::Shadow, brush);
-        palette50.setBrush(QPalette::Active, QPalette::AlternateBase, brush15);
-        palette50.setBrush(QPalette::Active, QPalette::ToolTipBase, brush4);
-        palette50.setBrush(QPalette::Active, QPalette::ToolTipText, brush);
-        palette50.setBrush(QPalette::Inactive, QPalette::WindowText, brush);
-        palette50.setBrush(QPalette::Inactive, QPalette::Button, brush10);
-        palette50.setBrush(QPalette::Inactive, QPalette::Light, brush11);
-        palette50.setBrush(QPalette::Inactive, QPalette::Midlight, brush12);
-        palette50.setBrush(QPalette::Inactive, QPalette::Dark, brush13);
-        palette50.setBrush(QPalette::Inactive, QPalette::Mid, brush14);
-        palette50.setBrush(QPalette::Inactive, QPalette::Text, brush);
-        palette50.setBrush(QPalette::Inactive, QPalette::BrightText, brush1);
-        palette50.setBrush(QPalette::Inactive, QPalette::ButtonText, brush);
-        palette50.setBrush(QPalette::Inactive, QPalette::Base, brush1);
-        palette50.setBrush(QPalette::Inactive, QPalette::Window, brush10);
-        palette50.setBrush(QPalette::Inactive, QPalette::Shadow, brush);
-        palette50.setBrush(QPalette::Inactive, QPalette::AlternateBase, brush15);
-        palette50.setBrush(QPalette::Inactive, QPalette::ToolTipBase, brush4);
-        palette50.setBrush(QPalette::Inactive, QPalette::ToolTipText, brush);
-        palette50.setBrush(QPalette::Disabled, QPalette::WindowText, brush13);
-        palette50.setBrush(QPalette::Disabled, QPalette::Button, brush10);
-        palette50.setBrush(QPalette::Disabled, QPalette::Light, brush11);
-        palette50.setBrush(QPalette::Disabled, QPalette::Midlight, brush12);
-        palette50.setBrush(QPalette::Disabled, QPalette::Dark, brush13);
-        palette50.setBrush(QPalette::Disabled, QPalette::Mid, brush14);
-        palette50.setBrush(QPalette::Disabled, QPalette::Text, brush13);
-        palette50.setBrush(QPalette::Disabled, QPalette::BrightText, brush1);
-        palette50.setBrush(QPalette::Disabled, QPalette::ButtonText, brush13);
-        palette50.setBrush(QPalette::Disabled, QPalette::Base, brush10);
-        palette50.setBrush(QPalette::Disabled, QPalette::Window, brush10);
-        palette50.setBrush(QPalette::Disabled, QPalette::Shadow, brush);
-        palette50.setBrush(QPalette::Disabled, QPalette::AlternateBase, brush10);
-        palette50.setBrush(QPalette::Disabled, QPalette::ToolTipBase, brush4);
-        palette50.setBrush(QPalette::Disabled, QPalette::ToolTipText, brush);
-        line_3->setPalette(palette50);
-        line_3->setFrameShadow(QFrame::Raised);
-        line_3->setLineWidth(2);
-        line_3->setFrameShape(QFrame::VLine);
-
-        gridLayout_2->addWidget(line_3, 0, 1, 1, 1);
-
         scrollArea->setWidget(scrollAreaWidgetContents);
 
         gridLayout->addWidget(scrollArea, 0, 0, 1, 1);
@@ -2271,7 +2334,7 @@ public:
         MainWindow->setCentralWidget(centralWidget);
         menuBar = new QMenuBar(MainWindow);
         menuBar->setObjectName(QStringLiteral("menuBar"));
-        menuBar->setGeometry(QRect(0, 0, 1815, 24));
+        menuBar->setGeometry(QRect(0, 0, 2307, 25));
         menuTools = new QMenu(menuBar);
         menuTools->setObjectName(QStringLiteral("menuTools"));
         menuHelp = new QMenu(menuBar);
@@ -2329,6 +2392,7 @@ public:
         lineEdit->setText(QString());
         label_2->setText(QApplication::translate("MainWindow", ".txt from", Q_NULLPTR));
         label_3->setText(QApplication::translate("MainWindow", "to", Q_NULLPTR));
+        checkBox_27->setText(QApplication::translate("MainWindow", "Sequence", Q_NULLPTR));
         checkBox_13->setText(QApplication::translate("MainWindow", "flip", Q_NULLPTR));
         checkBox_2->setText(QApplication::translate("MainWindow", "your file", Q_NULLPTR));
         lineEdit_2->setText(QString());
@@ -2337,9 +2401,10 @@ public:
         checkBox_18->setText(QApplication::translate("MainWindow", "P", Q_NULLPTR));
         checkBox_17->setText(QApplication::translate("MainWindow", "e", Q_NULLPTR));
         checkBox_35->setText(QApplication::translate("MainWindow", "T0", Q_NULLPTR));
-        label_7->setText(QApplication::translate("MainWindow", "Common name of rebined spectra:", Q_NULLPTR));
+        label_7->setText(QApplication::translate("MainWindow", "Rebined spectra:", Q_NULLPTR));
         lineEdit_3->setText(QString());
-        label_12->setText(QApplication::translate("MainWindow", "<html><head/><body><p><span style=\" color:#000000;\">*</span></p></body></html>", Q_NULLPTR));
+        label_9->setText(QApplication::translate("MainWindow", "to", Q_NULLPTR));
+        label_12->setText(QApplication::translate("MainWindow", "<html><head/><body><p><span style=\" color:#000000;\">_*</span></p></body></html>", Q_NULLPTR));
         label_22->setText(QApplication::translate("MainWindow", "Flux Ratio A/B:", Q_NULLPTR));
         label_16->setText(QApplication::translate("MainWindow", "FITS Extension:", Q_NULLPTR));
         lineEdit_9->setText(QString());
@@ -2364,6 +2429,8 @@ public:
         checkBox_21->setText(QApplication::translate("MainWindow", "B", Q_NULLPTR));
         checkBox_24->setText(QApplication::translate("MainWindow", "shift A", Q_NULLPTR));
         checkBox_25->setText(QApplication::translate("MainWindow", "shift B", Q_NULLPTR));
+        checkBox_26->setText(QApplication::translate("MainWindow", "add", Q_NULLPTR));
+        checkBox_28->setText(QApplication::translate("MainWindow", "mult", Q_NULLPTR));
         label_5->setText(QApplication::translate("MainWindow", "max. RV of component 1", Q_NULLPTR));
         label_6->setText(QApplication::translate("MainWindow", "max. RV of component 2", Q_NULLPTR));
         plainTextEdit->setPlainText(QString());
