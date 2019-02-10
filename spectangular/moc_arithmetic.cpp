@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Meta object code from reading C++ file 'arithmetic.h'
 **
-** Created by: The Qt Meta Object Compiler version 67 (Qt 5.8.0)
+** Created by: The Qt Meta Object Compiler version 67 (Qt 5.12.0)
 **
 ** WARNING! All changes made in this file will be lost!
 *****************************************************************************/
@@ -12,7 +12,7 @@
 #if !defined(Q_MOC_OUTPUT_REVISION)
 #error "The header file 'arithmetic.h' doesn't include <QObject>."
 #elif Q_MOC_OUTPUT_REVISION != 67
-#error "This file was generated using the moc from 5.8.0. It"
+#error "This file was generated using the moc from 5.12.0. It"
 #error "cannot be used with the include files from this version of Qt."
 #error "(The moc has changed too much.)"
 #endif
@@ -56,7 +56,7 @@ QT_MOC_LITERAL(11, 181, 21) // "on_checkBox_6_clicked"
 static const uint qt_meta_data_Arithmetic[] = {
 
  // content:
-       7,       // revision
+       8,       // revision
        0,       // classname
        0,    0, // classinfo
        9,   14, // methods
@@ -111,10 +111,14 @@ void Arithmetic::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, 
     }
 }
 
-const QMetaObject Arithmetic::staticMetaObject = {
-    { &QDialog::staticMetaObject, qt_meta_stringdata_Arithmetic.data,
-      qt_meta_data_Arithmetic,  qt_static_metacall, Q_NULLPTR, Q_NULLPTR}
-};
+QT_INIT_METAOBJECT const QMetaObject Arithmetic::staticMetaObject = { {
+    &QDialog::staticMetaObject,
+    qt_meta_stringdata_Arithmetic.data,
+    qt_meta_data_Arithmetic,
+    qt_static_metacall,
+    nullptr,
+    nullptr
+} };
 
 
 const QMetaObject *Arithmetic::metaObject() const
@@ -124,9 +128,9 @@ const QMetaObject *Arithmetic::metaObject() const
 
 void *Arithmetic::qt_metacast(const char *_clname)
 {
-    if (!_clname) return Q_NULLPTR;
+    if (!_clname) return nullptr;
     if (!strcmp(_clname, qt_meta_stringdata_Arithmetic.stringdata0))
-        return static_cast<void*>(const_cast< Arithmetic*>(this));
+        return static_cast<void*>(this);
     return QDialog::qt_metacast(_clname);
 }
 

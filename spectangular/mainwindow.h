@@ -142,6 +142,18 @@ private slots:
 
     void on_checkBox_28_clicked();
 
+    void disableButtons();
+
+    void enableButtons();
+
+    void on_pushButton_13_clicked();
+
+    double inclinations();
+
+    void on_checkBox_29_clicked();
+
+    void on_checkBox_30_clicked();
+
 private:
     Ui::MainWindow *ui;
     PlotSpec *pSpec;

@@ -37,10 +37,12 @@ int abauto=0;   // auto abort
 int runow=0;    // start optimisation from terminal without windows; 1 for yes, 0 for no.
 int overw=0;    //
 int sequence=0; // sequence
+int optfratios=0;   // optmize on flux ratios;
 unsigned int cores;
 string path, eins, zwei, line;
 QString qPath, qExtension, qWCol, qICol, qInitval, qInitmat, qOptval, qOptmat;
-QVector<double> RV1(1), RV2(1), RV3(1), edits(5), Mval1(1), Mval2(1), Mtel(1), otimes(1), orbele(7);
+QVector<double> RV1(1), RV2(1), RV3(1), edits(5), Mval1(1), Mval2(1), Mtel(1), otimes(1), orbele(7), dorbele(7);
+QVector<double> cpoints(8);
 double RV1max, RV3max, dv, residu, RV1min, RV3min, RV1maxi, RV3maxi, difference, RV1amin, RV3amin, r1, Diff, fluxratio, ldiff, Per, T0, ecc, Omega1, gama, K1, K2;
 double RVT0, RVt, RVe, RVE, RVP;
 const double c0 = 299792.458;
@@ -127,7 +129,7 @@ MainWindow::MainWindow(QWidget *parent) :
     qICol=ui->lineEdit_12->text();
     ICol=qICol.toUtf8().constData();
 
-    ui->spinBox_3->setValue(3);
+    ui->spinBox_3->setValue(9999);
     zaehler=ui->spinBox_3->value();
 
     ui->doubleSpinBox_4->setValue(1);
@@ -149,6 +151,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->lineEdit_24->setText("errors.dat");
 
     ui->checkBox_32->setChecked(true);
+    ui->checkBox_23->setChecked(true);
+    ui->checkBox_29->setChecked(true);
 
     ui->spinBox_10->setEnabled(false);
     ui->spinBox_9->setEnabled(false);
@@ -233,6 +237,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->spinBox_6->setStyleSheet("QSpinBox{background: transparent; border: 1px solid black;}");
     ui->spinBox_7->setStyleSheet("QSpinBox{background: transparent; border: 1px solid black;}");
     ui->spinBox_8->setStyleSheet("QSpinBox{background: transparent; border: 1px solid black;}");
+    ui->spinBox_9->setStyleSheet("QSpinBox{background: transparent; border: 1px solid black;}");
+    ui->spinBox_10->setStyleSheet("QSpinBox{background: transparent; border: 1px solid black;}");
 
     ui->plainTextEdit->setStyleSheet("QPlainTextEdit{background: transparent; color: black; border: 1px solid black;}");
     ui->plainTextEdit_2->setStyleSheet("QPlainTextEdit{background: transparent; color: black; border: 1px solid black;}");
@@ -258,6 +264,12 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->lineEdit_19->setStyleSheet("QLineEdit{background: transparent; color: black; border: 1px solid black;}");
     ui->lineEdit_20->setStyleSheet("QLineEdit{background: transparent; color: black; border: 1px solid black;}");
     ui->lineEdit_21->setStyleSheet("QLineEdit{background: transparent; color: black; border: 1px solid black;}");
+    ui->lineEdit_22->setStyleSheet("QLineEdit{background: transparent; color: black; border: 1px solid black;}");
+    ui->lineEdit_23->setStyleSheet("QLineEdit{background: transparent; color: black; border: 1px solid black;}");
+    ui->lineEdit_24->setStyleSheet("QLineEdit{background: transparent; color: black; border: 1px solid black;}");
+    ui->lineEdit_25->setStyleSheet("QLineEdit{background: transparent; color: black; border: 1px solid black;}");
+    ui->lineEdit_26->setStyleSheet("QLineEdit{background: transparent; color: black; border: 1px solid black;}");
+    ui->lineEdit_27->setStyleSheet("QLineEdit{background: transparent; color: black; border: 1px solid black;}");
 
     ui->label->setStyleSheet("QLabel{background: transparent; color: black;}");
     ui->label_2->setStyleSheet("QLabel{background: transparent; color: black;}");
@@ -317,16 +329,13 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->customPlot, SIGNAL(mouseMove(QMouseEvent*)), this ,SLOT(showPointToolTip(QMouseEvent*)));
     connect(ui->customPlot_3, SIGNAL(mouseMove(QMouseEvent*)), this ,SLOT(showPointToolTip_3(QMouseEvent*)));
 
-
-
     //openblas_set_num_threads(2);
     cores =thread::hardware_concurrency();
-
 
     ui->spinBox_7->setValue(cores);
     ui->spinBox_8->setValue(cores);
 
-    //cout<<"Run optimisation now? 0 no, 1 yes: "<<endl;
+    //cout<<"Run optimization now? 0 no, 1 yes: "<<endl;
     //cin>>runow;
     //runow=1;
 
@@ -356,6 +365,108 @@ MainWindow::~MainWindow()
 {
     delete ui;
 }
+
+//************************************************
+// function to calculate inclination
+//************************************************
+double MainWindow::inclinations (){
+    double xA1 = (cpoints[0]+cpoints[1])/2;
+    double xA2 = (cpoints[4]+cpoints[5])/2;
+    double xB1 = (cpoints[2]+cpoints[3])/2;
+    double xB2 = (cpoints[6]+cpoints[7])/2;
+    double m=0.0;
+
+    QString input="frcompa.dat";
+    string data1 = input.toUtf8().constData();
+    std::ostringstream dat1NameStream(data1);
+    dat1NameStream<<path<<"/"<<data1;
+    std::string dat1Name = dat1NameStream.str();
+    ifstream inA(dat1Name.c_str());
+
+    int npix=0;
+    string line, eins, zwei;
+    while(std::getline(inA, line))
+       ++npix;
+
+    inA.clear();
+    inA.seekg(0, ios::beg);
+    int nmean1=0, nmean2=0;
+    double meanA1=0.0, meanA2=0.0, meanB1=0.0, meanB2=0.0;
+    double x=0.0, y=0.0;
+
+    for(int i =0; i<npix; i++){
+        inA>> eins >>zwei;
+        istringstream ist(eins);
+        ist >> x;
+        istringstream ist2(zwei);
+        ist2 >> y;
+        if((x>=cpoints[0]) & (x<=cpoints[1])){
+            meanA1+=y;
+            ++nmean1;
+        }
+        else{
+            if((x>=cpoints[4]) & (x<=cpoints[5])){
+                meanA2+=y;
+                ++nmean2;
+            }
+            else{
+                //
+            }
+        }
+    }
+    meanA1=meanA1/nmean1;
+    meanA2=meanA2/nmean2;
+
+    m = pow(((meanA2-meanA1)/(xA2-xA1)),2);
+    cout<<"mA^2: "<<m<<endl;
+
+    QString input2="frcompb.dat";
+    string data2 = input2.toUtf8().constData();
+    std::ostringstream dat2NameStream(data2);
+    dat2NameStream<<path<<"/"<<data2;
+    std::string dat2Name = dat2NameStream.str();
+    ifstream inB(dat2Name.c_str());
+
+    npix=0;
+
+    while(std::getline(inB, line))
+       ++npix;
+
+    inB.clear();
+    inB.seekg(0, ios::beg);
+    nmean1=0;
+    nmean2=0;
+
+    for(int i =0; i<npix; i++){
+        inB>> eins >>zwei;
+        istringstream ist(eins);
+        ist >> x;
+        istringstream ist2(zwei);
+        ist2 >> y;
+        if((x>=cpoints[2]) & (x<=cpoints[3])){
+            meanB1+=y;
+            ++nmean1;
+        }
+        else{
+            if((x>=cpoints[6]) & (x<=cpoints[7])){
+                meanB2+=y;
+                ++nmean2;
+            }
+            else{
+                //
+            }
+        }
+    }
+    meanB1=meanB1/nmean1;
+    meanB2=meanB2/nmean2;
+    cout<<"mean: "<<meanB1<<"; "<<meanB2<<"; "<<nmean1<<"; "<<nmean2<<endl;
+    m += pow(((meanB2-meanB1)/(xB2-xB1)),2);
+    cout<<"mA^2 + mB^2: "<<m<<endl;
+    m = sqrt(m)/2;
+    cout<<"m: "<<m<<endl;
+
+    return m;
+    }
 
 //********************************************************
 //show mouse coordinates
@@ -997,7 +1108,7 @@ void MainWindow::read_data(){
         {
 
             //open file for reading
-            auto_ptr<CCfits::FITS> input_file(new CCfits::FITS(dat3Name.c_str(),CCfits::Read,true));
+            shared_ptr<CCfits::FITS> input_file(new CCfits::FITS(dat3Name.c_str(),CCfits::Read,true));
 
             // Create pointer to extension
                 CCfits::ExtHDU& datavector = input_file->extension(Extension);
@@ -1666,11 +1777,13 @@ void MainWindow::on_pushButton_3_clicked()
         return;
     }
 
+    MainWindow::disableButtons();
     MainWindow::read_data();
 
     if(error==1){
         this->setCursor(QCursor(Qt::ArrowCursor));
         error=0;
+        MainWindow::enableButtons();
         return;
     }
 
@@ -1790,15 +1903,18 @@ void MainWindow::on_pushButton_3_clicked()
             if(i<bso1){
 
             file3<<setprecision(14)<<pow(10,(W(0)+(2*index1-RV1maxi/dv)*difference))<<"\t"<<X(i)<<endl;
+            //file3<<setprecision(14)<<pow(10,(W(i)-(RV1maxi/dv)*difference))<<"\t"<<X(i)<<endl;
             ++index1;
             }
             if((i>=bso1) & (i<bso1+bso2)){
 
                 file4<<setprecision(14)<<pow(10,(W(0)+(index2*2+-RV3maxi/dv)*difference))<<"\t"<<X(i)<<endl;
+                //file4<<setprecision(14)<<pow(10,(W(i)-(RV3maxi/dv)*difference))<<"\t"<<X(i)<<endl;
                 ++index2;
             }
             if(i>=bso1+bso2){
                 tell<<setprecision(14)<<pow(10,(W(0)+2*index3*difference))<<"\t"<<X(i)<<endl;
+                //tell<<setprecision(14)<<pow(10,W(i))<<"\t"<<X(i)<<endl;
                 ++index3;
             }
             i=i+2;
@@ -1848,6 +1964,7 @@ void MainWindow::on_pushButton_3_clicked()
 
         QString residual=QString::number(residu);
         ui->lineEdit_7->setText(residual);
+        MainWindow::enableButtons();
 
          this->setCursor(QCursor(Qt::ArrowCursor));
 }
@@ -1864,9 +1981,10 @@ void MainWindow::on_actionSpectrum_Plotter_triggered()
 void MainWindow::on_actionAbout_triggered()
 {
     QMessageBox::information(this, "About", "This open-source software was developed at Leibniz-Institute for Astrophysics Potsdam (Germany) by\n\n "
-                                            "D.P. Sablowski\n\n"
-                                            "It makes use of the 'Armadillo' C++ linear algebra library, CCfits and libraries therein. It is provided AS IS WITHOUT WARRANTY of ANY KIND.\n\n"
-                                            "Licensed under the Apache 2.0 licence conditions");
+                                            "Daniel P. Sablowski\n\n"
+                                            "Version 1.0 2019\n\n"
+                                            "It makes use of the 'Armadillo' C++ linear algebra library, OpenBLAS, CCfits and libraries therein. It is provided AS IS WITHOUT WARRANTY of ANY KIND.\n\n"
+                                            "Licensed under the Apache 2.0 licence conditions.");
 }
 
 void MainWindow::on_actionBug_Report_triggered()
@@ -1891,11 +2009,13 @@ void MainWindow::on_pushButton_5_clicked()
         return;
     }
 
+    MainWindow::disableButtons();
     MainWindow::read_data();
 
     if(error==1){
         this->setCursor(QCursor(Qt::ArrowCursor));
         error=0;
+        MainWindow::enableButtons();
         return;
     }
 
@@ -2063,6 +2183,7 @@ void MainWindow::on_pushButton_5_clicked()
                     //}
 
                     file1<<setprecision(14)<<pow(10,(W(0)+(index1-(RV3maxi+orbele[4])/dv)*difference))<<"\t"<<(X(j))<<endl;
+                    //file1<<setprecision(14)<<pow(10,(W(j)-((RV3maxi+orbele[4])/dv)*difference))<<"\t"<<(X(j))<<endl;
                     ++index1;
                 }
                 if((j>=bso1)&(j<bso1+bso2)){
@@ -2073,11 +2194,13 @@ void MainWindow::on_pushButton_5_clicked()
                     //    X(j)=X(j)+(1.0/(fluxratio+1)-0.5);
                     //}
                     file2<<setprecision(14)<<pow(10,(W(0)+(index2-(RV1maxi+orbele[4])/dv)*difference))<<"\t"<<(X(j))<<endl;
+                    //file2<<setprecision(14)<<pow(10,(W(j)-((RV1maxi+orbele[4])/dv)*difference))<<"\t"<<(X(j))<<endl;
                     ++index2;
                 }
                 if(j>=bso1+bso2){
 
                     tell<<setprecision(14)<<pow(10,(W(0)+index3*difference))<<"\t"<<X(j)<<endl;
+                    //tell<<setprecision(14)<<pow(10,(W(j)))<<"\t"<<X(j)<<endl;
                     ++index3;
                 }
             }
@@ -2141,6 +2264,7 @@ void MainWindow::on_pushButton_5_clicked()
         ui->lineEdit_7->setText(residual);
 
         MainWindow::on_pushButton_6_clicked();
+        MainWindow::enableButtons();
 
          this->setCursor(QCursor(Qt::ArrowCursor));
 
@@ -2234,6 +2358,7 @@ void MainWindow::Optimisation()
     if(error==1){
         this->setCursor(QCursor(Qt::ArrowCursor));
         error=0;
+
         return;
     }
 
@@ -2386,7 +2511,6 @@ void MainWindow::Optimisation()
     else{
         LogFile<<"Default values for transformation coefficients used."<<endl;
 
-        step=1.0;
         Gamma=2.0;
         alpha=1.0;
         beta=0.5;
@@ -2442,6 +2566,13 @@ void MainWindow::Optimisation()
         dT0 = orbele[0]/10;
         dOmega = M_PI/20;
     }
+    dorbele[0]=dP;
+    dorbele[1]=de;
+    dorbele[2]=dKA;
+    dorbele[3]=dKB;
+    dorbele[4]=dGamma;
+    dorbele[5]=dT0;
+    dorbele[6]=dOmega;
 
     double ym2=0, ys2=0;
     int stagnate=0;
@@ -2455,6 +2586,7 @@ void MainWindow::Optimisation()
     LogFile<<"Step: "<<step<<"; dP: "<<dP<<"; de: "<<de<<"; dKA: "<<dKA<<"; dKB: "<<dKB<<"; dGamma: "<<dGamma<<"; dT0: "<<dT0<<"; dOmega: "<<dOmega<<endl;
     LogFile<<endl;
 
+    // optimisation on individual RVs
     if(ui->checkBox->isChecked() or ui->checkBox_2->isChecked()){
 
         LogFile<<"Optimisation on individual RVs."<<endl;
@@ -2497,6 +2629,7 @@ void MainWindow::Optimisation()
                     else{
                         qDebug()<< "Initiation aborted.";
                         this->setCursor(QCursor(Qt::ArrowCursor));
+                        MainWindow::enableButtons();
                         return;
                     }
                 }
@@ -2505,6 +2638,7 @@ void MainWindow::Optimisation()
                     cin >> overw;
                     if(overw==0){
                         this->setCursor(QCursor(Qt::ArrowCursor));
+                        MainWindow::enableButtons();
                         return;
                     }
                     else{
@@ -2523,7 +2657,6 @@ void MainWindow::Optimisation()
         }
         
         ofstream init(file1Name.c_str());
-
         ofstream init2(file2Name.c_str());
 
 
@@ -2603,6 +2736,7 @@ void MainWindow::Optimisation()
             abortt=0;
             sequence=0;
             this->setCursor(QCursor(Qt::ArrowCursor));
+            MainWindow::enableButtons();
             return;
         }
         if(i==0){
@@ -2613,6 +2747,7 @@ void MainWindow::Optimisation()
             r1=y[i];
             if(ui->checkBox_10->isChecked()){
                 MainWindow::on_pushButton_6_clicked();
+                MainWindow::enableButtons();
             }
         }
 
@@ -2662,6 +2797,7 @@ void MainWindow::Optimisation()
             }
            this->setCursor(QCursor(Qt::ArrowCursor));
             LogFile<<"The optimisation file does not exist! When running optimization the first time for a given set of data, the optimization needs to be initiated first."<<endl;
+            MainWindow::enableButtons();
             return;
         }
 
@@ -2684,6 +2820,7 @@ void MainWindow::Optimisation()
             }
            this->setCursor(QCursor(Qt::ArrowCursor));
             LogFile<<"The optimisation file does not match to the data! When running optimization the first time for a given set of data, the optimization needs to be initiated first."<<endl;
+            MainWindow::enableButtons();
             return;
         }
 
@@ -2696,19 +2833,20 @@ void MainWindow::Optimisation()
                     r1=y[i];
                 }
             }
+        ui->lineEdit_7->setText(QString::number(r1));
         initiate1.close();
 
         int coun=0;
 
         for (int i=0; i<number_of_lines*nu; i++){
-        initiate2 >> one;
-        istringstream ist(one);
-        ist >> P(coun,i-coun*nu);
-        cout<<"P["<<coun<<"]["<<i-coun*nu<<"]: "<<P(coun,i-coun*nu)<<" ";
-        if(i==coun*nu+nu-1){
-            cout<<endl;
-            ++coun;
-        }
+            initiate2 >> one;
+            istringstream ist(one);
+            ist >> P(coun,i-coun*nu);
+            cout<<"P["<<coun<<"]["<<i-coun*nu<<"]: "<<P(coun,i-coun*nu)<<" ";
+            if(i==coun*nu+nu-1){
+                cout<<endl;
+                ++coun;
+            }
         }
         initiate2.close();
 
@@ -2750,6 +2888,7 @@ void MainWindow::Optimisation()
             }
            this->setCursor(QCursor(Qt::ArrowCursor));
             LogFile<<"The initiation file does not exist! When running optimization the first time for a given set of data, the optimisation needs to be initiated first."<<endl;
+            MainWindow::enableButtons();
             return;
         }
 
@@ -2772,6 +2911,7 @@ void MainWindow::Optimisation()
             }
            this->setCursor(QCursor(Qt::ArrowCursor));
             LogFile<<"The initiation file does not match to the data! When running optimization the first time for a given set of data, the optimisation needs to be initiated first."<<endl;
+            MainWindow::enableButtons();
             return;
         }
 
@@ -2785,6 +2925,7 @@ void MainWindow::Optimisation()
                 }
             }
             initiate1.close();
+            ui->lineEdit_7->setText(QString::number(r1));
 
         int coun=0;
 
@@ -2913,7 +3054,7 @@ void MainWindow::Optimisation()
         ys=ys/(nu);
 
 
-        // mean and stdev equal to values of previous iteration
+        // stagnation
         if((ys==ys2) & (ym==ym2)){
             ++stagnate;
 
@@ -2940,10 +3081,11 @@ void MainWindow::Optimisation()
                         else{
                             cout<<"Optimisatin stopped; no better parameters found; stagnating."<<endl;
                             LogFile<<"Optimisatin stopped; no better parameters found; stagnating."<<endl;
+                            MainWindow::enableButtons();
                             return;
                         }
                     }
-                    // no auto stop
+                    // no auto stop applied but active
                     else{
                         cout<<"Reinitiate optimisation with current best RVs."<<endl;
                         ui->plainTextEdit_2->appendPlainText("Reinitiate optimisation with current best RVs.");
@@ -2979,10 +3121,8 @@ void MainWindow::Optimisation()
                         ui->checkBox_12->setChecked(false);
 
                         reinitiate=1;
-
                         return;
                     }
-
                 }
 
                 // no auto stop activated, reinitiate
@@ -3026,16 +3166,16 @@ void MainWindow::Optimisation()
                 }
 
             }
-            // no auto stop activated
+            // no auto stop and reinitiation activated
             else{
                 QString stagn = QString::number(stagnate);
                 LogFile<<"Stagnation of DSM: "<<stagnate<<endl;
                 cout<<"Optimisation may stagnate. No change in mean and STD of simplex points since "<<stagnate<<" iterations."<<endl;
                 ui->plainTextEdit_2->appendPlainText("Optimisation may stagnate. No change in mean and STD of simplex points since "+stagn+" iterations.");
             }
+        }
 
-            }
-
+        // no stagnation
         else {
             stagnate =0;
         }
@@ -3123,6 +3263,7 @@ void MainWindow::Optimisation()
                 abortt=0;
                 sequence=0;
                 this->setCursor(QCursor(Qt::ArrowCursor));
+                MainWindow::enableButtons();
                 return;
         }
 
@@ -3193,6 +3334,7 @@ void MainWindow::Optimisation()
                 abortt=0;
                 sequence=0;
                 this->setCursor(QCursor(Qt::ArrowCursor));
+                MainWindow::enableButtons();
                 return;
             }
             if(yt<yl){
@@ -3231,6 +3373,7 @@ void MainWindow::Optimisation()
                 abortt=0;
                 sequence=0;
                 this->setCursor(QCursor(Qt::ArrowCursor));
+                MainWindow::enableButtons();
                 return;
             }
             qApp->processEvents(QEventLoop::AllEvents);
@@ -3284,6 +3427,7 @@ void MainWindow::Optimisation()
                 abortt=0;
                 sequence=0;
                 this->setCursor(QCursor(Qt::ArrowCursor));
+                MainWindow::enableButtons();
                 return;
             }
             qApp->processEvents(QEventLoop::AllEvents);
@@ -3342,6 +3486,7 @@ void MainWindow::Optimisation()
                 abortt=0;
                 sequence=0;
                 this->setCursor(QCursor(Qt::ArrowCursor));
+                MainWindow::enableButtons();
                 return;
             }
             qApp->processEvents(QEventLoop::AllEvents);
@@ -3399,6 +3544,7 @@ void MainWindow::Optimisation()
                 abortt=0;
                 sequence=0;
                 this->setCursor(QCursor(Qt::ArrowCursor));
+                MainWindow::enableButtons();
                 return;
             }
             qApp->processEvents(QEventLoop::AllEvents);
@@ -3468,6 +3614,7 @@ void MainWindow::Optimisation()
                 abortt=0;
                 sequence=0;
                 this->setCursor(QCursor(Qt::ArrowCursor));
+                MainWindow::enableButtons();
                 return;
             }
 
@@ -3542,6 +3689,7 @@ void MainWindow::Optimisation()
             abortt=0;
             sequence=0;
             this->setCursor(QCursor(Qt::ArrowCursor));
+            MainWindow::enableButtons();
             return;
          }
         }
@@ -3596,6 +3744,7 @@ void MainWindow::Optimisation()
                 abortt=0;
                 sequence=0;
                 this->setCursor(QCursor(Qt::ArrowCursor));
+                MainWindow::enableButtons();
                 return;
             }
             qApp->processEvents(QEventLoop::AllEvents);
@@ -3664,16 +3813,75 @@ void MainWindow::Optimisation()
         }
     }
 
-      //optimization on orbit
+      //optimization on orbit**********************************************************
           if(ui->checkBox_16->isChecked()){
 
               int Plock=0, elock=0, T0lock=0;
               nu=7;
+              int add=0;
+
+              QVector<int> pvf(7);
+
+              if(ui->checkBox_18->isChecked()){ // P
+                  pvf[0]=1; // fixed
+                  LogFile<<"P locked ";
+                  ++add;
+              }
+              else{
+                  pvf[0]=0; // free
+              }
+              if(ui->checkBox_17->isChecked()){ // e
+                  pvf[1]=1;
+                  LogFile<<"e locked ";
+                  ++add;
+              }
+              else{
+                  pvf[1]=0;
+              }
+              if(ui->checkBox_31->isChecked()){ // KA
+                  pvf[2]=1;
+                  LogFile<<"KA locked ";
+                  ++add;
+              }
+              else{
+                  pvf[2]=0;
+              }
+              if(ui->checkBox_36->isChecked()){ // KB
+                  pvf[3]=1;
+                  LogFile<<"KB locked ";
+                  ++add;
+              }
+              else{
+                  pvf[3]=0;
+              }
+              if(ui->checkBox_37->isChecked()){ // Gamma
+                  pvf[4]=1;
+                  LogFile<<"Gamma locked ";
+                  ++add;
+              }
+              else{
+                  pvf[4]=0;
+              }
+              if(ui->checkBox_35->isChecked()){ // T0
+                  pvf[5]=1;
+                  LogFile<<"T0 locked ";
+                  ++add;
+              }
+              else{
+                  pvf[5]=0;
+              }
+              if(ui->checkBox_38->isChecked()){ // Omega
+                  pvf[6]=1;
+                  LogFile<<"Omega locked ";
+                  ++add;
+              }
+              else{
+                  pvf[6]=0;
+              }
 
               LogFile<<"Optimisation on orbital parameters."<<endl;
 
-              int add=0;
-
+              /*
               if(ui->checkBox_18->isChecked()){ // lock P
                   ++add;
                   Plock = 1;
@@ -3690,7 +3898,7 @@ void MainWindow::Optimisation()
                   ++add;
                   T0lock = 1;
                   LogFile<<"T0 locked"<<endl;
-              }
+              }*/
 
               nu = nu-add;
               cout<<"add: "<<add<<endl;
@@ -3698,6 +3906,20 @@ void MainWindow::Optimisation()
               LogFile<<endl;
 
               double y[nu+1], P[nu+1][nu], Z[nu], Co[nu], So[nu], Eo[nu], e[nu+1][nu];
+              QVector<double> porbele(nu), ddorbele(nu);
+              int pcount=0;
+
+              for(int i=0; i<nu+add; i++){
+                  if(pvf[i]==0){
+                      porbele[pcount]=orbele[i];
+                      ddorbele[pcount]=dorbele[i];
+                      ++pcount;
+                  }
+                  else{
+                      //
+                  }
+              }
+              pcount=0;
 
               //create new initial data
               if(ui->checkBox_9->isChecked()){
@@ -3733,6 +3955,7 @@ void MainWindow::Optimisation()
                             else{
                                 qDebug()<< "Initiation aborted.";
                                 this->setCursor(QCursor(Qt::ArrowCursor));
+                                MainWindow::enableButtons();
                                 return;
                             }
                         }
@@ -3742,6 +3965,7 @@ void MainWindow::Optimisation()
                             if(overw==0){
                                 qDebug()<< "Initiation aborted.";
                                 this->setCursor(QCursor(Qt::ArrowCursor));
+                                MainWindow::enableButtons();
                                 return;
                             }
                             else{
@@ -3768,7 +3992,17 @@ void MainWindow::Optimisation()
 
                   ofstream init2(file2Name.c_str());
 
-                  for(int i=0; i<nu; i++){
+                  for(int i=0; i<7; i++){
+                      if(pvf[i]==0){
+                          P[0][pcount]=porbele[pcount];
+                          cout<<P[0][pcount]<<" ";
+                          LogFile<<P[0][pcount]<<" ";
+                          ++pcount;
+                      }
+                      else{
+                          //
+                      }
+                      /*
                       if(add==0){
                       P[0][i]=orbele[i];
                       }
@@ -3819,16 +4053,17 @@ void MainWindow::Optimisation()
                           if(i==1) P[0][i]=orbele[3];
                           if(i==2) P[0][i]=orbele[4];
                           if(i==3) P[0][i]=orbele[6];
-                      }
-                      cout<<P[0][i]<<" ";
-                      LogFile<<P[0][i]<<" ";
+                      }*/
                   }
                   cout<<endl;
                   LogFile<<endl;
+                  pcount=0;
 
                   for(int i=0; i<nu+1; i++){
                       for(int j=0; j<nu; j++){
                           if((i>0)&(i==j+1)){
+                              e[i][j]=ddorbele[i-1];
+                              /*
                               if(add == 0){  // nothing locked
                                   if(j==0){
                                       e[i][j]=dP;
@@ -3976,7 +4211,8 @@ void MainWindow::Optimisation()
                                   if(j==3){
                                       e[i][j]=dOmega; // periastron length
                                   }
-                          }}
+                            }*/
+                          }
                           else e[i][j]=0;
                           cout<<e[i][j]<<" ";
                           LogFile<<e[i][j]<<" ";
@@ -3993,6 +4229,7 @@ void MainWindow::Optimisation()
                           init2<<setprecision(14)<<P[i][j]<<endl;
                           cout<<P[i][j]<<" ";
                           LogFile<<P[i][j]<<" ";
+                          /*
                           if(add==0){
                               orbele[j]=P[i][j];    // no parameter locked
                           }
@@ -4053,10 +4290,21 @@ void MainWindow::Optimisation()
                                   orbele[6]=P[i][j];
                               }
 
-                          }
+                          }*/
 
                       }
                       LogFile<<endl;
+
+                      for(int e=0; e<7; e++){
+                          if(pvf[e]==0){
+                              orbele[e]=P[i][pcount];
+                              ++pcount;
+                          }
+                          else{
+                              //
+                          }
+                      }
+                      pcount=0;
 
                       eval++;
                       ui->spinBox_5->setValue(eval);
@@ -4070,15 +4318,16 @@ void MainWindow::Optimisation()
 
                       if(upda==1){
                           upda=0;
+                          LogFile<<endl;
                           LogFile<<"New Parameters found."<<endl;
-                          LogFile<<"Residuum: "<<r1<<endl;
-                          LogFile<<scientific<<"P: "<<orbele[0]<<endl;
-                          LogFile<<scientific<<"e: "<<orbele[1]<<endl;
-                          LogFile<<scientific<<"KA: "<<orbele[2]<<endl;
-                          LogFile<<scientific<<"KB: "<<orbele[3]<<endl;
-                          LogFile<<scientific<<"Gamma: "<<orbele[4]<<endl;
-                          LogFile<<scientific<<"T0: "<<orbele[5]<<endl;
-                          LogFile<<scientific<<"Omega: "<<orbele[6]<<endl;
+                          LogFile<<"Residuum: "<<y[i]<<endl;
+                          LogFile<<setprecision(14)<<"P: "<<orbele[0]<<endl;
+                          LogFile<<setprecision(14)<<"e: "<<orbele[1]<<endl;
+                          LogFile<<setprecision(14)<<"KA: "<<orbele[2]<<endl;
+                          LogFile<<setprecision(14)<<"KB: "<<orbele[3]<<endl;
+                          LogFile<<setprecision(14)<<"Gamma: "<<orbele[4]<<endl;
+                          LogFile<<setprecision(14)<<"T0: "<<orbele[5]<<endl;
+                          LogFile<<setprecision(14)<<"Omega: "<<orbele[6]<<endl;
                           LogFile<<endl;
                       }
 
@@ -4089,6 +4338,7 @@ void MainWindow::Optimisation()
                           sequence=0;
                           LogFile<<"Initiation aborted."<<endl;
                           this->setCursor(QCursor(Qt::ArrowCursor));
+                          MainWindow::enableButtons();
                           return;
                       }
                       if(i==0){
@@ -4140,6 +4390,7 @@ void MainWindow::Optimisation()
                       }
                      this->setCursor(QCursor(Qt::ArrowCursor));
                       LogFile<<"The optimisation file does not exist! When running optimisation the first time for a given set of data, the optimisation needs to be initiated first."<<endl;
+                      MainWindow::enableButtons();
                       return;
                   }
 
@@ -4162,31 +4413,34 @@ void MainWindow::Optimisation()
                       }
                      this->setCursor(QCursor(Qt::ArrowCursor));
                       LogFile<<"The optimisation file does not match to the data! When running optimisation the first time for a given set of data, the optimisation needs to be initiated first."<<endl;
+                      MainWindow::enableButtons();
                       return;
                   }
 
                   for (int i=0; i<number_of_lines; i++){
-                  initiate1 >> one;
-                  istringstream ist(one);
-                  ist >> y[i];
-                  if(i==0) r1=y[0];
-                  if(y[i]<r1){
-                      r1=y[i];
-                  }
+                    initiate1 >> one;
+                    istringstream ist(one);
+                    ist >> y[i];
+                    if(i==0){
+                        r1=y[0];
+                    }
+                        if(y[i]<r1){
+                            r1=y[i];
+                        }
                   }
                   initiate1.close();
 
                   int coun=0;
 
                   for (int i=0; i<number_of_lines*nu; i++){
-                  initiate2 >> one;
-                  istringstream ist(one);
-                  ist >> P[coun][i-coun*nu];
-                  cout<<"P["<<coun<<"]["<<i-coun*nu<<"]: "<<P[coun][i-coun*nu]<<" ";
-                  if(i==coun*nu+nu-1){
-                      cout<<endl;
-                      ++coun;
-                  }
+                    initiate2 >> one;
+                    istringstream ist(one);
+                    ist >> P[coun][i-coun*nu];
+                    cout<<"P["<<coun<<"]["<<i-coun*nu<<"]: "<<P[coun][i-coun*nu]<<" ";
+                    if(i==coun*nu+nu-1){
+                        cout<<endl;
+                        ++coun;
+                    }
                   }
                   initiate2.close();
 
@@ -4212,7 +4466,6 @@ void MainWindow::Optimisation()
                   std::ostringstream file2NameStream(file2init);
                   file2NameStream<<path<<"/"<<file2init;
                   std::string file2Name = file2NameStream.str();
-                  ifstream initiate2(file2Name.c_str());
 
                   QFile checkfile(file2Name.c_str());
 
@@ -4227,8 +4480,10 @@ void MainWindow::Optimisation()
                       }
                      this->setCursor(QCursor(Qt::ArrowCursor));
                       LogFile<<"The initiation file does not exist! When running optimisation the first time for a given set of data, the optimisation needs to be initiated first."<<endl;
+                      MainWindow::enableButtons();
                       return;
                   }
+                  ifstream initiate2(file2Name.c_str());
 
                   int number_of_lines =0;
 
@@ -4249,31 +4504,34 @@ void MainWindow::Optimisation()
                      this->setCursor(QCursor(Qt::ArrowCursor));
                       cout<<number_of_lines<<endl;
                       LogFile<<"The initiation file does not match to the data! When running optimisation the first time for a given set of data, the optimisation needs to be initiated first."<<endl;
+                      MainWindow::enableButtons();
                       return;
                   }
 
                   for (int i=0; i<number_of_lines; i++){
-                  initiate1 >> one;
-                  istringstream ist(one);
-                  ist >> y[i];
-                  if(i==0) r1=y[0];
-                  if(y[i]<r1){
-                      r1=y[i];
-                  }
+                    initiate1 >> one;
+                    istringstream ist(one);
+                    ist >> y[i];
+                    if(i==0){
+                        r1=y[0];
+                    }
+                    if(y[i]<r1){
+                        r1=y[i];
+                    }
                   }
                   initiate1.close();
 
                   int coun=0;
 
                   for (int i=0; i<number_of_lines*nu; i++){
-                  initiate2 >> one;
-                  istringstream ist(one);
-                  ist >> P[coun][i-coun*nu];
-                  cout<<"P["<<coun<<"]["<<i-coun*nu<<"]: "<<P[coun][i-coun*nu]<<" ";
-                  if(i==coun*nu+nu-1){
-                      cout<<endl;
-                      ++coun;
-                  }
+                    initiate2 >> one;
+                    istringstream ist(one);
+                    ist >> P[coun][i-coun*nu];
+                    cout<<"P["<<coun<<"]["<<i-coun*nu<<"]: "<<P[coun][i-coun*nu]<<" ";
+                    if(i==coun*nu+nu-1){
+                        cout<<endl;
+                        ++coun;
+                    }
                   }
                   initiate2.close();
 
@@ -4392,25 +4650,146 @@ void MainWindow::Optimisation()
                       if((ys==ys2) & (ym==ym2)){
                           ++stagnate;
 
+                          // reinitiation
                           if(ui->checkBox_32->isChecked()){
-                              cout<<"Reinitiate optimisation with current best orbit."<<endl;
-                              ui->plainTextEdit_2->appendPlainText("Reinitiate optimisation with current best orbit.");
-                              LogFile<<"Stagnation of DSM: "<<stagnate<<endl;
-                              LogFile<<endl;
-                              LogFile<<"Reinitiate optimisation with current best orbit."<<endl;
 
-                              string filerein = "orbitelements.dat";
-                              std::ostringstream reinNameStream(filerein);
-                              reinNameStream<<path<<"/"<<filerein;
-                              std::string reinName = reinNameStream.str();
-                              ofstream borbit(reinName.c_str());
+                              //auto stop
+                              if(ui->checkBox_23->isChecked()){
+                                  if(ui->spinBox_6->value()==1){
+                                      if(ui->checkBox_27->isChecked()){ // use next sequence
+                                          LogFile<<"Finished Sequence "<<sequence<<". Setting up next sequence."<<endl;
+                                          LogFile<<"Using optimized RVs from last sequence."<<endl;
+                                          ++sequence;
+                                          MainWindow::on_pushButton_11_clicked(); // setting file names
+                                          ui->checkBox_9->setChecked(true);       // new optimisaton
+                                          ui->checkBox_11->setChecked(false);     // disable continue
+                                          ui->spinBox_3->setValue(9999);          // # iterations
+                                          MainWindow::on_pushButton_4_clicked();  // start optimisation
+                                      }
+                                      else{ // no sequence specified, stop optimization
+                                          cout<<"Optimisatin stopped; no better parameters found; stagnating."<<endl;
+                                          LogFile<<"Optimisatin stopped; no better parameters found; stagnating."<<endl;
+                                          MainWindow::enableButtons();
+                                          return;
+                                      }
+                                  }
+                                  // no auto stop applied but active
+                                  else{
+                                      cout<<"Reinitiate optimisation with current best orbit."<<endl;
+                                      ui->plainTextEdit_2->appendPlainText("Reinitiate optimisation with current best orbit.");
+                                      LogFile<<"Stagnation of DSM: "<<stagnate<<endl;
+                                      LogFile<<endl;
+                                      LogFile<<"Reinitiate optimisation with current best orbit."<<endl;
 
-                              if(add==0){
-                              for(int k=0; k<7; k++){
-                              borbit<<setprecision(14)<<P[Pl][k]<<endl;
+                                      string filerein = "orbitelements.dat";
+                                      std::ostringstream reinNameStream(filerein);
+                                      reinNameStream<<path<<"/"<<filerein;
+                                      std::string reinName = reinNameStream.str();
+                                      ofstream borbit(reinName.c_str());
+
+                                      /*
+                                      if(add==0){
+                                          for(int k=0; k<7; k++){
+                                              borbit<<setprecision(14)<<P[Pl][k]<<endl;
+                                          }
+                                      }
+                                      if(add==1){
+                                        if(Plock==1){
+                                          borbit<<setprecision(14)<<orbele[0]<<endl;
+                                          for(int k=0; k<6; k++){
+                                              borbit<<setprecision(14)<<P[Pl][k]<<endl;
+                                          }
+                                        }
+                                        if(elock==1){
+                                            borbit<<setprecision(14)<<P[Pl][0]<<endl;
+                                            borbit<<setprecision(14)<<orbele[1]<<endl;
+                                            for(int k=0; k<5; k++){
+                                              borbit<<setprecision(14)<<P[Pl][k+1]<<endl;
+                                            }
+                                        }
+                                        if(T0lock==1){
+                                            for(int k=0; k<5; k++){
+                                              borbit<<setprecision(14)<<P[Pl][k]<<endl;
+                                            }
+                                            borbit<<setprecision(14)<<orbele[5]<<endl;
+                                            borbit<<setprecision(14)<<P[Pl][5]<<endl;
+                                        }
+                                      }
+                                      if(add==2){
+                                        if((Plock==1) & (elock==1)){
+                                            borbit<<setprecision(14)<<orbele[0]<<endl;
+                                            borbit<<setprecision(14)<<orbele[1]<<endl;
+                                            for(int k=0; k<5; k++){
+                                              borbit<<setprecision(14)<<P[Pl][k]<<endl;
+                                            }
+                                        }
+                                        if((Plock==1) & (T0lock==1)){
+                                            borbit<<setprecision(14)<<orbele[0]<<endl;
+                                            for(int k=0; k<4; k++){
+                                              borbit<<setprecision(14)<<P[Pl][k]<<endl;
+                                            }
+                                            borbit<<setprecision(14)<<orbele[5]<<endl;
+                                            borbit<<setprecision(14)<<P[Pl][4]<<endl;
+                                        }
+                                        if((elock==1) & (T0lock==1)){
+                                            borbit<<setprecision(14)<<P[Pl][0]<<endl;
+                                            borbit<<setprecision(14)<<orbele[1]<<endl;
+                                            borbit<<setprecision(14)<<P[Pl][1]<<endl;
+                                            borbit<<setprecision(14)<<P[Pl][2]<<endl;
+                                            borbit<<setprecision(14)<<P[Pl][3]<<endl;
+                                            borbit<<setprecision(14)<<orbele[5]<<endl;
+                                            borbit<<setprecision(14)<<P[Pl][4]<<endl;
+                                        }
+                                      }
+                                      if(add==3){
+                                        borbit<<setprecision(14)<<orbele[0]<<endl;
+                                        borbit<<setprecision(14)<<orbele[1]<<endl;
+                                        borbit<<setprecision(14)<<P[Pl][0]<<endl;
+                                        borbit<<setprecision(14)<<P[Pl][1]<<endl;
+                                        borbit<<setprecision(14)<<P[Pl][2]<<endl;
+                                        borbit<<setprecision(14)<<orbele[5]<<endl;
+                                        borbit<<setprecision(14)<<P[Pl][3]<<endl;
+                                      }*/
+                                      for(int e=0; e<7; e++){
+                                          if(pvf[e]==0){
+                                              borbit<<setprecision(14)<<P[Pl][pcount]<<endl;
+                                              ++pcount;
+                                          }
+                                          else{
+                                              borbit<<setprecision(14)<<orbele[e]<<endl;
+                                          }
+                                      }
+                                      pcount=0;
+                                      ui->checkBox_9->setChecked(true);
+                                      ui->checkBox_11->setChecked(false);
+                                      ui->checkBox_12->setChecked(false);
+
+                                      reinitiate=1;
+                                      return;
+                                  }
                               }
-                              }
-                              if(add==1){
+
+                              // no auto stop activated, reinitiate
+                              else{
+                                cout<<"Reinitiate optimisation with current best orbit."<<endl;
+                                ui->plainTextEdit_2->appendPlainText("Reinitiate optimisation with current best orbit.");
+                                LogFile<<"Stagnation of DSM: "<<stagnate<<endl;
+                                LogFile<<endl;
+                                LogFile<<"Reinitiate optimisation with current best orbit."<<endl;
+
+                                string filerein = "orbitelements.dat";
+                                std::ostringstream reinNameStream(filerein);
+                                reinNameStream<<path<<"/"<<filerein;
+                                std::string reinName = reinNameStream.str();
+                                ofstream borbit(reinName.c_str());
+
+                                /*
+                                if(add==0){
+                                    for(int k=0; k<7; k++){
+                                        borbit<<setprecision(14)<<P[Pl][k]<<endl;
+                                    }
+                                }
+                                if(add==1){
                                   if(Plock==1){
                                     borbit<<setprecision(14)<<orbele[0]<<endl;
                                     for(int k=0; k<6; k++){
@@ -4431,8 +4810,8 @@ void MainWindow::Optimisation()
                                       borbit<<setprecision(14)<<orbele[5]<<endl;
                                       borbit<<setprecision(14)<<P[Pl][5]<<endl;
                                   }
-                              }
-                              if(add==2){
+                                }
+                                if(add==2){
                                   if((Plock==1) & (elock==1)){
                                       borbit<<setprecision(14)<<orbele[0]<<endl;
                                       borbit<<setprecision(14)<<orbele[1]<<endl;
@@ -4457,8 +4836,8 @@ void MainWindow::Optimisation()
                                       borbit<<setprecision(14)<<orbele[5]<<endl;
                                       borbit<<setprecision(14)<<P[Pl][4]<<endl;
                                   }
-                              }
-                              if(add==3){
+                                }
+                                if(add==3){
                                   borbit<<setprecision(14)<<orbele[0]<<endl;
                                   borbit<<setprecision(14)<<orbele[1]<<endl;
                                   borbit<<setprecision(14)<<P[Pl][0]<<endl;
@@ -4466,17 +4845,26 @@ void MainWindow::Optimisation()
                                   borbit<<setprecision(14)<<P[Pl][2]<<endl;
                                   borbit<<setprecision(14)<<orbele[5]<<endl;
                                   borbit<<setprecision(14)<<P[Pl][3]<<endl;
-                              }
+                                }*/
+                                for(int e=0; e<7; e++){
+                                    if(pvf[e]==0){
+                                        borbit<<setprecision(14)<<P[Pl][pcount]<<endl;
+                                        ++pcount;
+                                    }
+                                    else{
+                                        borbit<<setprecision(14)<<orbele[e]<<endl;
+                                    }
+                                }
+                                pcount=0;
+                                ui->checkBox_9->setChecked(true);
+                                ui->checkBox_11->setChecked(false);
+                                ui->checkBox_12->setChecked(false);
 
-                              ui->checkBox_9->setChecked(true);
-                              ui->checkBox_11->setChecked(false);
-                              ui->checkBox_12->setChecked(false);
-
-                              reinitiate=1;
-
-                              return;
-
-                          }
+                                reinitiate=1;
+                                return;
+                            }
+                        }
+                          // no reinitiated or auto stop active
                           else{
                               QString stagn = QString::number(stagnate);
                               LogFile<<"Stagnation of DSM: "<<stagnate<<endl;
@@ -4512,6 +4900,7 @@ void MainWindow::Optimisation()
                       //reflect highest value at centroid
                       for(int i=0; i<nu; i++){
                           Co[i]=Z[i]+alpha*(Z[i]-P[Ph][i]);
+                          /*
                           if(add==0){
                               orbele[i]=Co[i];    // no parameter locked
                           }
@@ -4572,8 +4961,18 @@ void MainWindow::Optimisation()
                                   orbele[6]=Co[i];
                               }
 
+                          }*/
+                      }
+                      for(int e=0; e<7; e++){
+                          if(pvf[e]==0){
+                              orbele[e]=Co[pcount];
+                              ++pcount;
+                          }
+                          else{
+                              //
                           }
                       }
+                      pcount=0;
                       eval++;
                       ui->spinBox_5->setValue(eval);
                       qApp->processEvents(QEventLoop::AllEvents);
@@ -4586,8 +4985,9 @@ void MainWindow::Optimisation()
 
                       if(upda==1){
                           upda=0;
+                          LogFile<<endl;
                           LogFile<<"New Parameters found."<<endl;
-                          LogFile<<"Residuum: "<<r1<<endl;
+                          LogFile<<"Residuum: "<<yi<<endl;
                           LogFile<<setprecision(14)<<"P: "<<orbele[0]<<endl;
                           LogFile<<setprecision(14)<<"e: "<<orbele[1]<<endl;
                           LogFile<<setprecision(14)<<"KA: "<<orbele[2]<<endl;
@@ -4617,6 +5017,7 @@ void MainWindow::Optimisation()
                           abortt=0;
                           sequence=0;
                           this->setCursor(QCursor(Qt::ArrowCursor));
+                          MainWindow::enableButtons();
                           return;
                       }
                       cout<<"reflection 1"<<endl;
@@ -4627,6 +5028,7 @@ void MainWindow::Optimisation()
                           LogFile<<"yi<yl, expansion; ";
                           for(int i=0; i<nu; i++){
                               Eo[i]=Z[i]+Gamma*(Co[i]-Z[i]);
+                              /*
                               if(add==0){
                                   orbele[i]=Eo[i];    // no parameter locked
                               }
@@ -4687,8 +5089,18 @@ void MainWindow::Optimisation()
                                       orbele[6]=Eo[i];
                                   }
 
+                              }*/
+                          }
+                          for(int e=0; e<7; e++){
+                              if(pvf[e]==0){
+                                  orbele[e]=Eo[pcount];
+                                  ++pcount;
+                              }
+                              else{
+                                  //
                               }
                           }
+                          pcount=0;
                           eval++;
                           ui->spinBox_5->setValue(eval);
                           qApp->processEvents(QEventLoop::AllEvents);
@@ -4701,8 +5113,9 @@ void MainWindow::Optimisation()
 
                           if(upda==1){
                               upda=0;
+                              LogFile<<endl;
                               LogFile<<"New Parameters found."<<endl;
-                              LogFile<<"Residuum: "<<r1<<endl;
+                              LogFile<<"Residuum: "<<yt<<endl;
                               LogFile<<setprecision(14)<<"P: "<<orbele[0]<<endl;
                               LogFile<<setprecision(14)<<"e: "<<orbele[1]<<endl;
                               LogFile<<setprecision(14)<<"KA: "<<orbele[2]<<endl;
@@ -4731,6 +5144,7 @@ void MainWindow::Optimisation()
                               abortt=0;
                               sequence=0;
                               this->setCursor(QCursor(Qt::ArrowCursor));
+                              MainWindow::enableButtons();
                               return;
                           }
                           if(yt<yl){
@@ -4745,6 +5159,7 @@ void MainWindow::Optimisation()
                               cout<<"ref1 ";
                               for(int i=0; i<nu; i++){
                                   P[Ph][i]=Co[i];
+                                  /*
                                   if(add==0){
                                       orbele[i]=Co[i];    // no parameter locked
                                   }
@@ -4805,8 +5220,18 @@ void MainWindow::Optimisation()
                                           orbele[6]=Co[i];
                                       }
 
+                                  }*/
+                              }
+                              for(int e=0; e<7; e++){
+                                  if(pvf[e]==0){
+                                      orbele[e]=Co[pcount];
+                                      ++pcount;
+                                  }
+                                  else{
+                                      //
                                   }
                               }
+                              pcount=0;
                               /*
                               eval++;
                               ui->spinBox_5->setValue(eval);
@@ -4834,6 +5259,7 @@ void MainWindow::Optimisation()
                                   abortt=0;
                                   sequence=0;
                                   this->setCursor(QCursor(Qt::ArrowCursor));
+                                  MainWindow::enableButtons();
                                   return;
                               }
                               qApp->processEvents(QEventLoop::AllEvents);
@@ -4879,6 +5305,7 @@ void MainWindow::Optimisation()
                                   abortt=0;
                                   sequence=0;
                                   this->setCursor(QCursor(Qt::ArrowCursor));
+                                  MainWindow::enableButtons();
                                   return;
                               }
                               qApp->processEvents(QEventLoop::AllEvents);
@@ -4921,6 +5348,7 @@ void MainWindow::Optimisation()
                                       abortt=0;
                                       sequence=0;
                                       this->setCursor(QCursor(Qt::ArrowCursor));
+                                      MainWindow::enableButtons();
                                       return;
                                   }
                                   qApp->processEvents(QEventLoop::AllEvents);
@@ -4928,6 +5356,7 @@ void MainWindow::Optimisation()
                               }
                               for(int i=0; i<nu; i++){
                                   So[i]=Z[i]+beta*(P[Ph][i]-Z[i]);
+                                  /*
                                   if(add==0){
                                       orbele[i]=So[i];    // no parameter locked
                                   }
@@ -4988,8 +5417,18 @@ void MainWindow::Optimisation()
                                           orbele[6]=So[i];
                                       }
 
-                                  }
+                                  }*/
                               }
+                                  for(int e=0; e<7; e++){
+                                      if(pvf[e]==0){
+                                          orbele[e]=So[pcount];
+                                          ++pcount;
+                                      }
+                                      else{
+                                          //
+                                      }
+                                  }
+                                  pcount=0;
                               eval++;
                               ui->spinBox_5->setValue(eval);
                               qApp->processEvents(QEventLoop::AllEvents);
@@ -5002,8 +5441,9 @@ void MainWindow::Optimisation()
 
                               if(upda==1){
                                   upda=0;
+                                  LogFile<<endl;
                                   LogFile<<"New Parameters found."<<endl;
-                                  LogFile<<"Residuum: "<<r1<<endl;
+                                  LogFile<<"Residuum: "<<yt<<endl;
                                   LogFile<<setprecision(14)<<"P: "<<orbele[0]<<endl;
                                   LogFile<<setprecision(14)<<"e: "<<orbele[1]<<endl;
                                   LogFile<<setprecision(14)<<"KA: "<<orbele[2]<<endl;
@@ -5032,6 +5472,7 @@ void MainWindow::Optimisation()
                                   abortt=0;
                                   sequence=0;
                                   this->setCursor(QCursor(Qt::ArrowCursor));
+                                  MainWindow::enableButtons();
                                   return;
                               }
 
@@ -5042,6 +5483,7 @@ void MainWindow::Optimisation()
                                   for(int j=0; j<nu+1; j++){
                                       for(int i =0; i<nu; i++){
                                           P[j][i]=P[Pl][i]+btot*(P[j][i]-P[Pl][i]);
+                                          /*
                                           if(add==0){
                                               orbele[i]=P[j][i];    // no parameter locked
                                           }
@@ -5102,7 +5544,17 @@ void MainWindow::Optimisation()
                                                   orbele[6]=P[j][i];
                                               }
 
+                                          }*/
+                                          for(int e=0; e<7; e++){
+                                              if(pvf[e]==0){
+                                                  orbele[e]=P[j][pcount];
+                                                  ++pcount;
+                                              }
+                                              else{
+                                                  //
+                                              }
                                           }
+                                          pcount=0;
                                       }
                                       eval++;
                                       ui->spinBox_5->setValue(eval);
@@ -5117,9 +5569,9 @@ void MainWindow::Optimisation()
 
                                       if(upda==1){
                                           upda=0;
-
+                                          LogFile<<endl;
                                           LogFile<<"New Parameters found."<<endl;
-                                          LogFile<<"Residuum: "<<r1<<endl;
+                                          LogFile<<"Residuum: "<<y[j]<<endl;
                                           LogFile<<setprecision(14)<<"P: "<<orbele[0]<<endl;
                                           LogFile<<setprecision(14)<<"e: "<<orbele[1]<<endl;
                                           LogFile<<setprecision(14)<<"KA: "<<orbele[2]<<endl;
@@ -5148,6 +5600,7 @@ void MainWindow::Optimisation()
                                           abortt=0;
                                           sequence=0;
                                           this->setCursor(QCursor(Qt::ArrowCursor));
+                                          MainWindow::enableButtons();
                                           return;
                                       }
                                   }
@@ -5159,6 +5612,7 @@ void MainWindow::Optimisation()
                                   LogFile<<"yt<=yh, single contraction; ";
                                   for(int i=0; i<nu; i++){
                                       P[Ph][i]=So[i];
+                                      /*
                                       if(add==0){
                                           orbele[i]=So[i];    // no parameter locked
                                       }
@@ -5219,8 +5673,18 @@ void MainWindow::Optimisation()
                                               orbele[6]=So[i];
                                           }
 
+                                      }*/
+                                  }
+                                  for(int e=0; e<7; e++){
+                                      if(pvf[e]==0){
+                                          orbele[e]=So[pcount];
+                                          ++pcount;
+                                      }
+                                      else{
+                                          //
                                       }
                                   }
+                                  pcount=0;
                                   /*
                                   eval++;
                                   ui->spinBox_5->setValue(eval);
@@ -5248,6 +5712,7 @@ void MainWindow::Optimisation()
                                       abortt=0;
                                       sequence=0;
                                       this->setCursor(QCursor(Qt::ArrowCursor));
+                                      MainWindow::enableButtons();
                                       return;
                                   }
                                   qApp->processEvents(QEventLoop::AllEvents);
@@ -5302,6 +5767,18 @@ void MainWindow::Optimisation()
                         }
                   }
 
+                  for(int e=0; e<7; e++){
+                      if(pvf[e]==0){
+                          orbele[e]=P[Pl][pcount];
+                          ++pcount;
+                      }
+                      else{
+                          //
+                      }
+                  }
+                  pcount=0;
+
+                  /*
                for(int i =0; i<nu; i++){
                   if(add==0){
                       orbele[i]=P[Pl][i];    // no parameter locked
@@ -5364,7 +5841,7 @@ void MainWindow::Optimisation()
                       }
 
                   }
-              }
+              }*/
 
                   cout<<endl;
                   cout<<setprecision(12)<<"Simplex Mean: "<<ym<<" Simplex STD: "<<ys<<endl;
@@ -6126,7 +6603,7 @@ double MainWindow::DivideConquer(){
         }
 
         if(ui->checkBox_14->isChecked()){
-        residu=sqrt(residu);
+            residu=sqrt(residu);
         }
 
         cout<<"Residuum: "<<residu<<endl;
@@ -6134,7 +6611,7 @@ double MainWindow::DivideConquer(){
         cout<<"  r/Bins: "<<residu/resbins<<endl;
 
         // better value found, write data to files.
-        if((residu<r1) or (r1==0.0)){
+        if(((residu<r1) or (r1==0.0)) and (optfratios==0)){
 
             r1=residu;
             upda=1;
@@ -6385,6 +6862,108 @@ double MainWindow::DivideConquer(){
                 }
             }
         }
+        else{
+            // write to files to determine inclinations
+            if(optfratios==1){
+
+                QVector<double> err(logbin), errmean(logbin);
+
+                string erro = "frerror.dat";
+                std::ostringstream upd1NameStream(erro);
+                upd1NameStream<<path<<"/"<<erro;
+                std::string upd1Name = upd1NameStream.str();
+                ofstream upda1(upd1Name.c_str());
+
+                string sCA = "frcompa.dat";
+                std::ostringstream upd2NameStream(sCA);
+                upd2NameStream<<path<<"/"<<sCA;
+                std::string upd2Name = upd2NameStream.str();
+                ofstream upda2(upd2Name.c_str());
+
+                string sCB = "frcompb.dat";
+                std::ostringstream upd3NameStream(sCB);
+                upd3NameStream<<path<<"/"<<sCB;
+                std::string upd3Name = upd3NameStream.str();
+                ofstream upda3(upd3Name.c_str());
+
+                string sTel = "frtellur.dat";
+                std::ostringstream upd5NameStream(sTel);
+                upd5NameStream<<path<<"/"<<sTel;
+                std::string upd5Name = upd5NameStream.str();
+                ofstream upda5(upd5Name.c_str());
+
+                string sDif = "frdifferences.dat";
+                std::ostringstream upd4NameStream(sDif);
+                upd4NameStream<<path<<"/"<<sDif;
+                std::string upd4Name = upd4NameStream.str();
+                ofstream upda4(upd4Name.c_str());
+
+                for(int i =0; i<logbin;i++){
+                    errmean[i]=0;
+                    for(int n = 0; n<num; n++){
+                        errmean[i]+=(res(i+n*logbin)-C(i+n*logbin))/num;
+
+                    }
+                    upda1<<pow(10,W(i))<<"\t"<<errmean[i]<<endl;
+                    errmean[i]=0;
+                }
+
+                for (j=0;j<Mm;j++) {
+                     if(abs(X(j))>10*tsh){
+                        if(j<bso1){
+
+                            upda2<<setprecision(14)<<pow(10,(W(0)+(index1-(RV3maxi+orbele[4])/dv)*difference))<<"\t"<<X(j)<<endl;
+                            ++index1;
+                        }
+                        if((j>=bso1)&(j<bso1+bso2)){
+                            upda3<<setprecision(14)<<pow(10,(W(0)+(index2-(RV1maxi+orbele[4])/dv)*difference))<<"\t"<<X(j)<<endl;
+                            ++index2;
+                        }
+                        if(j>=bso1+bso2){
+                            upda5<<setprecision(14)<<pow(10,(W(0)+index3*difference))<<"\t"<<X(j)<<endl;
+                            ++index3;
+                        }
+                    }
+                }
+                index1=0;
+                index2=0;
+                index3=0;
+
+                for(int i=0; i<res.size(); i++){
+                        upda4<<pow(10,W(i))<<" "<<(res(i)-C(i))<<endl;
+                }
+
+                // use function slope to optimise
+                if(ui->checkBox_30->isChecked()){
+                    residu=MainWindow::inclinations();
+                }
+                // use residu, calculated above, to optimise
+                else{
+                    //
+                }
+
+                if(residu<r1){
+                    r1=residu;
+                    upda=1;
+                    cout<<"Better flux ratios found."<<endl;
+                    for(int i=0; i<num; i++){
+                        cout<<Mval1[i]<<"\t"<<Mval2[i]<<endl;
+                    }
+                    ui->spinBox_6->setValue(eval);
+
+                    QString residual=QString::number(residu);
+                    ui->lineEdit_7->setText(residual);
+                }
+                if(r1==0.0){
+                    r1=residu;
+                    upda=1;
+                }
+
+            }
+            else{
+
+            }
+        }
         qApp->processEvents(QEventLoop::AllEvents);
 
         return residu;
@@ -6395,7 +6974,7 @@ double MainWindow::DivideConquer(){
 //*******************************************************
 void MainWindow::on_pushButton_6_clicked()
 {
-    if(runow==0){       //plot only of in GUI-mode
+    if((runow==0) & (optfratios==0)){       //plot only of in GUI-mode
         ui->customPlot->clearGraphs();
         ui->customPlot_2->clearGraphs();
         ui->customPlot_3->clearGraphs();
@@ -6407,7 +6986,6 @@ void MainWindow::on_pushButton_6_clicked()
         std::ostringstream datNameStream(plot11);
         datNameStream<<path<<"/"<<plot11;
         std::string datName = datNameStream.str();
-        ifstream toplot1(datName.c_str());
 
         QFile checkfile(datName.c_str());
 
@@ -6416,13 +6994,13 @@ void MainWindow::on_pushButton_6_clicked()
             QMessageBox::information(this, "Error", "File "+qPath+"/"+plot1+" does not exist!");
             return;
         }
+        ifstream toplot1(datName.c_str());
 
         QString plot2=ui->lineEdit_8->text();
         string plot12 = plot2.toUtf8().constData();
         std::ostringstream dat2NameStream(plot12);
         dat2NameStream<<path<<"/"<<plot12;
         std::string dat2Name = dat2NameStream.str();
-        ifstream toplot2(dat2Name.c_str());
 
         QFile checkfile2(dat2Name.c_str());
 
@@ -6431,13 +7009,13 @@ void MainWindow::on_pushButton_6_clicked()
             QMessageBox::information(this, "Error", "File "+qPath+"/"+plot2+" does not exist!");
             return;
         }
+        ifstream toplot2(dat2Name.c_str());
 
         QString qError=ui->lineEdit_20->text();
         string errorf=qError.toUtf8().constData();
         std::ostringstream dat4NameStream(errorf);
         dat4NameStream<<path<<"/"<<errorf;
-        std::string dat4Name = dat4NameStream.str();
-        ifstream errors(dat4Name.c_str());
+        std::string dat4Name = dat4NameStream.str();  
 
         QString qDiff="diffstatistic.dat";
         string sdiff=qDiff.toUtf8().constData();
@@ -6453,6 +7031,7 @@ void MainWindow::on_pushButton_6_clicked()
             QMessageBox::information(this, "Error", "File "+qPath+"/"+qError+" does not exist!");
             return;
         }
+        ifstream errors(dat4Name.c_str());
 
         int number_of_lines=0;
 
@@ -6604,7 +7183,7 @@ void MainWindow::on_pushButton_6_clicked()
 
         double offset = ui->doubleSpinBox_5->value();
         int index = 0, count=0;
-        double sres=0, sres2=0;
+        double sres=0.0, sres2=0.0, reasm=0.0;
 
         a.resize(number_of_lines);
         b.resize(number_of_lines);
@@ -6616,7 +7195,13 @@ void MainWindow::on_pushButton_6_clicked()
             istringstream ist2(two);
             ist2 >> b[i];
             if((i>0) & (a[i]<a[i-1])){
-                diffs<<sres<<"\t"<<sres2<<"\t"<<count<<endl;
+                reasm=sres/count;
+                if(sres!=0){
+                    diffs<<sres<<"\t"<<sres2<<"\t"<<reasm<<"\t"<<count<<endl;
+                }
+                else{
+                    //
+                }
                 sres = 0;
                 sres2 = 0;
                 count=0;
@@ -6637,12 +7222,69 @@ void MainWindow::on_pushButton_6_clicked()
                 sres2+=pow(b[i],2);
                 ++count;
             }
-            b[i]=b[i]+index*offset;
+            //b[i]=b[i]+index*offset;
         }
-        diffs<<sres<<"\t"<<sres2<<"\t"<<count<<endl;
+        if(sres!=0){
+            diffs<<sres<<"\t"<<sres2<<"\t"<<reasm<<"\t"<<count<<endl;
+        }
+        else{
+            //
+        }
 
         diffs.close();
         toplot3.close();
+
+        ifstream indiffs(dat5Name.c_str());
+
+        string three, four;
+        QVector<double> vreasm(index), vsres(index), vsres2(index), vcount(index);
+
+        for (int i=0; i<index; i++){
+            indiffs >> one >>two>>three>>four;
+            istringstream ist(one);
+            ist >> vsres[i];
+            istringstream ist2(two);
+            ist2 >> vsres2[i];
+            istringstream ist3(three);
+            ist3 >> vreasm[i];
+            istringstream ist4(four);
+            ist4 >> vcount[i];
+        }
+        indiffs.close();
+        sres=0.0;
+        sres2=0.0;
+        count=0;
+        index=0;
+        ofstream diffs2(dat5Name.c_str());
+
+        for(int i=0; i<number_of_lines; i++){
+            if((i>0) & (a[i]<a[i-1])){
+                reasm=sres/count;
+                diffs2<<sres<<"\t"<<vsres[index]<<"\t"<<sres2<<"\t"<<vsres2[index]<<"\t"<<reasm<<"\t"<<count<<endl;
+                sres = 0.0;
+                sres2 = 0.0;
+                count=0;
+                ++index;
+            }
+            if(ui->checkBox_33->isChecked()){
+                if(a[i]>ui->doubleSpinBox_14->value() & (a[i]<ui->doubleSpinBox_15->value())){
+                    sres+=vreasm[index]-b[i];
+                    sres2+=pow((vreasm[index]-b[i]),2);
+                    ++count;
+                }
+                else{
+                    // do nothing...
+                }
+            }
+            else{
+                sres+=b[i];
+                sres2+=pow(b[i],2);
+                ++count;
+            }
+            b[i]=b[i]+index*offset;
+        }
+         diffs2<<sres<<"\t"<<vsres[index]<<"\t"<<sres2<<"\t"<<vsres2[index]<<"\t"<<reasm<<"\t"<<count<<endl;
+         diffs2.close();
 
         ui->customPlot_3->addGraph();
         ui->customPlot_3->graph(0)->setData(a, b);
@@ -6650,7 +7292,7 @@ void MainWindow::on_pushButton_6_clicked()
         ui->customPlot_3->graph(0)->setLineStyle(QCPGraph::lsNone);
         ui->customPlot_3->graph(0)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, 2));
         ui->customPlot_3->xAxis->setRange(xs1, xs2);
-        ui->customPlot_3->yAxis->setRange(-0.5, 0.5+index*offset);
+        ui->customPlot_3->yAxis->rescale(true);
         ui->customPlot_3->replot();
 
         //telluric lines
@@ -6701,8 +7343,334 @@ void MainWindow::on_pushButton_6_clicked()
 
       }
     }
+
+    // plot files flux optimisation
     else{
-        // nothing to be plotted
+        if((runow==0) & (optfratios==1)){
+            ui->customPlot->clearGraphs();
+            ui->customPlot_2->clearGraphs();
+            ui->customPlot_3->clearGraphs();
+
+            double xs1, xs2, ys1, ys2;
+            string zeile, one, two;
+            QString plot1="frcompa.dat";
+            string plot11 = plot1.toUtf8().constData();
+            std::ostringstream datNameStream(plot11);
+            datNameStream<<path<<"/"<<plot11;
+            std::string datName = datNameStream.str();
+
+            QFile checkfile(datName.c_str());
+
+            if(!checkfile.exists()){
+                qDebug()<<"The file "<<checkfile.fileName()<<" does not exist.";
+                QMessageBox::information(this, "Error", "File "+qPath+"/"+plot1+" does not exist!");
+                return;
+            }
+            ifstream toplot1(datName.c_str());
+
+            QString plot2="frcompb.dat";
+            string plot12 = plot2.toUtf8().constData();
+            std::ostringstream dat2NameStream(plot12);
+            dat2NameStream<<path<<"/"<<plot12;
+            std::string dat2Name = dat2NameStream.str();
+
+            QFile checkfile2(dat2Name.c_str());
+
+            if(!checkfile2.exists()){
+                qDebug()<<"The file "<<checkfile2.fileName()<<" does not exist.";
+                QMessageBox::information(this, "Error", "File "+qPath+"/"+plot2+" does not exist!");
+                return;
+            }
+            ifstream toplot2(dat2Name.c_str());
+
+            QString qError="frerror.dat";
+            string errorf=qError.toUtf8().constData();
+            std::ostringstream dat4NameStream(errorf);
+            dat4NameStream<<path<<"/"<<errorf;
+            std::string dat4Name = dat4NameStream.str();
+
+            QFile checkfile4(dat4Name.c_str());
+
+            if(!checkfile4.exists()){
+                qDebug()<<"The file "<<checkfile4.fileName()<<" does not exist.";
+                QMessageBox::information(this, "Error", "File "+qPath+"/"+qError+" does not exist!");
+                return;
+            }
+            ifstream errors(dat4Name.c_str());
+
+            int number_of_lines=0;
+
+            while(std::getline(toplot1, zeile))
+                ++ number_of_lines;
+
+            toplot1.clear();
+            toplot1.seekg(0, ios::beg);
+
+            QVector<double> a(number_of_lines), b(number_of_lines);
+
+            for (int i=0; i<number_of_lines; i++){
+                toplot1 >> one >>two;
+                istringstream ist(one);
+                ist >> a[i];
+                istringstream ist2(two);
+                ist2 >> b[i];
+            }
+            toplot1.close();
+
+            xs1=a[0];
+            xs2=a[number_of_lines-1];
+            for(int i=0; i<number_of_lines; i++){
+                if(a[i]<xs1){
+                    xs1=a[i];
+                }
+            }
+
+            for(int i=0; i<number_of_lines; i++){
+                if(a[i]>xs2){
+                    xs2=a[i];
+                }
+            }
+
+
+            ys1=b[0];
+            ys2=b[number_of_lines-1];
+            for(int i=0; i<number_of_lines; i++){
+                if(b[i]<ys1){
+                    ys1=b[i];
+                }
+            }
+            for(int i=0; i<number_of_lines; i++){
+                if(b[i]>ys2){
+                    ys2=b[i];
+                }
+            }
+
+
+            number_of_lines=0;
+
+            while(std::getline(toplot2, zeile))
+                ++ number_of_lines;
+
+            toplot2.clear();
+            toplot2.seekg(0, ios::beg);
+
+            QVector<double> c(number_of_lines), d(number_of_lines);
+
+            for (int i=0; i<number_of_lines; i++){
+                toplot2 >> one >>two;
+                istringstream ist(one);
+                ist >> c[i];
+                istringstream ist2(two);
+                ist2 >> d[i];
+            }
+            toplot2.close();
+
+            for(int i=0; i<number_of_lines; i++){
+                if(c[i]<xs1){
+                    xs1=c[i];
+                }
+            }
+
+            for(int i=0; i<number_of_lines; i++){
+                if(c[i]>xs2){
+                    xs2=c[i];
+                }
+            }
+
+            for(int i=0; i<number_of_lines; i++){
+                if(d[i]<ys1){
+                    ys1=d[i];
+                }
+            }
+            for(int i=0; i<number_of_lines; i++){
+                if(d[i]>ys2){
+                    ys2=d[i];
+                }
+            }
+
+            number_of_lines=0;
+
+            while(std::getline(errors, zeile))
+           ++ number_of_lines;
+
+            errors.clear();
+            errors.seekg(0, ios::beg);
+
+            QVector<double> e(number_of_lines), f(number_of_lines);
+
+            for (int i=0; i<number_of_lines; i++){
+                errors >> one >>two;
+                istringstream ist(one);
+                ist >> e[i];
+                istringstream ist2(two);
+                ist2 >> f[i];
+            }
+            errors.close();
+
+            ui->customPlot->addGraph();
+            ui->customPlot->graph(0)->setData(a, b);
+            ui->customPlot->graph(0)->rescaleAxes();
+            ui->customPlot->graph(0)->setPen(QPen(Qt::blue));
+            ui->customPlot->addGraph();
+            ui->customPlot->graph(1)->setData(c, d);
+            ui->customPlot->graph(1)->rescaleAxes(true);
+            ui->customPlot->graph(1)->setPen(QPen(Qt::red));
+            ui->customPlot->addGraph();
+            ui->customPlot->graph(2)->setData(e, f);
+            ui->customPlot->yAxis->rescale(true);
+            ui->customPlot->graph(2)->setPen(QPen(Qt::black));
+            ui->customPlot->replot();
+
+            // differences
+
+            QString qDiff="frdiffstatistic.dat";
+            string sdiff=qDiff.toUtf8().constData();
+            std::ostringstream dat5NameStream(sdiff);
+            dat5NameStream<<path<<"/"<<sdiff;
+            std::string dat5Name = dat5NameStream.str();
+            ofstream diffs(dat5Name.c_str());
+
+            QString plot3="frdifferences.dat";
+            string plot13 = plot3.toUtf8().constData();
+            std::ostringstream dat3NameStream(plot13);
+            dat3NameStream<<path<<"/"<<plot13;
+            std::string dat3Name = dat3NameStream.str();
+
+            QFile checkfile3(datName.c_str());
+
+            if(!checkfile3.exists()){
+                qDebug()<<"The file "<<checkfile3.fileName()<<" does not exist.";
+                QMessageBox::information(this, "Error", "File "+qPath+"/"+plot3+" does not exist!");
+                return;
+            }
+
+            ifstream toplot3(dat3Name.c_str());
+
+            number_of_lines=0;
+
+            while(std::getline(toplot3, zeile))
+            ++ number_of_lines;
+
+            toplot3.clear();
+            toplot3.seekg(0, ios::beg);
+
+            double offset = ui->doubleSpinBox_5->value();
+            int index = 0, count=0;
+            double sres=0.0, sres2=0.0, reasm=0.0;
+
+            a.resize(number_of_lines);
+            b.resize(number_of_lines);
+
+            for (int i=0; i<number_of_lines; i++){
+                toplot3 >> one >>two;
+                istringstream ist(one);
+                ist >> a[i];
+                istringstream ist2(two);
+                ist2 >> b[i];
+                if((i>0) & (a[i]<a[i-1])){
+                    reasm=sres/count;
+                    if(sres!=0){
+                        diffs<<sres<<"\t"<<sres2<<"\t"<<reasm<<"\t"<<count<<endl;
+                    }
+                    else{
+                        //
+                    }
+                    sres = 0;
+                    sres2 = 0;
+                    count=0;
+                    ++index;
+                }
+                if(ui->checkBox_33->isChecked()){
+                    if(a[i]>ui->doubleSpinBox_14->value() & (a[i]<ui->doubleSpinBox_15->value())){
+                        sres+=b[i];
+                        sres2+=pow(b[i],2);
+                        ++count;
+                    }
+                    else{
+                        // do nothing...
+                    }
+                }
+                else{
+                    sres+=b[i];
+                    sres2+=pow(b[i],2);
+                    ++count;
+                }
+                //b[i]=b[i]+index*offset;
+            }
+            if(sres!=0){
+                diffs<<sres<<"\t"<<sres2<<"\t"<<reasm<<"\t"<<count<<endl;
+            }
+            else{
+                //
+            }
+
+            diffs.close();
+            toplot3.close();
+
+            ifstream indiffs(dat5Name.c_str());
+
+            string three, four;
+            QVector<double> vreasm(index), vsres(index), vsres2(index), vcount(index);
+
+            for (int i=0; i<index; i++){
+                indiffs >> one >>two>>three>>four;
+                istringstream ist(one);
+                ist >> vsres[i];
+                istringstream ist2(two);
+                ist2 >> vsres2[i];
+                istringstream ist3(three);
+                ist3 >> vreasm[i];
+                istringstream ist4(four);
+                ist4 >> vcount[i];
+            }
+            indiffs.close();
+            sres=0.0;
+            sres2=0.0;
+            count=0;
+            index=0;
+            ofstream diffs2(dat5Name.c_str());
+
+            for(int i=0; i<number_of_lines; i++){
+                if((i>0) & (a[i]<a[i-1])){
+                    reasm=sres/count;
+                    diffs2<<sres<<"\t"<<vsres[index]<<"\t"<<sres2<<"\t"<<vsres2[index]<<"\t"<<reasm<<"\t"<<count<<endl;
+                    sres = 0.0;
+                    sres2 = 0.0;
+                    count=0;
+                    ++index;
+                }
+                if(ui->checkBox_33->isChecked()){
+                    if(a[i]>ui->doubleSpinBox_14->value() & (a[i]<ui->doubleSpinBox_15->value())){
+                        sres+=vreasm[index]-b[i];
+                        sres2+=pow((vreasm[index]-b[i]),2);
+                        ++count;
+                    }
+                    else{
+                        // do nothing...
+                    }
+                }
+                else{
+                    sres+=b[i];
+                    sres2+=pow(b[i],2);
+                    ++count;
+                }
+                b[i]=b[i]+index*offset;
+            }
+             diffs2<<sres<<"\t"<<vsres[index]<<"\t"<<sres2<<"\t"<<vsres2[index]<<"\t"<<reasm<<"\t"<<count<<endl;
+             diffs2.close();
+
+            ui->customPlot_3->addGraph();
+            ui->customPlot_3->graph(0)->setData(a, b);
+            ui->customPlot_3->graph(0)->setPen(QPen(Qt::red));
+            ui->customPlot_3->graph(0)->setLineStyle(QCPGraph::lsNone);
+            ui->customPlot_3->graph(0)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, 2));
+            ui->customPlot_3->xAxis->setRange(xs1, xs2);
+            ui->customPlot_3->yAxis->setRange(-0.5, 0.5+index*offset);
+            ui->customPlot_3->replot();
+        }
+        else{
+            //
+        }
     }
 
 }
@@ -7442,6 +8410,7 @@ void MainWindow::ComputeDifferences()
 //*************************************
 void MainWindow::on_pushButton_4_clicked()
 {
+    MainWindow::disableButtons();
     MainWindow::Optimisation();
 
     if(reinitiate==1){
@@ -7449,6 +8418,7 @@ void MainWindow::on_pushButton_4_clicked()
         inrein=1;
         MainWindow::on_pushButton_4_clicked();
     }
+    MainWindow::enableButtons();
 
     this->setCursor(QCursor(Qt::ArrowCursor));
 
@@ -8618,43 +9588,43 @@ void MainWindow::on_pushButton_12_clicked()
      }
 
      else{
-         QString input=ui->lineEdit_8->text();
-         string in = input.toUtf8().constData();
-         std::ostringstream inNameStream(in);
-         inNameStream<<path<<"/compl.txt";//<<in;
-         std::string inName = inNameStream.str();
+            QString input=ui->lineEdit_8->text();
+            string in = input.toUtf8().constData();
+            std::ostringstream inNameStream(in);
+            inNameStream<<path<<"/compl.txt";//<<in;
+            std::string inName = inNameStream.str();
 
-         QFile checkfile1(inName.c_str());
+            QFile checkfile1(inName.c_str());
 
-         if(!checkfile1.exists()){
-             qDebug()<<"The file "<<checkfile1.fileName()<<" does not exist.";
-             QMessageBox::information(this, "Error", "Error 1: File"+qPath+"/"+input+" does not exist!");
-             this->setCursor(QCursor(Qt::ArrowCursor));
-             return;
-         }
-         ifstream file1(inName.c_str());
+            if(!checkfile1.exists()){
+                qDebug()<<"The file "<<checkfile1.fileName()<<" does not exist.";
+                QMessageBox::information(this, "Error", "Error 1: File"+qPath+"/"+input+" does not exist!");
+                this->setCursor(QCursor(Qt::ArrowCursor));
+                return;
+            }
+            ifstream file1(inName.c_str());
 
-         while(std::getline(file1, liner))
-            ++zlin;
+            while(std::getline(file1, liner))
+                ++zlin;
 
-         file1.clear();
-         file1.seekg(0, ios::beg);
+            file1.clear();
+            file1.seekg(0, ios::beg);
 
-         for(int i =0;i <bso1+bso2; i++){
-             file1 >> ein1 >>zwei2;
-             istringstream ist(ein1);
-             istringstream ist2(zwei2);
+            for(int i =0;i <bso1+bso2; i++){
+                file1 >> ein1 >>zwei2;
+                istringstream ist(ein1);
+                istringstream ist2(zwei2);
 
-             if(i>=bso1){
-                ist >> wav[i];
-                ist2 >> sol2[i];
-             }
-             else{
-                 wav[i]=0;
-                 sol2[i]=0;
-             }
-         }
-     }
+                if(i>=bso1){
+                    ist >> wav[i];
+                    ist2 >> sol2[i];
+                }
+                else{
+                    wav[i]=0;
+                    sol2[i]=0;
+                }
+            }
+        }
 
      sol1 = M*sol2;
      diff=C-sol1;
@@ -8956,5 +9926,1050 @@ void MainWindow::on_checkBox_28_clicked()
 {
     if(ui->checkBox_28->isChecked()){
         ui->checkBox_26->setChecked(false);
+    }
+}
+
+void MainWindow::disableButtons()
+{
+   ui->pushButton->setEnabled(false);
+   ui->pushButton_2->setEnabled(false);
+   ui->pushButton_3->setEnabled(false);
+   ui->pushButton_4->setEnabled(false);
+   ui->pushButton_5->setEnabled(false);
+   ui->pushButton_8->setEnabled(false);
+   ui->pushButton_9->setEnabled(false);
+   ui->pushButton_10->setEnabled(false);
+   ui->pushButton_11->setEnabled(false);
+   ui->pushButton_12->setEnabled(false);
+   ui->pushButton_13->setEnabled(false);
+}
+
+void MainWindow::enableButtons()
+{
+   ui->pushButton->setEnabled(true);
+   ui->pushButton_2->setEnabled(true);
+   ui->pushButton_3->setEnabled(true);
+   ui->pushButton_4->setEnabled(true);
+   ui->pushButton_5->setEnabled(true);
+   ui->pushButton_8->setEnabled(true);
+   ui->pushButton_9->setEnabled(true);
+   ui->pushButton_10->setEnabled(true);
+   ui->pushButton_11->setEnabled(true);
+   ui->pushButton_12->setEnabled(true);
+   ui->pushButton_13->setEnabled(true);
+}
+
+
+//*******************************************
+// optimize on flux ratios
+//*******************************************
+void MainWindow::on_pushButton_13_clicked()
+{
+    qPath=ui->lineEdit_4->text();
+    path = qPath.toUtf8().constData();
+
+    QString input=qPath+"/continuumpoints.dat";
+    string data1 = input.toUtf8().constData();
+    std::ostringstream dat1NameStream(data1);
+    dat1NameStream<<data1;
+    std::string dat1Name = dat1NameStream.str();
+
+    QFile checkfile1(dat1Name.c_str());
+
+    if(ui->checkBox_30->isChecked()){
+
+        if(!checkfile1.exists()){
+            QMessageBox::information(this, "Error", "File to define continuum does not exist. Please set the points via the Editor.");
+            return;
+        }
+        else{
+            string line, eins;
+            int nlines=0;
+            ifstream points(dat1Name.c_str());
+            while(std::getline(points, line))
+                ++nlines;
+
+            points.clear();
+            points.seekg(0, ios::beg);
+
+            if(nlines!=8){
+                QMessageBox::information(this, "Error", "Number of points in continuumpoints.dat is not 8.");
+                return;
+            }
+            else{
+                for(int i =0;i <8; i++){
+                    points >> eins;
+                    istringstream ist(eins);
+                    ist>>cpoints[i];
+                }
+            }
+        }
+    }
+    else{
+        //
+    }
+
+    optfratios=1;
+    MainWindow::disableButtons();
+
+    // optmisation on flux ratios
+    system_clock::time_point time1 = system_clock::now();
+
+    upda=0;
+    updac=0;
+    abauto=0;
+
+    ui->spinBox_4->setValue(0);
+    ui->spinBox_5->setValue(0);
+
+    this->setCursor(QCursor(Qt::WaitCursor));
+    MainWindow::read_data();
+    this->setCursor(QCursor(Qt::WaitCursor));
+
+    if(error==1){
+        this->setCursor(QCursor(Qt::ArrowCursor));
+        optfratios=0;
+        error=0;
+        MainWindow::enableButtons();
+        return;
+    }
+
+    qApp->processEvents(QEventLoop::AllEvents);
+
+    int Ph=0, Pl=0, Psh=0, SB1=0;
+
+    eval=0;
+
+    if(ui->checkBox_3->isChecked()){
+            SB1=1;
+    }
+
+    zaehler=ui->spinBox_3->value();
+    double yh, ysh, yl, ym, yi, ys, yt;
+
+    int nu=num;
+    QVector<double> fratios(num);
+
+    QString qLogFile = ui->lineEdit_21->text();
+    QString qlFile = qPath+"/"+qLogFile;
+    QFileInfo QLFile(qlFile);
+    string lFile = qLogFile.toUtf8().constData();
+    std::ostringstream lFileNameStream(lFile);
+    lFileNameStream<<path<<"/"<<lFile;
+    std::string lFileName = lFileNameStream.str();
+    ofstream LogFile;
+
+    struct tm *ts;
+    time_t t;
+
+    t = time(NULL);
+    ts = localtime(&t);
+
+    if(QLFile.exists()){
+        LogFile.open(lFileName.c_str(), std::ios_base::app);
+        LogFile<<endl;
+        LogFile<<"__________________________________________________"<<endl;
+        LogFile<<" "<<asctime(ts)<<endl;
+        LogFile<<endl;
+    }
+
+    else{
+        LogFile.open(lFileName.c_str());
+        LogFile<<"******************************"<<endl;
+        LogFile<<"  Optimisation LogFile"<<endl;
+        LogFile<<"******************************"<<endl;
+    }
+
+    LogFile<<"Optimisation of flux ratios."<<endl;
+
+    LogFile<<endl;
+
+    if(ui->checkBox_29->isChecked()){
+        LogFile<<"Using residuum as criterion for optimisation."<<endl;
+    }
+    else{
+        LogFile<<"Using function slope as criterion for optimisation."<<endl;
+    }
+
+    string sstrength = "edit.dat";
+    std::ostringstream ediNameStream(sstrength);
+    ediNameStream<<path<<"/"<<sstrength;
+    std::string ediName = ediNameStream.str();
+
+    QFileInfo lstrength(ediName.c_str());
+
+    if(lstrength.exists()){
+
+        ifstream edit(ediName.c_str());
+        string lines, einse;
+
+        int num_lines1=0;
+
+        while(std::getline(edit, lines))
+                   ++ num_lines1;
+
+                edit.clear();
+                edit.seekg(0, ios::beg);
+
+                if(num_lines1!=3*num){
+                    if(runow==0){
+                        QMessageBox::information(this, "Error", "Error 22: Edit file does not match to specified number of observations.");
+                    }
+                    else{
+                        cout<<"Error 22: Edit file does not match to specified number of observations."<<endl;
+                        MainWindow::Input();
+                    }
+                    error=1;
+                    optfratios=0;
+                    MainWindow::enableButtons();
+                    this->setCursor(QCursor(Qt::ArrowCursor));
+                    return;
+                }
+                LogFile<<"Relative component strength and telluric line strength set via Editor."<<endl;
+                LogFile<<"The strength of component B and the ratios are calculated via given strength of component A."<<endl;
+
+                for(int i=0; i<num_lines1; i++){
+                    edit >> einse;
+                    istringstream istr7(einse);
+
+                    if(i<num){
+                        istr7>>Mtel[i];
+                    }
+                    if((i>=num) & (i<2*num)){
+                        istr7>>Mval1[i-num];
+                        fratios[i-num]=1/Mval1[i-num]-1;
+                        Mval2[i-num]=fratios[i-num]/(1+fratios[i-num]);
+                    }
+                    if(i>=2*num){
+                        //istr7>>Mval2[i-2*num];
+                        //Mval2[i]=fratios[i]/(1+fratios[i]);
+                    }
+                }
+            }
+
+            else {
+                LogFile<<"No relative values set via Editor. Using flux ratio from GUI for all spectra."<<endl;
+
+                for(int i=0; i<num; i++){
+                    Mtel[i]=1.0;
+                    Mval1[i]=1/(1+ui->doubleSpinBox_4->value());
+                    Mval2[i]=ui->doubleSpinBox_4->value()/(1+ui->doubleSpinBox_4->value());
+                    fratios[i]=ui->doubleSpinBox_4->value();
+                }
+            }
+
+    LogFile<<endl;
+
+    string scoef = "optcoef.dat";
+    std::ostringstream coeNameStream(scoef);
+    coeNameStream<<path<<"/"<<scoef;
+    std::string coeName = coeNameStream.str();
+
+    QFileInfo optcoef(coeName.c_str());
+
+    if(optcoef.exists()){
+
+        LogFile<<"User defined transformation coefficients used."<<endl;
+
+        double optv[4];
+        ifstream optc(coeName.c_str());
+        string einse;
+
+        for(int i=0; i<4; i++){
+            optc >> einse;
+            istringstream istr8(einse);
+            istr8 >> optv[i];
+        }
+        alpha=optv[0];
+        beta=optv[1];
+        btot=optv[2];
+        Gamma=optv[3];
+
+    }
+
+    else{
+        LogFile<<"Default values for transformation coefficients used."<<endl;
+
+        Gamma=2.0;
+        alpha=1.0;
+        beta=0.5;
+        btot=0.5;
+    }
+
+    string sinit = "initialstep.dat";
+    std::ostringstream iniNameStream(sinit);
+    iniNameStream<<path<<"/"<<sinit;
+    std::string iniName = iniNameStream.str();
+
+    QFileInfo initstep(iniName.c_str());
+
+    if(initstep.exists()){
+
+        ifstream initStep(iniName.c_str());
+        double IntS[8];
+        string einse;
+
+        for(int i =0; i<8; i++){
+            initStep >> einse;
+            istringstream istr9(einse);
+            istr9 >> IntS[i];
+        }
+        step = IntS[0]*0.1;
+        dP = IntS[1];
+        de = IntS[2];
+        dKA = IntS[3];
+        dKB = IntS[4];
+        dGamma = IntS[5];
+        dT0 = IntS[6];
+        dOmega = IntS[7];
+
+        LogFile<<"User defined initial step size of "<<step<<" used."<<endl;
+    }
+
+    else{
+
+        LogFile<<"Default initial step size of 0.1 used."<<endl;
+
+        step=0.1;
+        dP = orbele[0]/10;
+        de = orbele[1]/10;
+        dKA = 3*dv;
+        dKB = 3*dv;
+        dGamma = 3*dv;
+        dT0 = orbele[0]/10;
+        dOmega = M_PI/20;
+    }
+
+    LogFile<<"Alpha: "<<alpha<<"; Beta: "<<beta<<"; Beta_tot: "<<btot<<"; Gamma: "<<Gamma<<"; Step: "<<step<<endl;
+
+    LogFile<<endl;
+
+    double y[nu+1], Z[nu], Co[nu], So[nu], Eo[nu];
+    mat P(nu+1,nu), e(nu+1,nu);
+
+    r1=0.0;
+
+    LogFile<<"Creating new initial simplex with "<<nu+1<<" points."<<endl;
+
+    qInitval = "fr_opt_val.dat";
+    string file1init = qInitval.toUtf8().constData();
+    std::ostringstream file1NameStream(file1init);
+    file1NameStream<<path<<"/"<<file1init;
+    std::string file1Name = file1NameStream.str();
+
+    qInitmat = "fr_opt_mat.dat";
+    string file2init = qInitmat.toUtf8().constData();
+    std::ostringstream file2NameStream(file2init);
+    file2NameStream<<path<<"/"<<file2init;
+    std::string file2Name = file2NameStream.str();
+
+    if(ui->checkBox_9->isChecked()){
+        QFile QIn(file1Name.c_str());
+        QFile QIn2(file2Name.c_str());
+
+        if((inrein==0) & (QIn.exists() or QIn2.exists())){
+            if(runow==0){
+                QMessageBox::StandardButton reply;
+                reply = QMessageBox::question(this, "Warning!", "The optimisation files "+QIn.fileName()+" and "+QIn2.fileName()+" already exists. \n\n Do you want to overwrite it?",
+                                      QMessageBox::Yes|QMessageBox::No);
+                if (reply == QMessageBox::Yes) {
+                qDebug() << "Overwrite initial data.";
+                }
+                else{
+                    qDebug()<< "Initiation aborted.";
+                    this->setCursor(QCursor(Qt::ArrowCursor));
+                    MainWindow::enableButtons();
+                    optfratios=0;
+                    return;
+                }
+            }
+            else{
+                cout<<"Warning: The optimisation files already exists. Do you want to overwrite it? 0 no, yes 1: "<<endl;
+                cin >> overw;
+                if(overw==0){
+                    this->setCursor(QCursor(Qt::ArrowCursor));
+                    MainWindow::enableButtons();
+                    optfratios=0;
+                    return;
+                }
+                else{
+                    qDebug() << "Overwrite initial data.";
+                }
+            }
+        }
+        else{
+            cout<<"Create new initial data."<<endl;
+        }
+
+    }
+    else{
+        cout<<"Create new initial data."<<endl;
+        inrein=0;
+    }
+
+    ofstream init(file1Name.c_str());
+    ofstream init2(file2Name.c_str());
+
+        for(int i=0; i<nu; i++){
+            P(0,i)=fratios[i];
+        }
+
+    for(int i=0; i<nu+1; i++){
+        for(int j=0; j<nu; j++){
+
+            if((i>0)&(i==j+1)){
+                e(i,j)=step;
+            }
+            else{
+                e(i,j)=0;
+            }
+        }
+    }
+
+    for (int i=0; i<nu+1; i++){
+        for (int j=0; j<nu; j++){
+
+            P(i,j)=P(0,j)+e(i,j);
+            init2<<setprecision(14)<<P(i,j)<<endl;
+            //cout<<P(i,j)<<" ";
+
+            Mval1[j]=1/(1+P(i,j));
+            Mval2[j]=P(i,j)/(1+P(i,j));
+        }
+
+        eval++;
+        ui->spinBox_5->setValue(eval);
+        qApp->processEvents(QEventLoop::AllEvents);
+        MainWindow::ConstructMatrix();
+        y[i]=MainWindow::DivideConquer();
+        //soptd<<"0\t"<<eval<<"\t"<<y[i]<<endl;
+        qApp->processEvents(QEventLoop::AllEvents);
+        if(upda==1){
+            upda=0;
+            abauto += 1;
+            LogFile<<endl;
+            LogFile<<"New ratios found; Residuum: "<<y[i]<<endl;
+            MainWindow::on_pushButton_6_clicked();
+            //MainWindow::plot_functionvalues();
+                for(int i = 0; i<nu;i++){
+                     LogFile<<Mval1[i]<<"\t"<<Mval2[i]<<endl;
+                }
+            LogFile<<endl;
+        }
+
+        if(abortt==1){
+            LogFile<<"Initiation was aborted."<<endl;
+            abortt=0;
+            sequence=0;
+            optfratios=0;
+            this->setCursor(QCursor(Qt::ArrowCursor));
+            MainWindow::enableButtons();
+            return;
+        }
+
+        cout<<y[i]<<endl;
+        init<<setprecision(12)<<y[i]<<endl;
+        LogFile<<"Residuum of point "<<i<<": "<<y[i]<<endl;
+    }
+
+    init.close();
+    init2.close();
+
+    LogFile<<"Initial simplex completed. Start of optimisation."<<endl;
+
+    double ys2=0.0, ym2=0.0;
+    int stagnate=0;
+
+    //start optimisation
+
+    qOptval = "optval_flux.dat";
+    string file1opt = qOptval.toUtf8().constData();
+    std::ostringstream file3NameStream(file1opt);
+    file3NameStream<<path<<"/"<<file1opt;
+    std::string file3Name = file3NameStream.str();
+    ofstream opt1(file3Name.c_str());
+
+    qOptmat = "optmat_flux.dat";
+    string file2opt = qOptmat.toUtf8().constData();
+    std::ostringstream file4NameStream(file2opt);
+    file4NameStream<<path<<"/"<<file2opt;
+    std::string file4Name = file4NameStream.str();
+    ofstream opt2(file4Name.c_str());
+
+    for (int t=0; t<zaehler; t++){
+        ui->spinBox_4->setValue(t+1);
+
+        string optback1 = "optval_flux_backup.dat";
+        std::ostringstream back1NameStream(optback1);
+        back1NameStream<<path<<"/"<<optback1;
+        std::string back1Name = back1NameStream.str();
+        ofstream back1(back1Name.c_str());
+
+
+        string optback2 = "optmat_flux_backup.dat";
+        std::ostringstream back2NameStream(optback2);
+        back2NameStream<<path<<"/"<<optback2;
+        std::string back2Name = back2NameStream.str();
+        ofstream back2(back2Name.c_str());
+
+        for(int i=0; i<nu+1;i++){
+            //cout<<y[i]<<endl;
+            back1<<setprecision(12)<<y[i]<<endl;
+            for(int j=0; j<nu; j++){
+                back2<<setprecision(12)<<P(i,j)<<endl;
+            }
+        }
+
+        LogFile<<endl;
+        LogFile<<"Iteration: "<<t+1<<endl;
+        //MainWindow::plot_functionvalues();
+        qApp->processEvents(QEventLoop::AllEvents);
+
+        cout<<endl;
+        cout<<endl;
+        cout<<"Iteration: "<<t+1<<"\t";
+
+        //initialize next step
+        ym=0;
+        ys=0;
+        for (int i=0; i<nu; i++){
+            Z[i]=0;
+        }
+
+        //looking for highest value
+        yh=y[0];
+        Ph = 0;
+        for (int j=0; j<nu+1; j++){
+            if(y[j]>yh){
+                yh = y[j];
+                Ph = j;
+            }
+        }
+
+        //looking for smallest value
+        yl=yh;
+        for (int j=0; j<nu+1; j++){
+            if(y[j]<yl){
+                yl=y[j];
+                Pl = j;
+            }
+        }
+
+        //looking for second highest value
+        ysh=yl;
+        for (int j=0; j<nu+1; j++){
+            if((y[j]>ysh) & (y[j]<yh) & (y[j]>yl) & (j !=Pl)){
+                ysh=y[j];
+                Psh=j;
+            }
+        }
+
+        yh=y[Ph];
+        yl=y[Pl];
+        ysh=y[Psh];
+
+        //computing mean and sigma
+        for (int i=0; i<nu+1; i++){
+            ym+=y[i]/(nu+1);
+        }
+        for (int i=0; i<nu+1; i++){
+            ys+=sqrt(pow((y[i]-ym),2));
+        }
+        ys=ys/(nu);
+
+        if((ys==ys2) & (ym==ym2)){
+            ++stagnate;
+            cout<<"stagnating."<<endl;
+        }
+        else{
+            //
+        }
+        ys2=ys;
+        ym2=ym;
+
+        cout<<"Simplex Mean: "<<ym<<"; Simplex STD: "<<ys<<endl;
+
+        LogFile<<setprecision(12)<<"Mean: "<<ym<<"\tSTD: "<<ys<<endl;
+
+        //compute centroid
+        for (int j=0; j<nu; j++){
+            for (int i=0; i<nu+1; i++){
+                if (i!=Ph){
+                    Z[j]+=P(i,j)/nu;
+                }
+            }
+        }
+
+        //reflect highest value at centroid
+        cout<<"reflection at centroid..."<<endl;
+        for (int i=0; i<nu; i++){
+            Co[i]=Z[i]+alpha*(Z[i]-P(Ph,i));
+            Mval1[i]=1/(1+Co[i]);
+            Mval2[i]=Co[i]/(1+Co[i]);
+        }
+        eval++;
+        ui->spinBox_5->setValue(eval);
+        qApp->processEvents(QEventLoop::AllEvents);
+        MainWindow::ConstructMatrix();
+        yi=MainWindow::DivideConquer();
+        //soptd<<t<<"\t"<<eval<<"\t"<<yi<<endl;
+        qApp->processEvents(QEventLoop::AllEvents);
+
+        if(upda==1){
+            upda=0;
+            LogFile<<endl;
+            LogFile<<"New ratios found; Residuum: "<<yi<<endl;
+                for(int i = 0; i<nu;i++){
+                    LogFile<<Co[i]<<endl;
+                }
+            LogFile<<endl;
+            MainWindow::on_pushButton_6_clicked();
+            qApp->processEvents(QEventLoop::AllEvents);
+        }
+
+        if(abortt==1){
+            //output results
+            LogFile<<"Optimisation aborted. Current best ratios:"<<endl;
+
+                for(int i = 0; i<nu;i++){
+                    LogFile<<P(Pl,i)<<endl;
+                }
+
+            LogFile<<endl;
+            for(int i=0; i<nu+1;i++){
+                cout<<y[i]<<endl;
+                opt1<<setprecision(12)<<y[i]<<endl;
+                for(int j=0; j<nu; j++){
+                    opt2<<setprecision(12)<<P(i,j)<<endl;
+                }
+            }
+                abortt=0;
+                sequence=0;
+                optfratios=0;
+                this->setCursor(QCursor(Qt::ArrowCursor));
+                MainWindow::enableButtons();
+                return;
+        }
+
+        //Alpha Branch, better than best point
+        if(yi<yl){
+           cout<<"expansion 1 ";
+            LogFile<<"yi<yl; ";
+            for (int i=0; i<nu; i++){
+                Eo[i]=Z[i]+Gamma*(Z[i]-P(Ph,i));  //Expansion over worst point
+                Mval1[i]=1/(1+Eo[i]);
+                Mval2[i]=Eo[i]/(1+Eo[i]);
+            }
+            eval++;
+            ui->spinBox_5->setValue(eval);
+            qApp->processEvents(QEventLoop::AllEvents);
+            MainWindow::ConstructMatrix();
+            yt=MainWindow::DivideConquer();
+            //soptd<<t<<"\t"<<eval<<"\t"<<yt<<endl;
+            qApp->processEvents(QEventLoop::AllEvents);
+
+            if(upda==1){
+                upda=0;
+                LogFile<<endl;
+                LogFile<<"New ratios found; Residuum: "<<yt<<endl;
+                    for(int i = 0; i<nu;i++){
+                        LogFile<<Eo[i]<<endl;
+                    }
+                LogFile<<endl;
+                MainWindow::on_pushButton_6_clicked();
+                qApp->processEvents(QEventLoop::AllEvents);
+            }
+
+            if(abortt==1){
+                //output results
+                LogFile<<"Optimisation aborted. Current best ratios:"<<endl;
+                    for(int i = 0; i<nu;i++){
+                        LogFile<<P(Pl,i)<<endl;
+                    }
+
+                LogFile<<endl;
+                for(int i=0; i<nu+1;i++){
+                    cout<<y[i]<<endl;
+                    opt1<<setprecision(12)<<y[i]<<endl;
+                    for(int j=0; j<nu; j++){
+                        opt2<<setprecision(12)<<P(i,j)<<endl;
+                    }
+                }
+                abortt=0;
+                sequence=0;
+                optfratios=0;
+                this->setCursor(QCursor(Qt::ArrowCursor));
+                MainWindow::enableButtons();
+                return;
+            }
+            if(yt<yl){
+                cout<<"expansion";
+                for (int i=0; i<nu; i++){
+                    P(Ph,i)=Eo[i];
+                }
+
+            y[Ph]=yt;//MainWindow::DivideConquer();
+            if(abortt==1){
+                //output results
+                LogFile<<"Optimisation aborted. Current best ratios:"<<endl;
+                    for(int i = 0; i<nu;i++){
+                        LogFile<<P(Pl,i)<<endl;
+                    }
+
+                LogFile<<endl;
+                for(int i=0; i<nu+1;i++){
+                    cout<<y[i]<<endl;
+                    opt1<<setprecision(12)<<y[i]<<endl;
+                    for(int j=0; j<nu; j++){
+                        opt2<<setprecision(12)<<P(i,j)<<endl;
+                    }
+                }
+                abortt=0;
+                sequence=0;
+                optfratios=0;
+                this->setCursor(QCursor(Qt::ArrowCursor));
+                MainWindow::enableButtons();
+                return;
+            }
+            qApp->processEvents(QEventLoop::AllEvents);
+
+        }
+        if (yt>=yl){
+            cout<<"ref1 ";
+            LogFile<<"yt<=yl, reflection; ";
+            for (int i=0; i<nu; i++){
+                P(Ph,i)=Co[i];
+                Mval1[i]=1/(1+Co[i]);
+                Mval2[i]=Co[i]/(1+Co[i]);
+            }
+
+            y[Ph]=yi;//MainWindow::DivideConquer();
+            if(abortt==1){
+                //output results
+                LogFile<<"Optimisation aborted. Current best ratios:"<<endl;
+                    for(int i = 0; i<nu;i++){
+                        LogFile<<P(Pl,i)<<endl;
+                    }
+
+                LogFile<<endl;
+                for(int i=0; i<nu+1;i++){
+                    cout<<y[i]<<endl;
+                    opt1<<setprecision(12)<<y[i]<<endl;
+                    for(int j=0; j<nu; j++){
+                        opt2<<setprecision(12)<<P(i,j)<<endl;
+                    }
+                }
+                abortt=0;
+                sequence=0;
+                optfratios=0;
+                this->setCursor(QCursor(Qt::ArrowCursor));
+                MainWindow::enableButtons();
+                return;
+            }
+            qApp->processEvents(QEventLoop::AllEvents);
+            }
+        }//Alpha Branch end
+
+        //Beta Branch, worse than best point
+        if(yi>=yl){
+            cout<<"yi>=yl ";
+            LogFile<<"yi>=yl; ";
+            //Beta_2 Branch
+            if(yi<=ysh){
+                cout<<"ref2 ";
+                for(int i=0; i<nu; i++){
+                    P(Ph,i)=Co[i];
+                    Mval1[i]=1/(1+Co[i]);
+                    Mval2[i]=Co[i]/(1+Co[i]);
+                }
+
+            y[Ph]=yi;//MainWindow::DivideConquer();
+            if(abortt==1){
+                //output results
+                LogFile<<"Optimisation aborted. Current best ratios:"<<endl;
+                    for(int i = 0; i<nu;i++){
+                        LogFile<<P(Pl,i)<<endl;
+                    }
+
+                LogFile<<endl;
+                for(int i=0; i<nu+1;i++){
+                    cout<<y[i]<<endl;
+                    opt1<<setprecision(12)<<y[i]<<endl;
+                    for(int j=0; j<nu; j++){
+                        opt2<<setprecision(12)<<P(i,j)<<endl;
+                    }
+                }
+                abortt=0;
+                sequence=0;
+                optfratios=0;
+                this->setCursor(QCursor(Qt::ArrowCursor));
+                MainWindow::enableButtons();
+                return;
+            }
+            qApp->processEvents(QEventLoop::AllEvents);
+        }//Beta_2 Branch End
+
+        //Beta_1 Branch
+        if(yi>ysh){
+            cout<<"yi>ysh ";
+            LogFile<<"yi>ysh; ";
+            if(yi<=yh){
+                cout<<"yi<=yh ref3 ";
+                LogFile<<"yi<=yh, reflection 3; ";
+                for(int i=0; i<nu; i++){
+                    P(Ph,i)=Co[i];
+                    Mval1[i]=1/(1+Co[i]);
+                    Mval2[i]=Co[i]/(1+Co[i]);
+                }
+
+            y[Ph]=yi;//MainWindow::DivideConquer();
+            if(abortt==1){
+                //output results
+                LogFile<<"Optimisation aborted. Current best ratios:"<<endl;
+                    for(int i = 0; i<nu;i++){
+                        LogFile<<P(Pl,i)<<endl;
+                    }
+
+                LogFile<<endl;
+                for(int i=0; i<nu+1;i++){
+                    cout<<y[i]<<endl;
+                    opt1<<setprecision(12)<<y[i]<<endl;
+                    for(int j=0; j<nu; j++){
+                        opt2<<setprecision(12)<<P(i,j)<<endl;
+                    }
+                }
+                abortt=0;
+                sequence=0;
+                optfratios=0;
+                this->setCursor(QCursor(Qt::ArrowCursor));
+                MainWindow::enableButtons();
+                return;
+            }
+            qApp->processEvents(QEventLoop::AllEvents);
+        //yh=y[Ph];
+        }
+
+        for(int i=0; i<nu; i++){
+            So[i]=Z[i]+beta*(P(Ph,i)-Z[i]); //simple contraction
+            Mval1[i]=1/(1+So[i]);
+            Mval2[i]=So[i]/(1+So[i]);
+        }
+        eval++;
+        ui->spinBox_5->setValue(eval);
+        qApp->processEvents(QEventLoop::AllEvents);
+        MainWindow::ConstructMatrix();
+        yt=MainWindow::DivideConquer();
+        qApp->processEvents(QEventLoop::AllEvents);
+        //soptd<<t<<"\t"<<eval<<"\t"<<yt<<endl;
+        if(upda==1){
+            upda=0;
+            LogFile<<endl;
+            LogFile<<"New ratios found; Residuum: "<<yt<<endl;
+            //MainWindow::plot_functionvalues();
+                for(int i = 0; i<nu;i++){
+                    LogFile<<So[i]<<endl;
+                }
+
+            LogFile<<endl;
+            MainWindow::on_pushButton_6_clicked();
+            qApp->processEvents(QEventLoop::AllEvents);
+        }
+
+        if(abortt==1){
+            //output results
+            LogFile<<"Optimisation aborted. Current best ratios:"<<endl;
+                for(int i = 0; i<nu;i++){
+                    LogFile<<P(Pl,i)<<endl;
+                }
+
+            LogFile<<endl;
+            for(int i=0; i<nu+1;i++){
+                cout<<y[i]<<endl;
+                opt1<<setprecision(12)<<y[i]<<endl;
+                    for(int j=0; j<nu; j++){
+                        opt2<<setprecision(12)<<P(i,j)<<endl;
+                    }
+                }
+                abortt=0;
+                sequence=0;
+                optfratios=0;
+                this->setCursor(QCursor(Qt::ArrowCursor));
+                MainWindow::enableButtons();
+                return;
+            }
+
+        //Beta_1_1 Branch
+        if(yt>yh){
+            cout<<"yt>yh tot ";
+            LogFile<<"yt>yh, total contraction, ";
+            for (int j=0; j<nu+1; j++){
+                for (int i=0; i<nu; i++){
+                    P(j,i)=P(Pl,i)+btot*(P(j,i)-P(Pl,i)); //total contraction
+                    Mval1[i]=1/(1+P(j,i));
+                    Mval2[i]=P(j,i)/(1+P(j,i));
+                }
+
+        eval++;
+        ui->spinBox_5->setValue(eval);
+        qApp->processEvents(QEventLoop::AllEvents);
+        MainWindow::ConstructMatrix();
+        y[j]=MainWindow::DivideConquer();
+        qApp->processEvents(QEventLoop::AllEvents);
+        cout<<j+1<<" of "<<nu+1<<" points contracted."<<endl;
+        //soptd<<t<<"\t"<<eval<<"\t"<<y[j]<<endl;
+
+        if(upda==1){
+            upda=0;
+            LogFile<<endl;
+            LogFile<<"New ratios found; Residuum: "<<y[j]<<endl;
+                for(int i = 0; i<nu;i++){
+                    LogFile<<P(j,i)<<endl;
+                }
+            LogFile<<endl;
+            MainWindow::on_pushButton_6_clicked();
+            qApp->processEvents(QEventLoop::AllEvents);
+        }
+
+        if(abortt==1){
+            //output results
+            LogFile<<"Optimisation aborted. Current best ratios:"<<endl;
+                for(int i = 0; i<nu;i++){
+                    LogFile<<P(Pl,i)<<endl;
+                }
+
+            LogFile<<endl;
+            for(int i=0; i<nu+1;i++){
+                cout<<y[i]<<endl;
+                opt1<<setprecision(12)<<y[i]<<endl;
+                for(int j=0; j<nu; j++){
+                    opt2<<setprecision(12)<<P(i,j)<<endl;
+                }
+            }
+            abortt=0;
+            sequence=0;
+            optfratios=0;
+            this->setCursor(QCursor(Qt::ArrowCursor));
+            MainWindow::enableButtons();
+            return;
+         }
+        }
+        }//Beta_1_1 Branch End
+
+        //Beta_1_2 Branch
+        if(yt<=yh){
+            cout<<"yt<=yh, sco ";
+            LogFile<<"yt<=yh, single contraction ";
+            for(int i=0; i<nu; i++){
+                P(Ph,i)=So[i];
+                Mval1[i]=1/(1+So[i]);
+                Mval2[i]=So[i]/(1+So[i]);
+            }
+
+        y[Ph]=yt;//MainWindow::DivideConquer();
+        if(abortt==1){
+            //output results
+            LogFile<<"Optimisation aborted. Current best ratios:"<<endl;
+                for(int i = 0; i<nu;i++){
+                    LogFile<<P(Pl,i)<<endl;
+                }
+
+            LogFile<<endl;
+            for(int i=0; i<nu+1;i++){
+                cout<<y[i]<<endl;
+                opt1<<setprecision(12)<<y[i]<<endl;
+                    for(int j=0; j<nu; j++){
+                        opt2<<setprecision(12)<<P(i,j)<<endl;
+                    }
+                }
+                abortt=0;
+                sequence=0;
+                optfratios=0;
+                this->setCursor(QCursor(Qt::ArrowCursor));
+                MainWindow::enableButtons();
+                return;
+            }
+            qApp->processEvents(QEventLoop::AllEvents);
+           }
+        }
+
+        }
+        LogFile<<endl;
+        }//end main loop
+
+
+        //looking for highest value
+        yh=y[0];
+        for (int j=0; j<nu+1; j++){
+            if(y[j]>yh){
+            yh = y[j];
+            Ph = j;
+            }
+        }
+
+        //looking for smallest value
+        yl=yh;
+        for (int j=0; j<nu+1; j++){
+            if(y[j]<yl){
+                yl=y[j];
+                Pl = j;
+            }
+        }
+
+        //looking for second highest value
+        ysh=yl;
+        for (int j=0; j<nu+1; j++){
+            if((y[j]>ysh)&(y[j]<yh)){
+                ysh=y[j];
+                Psh=j;
+            }
+        }
+
+        //output results
+        for(int i=0; i<nu+1;i++){
+            cout<<y[i]<<endl;
+            opt1<<setprecision(12)<<y[i]<<endl;
+            for(int j=0; j<nu; j++){
+                opt2<<setprecision(12)<<P(i,j)<<endl;
+            }
+        }
+
+        LogFile<<ym<<"          "<<ys<<endl;
+        LogFile<<" End Optimisation "<<endl;
+        LogFile<<" ratios after "<<zaehler<<" Iterations and "<<eval<<" Evaluations of Optimisation: "<<endl;
+            for(int i = 0; i<nu;i++){
+                LogFile<<P(Pl,i)<<endl;
+            }
+
+        LogFile.close();
+
+        cout<<"Ratios after "<<zaehler<<" Iterations and "<<eval<<" Evaluations:"<<endl;
+        for(int i=0; i<nu;i++){
+            cout<<P(Pl,i)<<endl;
+        }
+
+    optfratios=0;
+    MainWindow::enableButtons();
+    this->setCursor(QCursor(Qt::ArrowCursor));
+
+}
+
+
+void MainWindow::on_checkBox_29_clicked()
+{
+    if(ui->checkBox_29->isChecked()){
+        ui->checkBox_30->setChecked(false);
+    }
+    else{
+        ui->checkBox_30->setChecked(true);
+    }
+}
+
+void MainWindow::on_checkBox_30_clicked()
+{
+    if(ui->checkBox_30->isChecked()){
+        ui->checkBox_29->setChecked(false);
+    }
+    else{
+        ui->checkBox_29->setChecked(true);
     }
 }

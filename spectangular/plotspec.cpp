@@ -45,6 +45,8 @@ PlotSpec::PlotSpec(QWidget *parent) :
 
     ui->checkBox_14->setChecked(true);
     ui->doubleSpinBox_19->setValue(1);
+    ui->checkBox_18->setChecked(true);
+    ui->checkBox_21->setChecked(true);
 
     ui->lineEdit_8->setText("Ha_ad_2.txt");
     ui->lineEdit_9->setText("Ha_ad_1.txt");
@@ -151,7 +153,6 @@ void PlotSpec::on_pushButton_2_clicked()
     std::ostringstream datNameStream(plot11);
     datNameStream<<spPath<<"/"<<plot11;
     std::string datName = datNameStream.str();
-    ifstream toplot1(datName.c_str());
 
     QFile checkfile(datName.c_str());
 
@@ -160,6 +161,7 @@ void PlotSpec::on_pushButton_2_clicked()
         QMessageBox::information(this, "Error", "File "+qSpPath+"/"+plot1+" does not exist!");
        return;
     }
+    ifstream toplot1(datName.c_str());
 
     int number_of_lines =0;
 
@@ -198,7 +200,6 @@ void PlotSpec::on_pushButton_2_clicked()
     std::ostringstream dat2NameStream(plot12);
     dat2NameStream<<spPath<<"/"<<plot12;
     std::string dat2Name = dat2NameStream.str();
-    ifstream toplot2(dat2Name.c_str());
 
     QFile checkfile1(dat2Name.c_str());
 
@@ -207,6 +208,7 @@ void PlotSpec::on_pushButton_2_clicked()
         QMessageBox::information(this, "Error", "File "+qSpPath+"/"+plot2+" does not exist!");
        return;
     }
+    ifstream toplot2(dat2Name.c_str());
 
     number_of_lines =0;
 
@@ -523,35 +525,44 @@ void PlotSpec::on_doubleSpinBox_11_valueChanged()
 }
 
 //*******************************************************
-//add 1-f to file 1
+//add 1-f to file 1 & 2
 //*******************************************************
 void PlotSpec::on_pushButton_5_clicked()
 {
     ui->customPlot->clearGraphs();
 
-    QString plot2=ui->lineEdit_13->text();
-    string plot12 = plot2.toUtf8().constData();
-    std::ostringstream dat2NameStream(plot12);
-    dat2NameStream<<spPath<<"/"<<plot12;
-    std::string dat2Name = dat2NameStream.str();
-    ofstream toplot2(dat2Name.c_str());
-
-    QString plot1=ui->lineEdit_14->text();
+    QString plot1=ui->lineEdit_13->text();
     string plot11 = plot1.toUtf8().constData();
     std::ostringstream datNameStream(plot11);
     datNameStream<<spPath<<"/"<<plot11;
     std::string datName = datNameStream.str();
     ofstream toplot1(datName.c_str());
 
-    for(int i=0; i<aps.size(); i++){
-        d1ps[i]=bps[i]+(1-eps[i]);
-        toplot1<<aps[i]<<"\t"<<d1ps[i]<<endl;
+    QString plot2=ui->lineEdit_14->text();
+    string plot12 = plot2.toUtf8().constData();
+    std::ostringstream dat2NameStream(plot12);
+    dat2NameStream<<spPath<<"/"<<plot12;
+    std::string dat2Name = dat2NameStream.str();
+    ofstream toplot2(dat2Name.c_str());
 
+    for(int i=0; i<aps.size(); i++){
+        if(ui->checkBox_18->isChecked()){
+            d1ps[i]=bps[i]-(eps[i]-1);
+        }
+        else{
+            d1ps[i]=bps[i]+(eps[i]-1);
+        }
+        toplot1<<aps[i]<<"\t"<<d1ps[i]<<endl;
     }
 
     for(int i=0; i<cps.size(); i++){
-        d2ps[i]=dps[i]-(1-eps[i]);
-        toplot2<<aps[i]<<"\t"<<d2ps[i]<<endl;
+        if(ui->checkBox_20->isChecked()){
+            d2ps[i]=dps[i]-(eps[i]-1);
+        }
+        else{
+            d2ps[i]=dps[i]+(eps[i]-1);
+        }
+        toplot2<<cps[i]<<"\t"<<d2ps[i]<<endl;
     }
     toplot1.close();
     toplot2.close();
@@ -1216,5 +1227,45 @@ void PlotSpec::on_checkBox_13_clicked()
     }
     else{
         ui->checkBox_14->setChecked(true);
+    }
+}
+
+void PlotSpec::on_checkBox_18_clicked()
+{
+    if(ui->checkBox_18->isChecked()){
+        ui->checkBox_19->setChecked(false);
+    }
+    else{
+        ui->checkBox_19->setChecked(true);
+    }
+}
+
+void PlotSpec::on_checkBox_19_clicked()
+{
+    if(ui->checkBox_19->isChecked()){
+        ui->checkBox_18->setChecked(false);
+    }
+    else{
+        ui->checkBox_18->setChecked(true);
+    }
+}
+
+void PlotSpec::on_checkBox_20_clicked()
+{
+    if(ui->checkBox_20->isChecked()){
+        ui->checkBox_21->setChecked(false);
+    }
+    else{
+        ui->checkBox_21->setChecked(true);
+    }
+}
+
+void PlotSpec::on_checkBox_21_clicked()
+{
+    if(ui->checkBox_21->isChecked()){
+        ui->checkBox_20->setChecked(false);
+    }
+    else{
+        ui->checkBox_20->setChecked(true);
     }
 }

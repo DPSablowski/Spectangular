@@ -25,6 +25,10 @@ private slots:
 
     void on_lineEdit_4_textEdited();
 
+    void on_checkBox_4_clicked();
+
+    void Do_correlation();
+
 private:
     Ui::correlation *ui;
 };

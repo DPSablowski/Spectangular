@@ -35,7 +35,14 @@ public:
     QLabel *label;
     QSpacerItem *horizontalSpacer_2;
     QLineEdit *lineEdit;
+    QLabel *label_12;
+    QLineEdit *lineEdit_5;
     QCheckBox *checkBox_2;
+    QHBoxLayout *horizontalLayout_14;
+    QCheckBox *checkBox_4;
+    QSpinBox *spinBox_3;
+    QLabel *label_11;
+    QSpinBox *spinBox_4;
     QHBoxLayout *horizontalLayout_10;
     QLabel *label_8;
     QSpacerItem *horizontalSpacer_10;
@@ -69,11 +76,15 @@ public:
     QLabel *label_5;
     QSpacerItem *horizontalSpacer_7;
     QSpinBox *spinBox_2;
+    QHBoxLayout *horizontalLayout_15;
+    QLabel *label_13;
+    QSpacerItem *horizontalSpacer_14;
+    QDoubleSpinBox *doubleSpinBox_5;
     QHBoxLayout *horizontalLayout_13;
     QPushButton *pushButton_4;
     QSpacerItem *horizontalSpacer_13;
     QHBoxLayout *horizontalLayout_8;
-    QPushButton *pushButton_3;
+    QLabel *label_10;
     QSpacerItem *horizontalSpacer_8;
     QLineEdit *lineEdit_3;
     QHBoxLayout *horizontalLayout_9;
@@ -88,7 +99,7 @@ public:
     {
         if (correlation->objectName().isEmpty())
             correlation->setObjectName(QStringLiteral("correlation"));
-        correlation->resize(243, 503);
+        correlation->resize(388, 988);
         QPalette palette;
         QBrush brush(QColor(0, 0, 0, 255));
         brush.setStyle(Qt::SolidPattern);
@@ -123,6 +134,9 @@ public:
         brush8.setStyle(Qt::SolidPattern);
         palette.setBrush(QPalette::Active, QPalette::ToolTipBase, brush8);
         palette.setBrush(QPalette::Active, QPalette::ToolTipText, brush);
+        QBrush brush9(QColor(0, 0, 0, 128));
+        brush9.setStyle(Qt::NoBrush);
+        //palette.setBrush(QPalette::Active, QPalette::PlaceholderText, brush9);
         palette.setBrush(QPalette::Inactive, QPalette::WindowText, brush);
         palette.setBrush(QPalette::Inactive, QPalette::Button, brush1);
         palette.setBrush(QPalette::Inactive, QPalette::Light, brush2);
@@ -138,6 +152,9 @@ public:
         palette.setBrush(QPalette::Inactive, QPalette::AlternateBase, brush7);
         palette.setBrush(QPalette::Inactive, QPalette::ToolTipBase, brush8);
         palette.setBrush(QPalette::Inactive, QPalette::ToolTipText, brush);
+        QBrush brush10(QColor(0, 0, 0, 128));
+        brush10.setStyle(Qt::NoBrush);
+        //palette.setBrush(QPalette::Inactive, QPalette::PlaceholderText, brush10);
         palette.setBrush(QPalette::Disabled, QPalette::WindowText, brush4);
         palette.setBrush(QPalette::Disabled, QPalette::Button, brush1);
         palette.setBrush(QPalette::Disabled, QPalette::Light, brush2);
@@ -153,6 +170,9 @@ public:
         palette.setBrush(QPalette::Disabled, QPalette::AlternateBase, brush1);
         palette.setBrush(QPalette::Disabled, QPalette::ToolTipBase, brush8);
         palette.setBrush(QPalette::Disabled, QPalette::ToolTipText, brush);
+        QBrush brush11(QColor(0, 0, 0, 128));
+        brush11.setStyle(Qt::NoBrush);
+        //palette.setBrush(QPalette::Disabled, QPalette::PlaceholderText, brush11);
         correlation->setPalette(palette);
         QFont font;
         font.setPointSize(9);
@@ -172,13 +192,25 @@ public:
 
         lineEdit = new QLineEdit(correlation);
         lineEdit->setObjectName(QStringLiteral("lineEdit"));
+
+        horizontalLayout_3->addWidget(lineEdit);
+
+        label_12 = new QLabel(correlation);
+        label_12->setObjectName(QStringLiteral("label_12"));
+
+        horizontalLayout_3->addWidget(label_12);
+
+        lineEdit_5 = new QLineEdit(correlation);
+        lineEdit_5->setObjectName(QStringLiteral("lineEdit_5"));
         QSizePolicy sizePolicy(QSizePolicy::Maximum, QSizePolicy::Fixed);
         sizePolicy.setHorizontalStretch(0);
         sizePolicy.setVerticalStretch(0);
-        sizePolicy.setHeightForWidth(lineEdit->sizePolicy().hasHeightForWidth());
-        lineEdit->setSizePolicy(sizePolicy);
+        sizePolicy.setHeightForWidth(lineEdit_5->sizePolicy().hasHeightForWidth());
+        lineEdit_5->setSizePolicy(sizePolicy);
+        lineEdit_5->setMinimumSize(QSize(25, 0));
+        lineEdit_5->setMaximumSize(QSize(50, 16777215));
 
-        horizontalLayout_3->addWidget(lineEdit);
+        horizontalLayout_3->addWidget(lineEdit_5);
 
         checkBox_2 = new QCheckBox(correlation);
         checkBox_2->setObjectName(QStringLiteral("checkBox_2"));
@@ -187,6 +219,33 @@ public:
 
 
         verticalLayout->addLayout(horizontalLayout_3);
+
+        horizontalLayout_14 = new QHBoxLayout();
+        horizontalLayout_14->setObjectName(QStringLiteral("horizontalLayout_14"));
+        checkBox_4 = new QCheckBox(correlation);
+        checkBox_4->setObjectName(QStringLiteral("checkBox_4"));
+
+        horizontalLayout_14->addWidget(checkBox_4);
+
+        spinBox_3 = new QSpinBox(correlation);
+        spinBox_3->setObjectName(QStringLiteral("spinBox_3"));
+        spinBox_3->setMaximum(999);
+
+        horizontalLayout_14->addWidget(spinBox_3);
+
+        label_11 = new QLabel(correlation);
+        label_11->setObjectName(QStringLiteral("label_11"));
+
+        horizontalLayout_14->addWidget(label_11);
+
+        spinBox_4 = new QSpinBox(correlation);
+        spinBox_4->setObjectName(QStringLiteral("spinBox_4"));
+        spinBox_4->setMaximum(999);
+
+        horizontalLayout_14->addWidget(spinBox_4);
+
+
+        verticalLayout->addLayout(horizontalLayout_14);
 
         horizontalLayout_10 = new QHBoxLayout();
         horizontalLayout_10->setObjectName(QStringLiteral("horizontalLayout_10"));
@@ -203,6 +262,7 @@ public:
         doubleSpinBox_2->setObjectName(QStringLiteral("doubleSpinBox_2"));
         doubleSpinBox_2->setDecimals(4);
         doubleSpinBox_2->setSingleStep(0.1);
+        doubleSpinBox_2->setValue(1);
 
         horizontalLayout_10->addWidget(doubleSpinBox_2);
 
@@ -255,6 +315,7 @@ public:
         doubleSpinBox_3->setObjectName(QStringLiteral("doubleSpinBox_3"));
         doubleSpinBox_3->setDecimals(4);
         doubleSpinBox_3->setSingleStep(0.1);
+        doubleSpinBox_3->setValue(1);
 
         horizontalLayout_11->addWidget(doubleSpinBox_3);
 
@@ -331,10 +392,7 @@ public:
         doubleSpinBox_4 = new QDoubleSpinBox(correlation);
         doubleSpinBox_4->setObjectName(QStringLiteral("doubleSpinBox_4"));
         doubleSpinBox_4->setEnabled(false);
-        doubleSpinBox_4->setDecimals(5);
-        doubleSpinBox_4->setMinimum(-9);
-        doubleSpinBox_4->setMaximum(9.99);
-        doubleSpinBox_4->setSingleStep(0.001);
+        doubleSpinBox_4->setDecimals(6);
 
         horizontalLayout_12->addWidget(doubleSpinBox_4);
 
@@ -354,13 +412,34 @@ public:
 
         spinBox_2 = new QSpinBox(correlation);
         spinBox_2->setObjectName(QStringLiteral("spinBox_2"));
-        spinBox_2->setMinimum(-9999);
         spinBox_2->setMaximum(9999);
 
         horizontalLayout_7->addWidget(spinBox_2);
 
 
         verticalLayout->addLayout(horizontalLayout_7);
+
+        horizontalLayout_15 = new QHBoxLayout();
+        horizontalLayout_15->setObjectName(QStringLiteral("horizontalLayout_15"));
+        label_13 = new QLabel(correlation);
+        label_13->setObjectName(QStringLiteral("label_13"));
+
+        horizontalLayout_15->addWidget(label_13);
+
+        horizontalSpacer_14 = new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
+
+        horizontalLayout_15->addItem(horizontalSpacer_14);
+
+        doubleSpinBox_5 = new QDoubleSpinBox(correlation);
+        doubleSpinBox_5->setObjectName(QStringLiteral("doubleSpinBox_5"));
+        doubleSpinBox_5->setDecimals(3);
+        doubleSpinBox_5->setMinimum(-99.99);
+        doubleSpinBox_5->setMaximum(999.99);
+
+        horizontalLayout_15->addWidget(doubleSpinBox_5);
+
+
+        verticalLayout->addLayout(horizontalLayout_15);
 
         horizontalLayout_13 = new QHBoxLayout();
         horizontalLayout_13->setObjectName(QStringLiteral("horizontalLayout_13"));
@@ -378,10 +457,10 @@ public:
 
         horizontalLayout_8 = new QHBoxLayout();
         horizontalLayout_8->setObjectName(QStringLiteral("horizontalLayout_8"));
-        pushButton_3 = new QPushButton(correlation);
-        pushButton_3->setObjectName(QStringLiteral("pushButton_3"));
+        label_10 = new QLabel(correlation);
+        label_10->setObjectName(QStringLiteral("label_10"));
 
-        horizontalLayout_8->addWidget(pushButton_3);
+        horizontalLayout_8->addWidget(label_10);
 
         horizontalSpacer_8 = new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
 
@@ -443,7 +522,10 @@ public:
     {
         correlation->setWindowTitle(QApplication::translate("correlation", "Dialog", Q_NULLPTR));
         label->setText(QApplication::translate("correlation", "Spectrum:", Q_NULLPTR));
+        label_12->setText(QApplication::translate("correlation", "*.", Q_NULLPTR));
         checkBox_2->setText(QApplication::translate("correlation", "Log(x)", Q_NULLPTR));
+        checkBox_4->setText(QApplication::translate("correlation", "Sequence from", Q_NULLPTR));
+        label_11->setText(QApplication::translate("correlation", "to", Q_NULLPTR));
         label_8->setText(QApplication::translate("correlation", "Continuum:", Q_NULLPTR));
         checkBox->setText(QApplication::translate("correlation", "Bidiagonal Matrix used", Q_NULLPTR));
         label_2->setText(QApplication::translate("correlation", "Template:", Q_NULLPTR));
@@ -454,8 +536,9 @@ public:
         label_4->setText(QApplication::translate("correlation", "Result [pix]:", Q_NULLPTR));
         label_6->setText(QApplication::translate("correlation", "Result [log(A)]:", Q_NULLPTR));
         label_5->setText(QApplication::translate("correlation", "Correct Spectrum by [pix]:", Q_NULLPTR));
+        label_13->setText(QApplication::translate("correlation", "Add systematic Shift:", Q_NULLPTR));
         pushButton_4->setText(QApplication::translate("correlation", "Correct", Q_NULLPTR));
-        pushButton_3->setText(QApplication::translate("correlation", "Save as:", Q_NULLPTR));
+        label_10->setText(QApplication::translate("correlation", "Save As:", Q_NULLPTR));
         label_7->setText(QApplication::translate("correlation", "Work Path:", Q_NULLPTR));
         pushButton->setText(QApplication::translate("correlation", "Close", Q_NULLPTR));
     } // retranslateUi

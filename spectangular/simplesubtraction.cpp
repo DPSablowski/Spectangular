@@ -85,7 +85,7 @@ void SimpleSubtraction::on_pushButton_2_clicked()
         {
 
             //open file for reading
-            auto_ptr<CCfits::FITS> input_file(new CCfits::FITS(dat1Name.c_str(),CCfits::Read,true));
+            shared_ptr<CCfits::FITS> input_file(new CCfits::FITS(dat1Name.c_str(),CCfits::Read,true));
 
             // Create pointer to extension
                 CCfits::ExtHDU& datavector = input_file->extension(sExtension);
@@ -118,7 +118,7 @@ void SimpleSubtraction::on_pushButton_2_clicked()
         {
 
             //open file for reading
-            auto_ptr<CCfits::FITS> input_file(new CCfits::FITS(dat2Name.c_str(),CCfits::Read,true));
+            shared_ptr<CCfits::FITS> input_file(new CCfits::FITS(dat2Name.c_str(),CCfits::Read,true));
 
             // Create pointer to extension
                 CCfits::ExtHDU& datavector = input_file->extension(sExtension);

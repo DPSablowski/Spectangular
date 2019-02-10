@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Meta object code from reading C++ file 'plotspec.h'
 **
-** Created by: The Qt Meta Object Compiler version 67 (Qt 5.8.0)
+** Created by: The Qt Meta Object Compiler version 67 (Qt 5.12.0)
 **
 ** WARNING! All changes made in this file will be lost!
 *****************************************************************************/
@@ -12,7 +12,7 @@
 #if !defined(Q_MOC_OUTPUT_REVISION)
 #error "The header file 'plotspec.h' doesn't include <QObject>."
 #elif Q_MOC_OUTPUT_REVISION != 67
-#error "This file was generated using the moc from 5.8.0. It"
+#error "This file was generated using the moc from 5.12.0. It"
 #error "cannot be used with the include files from this version of Qt."
 #error "(The moc has changed too much.)"
 #endif
@@ -21,8 +21,8 @@ QT_BEGIN_MOC_NAMESPACE
 QT_WARNING_PUSH
 QT_WARNING_DISABLE_DEPRECATED
 struct qt_meta_stringdata_PlotSpec_t {
-    QByteArrayData data[42];
-    char stringdata0[859];
+    QByteArrayData data[46];
+    char stringdata0[951];
 };
 #define QT_MOC_LITERAL(idx, ofs, len) \
     Q_STATIC_BYTE_ARRAY_DATA_HEADER_INITIALIZER_WITH_OFFSET(len, \
@@ -72,7 +72,11 @@ QT_MOC_LITERAL(37, 738, 24), // "on_pushButton_11_clicked"
 QT_MOC_LITERAL(38, 763, 24), // "on_pushButton_12_clicked"
 QT_MOC_LITERAL(39, 788, 24), // "on_pushButton_13_clicked"
 QT_MOC_LITERAL(40, 813, 22), // "on_checkBox_14_clicked"
-QT_MOC_LITERAL(41, 836, 22) // "on_checkBox_13_clicked"
+QT_MOC_LITERAL(41, 836, 22), // "on_checkBox_13_clicked"
+QT_MOC_LITERAL(42, 859, 22), // "on_checkBox_18_clicked"
+QT_MOC_LITERAL(43, 882, 22), // "on_checkBox_19_clicked"
+QT_MOC_LITERAL(44, 905, 22), // "on_checkBox_20_clicked"
+QT_MOC_LITERAL(45, 928, 22) // "on_checkBox_21_clicked"
 
     },
     "PlotSpec\0seData\0\0str\0str2\0str3\0str4\0"
@@ -100,17 +104,19 @@ QT_MOC_LITERAL(41, 836, 22) // "on_checkBox_13_clicked"
     "on_pushButton_11_clicked\0"
     "on_pushButton_12_clicked\0"
     "on_pushButton_13_clicked\0"
-    "on_checkBox_14_clicked\0on_checkBox_13_clicked"
+    "on_checkBox_14_clicked\0on_checkBox_13_clicked\0"
+    "on_checkBox_18_clicked\0on_checkBox_19_clicked\0"
+    "on_checkBox_20_clicked\0on_checkBox_21_clicked"
 };
 #undef QT_MOC_LITERAL
 
 static const uint qt_meta_data_PlotSpec[] = {
 
  // content:
-       7,       // revision
+       8,       // revision
        0,       // classname
        0,    0, // classinfo
-      34,   14, // methods
+      38,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -118,40 +124,44 @@ static const uint qt_meta_data_PlotSpec[] = {
        0,       // signalCount
 
  // slots: name, argc, parameters, tag, flags
-       1,    4,  184,    2, 0x0a /* Public */,
-       7,    0,  193,    2, 0x0a /* Public */,
-       8,    0,  194,    2, 0x0a /* Public */,
-       9,    0,  195,    2, 0x08 /* Private */,
-      10,    0,  196,    2, 0x08 /* Private */,
-      11,    0,  197,    2, 0x08 /* Private */,
-      12,    0,  198,    2, 0x08 /* Private */,
-      13,    0,  199,    2, 0x08 /* Private */,
-      14,    0,  200,    2, 0x08 /* Private */,
-      15,    0,  201,    2, 0x08 /* Private */,
-      16,    0,  202,    2, 0x08 /* Private */,
-      17,    0,  203,    2, 0x08 /* Private */,
-      18,    0,  204,    2, 0x08 /* Private */,
-      19,    0,  205,    2, 0x08 /* Private */,
-      20,    0,  206,    2, 0x08 /* Private */,
-      21,    0,  207,    2, 0x08 /* Private */,
-      22,    0,  208,    2, 0x08 /* Private */,
-      23,    0,  209,    2, 0x08 /* Private */,
-      24,    0,  210,    2, 0x08 /* Private */,
-      25,    0,  211,    2, 0x08 /* Private */,
-      26,    0,  212,    2, 0x08 /* Private */,
-      27,    0,  213,    2, 0x08 /* Private */,
-      28,    1,  214,    2, 0x08 /* Private */,
-      31,    1,  217,    2, 0x08 /* Private */,
-      32,    0,  220,    2, 0x08 /* Private */,
-      33,    0,  221,    2, 0x08 /* Private */,
-      34,    0,  222,    2, 0x08 /* Private */,
-      35,    0,  223,    2, 0x08 /* Private */,
-      36,    0,  224,    2, 0x08 /* Private */,
-      37,    0,  225,    2, 0x08 /* Private */,
-      38,    0,  226,    2, 0x08 /* Private */,
-      39,    0,  227,    2, 0x08 /* Private */,
-      40,    0,  228,    2, 0x08 /* Private */,
-      41,    0,  229,    2, 0x08 /* Private */,
+       1,    4,  204,    2, 0x0a /* Public */,
+       7,    0,  213,    2, 0x0a /* Public */,
+       8,    0,  214,    2, 0x0a /* Public */,
+       9,    0,  215,    2, 0x08 /* Private */,
+      10,    0,  216,    2, 0x08 /* Private */,
+      11,    0,  217,    2, 0x08 /* Private */,
+      12,    0,  218,    2, 0x08 /* Private */,
+      13,    0,  219,    2, 0x08 /* Private */,
+      14,    0,  220,    2, 0x08 /* Private */,
+      15,    0,  221,    2, 0x08 /* Private */,
+      16,    0,  222,    2, 0x08 /* Private */,
+      17,    0,  223,    2, 0x08 /* Private */,
+      18,    0,  224,    2, 0x08 /* Private */,
+      19,    0,  225,    2, 0x08 /* Private */,
+      20,    0,  226,    2, 0x08 /* Private */,
+      21,    0,  227,    2, 0x08 /* Private */,
+      22,    0,  228,    2, 0x08 /* Private */,
+      23,    0,  229,    2, 0x08 /* Private */,
+      24,    0,  230,    2, 0x08 /* Private */,
+      25,    0,  231,    2, 0x08 /* Private */,
+      26,    0,  232,    2, 0x08 /* Private */,
+      27,    0,  233,    2, 0x08 /* Private */,
+      28,    1,  234,    2, 0x08 /* Private */,
+      31,    1,  237,    2, 0x08 /* Private */,
+      32,    0,  240,    2, 0x08 /* Private */,
+      33,    0,  241,    2, 0x08 /* Private */,
+      34,    0,  242,    2, 0x08 /* Private */,
+      35,    0,  243,    2, 0x08 /* Private */,
+      36,    0,  244,    2, 0x08 /* Private */,
+      37,    0,  245,    2, 0x08 /* Private */,
+      38,    0,  246,    2, 0x08 /* Private */,
+      39,    0,  247,    2, 0x08 /* Private */,
+      40,    0,  248,    2, 0x08 /* Private */,
+      41,    0,  249,    2, 0x08 /* Private */,
+      42,    0,  250,    2, 0x08 /* Private */,
+      43,    0,  251,    2, 0x08 /* Private */,
+      44,    0,  252,    2, 0x08 /* Private */,
+      45,    0,  253,    2, 0x08 /* Private */,
 
  // slots: parameters
     QMetaType::Void, QMetaType::QString, QMetaType::QString, QMetaType::QString, QMetaType::QString,    3,    4,    5,    6,
@@ -178,6 +188,10 @@ static const uint qt_meta_data_PlotSpec[] = {
     QMetaType::Void,
     QMetaType::Void, 0x80000000 | 29,   30,
     QMetaType::Void, 0x80000000 | 29,   30,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
+    QMetaType::Void,
     QMetaType::Void,
     QMetaType::Void,
     QMetaType::Void,
@@ -232,15 +246,23 @@ void PlotSpec::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, vo
         case 31: _t->on_pushButton_13_clicked(); break;
         case 32: _t->on_checkBox_14_clicked(); break;
         case 33: _t->on_checkBox_13_clicked(); break;
+        case 34: _t->on_checkBox_18_clicked(); break;
+        case 35: _t->on_checkBox_19_clicked(); break;
+        case 36: _t->on_checkBox_20_clicked(); break;
+        case 37: _t->on_checkBox_21_clicked(); break;
         default: ;
         }
     }
 }
 
-const QMetaObject PlotSpec::staticMetaObject = {
-    { &QDialog::staticMetaObject, qt_meta_stringdata_PlotSpec.data,
-      qt_meta_data_PlotSpec,  qt_static_metacall, Q_NULLPTR, Q_NULLPTR}
-};
+QT_INIT_METAOBJECT const QMetaObject PlotSpec::staticMetaObject = { {
+    &QDialog::staticMetaObject,
+    qt_meta_stringdata_PlotSpec.data,
+    qt_meta_data_PlotSpec,
+    qt_static_metacall,
+    nullptr,
+    nullptr
+} };
 
 
 const QMetaObject *PlotSpec::metaObject() const
@@ -250,9 +272,9 @@ const QMetaObject *PlotSpec::metaObject() const
 
 void *PlotSpec::qt_metacast(const char *_clname)
 {
-    if (!_clname) return Q_NULLPTR;
+    if (!_clname) return nullptr;
     if (!strcmp(_clname, qt_meta_stringdata_PlotSpec.stringdata0))
-        return static_cast<void*>(const_cast< PlotSpec*>(this));
+        return static_cast<void*>(this);
     return QDialog::qt_metacast(_clname);
 }
 
@@ -262,13 +284,13 @@ int PlotSpec::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 34)
+        if (_id < 38)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 34;
+        _id -= 38;
     } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 34)
+        if (_id < 38)
             *reinterpret_cast<int*>(_a[0]) = -1;
-        _id -= 34;
+        _id -= 38;
     }
     return _id;
 }

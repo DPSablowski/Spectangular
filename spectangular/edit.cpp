@@ -26,13 +26,16 @@ Edit::Edit(QWidget *parent) :
     this->setWindowTitle("Editor");
 
     ui->tableWidget->setColumnCount(1);
-    ui->tableWidget->setHorizontalHeaderLabels(QStringList()<<"Ratio");
+    ui->tableWidget->setHorizontalHeaderLabels(QStringList()<<"Depth");
 
     ui->tableWidget_2->setColumnCount(1);
-    ui->tableWidget_2->setHorizontalHeaderLabels(QStringList()<<"Ratio");
+    ui->tableWidget_2->setHorizontalHeaderLabels(QStringList()<<"A");
 
     ui->tableWidget_3->setColumnCount(1);
-    ui->tableWidget_3->setHorizontalHeaderLabels(QStringList()<<"Ratio");
+    ui->tableWidget_3->setHorizontalHeaderLabels(QStringList()<<"B");
+
+    ui->tableWidget_4->setColumnCount(1);
+    ui->tableWidget_4->setHorizontalHeaderLabels(QStringList()<<"Ratio");
 
     ui->doubleSpinBox->setValue(1.0);
     ui->doubleSpinBox_2->setValue(0.5);
@@ -129,8 +132,10 @@ void Edit::on_spinBox_valueChanged()
     ui->tableWidget->setRowCount(obser);
     ui->tableWidget_2->setRowCount(obser);
     ui->tableWidget_3->setRowCount(obser);
+    ui->tableWidget_4->setRowCount(obser);
     double FA = ui->doubleSpinBox_20->value()/(ui->doubleSpinBox_20->value()+1.0);
     double FB = 1.0/(ui->doubleSpinBox_20->value()+1.0);
+    double k = ui->doubleSpinBox_20->value();
 
     for(int i=0; i<obser; i++){
         ui->tableWidget->setItem(i,0,new QTableWidgetItem("1"));
@@ -141,6 +146,9 @@ void Edit::on_spinBox_valueChanged()
 
         ui->tableWidget_3->setItem(i,0,new QTableWidgetItem("1"));
         ui->tableWidget_3->setItem(i,0,new QTableWidgetItem(QString::number(FB)));
+
+        ui->tableWidget_4->setItem(i,0,new QTableWidgetItem("1"));
+        ui->tableWidget_4->setItem(i,0,new QTableWidgetItem(QString::number(k)));
     }
 }
 
@@ -293,8 +301,9 @@ void Edit::on_pushButton_10_clicked(){
 
 }
 
-
+//*****************************************
 //Save
+//*****************************************
 void Edit::on_pushButton_4_clicked()
 {
     qEPath=ui->lineEdit_3->text();
@@ -356,7 +365,9 @@ void Edit::on_pushButton_4_clicked()
     }
 }
 
+//***************************************
 // Load
+//***************************************
 void Edit::on_pushButton_5_clicked()
 {
     QString qSCL = qEPath+"/"+ ui->lineEdit_2->text() +".scl";
@@ -402,7 +413,9 @@ void Edit::on_pushButton_5_clicked()
     }
 }
 
+//********************************************
 // apply initial steps size
+//********************************************
 void Edit::on_pushButton_11_clicked()
 {
     qEPath=ui->lineEdit_3->text();
@@ -424,7 +437,9 @@ void Edit::on_pushButton_11_clicked()
     init<<setprecision(10)<<ui->doubleSpinBox_19->value()<<endl;
 }
 
+//****************************************
 // remove initial step size
+//****************************************
 void Edit::on_pushButton_12_clicked()
 {
     qEPath=ui->lineEdit_3->text();
@@ -435,4 +450,234 @@ void Edit::on_pushButton_12_clicked()
     dat1NameStream<<ePath<<"/"<<sedit;
     std::string dat1Name = dat1NameStream.str();
     remove(dat1Name.c_str());
+}
+
+
+//****************************************
+// apply points for continuum definition
+//****************************************
+void Edit::on_pushButton_13_clicked()
+{
+    qEPath=ui->lineEdit_3->text();
+    ePath = qEPath.toUtf8().constData();
+
+    string sedit = "continuumpoints.dat";
+    std::ostringstream dat1NameStream(sedit);
+    dat1NameStream<<ePath<<"/"<<sedit;
+    std::string dat1Name = dat1NameStream.str();
+    ofstream init(dat1Name.c_str());
+
+    QString qpoint = ui->lineEdit_4->text();
+    double point = qpoint.toDouble();
+    if(qpoint.isEmpty()){
+        QMessageBox::information(this, "Error", "Please enter point x_1,1 of comp. A.");
+        return;
+    }
+    else{
+        init<<point<<endl;
+    }
+
+    qpoint =ui->lineEdit_5->text();
+    point = qpoint.toDouble();
+    if(qpoint.isEmpty()){
+        QMessageBox::information(this, "Error", "Please enter point x_1,2 of comp. A.");
+        return;
+    }
+    else{
+        init<<point<<endl;
+    }
+
+    qpoint = ui->lineEdit_6->text();
+    point = qpoint.toDouble();
+    if(qpoint.isEmpty()){
+        QMessageBox::information(this, "Error", "Please enter point x_1,1 of comp. B.");
+        return;
+    }
+    else{
+        init<<point<<endl;
+    }
+
+    qpoint =ui->lineEdit_7->text();
+    point = qpoint.toDouble();
+    if(qpoint.isEmpty()){
+        QMessageBox::information(this, "Error", "Please enter point x_1,2 of comp. B.");
+        return;
+    }
+    else{
+        init<<point<<endl;
+    }
+
+    qpoint = ui->lineEdit_8->text();
+    point = qpoint.toDouble();
+    if(qpoint.isEmpty()){
+        QMessageBox::information(this, "Error", "Please enter point x_2,1 of comp. A.");
+        return;
+    }
+    else{
+        init<<point<<endl;
+    }
+
+    qpoint =ui->lineEdit_9->text();
+    point = qpoint.toDouble();
+    if(qpoint.isEmpty()){
+        QMessageBox::information(this, "Error", "Please enter point x_2,2 of comp. A.");
+        return;
+    }
+    else{
+        init<<point<<endl;
+    }
+    qpoint =ui->lineEdit_10->text();
+    point = qpoint.toDouble();
+    if(qpoint.isEmpty()){
+        QMessageBox::information(this, "Error", "Please enter point x_2,1 of comp. B.");
+        return;
+    }
+    else{
+        init<<point<<endl;
+    }
+    qpoint =ui->lineEdit_11->text();
+    point = qpoint.toDouble();
+    if(qpoint.isEmpty()){
+        QMessageBox::information(this, "Error", "Please enter point x_2,2 of comp. B.");
+        return;
+    }
+    else{
+        init<<point<<endl;
+    }
+}
+
+//***************************************
+// set relative strength by given ratios
+//***************************************
+void Edit::on_pushButton_14_clicked()
+{
+    QTableWidgetItem *wratio;
+    QString qratio;
+    double k, FA, FB;
+
+    for(int i=0; i<obser; i++){
+
+        wratio=ui->tableWidget_4->item(i,0);
+        qratio=wratio->text();
+        k = qratio.toDouble();
+
+        FA = k/(k+1.0);
+        FB = 1.0/(k+1.0);
+
+        ui->tableWidget_2->setItem(i,0,new QTableWidgetItem(QString::number(FA)));
+
+        ui->tableWidget_3->setItem(i,0,new QTableWidgetItem(QString::number(FB)));
+    }
+}
+
+//************************
+// load ratios from file
+//************************
+void Edit::on_pushButton_15_clicked()
+{
+    QVector<double> k(1);
+
+    QString qSCL = qEPath+"/"+ ui->lineEdit_12->text();
+    QFile SCL(qSCL);
+
+    string scl = qSCL.toUtf8().constData();
+    std::ostringstream datANameStream(scl);
+    datANameStream<<scl;
+    std::string datAName = datANameStream.str();
+
+    if(!SCL.exists()){
+        QMessageBox::information(this, "Error", "File "+ qSCL +" does not exist.");
+        return;
+    }
+    else{
+        obser=0;
+        ifstream inEdit(datAName.c_str());
+        string eins, lines;
+
+        while(std::getline(inEdit, lines))
+              ++obser;
+
+        inEdit.clear();
+        inEdit.seekg(0, ios::beg);
+
+        k.resize(obser);
+
+        for(int g=0; g<obser; g++){
+            inEdit >> eins;
+            istringstream ist(eins);
+            ist >> k[g];
+
+        }
+        inEdit.close();
+    }
+    ui->spinBox->setValue(obser);
+
+    QTableWidgetItem *wratio;
+    QString qratio;
+    double FA, FB;
+
+    for(int i=0; i<obser; i++){
+
+        ui->tableWidget_4->setItem(i,0,new QTableWidgetItem(QString::number(k[i])));
+
+        if(ui->checkBox->isChecked()){
+            FB = k[i]/(k[i]+1.0);
+            FA = 1.0/(k[i]+1.0);
+        }
+        else{
+            FA = k[i]/(k[i]+1.0);
+            FB = 1.0/(k[i]+1.0);
+        }
+
+        ui->tableWidget_2->setItem(i,0,new QTableWidgetItem(QString::number(FA)));
+
+        ui->tableWidget_3->setItem(i,0,new QTableWidgetItem(QString::number(FB)));
+    }
+}
+
+//*******************************************
+// Help button for component strength and continuum point definition
+//*******************************************
+void Edit::on_pushButton_16_clicked()
+{
+    QMessageBox::information(this, "Help", "In the upper three tables, you can specify the component strength for binary components A, B, and telluric (static) component. Thes strengths have to add to one in each row."
+                                           "\nYou can also load a file with ratios (one column, one row per spectrum) with the Load Ratios button at top."
+                                           "\nThe 8 line edits at bottom are used to spedify points in the disentangled spectra to compute a linear function. The slope of the function can be used for optimization on flux ratios."
+                                           " Left two columns of these line edits for component A right for B, top ones for left, bottom for right point. See manual for more details.\n"
+                                           "Hit the Apply button(s) to create a file with your definitions.\n"
+                                           "Reset button will delete the file with the user defined values.");
+}
+
+//*****************************************
+// Help button for transformation coeff. of simplex
+//*****************************************
+void Edit::on_pushButton_17_clicked()
+{
+    QMessageBox::information(this, "Halp", "The coef. for the transfomations of the simplex done by the Downhill-Simplex algorithm implemented, can be specified here. If not given, the default values given here are used."
+                                           "\nHit the Apply button to create a file with your definitions."
+                                           "\nReset button will delete the file with the user defined values.");
+}
+
+//****************************************
+// Help button for step sizes to construct initial simplex
+//****************************************
+void Edit::on_pushButton_18_clicked()
+{
+    QMessageBox::information(this, "Help", "The optimization algorithm creates an initial simplex. This is done by specifying step sizes, added to the initial values of the corresponding variables n to construct a simplex n+1 points.\n"
+                                           "Step size is used for optimization on radial velocities and is given here as multiples of the pixel size in velocity space (output on main window).\n"
+                                           "Optimization on flux ratios uses the step size as well, but multiplied by 0.1."
+                                           "\nHit the Apply button to create a file with your definitions."
+                                           "\nReset button will delete the file with the user defined values.");
+}
+
+//****************************************
+// Help button orbital parameters
+//****************************************
+void Edit::on_pushButton_19_clicked()
+{
+    QMessageBox::information(this, "Help", "The orbital elements used as start values for the optimization are set here.\n"
+                                           "Orbital elements can also be loaded from the drop-down menu. Add an orbit to the file BinaryData.dat if not present in the list."
+                                           "\nThis setting is mandatory for optimization on orbital elements!."
+                                           "\nHit the Apply button to create a file with your definitions."
+                                           "\nReset button will delete the file with the user defined values.");
 }

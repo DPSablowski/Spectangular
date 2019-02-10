@@ -86,6 +86,14 @@ private slots:
 
     void on_checkBox_13_clicked();
 
+    void on_checkBox_18_clicked();
+
+    void on_checkBox_19_clicked();
+
+    void on_checkBox_20_clicked();
+
+    void on_checkBox_21_clicked();
+
 private:
     Ui::PlotSpec *ui;
 };
