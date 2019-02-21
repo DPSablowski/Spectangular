@@ -156,7 +156,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->spinBox_10->setEnabled(false);
     ui->spinBox_9->setEnabled(false);
-    ui->lineEdit_19->setEnabled(false);
+    //ui->lineEdit_19->setEnabled(false);
 
     ui->customPlot->xAxis2->setVisible(true);
     ui->customPlot->xAxis2->setTickLabels(false);
