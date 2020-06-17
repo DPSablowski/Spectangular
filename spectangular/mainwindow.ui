@@ -497,7 +497,7 @@
          <x>0</x>
          <y>0</y>
          <width>2396</width>
-         <height>1317</height>
+         <height>1319</height>
         </rect>
        </property>
        <layout class="QGridLayout" name="gridLayout_2">
@@ -521,7 +521,7 @@
                    <string/>
                   </property>
                   <property name="pixmap">
-                   <pixmap>:/new/Icons/AIP.jpeg</pixmap>
+                   <pixmap resource="images.qrc">:/new/Icons/AIP.jpeg</pixmap>
                   </property>
                  </widget>
                 </item>
@@ -537,7 +537,7 @@
                    <string/>
                   </property>
                   <property name="pixmap">
-                   <pixmap>:/new/Icons/activity_logo.png</pixmap>
+                   <pixmap resource="images.qrc">:/new/Icons/activity_logo.png</pixmap>
                   </property>
                  </widget>
                 </item>
@@ -3519,7 +3519,7 @@
                    <string>ECON</string>
                   </property>
                   <property name="icon">
-                   <iconset>
+                   <iconset resource="images.qrc">
                     <normaloff>:/new/Icons/run.png</normaloff>:/new/Icons/run.png</iconset>
                   </property>
                  </widget>
@@ -3550,7 +3550,14 @@
                    </font>
                   </property>
                   <property name="text">
-                   <string>Divide-and-Conquer</string>
+                   <string>DaC</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QCheckBox" name="checkBox_39">
+                  <property name="text">
+                   <string>Trunc. SVD</string>
                   </property>
                  </widget>
                 </item>
@@ -3665,8 +3672,24 @@
                    <string>SVD</string>
                   </property>
                   <property name="icon">
-                   <iconset>
+                   <iconset resource="images.qrc">
                     <normaloff>:/new/Icons/run.png</normaloff>:/new/Icons/run.png</iconset>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="pushButton_14">
+                  <property name="enabled">
+                   <bool>true</bool>
+                  </property>
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="text">
+                   <string>SpSolve</string>
                   </property>
                  </widget>
                 </item>
@@ -4778,7 +4801,7 @@
                  <string>Optimization</string>
                 </property>
                 <property name="icon">
-                 <iconset>
+                 <iconset resource="images.qrc">
                   <normaloff>:/new/Icons/run.png</normaloff>:/new/Icons/run.png</iconset>
                 </property>
                </widget>
@@ -8071,7 +8094,7 @@
                      <string>Error</string>
                     </property>
                     <property name="icon">
-                     <iconset>
+                     <iconset resource="images.qrc">
                       <normaloff>:/new/Icons/run.png</normaloff>:/new/Icons/run.png</iconset>
                     </property>
                    </widget>
@@ -9318,7 +9341,7 @@
   <widget class="QStatusBar" name="statusBar"/>
   <action name="actionSpectrum_Plotter">
    <property name="icon">
-    <iconset>
+    <iconset resource="images.qrc">
      <normaloff>:/new/Icons/SPlotter.png</normaloff>:/new/Icons/SPlotter.png</iconset>
    </property>
    <property name="text">
@@ -9337,7 +9360,7 @@
   </action>
   <action name="actionCorrelation">
    <property name="icon">
-    <iconset>
+    <iconset resource="images.qrc">
      <normaloff>:/new/Icons/Corr.png</normaloff>:/new/Icons/Corr.png</iconset>
    </property>
    <property name="text">
@@ -9383,7 +9406,9 @@
   <tabstop>pushButton</tabstop>
   <tabstop>plainTextEdit</tabstop>
  </tabstops>
- <resources/>
+ <resources>
+  <include location="images.qrc"/>
+ </resources>
  <connections>
   <connection>
    <sender>pushButton</sender>

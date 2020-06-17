@@ -65,7 +65,8 @@ double dT0;
 double dOmega;
 
 mat M(Mn,Mm);   //transformation matrix
-mat Mt(Mm,Mn);  //transpose of transformation matrix
+mat Mt(Mm,Mn); //transpose of transformation matrix
+sp_mat A(Mm,Mn);
 vec X(Mm);      //solution vector of SVD
 vec C(Mn);      //measurement vector
 vec W(Mm);      //wavelength vector of measurement
@@ -1774,6 +1775,7 @@ void MainWindow::on_pushButton_3_clicked()
             cout<<"Error 19: At least two observations at (hopefully) different phases are necessary."<<endl;
             MainWindow::Input();
         }
+        this->setCursor(QCursor(Qt::ArrowCursor));
         return;
     }
 
@@ -2085,7 +2087,7 @@ void MainWindow::on_pushButton_5_clicked()
 
     vec res(Mm);
 
-    int cBS;
+    int cBS=0;
 
     if(ui->checkBox_5->isChecked()){
         svd_econ(U,w,V,M, "both", "std");
@@ -2094,6 +2096,12 @@ void MainWindow::on_pushButton_5_clicked()
 
     if(ui->checkBox_6->isChecked()){
         svd_econ(U,w,V,M, "both", "dc");
+    }
+    else ++cBS;
+
+    if(ui->checkBox_39->isChecked()){
+        A = M;
+        svds(U,w,V,A,Mm);
     }
     else ++cBS;
 
@@ -7176,7 +7184,8 @@ void MainWindow::on_pushButton_6_clicked()
         number_of_lines=0;
 
         while(std::getline(toplot3, zeile))
-        ++ number_of_lines;
+        ++number_of_lines;
+        cout<<number_of_lines<<endl;
 
         toplot3.clear();
         toplot3.seekg(0, ios::beg);
@@ -7194,18 +7203,21 @@ void MainWindow::on_pushButton_6_clicked()
             ist >> a[i];
             istringstream ist2(two);
             ist2 >> b[i];
-            if((i>0) & (a[i]<a[i-1])){
-                reasm=sres/count;
-                if(sres!=0){
+            if(i>0){
+                if((sres!=0) & (a[i]<a[i-1])){
                     diffs<<sres<<"\t"<<sres2<<"\t"<<reasm<<"\t"<<count<<endl;
                 }
                 else{
                     //
                 }
+                reasm=sres/count;
                 sres = 0;
                 sres2 = 0;
                 count=0;
                 ++index;
+            }
+            else{
+                //
             }
             if(ui->checkBox_33->isChecked()){
                 if(a[i]>ui->doubleSpinBox_14->value() & (a[i]<ui->doubleSpinBox_15->value())){
@@ -7230,6 +7242,7 @@ void MainWindow::on_pushButton_6_clicked()
         else{
             //
         }
+        cout<<"end"<<endl;
 
         diffs.close();
         toplot3.close();
@@ -7258,13 +7271,21 @@ void MainWindow::on_pushButton_6_clicked()
         ofstream diffs2(dat5Name.c_str());
 
         for(int i=0; i<number_of_lines; i++){
-            if((i>0) & (a[i]<a[i-1])){
+            if(i>0){
+                if(a[i]<a[i-1]){
                 reasm=sres/count;
                 diffs2<<sres<<"\t"<<vsres[index]<<"\t"<<sres2<<"\t"<<vsres2[index]<<"\t"<<reasm<<"\t"<<count<<endl;
                 sres = 0.0;
                 sres2 = 0.0;
                 count=0;
                 ++index;
+                }
+                else {
+                    // do nothing
+                }
+            }
+            else  {
+                // do nothing
             }
             if(ui->checkBox_33->isChecked()){
                 if(a[i]>ui->doubleSpinBox_14->value() & (a[i]<ui->doubleSpinBox_15->value())){
@@ -9023,18 +9044,17 @@ void MainWindow::on_pushButton_10_clicked()
         string eins, cstring;
 
         for(int g=0; g<SetP; g++){
-        inSPS >> eins;
-        istringstream ist(eins);
-        if((g>SetN-1) & (g<SetN+SetH)){
-            ist >> SetC[g-SetN];
-        }
-        if(g<SetN){
-
-        ist >> SetV[g];
-        }
-        else{
-            ist >> SetCB[g-SetN-SetH];
-        }
+            inSPS >> eins;
+            istringstream ist(eins);
+            if((g>SetN-1) & (g<SetN+SetH)){
+                ist >> SetC[g-SetN];
+            }
+             else if(g<SetN){
+                ist >> SetV[g];
+            }
+            else{
+                ist >> SetCB[g-SetN-SetH];
+            }
         }
         inSPS.close();
 
@@ -10972,4 +10992,47 @@ void MainWindow::on_checkBox_30_clicked()
     else{
         ui->checkBox_29->setChecked(true);
     }
+}
+
+//******************************
+// sparse matrix solver
+//******************************
+void MainWindow::separation()
+{
+    this->setCursor(QCursor(Qt::WaitCursor));
+    if(ui->spinBox_2->value()-ui->spinBox->value()<1){
+        if(runow==0){
+            QMessageBox::information(this, "Error", "Error 19: At least two observations at (hopefully) different phases are necessary.");
+        }
+        else{
+            cout<<"Error 19: At least two observations at (hopefully) different phases are necessary."<<endl;
+            MainWindow::Input();
+        }
+        this->setCursor(QCursor(Qt::ArrowCursor));
+        return;
+    }
+
+    MainWindow::disableButtons();
+    MainWindow::read_data();
+
+    if(error==1){
+        this->setCursor(QCursor(Qt::ArrowCursor));
+        error=0;
+        MainWindow::enableButtons();
+        return;
+    }
+    this->setCursor(QCursor(Qt::WaitCursor));
+
+
+        std::ostringstream file5NameStream("compl.txt");
+        file5NameStream<<path<<"/compl.txt";
+        std::string file5Name = file5NameStream.str();
+        ofstream file7(file5Name.c_str());
+
+        for(int i =0; i<Mm; i++){
+            file7<<i<<"\t"<<X(i)<<endl;
+        }
+
+    MainWindow::enableButtons();
+    this->setCursor(QCursor(Qt::ArrowCursor));
 }

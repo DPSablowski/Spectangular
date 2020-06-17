@@ -154,6 +154,8 @@ private slots:
 
     void on_checkBox_30_clicked();
 
+    void separation();
+
 private:
     Ui::MainWindow *ui;
     PlotSpec *pSpec;

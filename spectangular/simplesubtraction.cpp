@@ -221,11 +221,11 @@ void SimpleSubtraction::on_pushButton_2_clicked()
         i2.resize(length);
 
         for(int i=0; i<length; i++){
-        dat >> eins >>zwei;
-        istringstream ist3(eins);
-        ist3 >> w2[i];
-        istringstream ist4(zwei);
-        ist4 >> i2[i];
+            dat >> eins >>zwei;
+            istringstream ist3(eins);
+            ist3 >> w2[i];
+            istringstream ist4(zwei);
+            ist4 >> i2[i];
         }
 
     }

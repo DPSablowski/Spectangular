@@ -130,7 +130,9 @@ public:
     QPushButton *pushButton_5;
     QCheckBox *checkBox_5;
     QCheckBox *checkBox_6;
+    QCheckBox *checkBox_39;
     QPushButton *pushButton_3;
+    QPushButton *pushButton_14;
     QSpacerItem *horizontalSpacer_11;
     QHBoxLayout *horizontalLayout_9;
     QPushButton *pushButton_12;
@@ -382,7 +384,7 @@ public:
         scrollArea->setWidgetResizable(true);
         scrollAreaWidgetContents = new QWidget();
         scrollAreaWidgetContents->setObjectName(QString::fromUtf8("scrollAreaWidgetContents"));
-        scrollAreaWidgetContents->setGeometry(QRect(0, 0, 2396, 1317));
+        scrollAreaWidgetContents->setGeometry(QRect(0, 0, 2396, 1319));
         gridLayout_2 = new QGridLayout(scrollAreaWidgetContents);
         gridLayout_2->setSpacing(6);
         gridLayout_2->setContentsMargins(11, 11, 11, 11);
@@ -1230,6 +1232,11 @@ public:
 
         horizontalLayout_11->addWidget(checkBox_6);
 
+        checkBox_39 = new QCheckBox(scrollAreaWidgetContents);
+        checkBox_39->setObjectName(QString::fromUtf8("checkBox_39"));
+
+        horizontalLayout_11->addWidget(checkBox_39);
+
         pushButton_3 = new QPushButton(scrollAreaWidgetContents);
         pushButton_3->setObjectName(QString::fromUtf8("pushButton_3"));
         sizePolicy1.setHeightForWidth(pushButton_3->sizePolicy().hasHeightForWidth());
@@ -1255,6 +1262,14 @@ public:
         pushButton_3->setIcon(icon3);
 
         horizontalLayout_11->addWidget(pushButton_3);
+
+        pushButton_14 = new QPushButton(scrollAreaWidgetContents);
+        pushButton_14->setObjectName(QString::fromUtf8("pushButton_14"));
+        pushButton_14->setEnabled(true);
+        sizePolicy1.setHeightForWidth(pushButton_14->sizePolicy().hasHeightForWidth());
+        pushButton_14->setSizePolicy(sizePolicy1);
+
+        horizontalLayout_11->addWidget(pushButton_14);
 
         horizontalSpacer_11 = new QSpacerItem(40, 20, QSizePolicy::Preferred, QSizePolicy::Minimum);
 
@@ -2901,8 +2916,10 @@ public:
         checkBox_34->setText(QApplication::translate("MainWindow", "SB3", nullptr));
         pushButton_5->setText(QApplication::translate("MainWindow", "ECON", nullptr));
         checkBox_5->setText(QApplication::translate("MainWindow", "Standard", nullptr));
-        checkBox_6->setText(QApplication::translate("MainWindow", "Divide-and-Conquer", nullptr));
+        checkBox_6->setText(QApplication::translate("MainWindow", "DaC", nullptr));
+        checkBox_39->setText(QApplication::translate("MainWindow", "Trunc. SVD", nullptr));
         pushButton_3->setText(QApplication::translate("MainWindow", "SVD", nullptr));
+        pushButton_14->setText(QApplication::translate("MainWindow", "SpSolve", nullptr));
         pushButton_12->setText(QApplication::translate("MainWindow", "Subtract", nullptr));
         checkBox_20->setText(QApplication::translate("MainWindow", "A", nullptr));
         checkBox_21->setText(QApplication::translate("MainWindow", "B", nullptr));
