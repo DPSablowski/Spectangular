@@ -21,7 +21,6 @@
 #include <thread>
 #include <QFileInfo>
 #include <cblas.h>
-#include <omp.h>
 
 using namespace std;
 using namespace arma;

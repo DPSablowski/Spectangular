@@ -7,7 +7,6 @@
         <file>AIP.jpeg</file>
     </qresource>
     <qresource prefix="/new/backround">
-        <file>Infected_Sith.jpg</file>
         <file>Logo.png</file>
     </qresource>
 </RCC>

@@ -277,6 +277,7 @@ DIST          = /home/daniel/Qt/5.15.0/gcc_64/mkspecs/features/spec_pre.prf \
 		/home/daniel/Qt/5.15.0/gcc_64/mkspecs/features/qt_config.prf \
 		/home/daniel/Qt/5.15.0/gcc_64/mkspecs/linux-g++/qmake.conf \
 		/home/daniel/Qt/5.15.0/gcc_64/mkspecs/features/spec_post.prf \
+		../spectangular/.qmake.stash \
 		/home/daniel/Qt/5.15.0/gcc_64/mkspecs/features/exclusive_builds.prf \
 		/home/daniel/Qt/5.15.0/gcc_64/mkspecs/features/toolchain.prf \
 		/home/daniel/Qt/5.15.0/gcc_64/mkspecs/features/default_pre.prf \
@@ -514,6 +515,7 @@ Makefile: ../spectangular/Spectangular.pro /home/daniel/Qt/5.15.0/gcc_64/mkspecs
 		/home/daniel/Qt/5.15.0/gcc_64/mkspecs/features/qt_config.prf \
 		/home/daniel/Qt/5.15.0/gcc_64/mkspecs/linux-g++/qmake.conf \
 		/home/daniel/Qt/5.15.0/gcc_64/mkspecs/features/spec_post.prf \
+		.qmake.stash \
 		/home/daniel/Qt/5.15.0/gcc_64/mkspecs/features/exclusive_builds.prf \
 		/home/daniel/Qt/5.15.0/gcc_64/mkspecs/features/toolchain.prf \
 		/home/daniel/Qt/5.15.0/gcc_64/mkspecs/features/default_pre.prf \
@@ -727,6 +729,7 @@ Makefile: ../spectangular/Spectangular.pro /home/daniel/Qt/5.15.0/gcc_64/mkspecs
 /home/daniel/Qt/5.15.0/gcc_64/mkspecs/features/qt_config.prf:
 /home/daniel/Qt/5.15.0/gcc_64/mkspecs/linux-g++/qmake.conf:
 /home/daniel/Qt/5.15.0/gcc_64/mkspecs/features/spec_post.prf:
+.qmake.stash:
 /home/daniel/Qt/5.15.0/gcc_64/mkspecs/features/exclusive_builds.prf:
 /home/daniel/Qt/5.15.0/gcc_64/mkspecs/features/toolchain.prf:
 /home/daniel/Qt/5.15.0/gcc_64/mkspecs/features/default_pre.prf:
@@ -801,8 +804,7 @@ qrc_images.cpp: ../spectangular/images.qrc \
 		../spectangular/Corr.png \
 		../spectangular/run.png \
 		../spectangular/AIP.jpeg \
-		../spectangular/Logo.png \
-		../spectangular/Infected_Sith.jpg
+		../spectangular/Logo.png
 	/home/daniel/Qt/5.15.0/gcc_64/bin/rcc -name images ../spectangular/images.qrc -o qrc_images.cpp
 
 compiler_moc_predefs_make_all: moc_predefs.h
@@ -4306,7 +4308,8 @@ plotspec.o: ../spectangular/plotspec.cpp ../spectangular/plotspec.h \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtPrintSupport/qprintpreviewwidget.h \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtPrintSupport/qtprintsupportversion.h \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtCore/QFile \
-		/home/daniel/Qt/5.15.0/gcc_64/include/QtCore/QtDebug
+		/home/daniel/Qt/5.15.0/gcc_64/include/QtCore/QtDebug \
+		../spectangular/spline.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o plotspec.o ../spectangular/plotspec.cpp
 
 qcustomplot.o: ../spectangular/qcustomplot.cpp ../spectangular/qcustomplot.h \
@@ -4918,10 +4921,6 @@ correlation.o: ../spectangular/correlation.cpp ../spectangular/correlation.h \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtGui/qtouchdevice.h \
 		../spectangular/ui_correlation.h \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtCore/QVariant \
-		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/QAction \
-		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qaction.h \
-		/home/daniel/Qt/5.15.0/gcc_64/include/QtGui/qicon.h \
-		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qactiongroup.h \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/QApplication \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qapplication.h \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtCore/qcoreapplication.h \
@@ -4929,11 +4928,10 @@ correlation.o: ../spectangular/correlation.cpp ../spectangular/correlation.h \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qdesktopwidget.h \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtGui/qguiapplication.h \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtGui/qinputmethod.h \
-		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/QButtonGroup \
-		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qbuttongroup.h \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/QCheckBox \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qcheckbox.h \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qabstractbutton.h \
+		/home/daniel/Qt/5.15.0/gcc_64/include/QtGui/qicon.h \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/QDoubleSpinBox \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qspinbox.h \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qabstractspinbox.h \
@@ -4944,23 +4942,9 @@ correlation.o: ../spectangular/correlation.cpp ../spectangular/correlation.h \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qlayout.h \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qlayoutitem.h \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qgridlayout.h \
-		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/QHeaderView \
-		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qheaderview.h \
-		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qabstractitemview.h \
-		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qabstractscrollarea.h \
-		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qframe.h \
-		/home/daniel/Qt/5.15.0/gcc_64/include/QtCore/qabstractitemmodel.h \
-		/home/daniel/Qt/5.15.0/gcc_64/include/QtCore/qitemselectionmodel.h \
-		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qabstractitemdelegate.h \
-		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qstyleoption.h \
-		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qslider.h \
-		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qabstractslider.h \
-		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qstyle.h \
-		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qtabbar.h \
-		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qtabwidget.h \
-		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qrubberband.h \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/QLabel \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qlabel.h \
+		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qframe.h \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/QLineEdit \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qlineedit.h \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtGui/qtextcursor.h \
@@ -5084,10 +5068,6 @@ edit.o: ../spectangular/edit.cpp ../spectangular/edit.h \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtGui/qtouchdevice.h \
 		../spectangular/ui_edit.h \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtCore/QVariant \
-		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/QAction \
-		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qaction.h \
-		/home/daniel/Qt/5.15.0/gcc_64/include/QtGui/qicon.h \
-		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qactiongroup.h \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/QApplication \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qapplication.h \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtCore/qcoreapplication.h \
@@ -5095,11 +5075,10 @@ edit.o: ../spectangular/edit.cpp ../spectangular/edit.h \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qdesktopwidget.h \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtGui/qguiapplication.h \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtGui/qinputmethod.h \
-		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/QButtonGroup \
-		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qbuttongroup.h \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/QCheckBox \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qcheckbox.h \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qabstractbutton.h \
+		/home/daniel/Qt/5.15.0/gcc_64/include/QtGui/qicon.h \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/QComboBox \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qcombobox.h \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qabstractitemdelegate.h \
