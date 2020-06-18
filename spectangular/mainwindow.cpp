@@ -544,6 +544,9 @@ void MainWindow::read_data(){
                 error=1;
                 return;
             }
+            else{
+                // do nothing
+            }
 
             ifstream dat1(dat1Name.c_str());
 
@@ -568,74 +571,75 @@ void MainWindow::read_data(){
         }
         //from your file
         if(ui->checkBox_2->isChecked()){
-        checker=2;
-        orbele[4]=0;
-        mini=ui->spinBox->value();
-        maxi=ui->spinBox_2->value();
-        num=maxi-mini+1;
+            checker=2;
+            orbele[4]=0;
+            mini=ui->spinBox->value();
+            maxi=ui->spinBox_2->value();
+            num=maxi-mini+1;
 
-        RV1.resize(num);
-        RV2.resize(num);
-        RV3.resize(num);
+            RV1.resize(num);
+            RV2.resize(num);
+            RV3.resize(num);
 
-        QString input2=ui->lineEdit_2->text();
-        string data2 = input2.toUtf8().constData();
-        std::ostringstream dat2NameStream(data2);
-        dat2NameStream<<path<<"/"<<data2;
-        std::string dat2Name = dat2NameStream.str();
+            QString input2=ui->lineEdit_2->text();
+            string data2 = input2.toUtf8().constData();
+            std::ostringstream dat2NameStream(data2);
+            dat2NameStream<<path<<"/"<<data2;
+            std::string dat2Name = dat2NameStream.str();
 
-        QFile checkfile2(dat2Name.c_str());
+            QFile checkfile2(dat2Name.c_str());
 
-        if(!checkfile2.exists()){
-            qDebug()<<"The file "<<checkfile2.fileName()<<" does not exist.";
-            if(runow==0){
-                QMessageBox::information(this, "Error", "Error 2: File "+qPath+"/"+input2+" does not exist!");
+            if(!checkfile2.exists()){
+                qDebug()<<"The file "<<checkfile2.fileName()<<" does not exist.";
+                if(runow==0){
+                    QMessageBox::information(this, "Error", "Error 2: File "+qPath+"/"+input2+" does not exist!");
+                }
+                else{
+                    cout<<"Error 2: File "<<path<<"/"<<data2<<" does not exist!"<<endl;
+                    MainWindow::Input();
+                }
+                this->setCursor(QCursor(Qt::ArrowCursor));
+                error=1;
+               return;
             }
             else{
-                cout<<"Error 2: File "<<path<<"/"<<data2<<" does not exist!"<<endl;
-                MainWindow::Input();
-            }
-            this->setCursor(QCursor(Qt::ArrowCursor));
-            error=1;
-           return;
-        }
 
-        ifstream dat2(dat2Name.c_str());
+                ifstream dat2(dat2Name.c_str());
 
-        entries=0;
-        while(std::getline(dat2, liner))
-           ++entries;
+                entries=0;
+                while(std::getline(dat2, liner))
+                    ++entries;
 
-        dat2.clear();
-        dat2.seekg(0, ios::beg);
+                dat2.clear();
+                dat2.seekg(0, ios::beg);
 
-        if(entries!=num){
-            if(runow==0){
-                QMessageBox::information(this, "Error", "Error 3: Time file "+qPath+"/"+input2+" does not match to the number of observations.");
-            }
-            else{
-                cout<<"Error 3: File "<<path<<"/"<<data2<<" does not match to the number of observations."<<endl;
-                MainWindow::Input();
-            }
-            error=1;
-            this->setCursor(QCursor(Qt::ArrowCursor));
-            return;
-        }
-
-
-        for(int g=mini; g<=maxi; g++){
-        dat2 >> eins >>zwei;
-        istringstream ist(eins);
-        ist >> RV1[g-mini];
-        istringstream ist2(zwei);
-        ist2 >> RV3[g-mini];
-        QString index= QString::number(g-mini);
-        QString velocity=QString::number(RV1[g-mini]);
-        //QString doppler=QString::number(RV2[g]);
-        QString sum=QString::number(RV3[g-mini]);
-        ui->plainTextEdit->appendPlainText(index+" "+velocity+" "+sum);
-
+                if(entries!=num){
+                    if(runow==0){
+                        QMessageBox::information(this, "Error", "Error 3: Time file "+qPath+"/"+input2+" does not match to the number of observations.");
                     }
+                    else{
+                        cout<<"Error 3: File "<<path<<"/"<<data2<<" does not match to the number of observations."<<endl;
+                        MainWindow::Input();
+                    }
+                    error=1;
+                    this->setCursor(QCursor(Qt::ArrowCursor));
+                    return;
+                }
+
+                for(int g=mini; g<=maxi; g++){
+                    dat2 >> eins >>zwei;
+                    istringstream ist(eins);
+                    ist >> RV1[g-mini];
+                    istringstream ist2(zwei);
+                    ist2 >> RV3[g-mini];
+                    QString index= QString::number(g-mini);
+                    QString velocity=QString::number(RV1[g-mini]);
+                    //QString doppler=QString::number(RV2[g]);
+                    QString sum=QString::number(RV3[g-mini]);
+                    ui->plainTextEdit->appendPlainText(index+" "+velocity+" "+sum);
+                }
+            dat2.close();
+            }
         }
 
         //unknown RVs
@@ -671,34 +675,36 @@ void MainWindow::read_data(){
                 error=1;
                return;
             }
+            else{
 
-            ifstream dat(intName.c_str());
+                ifstream dat(intName.c_str());
 
-            entries=0;
-            while(std::getline(dat, liner))
-               ++entries;
+                entries=0;
+                while(std::getline(dat, liner))
+                   ++entries;
 
-            dat.clear();
-            dat.seekg(0, ios::beg);
+                dat.clear();
+                dat.seekg(0, ios::beg);
 
-            if(entries!=num){
-                if(runow==0){
-                    QMessageBox::information(this, "Error", "Error 5: Time file "+qPath+"/"+inputt+" does not match to the number of observations.");
+                if(entries!=num){
+                    if(runow==0){
+                        QMessageBox::information(this, "Error", "Error 5: Time file "+qPath+"/"+inputt+" does not match to the number of observations.");
+                    }
+                    else{
+                        cout<<"Error 5: File "<<path<<"/"<<times<<" does not match to the number of observations."<<endl;
+                        MainWindow::Input();
+                    }
+                    error=1;
+                    this->setCursor(QCursor(Qt::ArrowCursor));
+                    return;
                 }
-                else{
-                    cout<<"Error 5: File "<<path<<"/"<<times<<" does not match to the number of observations."<<endl;
-                    MainWindow::Input();
+
+
+                for(int g=0; g<num; g++){
+                    dat >> eins;
+                    istringstream istr(eins);
+                    istr >> otimes[g];
                 }
-                error=1;
-                this->setCursor(QCursor(Qt::ArrowCursor));
-                return;
-            }
-
-
-            for(int g=0; g<num; g++){
-                dat >> eins;
-                istringstream istr(eins);
-                istr >> otimes[g];
             }
 
             string orbit = "orbitelements.dat";
@@ -721,13 +727,15 @@ void MainWindow::read_data(){
                 error=1;
                return;
             }
+            else{
 
-            ifstream initorbit(orbName.c_str());
+                ifstream initorbit(orbName.c_str());
 
-            for(int i=0; i<7; i++){
-                initorbit >> eins;
-                istringstream istr1(eins);
-                istr1 >> orbele[i];
+                for(int i=0; i<7; i++){
+                    initorbit >> eins;
+                    istringstream istr1(eins);
+                    istr1 >> orbele[i];
+                }
             }
 
             MainWindow::VAmplitudeA();
@@ -746,12 +754,18 @@ void MainWindow::read_data(){
         RV1max=abs(RV1[0]);
         RV3max=abs(RV3[0]);
         for (int i=0; i<num; i++){
-        if (abs(RV1[i])>abs(RV1max)){
-        RV1max=RV1[i];
-        }
-        if (abs(RV3[i])>abs(RV3max)){
-        RV3max=RV3[i];
-        }
+            if (abs(RV1[i])>abs(RV1max)){
+                RV1max=RV1[i];
+            }
+            else{
+                //
+            }
+            if (abs(RV3[i])>abs(RV3max)){
+                RV3max=RV3[i];
+            }
+            else{
+                //
+            }
         }
 
         //looking for minimum and maximum RV
@@ -763,21 +777,36 @@ void MainWindow::read_data(){
             if(RV1[i]<RV1min){
                 RV1min=RV1[i];
             }
+            else{
+                //
+            }
             if(RV3[i]<RV3min){
                 RV3min=RV3[i];
+            }
+            else{
+                //
             }
             if(RV1[i]>RV1maxi){
                 RV1maxi=RV1[i];
             }
+            else{
+                //
+            }
             if(RV3[i]>RV3maxi){
                 RV3maxi=RV3[i];
+            }
+            else{
+                //
             }
         }
 
         RV1amin=RV1[0];
         for(int i=0; i<num; i++){
             if(abs(RV1[i])<RV1amin){
-            RV1amin=RV1[i];
+                RV1amin=RV1[i];
+            }
+            else{
+                //
             }
         }
 
@@ -798,108 +827,123 @@ void MainWindow::read_data(){
 
                 for(int g=mini; g<=maxi; g++){
 
-                QString input=ui->lineEdit->text();
-                string data1 = input.toUtf8().constData();
-                std::ostringstream dat1NameStream(data1);
-                dat1NameStream<<path<<"/"<<data1<<g<<".txt";
-                std::string dat1Name = dat1NameStream.str();
+                    QString input=ui->lineEdit->text();
+                    string data1 = input.toUtf8().constData();
+                    std::ostringstream dat1NameStream(data1);
+                    dat1NameStream<<path<<"/"<<data1<<g<<".txt";
+                    std::string dat1Name = dat1NameStream.str();
 
-                QFile checkfile1(dat1Name.c_str());
+                    QFile checkfile1(dat1Name.c_str());
 
-                if(!checkfile1.exists()){
-                    qDebug()<<"The file "<<checkfile1.fileName()<<" does not exist.";
-                    QString fError= QString::number(g);
-                    if(runow==0){
-                        QMessageBox::information(this, "Error", "Error 7: File"+qPath+"/"+input+fError+".txt does not exist!");
+                    if(!checkfile1.exists()){
+                        qDebug()<<"The file "<<checkfile1.fileName()<<" does not exist.";
+                        QString fError= QString::number(g);
+                        if(runow==0){
+                            QMessageBox::information(this, "Error", "Error 7: File"+qPath+"/"+input+fError+".txt does not exist!");
+                        }
+                        else{
+                            cout<<"Error 7: File "<<path<<"/"<<data1<<g<<" does not exist!"<<endl;
+                            MainWindow::Input();
+                        }
+                        this->setCursor(QCursor(Qt::ArrowCursor));
+                        error=1;
+                        return;
                     }
                     else{
-                        cout<<"Error 7: File "<<path<<"/"<<data1<<g<<" does not exist!"<<endl;
+
+                        ifstream dat1(dat1Name.c_str());
+
+                        dat1 >> eins;
+                        istringstream ist(eins);
+                        ist >> RV1[g-mini];
+
+                        QString index= QString::number(g);
+                        QString velocity=QString::number(RV1[g-mini]);
+
+                        ui->plainTextEdit->appendPlainText(index+" "+velocity);
+                        dat1.close();
+                    }
+                }
+            }
+            else{
+               //
+            }
+            //from your file
+            if(ui->checkBox_2->isChecked()){
+                checker=2;
+                orbele[4]=0;
+                mini=ui->spinBox->value();
+                maxi=ui->spinBox_2->value();
+                num=maxi-mini+1;
+
+                RV1.resize(num);
+
+                QString input2=ui->lineEdit_2->text();
+                string data2 = input2.toUtf8().constData();
+                std::ostringstream dat2NameStream(data2);
+                dat2NameStream<<path<<"/"<<data2;
+                std::string dat2Name = dat2NameStream.str();
+
+                QFile checkfile2(dat2Name.c_str());
+
+                if(!checkfile2.exists()){
+                    qDebug()<<"The file "<<checkfile2.fileName()<<" does not exist.";
+                    if(runow==0){
+                        QMessageBox::information(this, "Error", "Error 8: File"+qPath+"/"+input2+" does not exist!");
+                    }
+                    else{
+                        cout<<"Error 8: File "<<path<<"/"<<data2<<" does not exist!"<<endl;
                         MainWindow::Input();
                     }
                     this->setCursor(QCursor(Qt::ArrowCursor));
                     error=1;
-                    return;
+                   return;
                 }
 
-                ifstream dat1(dat1Name.c_str());
-
-                dat1 >> eins;
-                istringstream ist(eins);
-                ist >> RV1[g-mini];
-
-                QString index= QString::number(g);
-                QString velocity=QString::number(RV1[g-mini]);
-
-                ui->plainTextEdit->appendPlainText(index+" "+velocity);
-
-                }
-            }
-            //from your file
-            if(ui->checkBox_2->isChecked()){
-            checker=2;
-            orbele[4]=0;
-            mini=ui->spinBox->value();
-            maxi=ui->spinBox_2->value();
-            num=maxi-mini+1;
-
-            RV1.resize(num);
-
-            QString input2=ui->lineEdit_2->text();
-            string data2 = input2.toUtf8().constData();
-            std::ostringstream dat2NameStream(data2);
-            dat2NameStream<<path<<"/"<<data2;
-            std::string dat2Name = dat2NameStream.str();
-
-            QFile checkfile2(dat2Name.c_str());
-
-            if(!checkfile2.exists()){
-                qDebug()<<"The file "<<checkfile2.fileName()<<" does not exist.";
-                if(runow==0){
-                    QMessageBox::information(this, "Error", "Error 8: File"+qPath+"/"+input2+" does not exist!");
-                }
                 else{
-                    cout<<"Error 8: File "<<path<<"/"<<data2<<" does not exist!"<<endl;
-                    MainWindow::Input();
-                }
-                this->setCursor(QCursor(Qt::ArrowCursor));
-                error=1;
-               return;
-            }
+                    ifstream dat2(dat2Name.c_str());
 
-            ifstream dat2(dat2Name.c_str());
+                    entries=0;
+                    while(std::getline(dat2, liner))
+                       ++entries;
 
-            entries=0;
-            while(std::getline(dat2, liner))
-               ++entries;
+                    dat2.clear();
+                    dat2.seekg(0, ios::beg);
 
-            dat2.clear();
-            dat2.seekg(0, ios::beg);
+                    if(entries!=num){
+                        if(runow==0){
+                            QMessageBox::information(this, "Error", "Error 9: Time file "+qPath+"/"+input2+" does not match to the number of observations.");
+                        }
+                        else{
+                            cout<<"Error 9: File "<<path<<"/"<<data2<<" does not match to the number of observations."<<endl;
+                            MainWindow::Input();
+                        }
+                        error=1;
+                        this->setCursor(QCursor(Qt::ArrowCursor));
+                        return;
+                    }
+                    else{
 
-            if(entries!=num){
-                if(runow==0){
-                    QMessageBox::information(this, "Error", "Error 9: Time file "+qPath+"/"+input2+" does not match to the number of observations.");
-                }
-                else{
-                    cout<<"Error 9: File "<<path<<"/"<<data2<<" does not match to the number of observations."<<endl;
-                    MainWindow::Input();
-                }
-                error=1;
-                this->setCursor(QCursor(Qt::ArrowCursor));
-                return;
-            }
+                        for(int g=0; g<=maxi; g++){
+                            dat2 >> eins;
+                            istringstream ist(eins);
 
-
-            for(int g=0; g<=maxi; g++){
-            dat2 >> eins;
-            istringstream ist(eins);
-
-            if(g>=mini){
-                ist >> RV1[g-mini];
-                QString index= QString::number(g);
-                QString velocity=QString::number(RV1[g]);
-                ui->plainTextEdit->appendPlainText(index+" "+velocity);
+                            if(g>=mini){
+                                ist >> RV1[g-mini];
+                                QString index= QString::number(g);
+                                QString velocity=QString::number(RV1[g]);
+                                ui->plainTextEdit->appendPlainText(index+" "+velocity);
+                            }
+                            else{
+                                // do nothing
+                            }
+                        }
+                        dat2.close();
                     }
                 }
+            }
+            else{
+                //
             }
 
             //unknown RVs
@@ -935,33 +979,37 @@ void MainWindow::read_data(){
                     error=1;
                    return;
                 }
+                else{
 
-                ifstream dat(intName.c_str());
+                    ifstream dat(intName.c_str());
 
-                entries=0;
-                while(std::getline(dat, liner))
-                   ++entries;
+                    entries=0;
+                    while(std::getline(dat, liner))
+                       ++entries;
 
-                dat.clear();
-                dat.seekg(0, ios::beg);
+                    dat.clear();
+                    dat.seekg(0, ios::beg);
 
-                if(entries!=num){
-                    if(runow==0){
-                        QMessageBox::information(this, "Error", "Error 11: Time file "+qPath+"/"+inputt+" does not match to the number of observations.");
+                    if(entries!=num){
+                        if(runow==0){
+                            QMessageBox::information(this, "Error", "Error 11: Time file "+qPath+"/"+inputt+" does not match to the number of observations.");
+                        }
+                        else{
+                            cout<<"Error 1: File "<<path<<"/"<<times<<" does not match to the number of observations."<<endl;
+                            MainWindow::Input();
+                        }
+                        error=1;
+                        this->setCursor(QCursor(Qt::ArrowCursor));
+                        return;
                     }
                     else{
-                        cout<<"Error 1: File "<<path<<"/"<<times<<" does not match to the number of observations."<<endl;
-                        MainWindow::Input();
-                    }
-                    error=1;
-                    this->setCursor(QCursor(Qt::ArrowCursor));
-                    return;
-                }
 
-                for(int g=0; g<num; g++){
-                    dat >> eins;
-                    istringstream istr(eins);
-                    istr >> otimes[g];
+                        for(int g=0; g<num; g++){
+                            dat >> eins;
+                            istringstream istr(eins);
+                            istr >> otimes[g];
+                        }
+                    }
                 }
 
                 string orbit = "orbitelements.dat";
@@ -1004,24 +1052,36 @@ void MainWindow::read_data(){
                     cout<<RV1[i]<<endl;
                 }
             }
+            else{
+                //
+            }
 
             //looking for maximum RV absolute
             RV1max=abs(RV1[0]);
 
             for (int i=0; i<num; i++){
-            if (abs(RV1[i])>abs(RV1max)){
-            RV1max=RV1[i];
+                if (abs(RV1[i])>abs(RV1max)){
+                    RV1max=RV1[i];
+                }
+                else{
+                    //
+                }
             }
 
-        }
             RV1amin=RV1[0];
             RV1min=RV1[0];
             for(int i=0; i<num; i++){
                 if(abs(RV1[i])<RV1amin){
-                RV1amin=RV1[i];
+                    RV1amin=RV1[i];
+                }
+                else{
+                    //
                 }
                 if(RV1[i]<RV1min){
                     RV1min=RV1[i];
+                }
+                else{
+                    //
                 }
             }
     }
@@ -1042,20 +1102,19 @@ void MainWindow::read_data(){
             return;
         }
 
-
-    if(checker==0){
-        if(runow==0){
-            QMessageBox::information(this,"Choose Input", "Error 14: Please choose input data from file or unknown (via global optimization).");
+        else if(checker==0){
+            if(runow==0){
+                QMessageBox::information(this,"Choose Input", "Error 14: Please choose input data from file or unknown (via global optimization).");
+            }
+            else{
+                cout<<"Error 14: Please choose input data from file or unknown (via global optimization)."<<endl;
+                MainWindow::Input();
+            }
+            this->setCursor(QCursor(Qt::ArrowCursor));
+            error=1;
+            return;
         }
-        else{
-            cout<<"Error 14: Please choose input data from file or unknown (via global optimization)."<<endl;
-            MainWindow::Input();
-        }
-        this->setCursor(QCursor(Qt::ArrowCursor));
-        error=1;
-        return;
-    }
-    checker=0;
+        checker=0;
 
     //read measurements and write to solution vector
 
@@ -1074,69 +1133,69 @@ void MainWindow::read_data(){
 
         for(int g=mini; g<=maxi; g++){
 
-        QString input3=ui->lineEdit_3->text();
-        string data3 = input3.toUtf8().constData();
-        std::ostringstream dat3NameStream(data3);
-        if(ui->checkBox_27->isChecked()){
-            dat3NameStream<<path<<"/"<<data3<<sequence<<"_"<<g<<sfext;
-        }
-        else{
-            dat3NameStream<<path<<"/"<<data3<<g<<sfext;
-        }
-        std::string dat3Name = dat3NameStream.str();
-
-        QFile checkfile3(dat3Name.c_str());
-
-        if(!checkfile3.exists()){
-            qDebug()<<"The file "<<checkfile3.fileName()<<" does not exist.";
-            QString fError= QString::number(g);
-            if(runow==0){
-                QMessageBox::information(this, "Error", "Error 15: Spectrum "+qPath+"/"+input3+fError+fext+" does not exist!");
+            QString input3=ui->lineEdit_3->text();
+            string data3 = input3.toUtf8().constData();
+            std::ostringstream dat3NameStream(data3);
+            if(ui->checkBox_27->isChecked()){
+                dat3NameStream<<path<<"/"<<data3<<sequence<<"_"<<g<<sfext;
             }
             else{
-                cout<<"Error 15: File "<<path<<"/"<<data3<<g<<" does not exist!"<<endl;
-                MainWindow::Input();
+                dat3NameStream<<path<<"/"<<data3<<g<<sfext;
             }
-            this->setCursor(QCursor(Qt::ArrowCursor));
-            error=1;
-           return;
-        }
-        ifstream dat3(dat3Name.c_str());
+            std::string dat3Name = dat3NameStream.str();
 
-        CCfits::FITS::setVerboseMode(true);
+            QFile checkfile3(dat3Name.c_str());
 
-        try
-        {
+            if(!checkfile3.exists()){
+                qDebug()<<"The file "<<checkfile3.fileName()<<" does not exist.";
+                QString fError= QString::number(g);
+                if(runow==0){
+                    QMessageBox::information(this, "Error", "Error 15: Spectrum "+qPath+"/"+input3+fError+fext+" does not exist!");
+                }
+                else{
+                    cout<<"Error 15: File "<<path<<"/"<<data3<<g<<" does not exist!"<<endl;
+                MainWindow::Input();
+                }
+                this->setCursor(QCursor(Qt::ArrowCursor));
+                error=1;
+                return;
+            }
+            ifstream dat3(dat3Name.c_str());
 
-            //open file for reading
-            shared_ptr<CCfits::FITS> input_file(new CCfits::FITS(dat3Name.c_str(),CCfits::Read,true));
+            CCfits::FITS::setVerboseMode(true);
 
-            // Create pointer to extension
+            try
+            {
+
+                //open file for reading
+                shared_ptr<CCfits::FITS> input_file(new CCfits::FITS(dat3Name.c_str(),CCfits::Read,true));
+
+                // Create pointer to extension
                 CCfits::ExtHDU& datavector = input_file->extension(Extension);
 
-              // Read rows
-              CCfits::Column& column = datavector.column(WCol);
-              column.read(wave, 1, column.rows());
+                // Read rows
+                CCfits::Column& column = datavector.column(WCol);
+                column.read(wave, 1, column.rows());
 
-              // Read rows
-              CCfits::Column& column2 = datavector.column(ICol);
-              column2.read(intens, 1, column2.rows());
+                // Read rows
+                CCfits::Column& column2 = datavector.column(ICol);
+                column2.read(intens, 1, column2.rows());
 
-              logbin=wave.size();
+                logbin=wave.size();
 
-              C.resize(logbin*num);
-              W.resize(logbin*num);
-              int grar =0;
+                C.resize(logbin*num);
+                W.resize(logbin*num);
+                int grar =0;
 
-              for(int i=(g-mini)*logbin; i<(g-mini+1)*logbin; i++){
-              W[i]=wave[grar];
-              C[i]=intens[grar];
-              ++grar;
-              }
-              if(ui->checkBox_33->isChecked() & (g==mini)){
+                for(int i=(g-mini)*logbin; i<(g-mini+1)*logbin; i++){
+                     W[i]=wave[grar];
+                     C[i]=intens[grar];
+                     ++grar;
+                }
+                if(ui->checkBox_33->isChecked() & (g==mini)){
                   if(ui->doubleSpinBox_14->value()<W[0] or (ui->doubleSpinBox_14->value()>W[logbin-1]) or (ui->doubleSpinBox_15->value()<W[0]) or (ui->doubleSpinBox_15->value()>W[logbin-1])){
                       if(runow==0){
-                        QMessageBox::information(this, "Error", "Error 16: Please check the wavelength range for residuum computation.");
+                          QMessageBox::information(this, "Error", "Error 16: Please check the wavelength range for residuum computation.");
                       }
                       else{
                           cout<<"Error 16: Please check the wavelength range for residuum computation."<<endl;
@@ -1146,21 +1205,18 @@ void MainWindow::read_data(){
                       this->setCursor(QCursor(Qt::ArrowCursor));
                       return;
                   }
-              }
-
-        }
+               }
+            }
             catch (CCfits::FitsException&)
 
              {
               std::cerr << " Fits Exception Thrown by test function \n";
               }
-
-    }
-
+        }
     }
 
     //input as ASCII-file
-    if(ui->comboBox->currentIndex()==1){
+    else if(ui->comboBox->currentIndex()==1){
         for(int g=mini; g<=maxi; g++){
 
             QString input3=ui->lineEdit_3->text();
@@ -1173,7 +1229,6 @@ void MainWindow::read_data(){
                 dat3NameStream<<path<<"/"<<data3<<g<<sfext;
             }
             std::string dat3Name = dat3NameStream.str();
-            ifstream dat3(dat3Name.c_str());
 
             QFile checkfile3(dat3Name.c_str());
 
@@ -1191,27 +1246,31 @@ void MainWindow::read_data(){
                 error=1;
                 return;
             }
+            else{
+                ifstream dat3(dat3Name.c_str());
 
-            this->setCursor(QCursor(Qt::WaitCursor));
+                this->setCursor(QCursor(Qt::WaitCursor));
 
-            logbin=0;
+                logbin=0;
 
-            while(std::getline(dat3, line))
-            ++logbin;
+                while(std::getline(dat3, line))
+                ++logbin;
 
-            dat3.clear();
-            dat3.seekg(0, ios::beg);
+                dat3.clear();
+                dat3.seekg(0, ios::beg);
 
-            C.resize(logbin*num);
-            W.resize(logbin*num);
+                C.resize(logbin*num);
+                W.resize(logbin*num);
 
-            for(int i=(g-mini)*logbin; i<(g-mini+1)*logbin; i++){
-                dat3 >> eins >>zwei;
-                istringstream ist3(eins);
-                ist3 >> W(i);
-                istringstream ist4(zwei);
-                ist4 >> C(i);
+                for(int i=(g-mini)*logbin; i<(g-mini+1)*logbin; i++){
+                    dat3 >> eins >>zwei;
+                    istringstream ist3(eins);
+                    ist3 >> W(i);
+                    istringstream ist4(zwei);
+                    ist4 >> C(i);
 
+                }
+                dat3.close();
             }
             /*
             if(ui->checkBox_33->isChecked() & (g==mini)){
@@ -1268,8 +1327,14 @@ void MainWindow::read_data(){
             if(RV1[j]>=0){
                 RV1c[j]=RV1[j]/dv+1;
             }
+            else{
+
+            }
             if(RV1[j]<0){
                 RV1c[j]=RV1[j]/dv-1;
+            }
+            else{
+
             }
         }
         else{
@@ -1280,8 +1345,14 @@ void MainWindow::read_data(){
             if(RV3[j]>=0){
                 RV3c[j]=RV3[j]/dv+1;
             }
+            else{
+
+            }
             if(RV3[j]<0){
                 RV3c[j]=RV3[j]/dv-1;
+            }
+            else{
+
             }
         }
         else{
@@ -1299,20 +1370,38 @@ void MainWindow::read_data(){
             if(RV1c[j]<RV1cmin){
                 RV1cmin=RV1c[j];
             }
+            else{
+
+            }
             if(RV1c[j]>RV1cmax){
                 RV1cmax=RV1c[j];
+            }
+            else{
+
             }
             if(RV3c[j]<RV2cmin){
                 RV2cmin=RV3c[j];
             }
+            else{
+
+            }
             if(RV3c[j]>RV2cmax){
                 RV2cmax=RV3c[j];
+            }
+            else{
+
             }
             if(abs(RV1c[j])>RV1m){
                 RV1m = abs(RV1c[j]);
             }
+            else{
+
+            }
             if(abs(RV3c[j])>RV3m){
                 RV3m = abs(RV3c[j]);
+            }
+            else{
+
             }
         }
 
@@ -1351,6 +1440,9 @@ void MainWindow::read_data(){
     if(ui->checkBox_3->isChecked()){
         bso2=0;
     }
+    else{
+
+    }
 
     cout<<"bso1 "<<bso1<<endl;
     cout<<"bso2 "<<bso2<<endl;
@@ -1360,7 +1452,7 @@ void MainWindow::read_data(){
 
     Mn=num*logbin;
     if(ui->checkBox_8->isChecked()){
-    Mm=bso1+bso2+logbin;    //telluric +logbin
+        Mm=bso1+bso2+logbin;    //telluric +logbin
     }
     else{
         Mm=bso1+bso2;
@@ -1390,37 +1482,49 @@ void MainWindow::read_data(){
         int num_lines1=0;
 
         while(std::getline(edit, lines))
-                   ++ num_lines1;
+              ++ num_lines1;
 
-                edit.clear();
-                edit.seekg(0, ios::beg);
+        edit.clear();
+        edit.seekg(0, ios::beg);
 
-                if(num_lines1!=3*num){
-                    if(runow==0){
-                        QMessageBox::information(this, "Error", "Error 18: Edit file does not match to specified number of observations.");
-                    }
-                    else{
-                        cout<<"Error 18: Edit file does not match to specified number of observations."<<endl;
-                        MainWindow::Input();
-                    }
-                    this->setCursor(QCursor(Qt::ArrowCursor));
-                    error=1;
-                    return;
+        if(num_lines1!=3*num){
+           if(runow==0){
+              QMessageBox::information(this, "Error", "Error 18: Edit file does not match to specified number of observations.");
+           }
+           else{
+               cout<<"Error 18: Edit file does not match to specified number of observations."<<endl;
+               MainWindow::Input();
+          }
+          this->setCursor(QCursor(Qt::ArrowCursor));
+          error=1;
+          return;
+        }
+        else{
+
+            for(int i=0; i<num_lines1; i++){
+                edit >> einse;
+                istringstream istr7(einse);
+
+                if(i<num){
+                    istr7>>Mtel[i];
                 }
-
-        for(int i=0; i<num_lines1; i++){
-            edit >> einse;
-            istringstream istr7(einse);
-
-            if(i<num){
-                istr7>>Mtel[i];
+                else{
+                    //
+                }
+                if((i>=num) & (i<2*num)){
+                    istr7>>Mval1[i-num];
+                }
+                else{
+                    //
+                }
+                if((i>=2*num) & (i<3*num)){
+                    istr7>>Mval2[i-2*num];
+                }
+                else{
+                    //
+                }
             }
-            if((i>=num) & (i<2*num)){
-                istr7>>Mval1[i-num];
-            }
-            if((i>=2*num) & (i<3*num)){
-                istr7>>Mval2[i-2*num];
-            }
+            edit.close();
         }
     }
 
@@ -1570,6 +1674,9 @@ void MainWindow::read_data(){
                             m=m+1;
                             ++elements;
                         }
+                        else{
+                            //
+                        }
                         ++elements;
                     }
                     if(bidi==0){
@@ -1579,6 +1686,9 @@ void MainWindow::read_data(){
                         }
                         else M(n,m)=Mval2[a];
                         ++elements;
+                    }
+                    else{
+                        //
                     }
                 }
                 else{
@@ -1617,6 +1727,9 @@ void MainWindow::read_data(){
                             RV1a=abs(RV1cmin)+RV1c[a];
                     }
                 }
+                else{
+                    //
+                }
                 for (int m=0; m<Mm; m++){
                     if((n-a*logbin+RV1a)==m or (m==n-a*logbin+bso1)){//or n+logbin+2*abs(RV1m)-a*logbin+RV3a+abs(RV3m)==m
                         if(bidi==1){
@@ -1633,6 +1746,9 @@ void MainWindow::read_data(){
                                 m=m+1;
                                 ++elements;
                             }
+                            else{
+                                //
+                            }
                             ++elements;
                         }
                         if(bidi==0){
@@ -1641,6 +1757,9 @@ void MainWindow::read_data(){
                             }
                             else M(n,m)=Mval1[a];
                             ++elements;
+                        }
+                        else{
+                            //
                         }
                     }
                     else{
@@ -1662,6 +1781,9 @@ void MainWindow::read_data(){
                             RV1a=abs(RV1cmin)+RV1c[a];
                     }
                 }
+                else{
+                    //
+                }
 
                 if(n==logbin+a*logbin){
                     a+=1;
@@ -1672,30 +1794,36 @@ void MainWindow::read_data(){
                             RV1a=abs(RV1cmin)+RV1c[a];
                     }
                 }
-                    for (int m=0; m<Mm; m++){
-                        if((n-a*logbin+RV1a)==m){
-                            if(bidi==1){
-                                M(n,m)=Mval1[a];
-                                if(m<Mm-1) {
-                                    M(n,m+1)=Mval1[a];
-                                    m=m+1;
-                                    ++elements;
-                                }
-                                ++elements;
-                            }
-                            if(bidi==0){
-                                M(n,m)=Mval1[a];
-                                ++elements;
-                            }
-                        }
-                        else{
-                            M(n,m)=0;
-                        }
-                    }
+                else{
+                    //
                 }
+                for (int m=0; m<Mm; m++){
+                    if((n-a*logbin+RV1a)==m){
+                       if(bidi==1){
+                          M(n,m)=Mval1[a];
+                          if(m<Mm-1) {
+                             M(n,m+1)=Mval1[a];
+                             m=m+1;
+                             ++elements;
+                          }
+                          ++elements;
+                       }
+                       if(bidi==0){
+                          M(n,m)=Mval1[a];
+                          ++elements;
+                       }
+                       else{
+                           //
+                       }
+                    }
+                    else{
+                         M(n,m)=0;
+                        }
+                 }
             }
-            //file1<<M<<endl;
         }
+        //file1<<M<<endl;
+    }
 
     //matrix for SB3 systems without telluric
 
@@ -1727,11 +1855,15 @@ void MainWindow::read_data(){
     for(int n=0; n<Mn;n++){
         for(int m=0; m<Mm;m++){
             if(M(n,m)>0){
-            loc(0,elcount)=n;
-            loc(1,elcount)=m;
-            ++elcount;
+                loc(0,elcount)=n;
+                loc(1,elcount)=m;
+                ++elcount;
             }
-    }}
+            else{
+                //
+            }
+        }
+    }
 
 
     qApp->processEvents(QEventLoop::AllEvents);
@@ -1779,8 +1911,10 @@ void MainWindow::on_pushButton_3_clicked()
         return;
     }
 
-    MainWindow::disableButtons();
-    MainWindow::read_data();
+    else{
+        MainWindow::disableButtons();
+        MainWindow::read_data();
+    }
 
     if(error==1){
         this->setCursor(QCursor(Qt::ArrowCursor));
@@ -1789,7 +1923,9 @@ void MainWindow::on_pushButton_3_clicked()
         return;
     }
 
-    residu=0;
+    else{
+        residu=0;
+    }
 
     QString output=ui->lineEdit_5->text();
     string out = output.toUtf8().constData();
@@ -1870,14 +2006,14 @@ void MainWindow::on_pushButton_3_clicked()
                         file1<<setprecision(14)<<pow(10,(W(0)+(index1+RV1min/dv)*difference))<<"\t"<<X(j)<<endl;
                         ++index1;
                     }
-                    if((j>=bso1) & (j<bso1+bso2)){
+                    else if((j>=bso1) & (j<bso1+bso2)){
                         //if(ui->checkBox_4->isChecked()){
                         //    X(j)=X(j)+(1.0/(fluxratio+1)-0.5);
                         //}
                         file2<<setprecision(14)<<pow(10,(W(0)+(index2+RV3min/dv)*difference))<<"\t"<<X(j)<<endl;
                         ++index2;
                     }
-                    if(j>=bso1+bso2){
+                    else if(j>=bso1+bso2){
                         tell<<setprecision(14)<<pow(10,(W(0)+index3*difference))<<"\t"<<X(j)<<endl;
                         ++index3;
                     }
@@ -3824,7 +3960,7 @@ void MainWindow::Optimisation()
       //optimization on orbit**********************************************************
           if(ui->checkBox_16->isChecked()){
 
-              int Plock=0, elock=0, T0lock=0;
+              //int Plock=0, elock=0, T0lock=0;
               nu=7;
               int add=0;
 
@@ -3950,7 +4086,7 @@ void MainWindow::Optimisation()
                     QFile QIn(file1Name.c_str());
                     QFile QIn2(file2Name.c_str());
 
-                    if(inrein==0 & (QIn.exists() or QIn2.exists())){
+                    if((inrein==0) & (QIn.exists() or QIn2.exists())){
                         if(runow==0){
                             QMessageBox::StandardButton reply;
                             reply = QMessageBox::question(this, "Warning!", "The file already exists. \n\n Do you want to overwrite it?",

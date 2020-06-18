@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'mainwindow.ui'
 **
-** Created by: Qt User Interface Compiler version 5.12.0
+** Created by: Qt User Interface Compiler version 5.15.0
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
 ********************************************************************************/
@@ -302,7 +302,9 @@ public:
         palette.setBrush(QPalette::Active, QPalette::ToolTipText, brush);
         QBrush brush5(QColor(0, 0, 0, 128));
         brush5.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette.setBrush(QPalette::Active, QPalette::PlaceholderText, brush5);
+#endif
         palette.setBrush(QPalette::Inactive, QPalette::WindowText, brush);
         palette.setBrush(QPalette::Inactive, QPalette::Button, brush1);
         palette.setBrush(QPalette::Inactive, QPalette::Light, brush1);
@@ -320,7 +322,9 @@ public:
         palette.setBrush(QPalette::Inactive, QPalette::ToolTipText, brush);
         QBrush brush6(QColor(0, 0, 0, 128));
         brush6.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette.setBrush(QPalette::Inactive, QPalette::PlaceholderText, brush6);
+#endif
         palette.setBrush(QPalette::Disabled, QPalette::WindowText, brush2);
         palette.setBrush(QPalette::Disabled, QPalette::Button, brush1);
         palette.setBrush(QPalette::Disabled, QPalette::Light, brush1);
@@ -338,7 +342,9 @@ public:
         palette.setBrush(QPalette::Disabled, QPalette::ToolTipText, brush);
         QBrush brush7(QColor(0, 0, 0, 128));
         brush7.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette.setBrush(QPalette::Disabled, QPalette::PlaceholderText, brush7);
+#endif
         MainWindow->setPalette(palette);
         QFont font;
         font.setFamily(QString::fromUtf8("Bitstream Charter"));
@@ -347,7 +353,7 @@ public:
         font.setWeight(75);
         MainWindow->setFont(font);
         QIcon icon;
-        icon.addFile(QString::fromUtf8(":/new/background/Binary.png"), QSize(), QIcon::Normal, QIcon::Off);
+        icon.addFile(QString::fromUtf8(":/new/backround/Logo.png"), QSize(), QIcon::Normal, QIcon::Off);
         MainWindow->setWindowIcon(icon);
         actionSpectrum_Plotter = new QAction(MainWindow);
         actionSpectrum_Plotter->setObjectName(QString::fromUtf8("actionSpectrum_Plotter"));
@@ -384,7 +390,7 @@ public:
         scrollArea->setWidgetResizable(true);
         scrollAreaWidgetContents = new QWidget();
         scrollAreaWidgetContents->setObjectName(QString::fromUtf8("scrollAreaWidgetContents"));
-        scrollAreaWidgetContents->setGeometry(QRect(0, 0, 2396, 1319));
+        scrollAreaWidgetContents->setGeometry(QRect(0, 0, 2287, 1247));
         gridLayout_2 = new QGridLayout(scrollAreaWidgetContents);
         gridLayout_2->setSpacing(6);
         gridLayout_2->setContentsMargins(11, 11, 11, 11);
@@ -457,21 +463,27 @@ public:
         palette1.setBrush(QPalette::Active, QPalette::ToolTipText, brush8);
         QBrush brush9(QColor(255, 0, 0, 128));
         brush9.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette1.setBrush(QPalette::Active, QPalette::PlaceholderText, brush9);
+#endif
         palette1.setBrush(QPalette::Inactive, QPalette::WindowText, brush8);
         palette1.setBrush(QPalette::Inactive, QPalette::Text, brush8);
         palette1.setBrush(QPalette::Inactive, QPalette::ButtonText, brush8);
         palette1.setBrush(QPalette::Inactive, QPalette::ToolTipText, brush8);
         QBrush brush10(QColor(255, 0, 0, 128));
         brush10.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette1.setBrush(QPalette::Inactive, QPalette::PlaceholderText, brush10);
+#endif
         palette1.setBrush(QPalette::Disabled, QPalette::WindowText, brush8);
         palette1.setBrush(QPalette::Disabled, QPalette::Text, brush8);
         palette1.setBrush(QPalette::Disabled, QPalette::ButtonText, brush8);
         palette1.setBrush(QPalette::Disabled, QPalette::ToolTipText, brush8);
         QBrush brush11(QColor(255, 0, 0, 128));
         brush11.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette1.setBrush(QPalette::Disabled, QPalette::PlaceholderText, brush11);
+#endif
         lineEdit->setPalette(palette1);
         lineEdit->setFont(font);
         lineEdit->setAutoFillBackground(false);
@@ -487,17 +499,23 @@ public:
         palette2.setBrush(QPalette::Active, QPalette::ButtonText, brush);
         QBrush brush12(QColor(0, 0, 0, 128));
         brush12.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette2.setBrush(QPalette::Active, QPalette::PlaceholderText, brush12);
+#endif
         palette2.setBrush(QPalette::Inactive, QPalette::Text, brush);
         palette2.setBrush(QPalette::Inactive, QPalette::ButtonText, brush);
         QBrush brush13(QColor(0, 0, 0, 128));
         brush13.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette2.setBrush(QPalette::Inactive, QPalette::PlaceholderText, brush13);
+#endif
         palette2.setBrush(QPalette::Disabled, QPalette::Text, brush8);
         palette2.setBrush(QPalette::Disabled, QPalette::ButtonText, brush8);
         QBrush brush14(QColor(0, 0, 0, 128));
         brush14.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette2.setBrush(QPalette::Disabled, QPalette::PlaceholderText, brush14);
+#endif
         label_2->setPalette(palette2);
         label_2->setFont(font);
 
@@ -512,17 +530,23 @@ public:
         palette3.setBrush(QPalette::Active, QPalette::ButtonText, brush);
         QBrush brush15(QColor(0, 0, 0, 128));
         brush15.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette3.setBrush(QPalette::Active, QPalette::PlaceholderText, brush15);
+#endif
         palette3.setBrush(QPalette::Inactive, QPalette::Text, brush);
         palette3.setBrush(QPalette::Inactive, QPalette::ButtonText, brush);
         QBrush brush16(QColor(0, 0, 0, 128));
         brush16.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette3.setBrush(QPalette::Inactive, QPalette::PlaceholderText, brush16);
+#endif
         palette3.setBrush(QPalette::Disabled, QPalette::Text, brush8);
         palette3.setBrush(QPalette::Disabled, QPalette::ButtonText, brush8);
         QBrush brush17(QColor(0, 0, 0, 128));
         brush17.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette3.setBrush(QPalette::Disabled, QPalette::PlaceholderText, brush17);
+#endif
         spinBox->setPalette(palette3);
 
         horizontalLayout->addWidget(spinBox);
@@ -544,17 +568,23 @@ public:
         palette4.setBrush(QPalette::Active, QPalette::ButtonText, brush);
         QBrush brush18(QColor(0, 0, 0, 128));
         brush18.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette4.setBrush(QPalette::Active, QPalette::PlaceholderText, brush18);
+#endif
         palette4.setBrush(QPalette::Inactive, QPalette::Text, brush);
         palette4.setBrush(QPalette::Inactive, QPalette::ButtonText, brush);
         QBrush brush19(QColor(0, 0, 0, 128));
         brush19.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette4.setBrush(QPalette::Inactive, QPalette::PlaceholderText, brush19);
+#endif
         palette4.setBrush(QPalette::Disabled, QPalette::Text, brush8);
         palette4.setBrush(QPalette::Disabled, QPalette::ButtonText, brush8);
         QBrush brush20(QColor(0, 0, 0, 128));
         brush20.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette4.setBrush(QPalette::Disabled, QPalette::PlaceholderText, brush20);
+#endif
         spinBox_2->setPalette(palette4);
         spinBox_2->setMaximum(999);
         spinBox_2->setValue(1);
@@ -607,21 +637,27 @@ public:
         palette5.setBrush(QPalette::Active, QPalette::ToolTipText, brush8);
         QBrush brush21(QColor(255, 0, 0, 128));
         brush21.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette5.setBrush(QPalette::Active, QPalette::PlaceholderText, brush21);
+#endif
         palette5.setBrush(QPalette::Inactive, QPalette::WindowText, brush8);
         palette5.setBrush(QPalette::Inactive, QPalette::Text, brush8);
         palette5.setBrush(QPalette::Inactive, QPalette::ButtonText, brush8);
         palette5.setBrush(QPalette::Inactive, QPalette::ToolTipText, brush8);
         QBrush brush22(QColor(255, 0, 0, 128));
         brush22.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette5.setBrush(QPalette::Inactive, QPalette::PlaceholderText, brush22);
+#endif
         palette5.setBrush(QPalette::Disabled, QPalette::WindowText, brush8);
         palette5.setBrush(QPalette::Disabled, QPalette::Text, brush8);
         palette5.setBrush(QPalette::Disabled, QPalette::ButtonText, brush8);
         palette5.setBrush(QPalette::Disabled, QPalette::ToolTipText, brush8);
         QBrush brush23(QColor(255, 0, 0, 128));
         brush23.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette5.setBrush(QPalette::Disabled, QPalette::PlaceholderText, brush23);
+#endif
         lineEdit_2->setPalette(palette5);
         lineEdit_2->setFont(font);
 
@@ -738,21 +774,27 @@ public:
         palette6.setBrush(QPalette::Active, QPalette::ToolTipText, brush8);
         QBrush brush24(QColor(255, 0, 0, 128));
         brush24.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette6.setBrush(QPalette::Active, QPalette::PlaceholderText, brush24);
+#endif
         palette6.setBrush(QPalette::Inactive, QPalette::WindowText, brush8);
         palette6.setBrush(QPalette::Inactive, QPalette::Text, brush8);
         palette6.setBrush(QPalette::Inactive, QPalette::ButtonText, brush8);
         palette6.setBrush(QPalette::Inactive, QPalette::ToolTipText, brush8);
         QBrush brush25(QColor(255, 0, 0, 128));
         brush25.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette6.setBrush(QPalette::Inactive, QPalette::PlaceholderText, brush25);
+#endif
         palette6.setBrush(QPalette::Disabled, QPalette::WindowText, brush8);
         palette6.setBrush(QPalette::Disabled, QPalette::Text, brush8);
         palette6.setBrush(QPalette::Disabled, QPalette::ButtonText, brush8);
         palette6.setBrush(QPalette::Disabled, QPalette::ToolTipText, brush8);
         QBrush brush26(QColor(255, 0, 0, 128));
         brush26.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette6.setBrush(QPalette::Disabled, QPalette::PlaceholderText, brush26);
+#endif
         lineEdit_3->setPalette(palette6);
         lineEdit_3->setFont(font);
 
@@ -814,17 +856,23 @@ public:
         palette7.setBrush(QPalette::Active, QPalette::ButtonText, brush);
         QBrush brush27(QColor(0, 0, 0, 128));
         brush27.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette7.setBrush(QPalette::Active, QPalette::PlaceholderText, brush27);
+#endif
         palette7.setBrush(QPalette::Inactive, QPalette::Text, brush);
         palette7.setBrush(QPalette::Inactive, QPalette::ButtonText, brush);
         QBrush brush28(QColor(0, 0, 0, 128));
         brush28.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette7.setBrush(QPalette::Inactive, QPalette::PlaceholderText, brush28);
+#endif
         palette7.setBrush(QPalette::Disabled, QPalette::Text, brush8);
         palette7.setBrush(QPalette::Disabled, QPalette::ButtonText, brush8);
         QBrush brush29(QColor(0, 0, 0, 128));
         brush29.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette7.setBrush(QPalette::Disabled, QPalette::PlaceholderText, brush29);
+#endif
         doubleSpinBox_4->setPalette(palette7);
         doubleSpinBox_4->setDecimals(5);
         doubleSpinBox_4->setSingleStep(0.020000000000000);
@@ -894,7 +942,9 @@ public:
         palette8.setBrush(QPalette::Active, QPalette::ToolTipText, brush);
         QBrush brush34(QColor(0, 0, 0, 128));
         brush34.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette8.setBrush(QPalette::Active, QPalette::PlaceholderText, brush34);
+#endif
         palette8.setBrush(QPalette::Inactive, QPalette::WindowText, brush);
         palette8.setBrush(QPalette::Inactive, QPalette::Button, brush30);
         palette8.setBrush(QPalette::Inactive, QPalette::Light, brush1);
@@ -912,7 +962,9 @@ public:
         palette8.setBrush(QPalette::Inactive, QPalette::ToolTipText, brush);
         QBrush brush35(QColor(0, 0, 0, 128));
         brush35.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette8.setBrush(QPalette::Inactive, QPalette::PlaceholderText, brush35);
+#endif
         palette8.setBrush(QPalette::Disabled, QPalette::WindowText, brush32);
         palette8.setBrush(QPalette::Disabled, QPalette::Button, brush30);
         palette8.setBrush(QPalette::Disabled, QPalette::Light, brush1);
@@ -930,7 +982,9 @@ public:
         palette8.setBrush(QPalette::Disabled, QPalette::ToolTipText, brush);
         QBrush brush36(QColor(0, 0, 0, 128));
         brush36.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette8.setBrush(QPalette::Disabled, QPalette::PlaceholderText, brush36);
+#endif
         comboBox->setPalette(palette8);
 
         horizontalLayout_17->addWidget(comboBox);
@@ -954,21 +1008,27 @@ public:
         palette9.setBrush(QPalette::Active, QPalette::ToolTipText, brush8);
         QBrush brush37(QColor(255, 0, 0, 128));
         brush37.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette9.setBrush(QPalette::Active, QPalette::PlaceholderText, brush37);
+#endif
         palette9.setBrush(QPalette::Inactive, QPalette::WindowText, brush8);
         palette9.setBrush(QPalette::Inactive, QPalette::Text, brush8);
         palette9.setBrush(QPalette::Inactive, QPalette::ButtonText, brush8);
         palette9.setBrush(QPalette::Inactive, QPalette::ToolTipText, brush8);
         QBrush brush38(QColor(255, 0, 0, 128));
         brush38.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette9.setBrush(QPalette::Inactive, QPalette::PlaceholderText, brush38);
+#endif
         palette9.setBrush(QPalette::Disabled, QPalette::WindowText, brush8);
         palette9.setBrush(QPalette::Disabled, QPalette::Text, brush8);
         palette9.setBrush(QPalette::Disabled, QPalette::ButtonText, brush8);
         palette9.setBrush(QPalette::Disabled, QPalette::ToolTipText, brush8);
         QBrush brush39(QColor(255, 0, 0, 128));
         brush39.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette9.setBrush(QPalette::Disabled, QPalette::PlaceholderText, brush39);
+#endif
         lineEdit_9->setPalette(palette9);
         lineEdit_9->setFont(font);
 
@@ -1004,21 +1064,27 @@ public:
         palette10.setBrush(QPalette::Active, QPalette::ToolTipText, brush8);
         QBrush brush40(QColor(255, 0, 0, 128));
         brush40.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette10.setBrush(QPalette::Active, QPalette::PlaceholderText, brush40);
+#endif
         palette10.setBrush(QPalette::Inactive, QPalette::WindowText, brush8);
         palette10.setBrush(QPalette::Inactive, QPalette::Text, brush8);
         palette10.setBrush(QPalette::Inactive, QPalette::ButtonText, brush8);
         palette10.setBrush(QPalette::Inactive, QPalette::ToolTipText, brush8);
         QBrush brush41(QColor(255, 0, 0, 128));
         brush41.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette10.setBrush(QPalette::Inactive, QPalette::PlaceholderText, brush41);
+#endif
         palette10.setBrush(QPalette::Disabled, QPalette::WindowText, brush8);
         palette10.setBrush(QPalette::Disabled, QPalette::Text, brush8);
         palette10.setBrush(QPalette::Disabled, QPalette::ButtonText, brush8);
         palette10.setBrush(QPalette::Disabled, QPalette::ToolTipText, brush8);
         QBrush brush42(QColor(255, 0, 0, 128));
         brush42.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette10.setBrush(QPalette::Disabled, QPalette::PlaceholderText, brush42);
+#endif
         lineEdit_11->setPalette(palette10);
         lineEdit_11->setFont(font);
 
@@ -1044,21 +1110,27 @@ public:
         palette11.setBrush(QPalette::Active, QPalette::ToolTipText, brush8);
         QBrush brush43(QColor(255, 0, 0, 128));
         brush43.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette11.setBrush(QPalette::Active, QPalette::PlaceholderText, brush43);
+#endif
         palette11.setBrush(QPalette::Inactive, QPalette::WindowText, brush8);
         palette11.setBrush(QPalette::Inactive, QPalette::Text, brush8);
         palette11.setBrush(QPalette::Inactive, QPalette::ButtonText, brush8);
         palette11.setBrush(QPalette::Inactive, QPalette::ToolTipText, brush8);
         QBrush brush44(QColor(255, 0, 0, 128));
         brush44.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette11.setBrush(QPalette::Inactive, QPalette::PlaceholderText, brush44);
+#endif
         palette11.setBrush(QPalette::Disabled, QPalette::WindowText, brush8);
         palette11.setBrush(QPalette::Disabled, QPalette::Text, brush8);
         palette11.setBrush(QPalette::Disabled, QPalette::ButtonText, brush8);
         palette11.setBrush(QPalette::Disabled, QPalette::ToolTipText, brush8);
         QBrush brush45(QColor(255, 0, 0, 128));
         brush45.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette11.setBrush(QPalette::Disabled, QPalette::PlaceholderText, brush45);
+#endif
         lineEdit_12->setPalette(palette11);
         lineEdit_12->setFont(font);
 
@@ -1093,21 +1165,27 @@ public:
         palette12.setBrush(QPalette::Active, QPalette::ToolTipText, brush8);
         QBrush brush46(QColor(255, 0, 0, 128));
         brush46.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette12.setBrush(QPalette::Active, QPalette::PlaceholderText, brush46);
+#endif
         palette12.setBrush(QPalette::Inactive, QPalette::WindowText, brush8);
         palette12.setBrush(QPalette::Inactive, QPalette::Text, brush8);
         palette12.setBrush(QPalette::Inactive, QPalette::ButtonText, brush8);
         palette12.setBrush(QPalette::Inactive, QPalette::ToolTipText, brush8);
         QBrush brush47(QColor(255, 0, 0, 128));
         brush47.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette12.setBrush(QPalette::Inactive, QPalette::PlaceholderText, brush47);
+#endif
         palette12.setBrush(QPalette::Disabled, QPalette::WindowText, brush8);
         palette12.setBrush(QPalette::Disabled, QPalette::Text, brush8);
         palette12.setBrush(QPalette::Disabled, QPalette::ButtonText, brush8);
         palette12.setBrush(QPalette::Disabled, QPalette::ToolTipText, brush8);
         QBrush brush48(QColor(255, 0, 0, 128));
         brush48.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette12.setBrush(QPalette::Disabled, QPalette::PlaceholderText, brush48);
+#endif
         lineEdit_4->setPalette(palette12);
         lineEdit_4->setFont(font);
 
@@ -1132,17 +1210,23 @@ public:
         palette13.setBrush(QPalette::Active, QPalette::ButtonText, brush);
         QBrush brush49(QColor(0, 0, 0, 128));
         brush49.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette13.setBrush(QPalette::Active, QPalette::PlaceholderText, brush49);
+#endif
         palette13.setBrush(QPalette::Inactive, QPalette::Text, brush);
         palette13.setBrush(QPalette::Inactive, QPalette::ButtonText, brush);
         QBrush brush50(QColor(0, 0, 0, 128));
         brush50.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette13.setBrush(QPalette::Inactive, QPalette::PlaceholderText, brush50);
+#endif
         palette13.setBrush(QPalette::Disabled, QPalette::Text, brush);
         palette13.setBrush(QPalette::Disabled, QPalette::ButtonText, brush);
         QBrush brush51(QColor(0, 0, 0, 128));
         brush51.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette13.setBrush(QPalette::Disabled, QPalette::PlaceholderText, brush51);
+#endif
         pushButton_2->setPalette(palette13);
         pushButton_2->setFont(font);
 
@@ -1201,17 +1285,23 @@ public:
         palette14.setBrush(QPalette::Active, QPalette::ButtonText, brush);
         QBrush brush52(QColor(0, 0, 0, 128));
         brush52.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette14.setBrush(QPalette::Active, QPalette::PlaceholderText, brush52);
+#endif
         palette14.setBrush(QPalette::Inactive, QPalette::Text, brush);
         palette14.setBrush(QPalette::Inactive, QPalette::ButtonText, brush);
         QBrush brush53(QColor(0, 0, 0, 128));
         brush53.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette14.setBrush(QPalette::Inactive, QPalette::PlaceholderText, brush53);
+#endif
         palette14.setBrush(QPalette::Disabled, QPalette::Text, brush);
         palette14.setBrush(QPalette::Disabled, QPalette::ButtonText, brush);
         QBrush brush54(QColor(0, 0, 0, 128));
         brush54.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette14.setBrush(QPalette::Disabled, QPalette::PlaceholderText, brush54);
+#endif
         pushButton_5->setPalette(palette14);
         pushButton_5->setFont(font);
         QIcon icon3;
@@ -1246,17 +1336,23 @@ public:
         palette15.setBrush(QPalette::Active, QPalette::ButtonText, brush);
         QBrush brush55(QColor(0, 0, 0, 128));
         brush55.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette15.setBrush(QPalette::Active, QPalette::PlaceholderText, brush55);
+#endif
         palette15.setBrush(QPalette::Inactive, QPalette::Text, brush);
         palette15.setBrush(QPalette::Inactive, QPalette::ButtonText, brush);
         QBrush brush56(QColor(0, 0, 0, 128));
         brush56.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette15.setBrush(QPalette::Inactive, QPalette::PlaceholderText, brush56);
+#endif
         palette15.setBrush(QPalette::Disabled, QPalette::Text, brush);
         palette15.setBrush(QPalette::Disabled, QPalette::ButtonText, brush);
         QBrush brush57(QColor(0, 0, 0, 128));
         brush57.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette15.setBrush(QPalette::Disabled, QPalette::PlaceholderText, brush57);
+#endif
         pushButton_3->setPalette(palette15);
         pushButton_3->setFont(font);
         pushButton_3->setIcon(icon3);
@@ -1378,17 +1474,23 @@ public:
         palette16.setBrush(QPalette::Active, QPalette::ButtonText, brush);
         QBrush brush58(QColor(0, 0, 0, 128));
         brush58.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette16.setBrush(QPalette::Active, QPalette::PlaceholderText, brush58);
+#endif
         palette16.setBrush(QPalette::Inactive, QPalette::Text, brush);
         palette16.setBrush(QPalette::Inactive, QPalette::ButtonText, brush);
         QBrush brush59(QColor(0, 0, 0, 128));
         brush59.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette16.setBrush(QPalette::Inactive, QPalette::PlaceholderText, brush59);
+#endif
         palette16.setBrush(QPalette::Disabled, QPalette::Text, brush);
         palette16.setBrush(QPalette::Disabled, QPalette::ButtonText, brush);
         QBrush brush60(QColor(0, 0, 0, 128));
         brush60.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette16.setBrush(QPalette::Disabled, QPalette::PlaceholderText, brush60);
+#endif
         doubleSpinBox->setPalette(palette16);
         doubleSpinBox->setMinimum(-999.000000000000000);
         doubleSpinBox->setMaximum(999.000000000000000);
@@ -1419,17 +1521,23 @@ public:
         palette17.setBrush(QPalette::Active, QPalette::ButtonText, brush);
         QBrush brush61(QColor(0, 0, 0, 128));
         brush61.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette17.setBrush(QPalette::Active, QPalette::PlaceholderText, brush61);
+#endif
         palette17.setBrush(QPalette::Inactive, QPalette::Text, brush);
         palette17.setBrush(QPalette::Inactive, QPalette::ButtonText, brush);
         QBrush brush62(QColor(0, 0, 0, 128));
         brush62.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette17.setBrush(QPalette::Inactive, QPalette::PlaceholderText, brush62);
+#endif
         palette17.setBrush(QPalette::Disabled, QPalette::Text, brush);
         palette17.setBrush(QPalette::Disabled, QPalette::ButtonText, brush);
         QBrush brush63(QColor(0, 0, 0, 128));
         brush63.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette17.setBrush(QPalette::Disabled, QPalette::PlaceholderText, brush63);
+#endif
         doubleSpinBox_2->setPalette(palette17);
         doubleSpinBox_2->setMinimum(-999.000000000000000);
         doubleSpinBox_2->setMaximum(999.990000000000009);
@@ -1455,17 +1563,23 @@ public:
         palette18.setBrush(QPalette::Active, QPalette::ButtonText, brush);
         QBrush brush64(QColor(0, 0, 0, 128));
         brush64.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette18.setBrush(QPalette::Active, QPalette::PlaceholderText, brush64);
+#endif
         palette18.setBrush(QPalette::Inactive, QPalette::Text, brush);
         palette18.setBrush(QPalette::Inactive, QPalette::ButtonText, brush);
         QBrush brush65(QColor(0, 0, 0, 128));
         brush65.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette18.setBrush(QPalette::Inactive, QPalette::PlaceholderText, brush65);
+#endif
         palette18.setBrush(QPalette::Disabled, QPalette::Text, brush);
         palette18.setBrush(QPalette::Disabled, QPalette::ButtonText, brush);
         QBrush brush66(QColor(0, 0, 0, 128));
         brush66.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette18.setBrush(QPalette::Disabled, QPalette::PlaceholderText, brush66);
+#endif
         plainTextEdit->setPalette(palette18);
         plainTextEdit->setFont(font);
         plainTextEdit->setFrameShadow(QFrame::Plain);
@@ -1512,7 +1626,9 @@ public:
         palette19.setBrush(QPalette::Active, QPalette::ToolTipText, brush);
         QBrush brush73(QColor(0, 0, 0, 128));
         brush73.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette19.setBrush(QPalette::Active, QPalette::PlaceholderText, brush73);
+#endif
         palette19.setBrush(QPalette::Inactive, QPalette::WindowText, brush);
         palette19.setBrush(QPalette::Inactive, QPalette::Button, brush67);
         palette19.setBrush(QPalette::Inactive, QPalette::Light, brush68);
@@ -1530,7 +1646,9 @@ public:
         palette19.setBrush(QPalette::Inactive, QPalette::ToolTipText, brush);
         QBrush brush74(QColor(0, 0, 0, 128));
         brush74.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette19.setBrush(QPalette::Inactive, QPalette::PlaceholderText, brush74);
+#endif
         palette19.setBrush(QPalette::Disabled, QPalette::WindowText, brush70);
         palette19.setBrush(QPalette::Disabled, QPalette::Button, brush67);
         palette19.setBrush(QPalette::Disabled, QPalette::Light, brush68);
@@ -1548,7 +1666,9 @@ public:
         palette19.setBrush(QPalette::Disabled, QPalette::ToolTipText, brush);
         QBrush brush75(QColor(0, 0, 0, 128));
         brush75.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette19.setBrush(QPalette::Disabled, QPalette::PlaceholderText, brush75);
+#endif
         line->setPalette(palette19);
         line->setLineWidth(2);
         line->setFrameShape(QFrame::HLine);
@@ -1571,17 +1691,23 @@ public:
         palette20.setBrush(QPalette::Active, QPalette::ButtonText, brush);
         QBrush brush76(QColor(0, 0, 0, 128));
         brush76.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette20.setBrush(QPalette::Active, QPalette::PlaceholderText, brush76);
+#endif
         palette20.setBrush(QPalette::Inactive, QPalette::Text, brush);
         palette20.setBrush(QPalette::Inactive, QPalette::ButtonText, brush);
         QBrush brush77(QColor(0, 0, 0, 128));
         brush77.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette20.setBrush(QPalette::Inactive, QPalette::PlaceholderText, brush77);
+#endif
         palette20.setBrush(QPalette::Disabled, QPalette::Text, brush);
         palette20.setBrush(QPalette::Disabled, QPalette::ButtonText, brush);
         QBrush brush78(QColor(0, 0, 0, 128));
         brush78.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette20.setBrush(QPalette::Disabled, QPalette::PlaceholderText, brush78);
+#endif
         pushButton_4->setPalette(palette20);
         pushButton_4->setFont(font);
         pushButton_4->setIcon(icon3);
@@ -1605,17 +1731,23 @@ public:
         palette21.setBrush(QPalette::Active, QPalette::ButtonText, brush);
         QBrush brush79(QColor(0, 0, 0, 128));
         brush79.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette21.setBrush(QPalette::Active, QPalette::PlaceholderText, brush79);
+#endif
         palette21.setBrush(QPalette::Inactive, QPalette::Text, brush);
         palette21.setBrush(QPalette::Inactive, QPalette::ButtonText, brush);
         QBrush brush80(QColor(0, 0, 0, 128));
         brush80.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette21.setBrush(QPalette::Inactive, QPalette::PlaceholderText, brush80);
+#endif
         palette21.setBrush(QPalette::Disabled, QPalette::Text, brush8);
         palette21.setBrush(QPalette::Disabled, QPalette::ButtonText, brush8);
         QBrush brush81(QColor(0, 0, 0, 128));
         brush81.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette21.setBrush(QPalette::Disabled, QPalette::PlaceholderText, brush81);
+#endif
         spinBox_3->setPalette(palette21);
         spinBox_3->setMaximum(9999);
         spinBox_3->setValue(9999);
@@ -1667,17 +1799,23 @@ public:
         palette22.setBrush(QPalette::Active, QPalette::ButtonText, brush);
         QBrush brush82(QColor(0, 0, 0, 128));
         brush82.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette22.setBrush(QPalette::Active, QPalette::PlaceholderText, brush82);
+#endif
         palette22.setBrush(QPalette::Inactive, QPalette::Text, brush);
         palette22.setBrush(QPalette::Inactive, QPalette::ButtonText, brush);
         QBrush brush83(QColor(0, 0, 0, 128));
         brush83.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette22.setBrush(QPalette::Inactive, QPalette::PlaceholderText, brush83);
+#endif
         palette22.setBrush(QPalette::Disabled, QPalette::Text, brush);
         palette22.setBrush(QPalette::Disabled, QPalette::ButtonText, brush);
         QBrush brush84(QColor(0, 0, 0, 128));
         brush84.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette22.setBrush(QPalette::Disabled, QPalette::PlaceholderText, brush84);
+#endif
         pushButton_7->setPalette(palette22);
         pushButton_7->setFont(font);
 
@@ -1709,17 +1847,23 @@ public:
         palette23.setBrush(QPalette::Active, QPalette::ButtonText, brush);
         QBrush brush85(QColor(0, 0, 0, 128));
         brush85.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette23.setBrush(QPalette::Active, QPalette::PlaceholderText, brush85);
+#endif
         palette23.setBrush(QPalette::Inactive, QPalette::Text, brush);
         palette23.setBrush(QPalette::Inactive, QPalette::ButtonText, brush);
         QBrush brush86(QColor(0, 0, 0, 128));
         brush86.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette23.setBrush(QPalette::Inactive, QPalette::PlaceholderText, brush86);
+#endif
         palette23.setBrush(QPalette::Disabled, QPalette::Text, brush);
         palette23.setBrush(QPalette::Disabled, QPalette::ButtonText, brush);
         QBrush brush87(QColor(0, 0, 0, 128));
         brush87.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette23.setBrush(QPalette::Disabled, QPalette::PlaceholderText, brush87);
+#endif
         spinBox_4->setPalette(palette23);
         spinBox_4->setMaximum(9999);
 
@@ -1741,17 +1885,23 @@ public:
         palette24.setBrush(QPalette::Active, QPalette::ButtonText, brush);
         QBrush brush88(QColor(0, 0, 0, 128));
         brush88.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette24.setBrush(QPalette::Active, QPalette::PlaceholderText, brush88);
+#endif
         palette24.setBrush(QPalette::Inactive, QPalette::Text, brush);
         palette24.setBrush(QPalette::Inactive, QPalette::ButtonText, brush);
         QBrush brush89(QColor(0, 0, 0, 128));
         brush89.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette24.setBrush(QPalette::Inactive, QPalette::PlaceholderText, brush89);
+#endif
         palette24.setBrush(QPalette::Disabled, QPalette::Text, brush);
         palette24.setBrush(QPalette::Disabled, QPalette::ButtonText, brush);
         QBrush brush90(QColor(0, 0, 0, 128));
         brush90.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette24.setBrush(QPalette::Disabled, QPalette::PlaceholderText, brush90);
+#endif
         spinBox_5->setPalette(palette24);
         spinBox_5->setMaximum(99999);
 
@@ -1782,17 +1932,23 @@ public:
         palette25.setBrush(QPalette::Active, QPalette::ButtonText, brush);
         QBrush brush91(QColor(0, 0, 0, 128));
         brush91.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette25.setBrush(QPalette::Active, QPalette::PlaceholderText, brush91);
+#endif
         palette25.setBrush(QPalette::Inactive, QPalette::Text, brush);
         palette25.setBrush(QPalette::Inactive, QPalette::ButtonText, brush);
         QBrush brush92(QColor(0, 0, 0, 128));
         brush92.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette25.setBrush(QPalette::Inactive, QPalette::PlaceholderText, brush92);
+#endif
         palette25.setBrush(QPalette::Disabled, QPalette::Text, brush);
         palette25.setBrush(QPalette::Disabled, QPalette::ButtonText, brush);
         QBrush brush93(QColor(0, 0, 0, 128));
         brush93.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette25.setBrush(QPalette::Disabled, QPalette::PlaceholderText, brush93);
+#endif
         label_28->setPalette(palette25);
 
         horizontalLayout_16->addWidget(label_28);
@@ -1806,17 +1962,23 @@ public:
         palette26.setBrush(QPalette::Active, QPalette::ButtonText, brush);
         QBrush brush94(QColor(0, 0, 0, 128));
         brush94.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette26.setBrush(QPalette::Active, QPalette::PlaceholderText, brush94);
+#endif
         palette26.setBrush(QPalette::Inactive, QPalette::Text, brush);
         palette26.setBrush(QPalette::Inactive, QPalette::ButtonText, brush);
         QBrush brush95(QColor(0, 0, 0, 128));
         brush95.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette26.setBrush(QPalette::Inactive, QPalette::PlaceholderText, brush95);
+#endif
         palette26.setBrush(QPalette::Disabled, QPalette::Text, brush);
         palette26.setBrush(QPalette::Disabled, QPalette::ButtonText, brush);
         QBrush brush96(QColor(0, 0, 0, 128));
         brush96.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette26.setBrush(QPalette::Disabled, QPalette::PlaceholderText, brush96);
+#endif
         spinBox_7->setPalette(palette26);
         spinBox_7->setMinimum(1);
         spinBox_7->setMaximum(9999);
@@ -1830,17 +1992,23 @@ public:
         palette27.setBrush(QPalette::Active, QPalette::ButtonText, brush);
         QBrush brush97(QColor(0, 0, 0, 128));
         brush97.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette27.setBrush(QPalette::Active, QPalette::PlaceholderText, brush97);
+#endif
         palette27.setBrush(QPalette::Inactive, QPalette::Text, brush);
         palette27.setBrush(QPalette::Inactive, QPalette::ButtonText, brush);
         QBrush brush98(QColor(0, 0, 0, 128));
         brush98.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette27.setBrush(QPalette::Inactive, QPalette::PlaceholderText, brush98);
+#endif
         palette27.setBrush(QPalette::Disabled, QPalette::Text, brush);
         palette27.setBrush(QPalette::Disabled, QPalette::ButtonText, brush);
         QBrush brush99(QColor(0, 0, 0, 128));
         brush99.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette27.setBrush(QPalette::Disabled, QPalette::PlaceholderText, brush99);
+#endif
         label_29->setPalette(palette27);
 
         horizontalLayout_16->addWidget(label_29);
@@ -1854,17 +2022,23 @@ public:
         palette28.setBrush(QPalette::Active, QPalette::ButtonText, brush);
         QBrush brush100(QColor(0, 0, 0, 128));
         brush100.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette28.setBrush(QPalette::Active, QPalette::PlaceholderText, brush100);
+#endif
         palette28.setBrush(QPalette::Inactive, QPalette::Text, brush);
         palette28.setBrush(QPalette::Inactive, QPalette::ButtonText, brush);
         QBrush brush101(QColor(0, 0, 0, 128));
         brush101.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette28.setBrush(QPalette::Inactive, QPalette::PlaceholderText, brush101);
+#endif
         palette28.setBrush(QPalette::Disabled, QPalette::Text, brush);
         palette28.setBrush(QPalette::Disabled, QPalette::ButtonText, brush);
         QBrush brush102(QColor(0, 0, 0, 128));
         brush102.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette28.setBrush(QPalette::Disabled, QPalette::PlaceholderText, brush102);
+#endif
         spinBox_8->setPalette(palette28);
         spinBox_8->setMinimum(1);
         spinBox_8->setMaximum(9999);
@@ -1943,19 +2117,25 @@ public:
         palette29.setBrush(QPalette::Active, QPalette::Text, brush8);
         QBrush brush103(QColor(255, 0, 0, 128));
         brush103.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette29.setBrush(QPalette::Active, QPalette::PlaceholderText, brush103);
+#endif
         palette29.setBrush(QPalette::Inactive, QPalette::WindowText, brush8);
         palette29.setBrush(QPalette::Inactive, QPalette::Text, brush8);
         QBrush brush104(QColor(255, 0, 0, 128));
         brush104.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette29.setBrush(QPalette::Inactive, QPalette::PlaceholderText, brush104);
+#endif
         QBrush brush105(QColor(143, 146, 147, 255));
         brush105.setStyle(Qt::SolidPattern);
         palette29.setBrush(QPalette::Disabled, QPalette::WindowText, brush105);
         palette29.setBrush(QPalette::Disabled, QPalette::Text, brush105);
         QBrush brush106(QColor(255, 0, 0, 128));
         brush106.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette29.setBrush(QPalette::Disabled, QPalette::PlaceholderText, brush106);
+#endif
         lineEdit_5->setPalette(palette29);
 
         horizontalLayout_8->addWidget(lineEdit_5);
@@ -1976,17 +2156,23 @@ public:
         palette30.setBrush(QPalette::Active, QPalette::Text, brush8);
         QBrush brush107(QColor(255, 0, 0, 128));
         brush107.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette30.setBrush(QPalette::Active, QPalette::PlaceholderText, brush107);
+#endif
         palette30.setBrush(QPalette::Inactive, QPalette::WindowText, brush8);
         palette30.setBrush(QPalette::Inactive, QPalette::Text, brush8);
         QBrush brush108(QColor(255, 0, 0, 128));
         brush108.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette30.setBrush(QPalette::Inactive, QPalette::PlaceholderText, brush108);
+#endif
         palette30.setBrush(QPalette::Disabled, QPalette::WindowText, brush105);
         palette30.setBrush(QPalette::Disabled, QPalette::Text, brush105);
         QBrush brush109(QColor(255, 0, 0, 128));
         brush109.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette30.setBrush(QPalette::Disabled, QPalette::PlaceholderText, brush109);
+#endif
         lineEdit_8->setPalette(palette30);
 
         horizontalLayout_8->addWidget(lineEdit_8);
@@ -2022,17 +2208,23 @@ public:
         palette31.setBrush(QPalette::Active, QPalette::ButtonText, brush);
         QBrush brush110(QColor(0, 0, 0, 128));
         brush110.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette31.setBrush(QPalette::Active, QPalette::PlaceholderText, brush110);
+#endif
         palette31.setBrush(QPalette::Inactive, QPalette::Text, brush);
         palette31.setBrush(QPalette::Inactive, QPalette::ButtonText, brush);
         QBrush brush111(QColor(0, 0, 0, 128));
         brush111.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette31.setBrush(QPalette::Inactive, QPalette::PlaceholderText, brush111);
+#endif
         palette31.setBrush(QPalette::Disabled, QPalette::Text, brush);
         palette31.setBrush(QPalette::Disabled, QPalette::ButtonText, brush);
         QBrush brush112(QColor(0, 0, 0, 128));
         brush112.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette31.setBrush(QPalette::Disabled, QPalette::PlaceholderText, brush112);
+#endif
         label_26->setPalette(palette31);
 
         horizontalLayout_23->addWidget(label_26);
@@ -2101,17 +2293,23 @@ public:
         palette34.setBrush(QPalette::Active, QPalette::ButtonText, brush);
         QBrush brush114(QColor(0, 0, 0, 128));
         brush114.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette34.setBrush(QPalette::Active, QPalette::PlaceholderText, brush114);
+#endif
         palette34.setBrush(QPalette::Inactive, QPalette::Text, brush);
         palette34.setBrush(QPalette::Inactive, QPalette::ButtonText, brush);
         QBrush brush115(QColor(0, 0, 0, 128));
         brush115.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette34.setBrush(QPalette::Inactive, QPalette::PlaceholderText, brush115);
+#endif
         palette34.setBrush(QPalette::Disabled, QPalette::Text, brush);
         palette34.setBrush(QPalette::Disabled, QPalette::ButtonText, brush);
         QBrush brush116(QColor(0, 0, 0, 128));
         brush116.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette34.setBrush(QPalette::Disabled, QPalette::PlaceholderText, brush116);
+#endif
         label_30->setPalette(palette34);
 
         horizontalLayout_25->addWidget(label_30);
@@ -2149,17 +2347,23 @@ public:
         palette37.setBrush(QPalette::Active, QPalette::ButtonText, brush);
         QBrush brush117(QColor(0, 0, 0, 128));
         brush117.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette37.setBrush(QPalette::Active, QPalette::PlaceholderText, brush117);
+#endif
         palette37.setBrush(QPalette::Inactive, QPalette::Text, brush);
         palette37.setBrush(QPalette::Inactive, QPalette::ButtonText, brush);
         QBrush brush118(QColor(0, 0, 0, 128));
         brush118.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette37.setBrush(QPalette::Inactive, QPalette::PlaceholderText, brush118);
+#endif
         palette37.setBrush(QPalette::Disabled, QPalette::Text, brush);
         palette37.setBrush(QPalette::Disabled, QPalette::ButtonText, brush);
         QBrush brush119(QColor(0, 0, 0, 128));
         brush119.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette37.setBrush(QPalette::Disabled, QPalette::PlaceholderText, brush119);
+#endif
         label_31->setPalette(palette37);
 
         horizontalLayout_25->addWidget(label_31);
@@ -2219,21 +2423,27 @@ public:
         palette40.setBrush(QPalette::Active, QPalette::ToolTipText, brush8);
         QBrush brush120(QColor(255, 0, 0, 128));
         brush120.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette40.setBrush(QPalette::Active, QPalette::PlaceholderText, brush120);
+#endif
         palette40.setBrush(QPalette::Inactive, QPalette::WindowText, brush8);
         palette40.setBrush(QPalette::Inactive, QPalette::Text, brush8);
         palette40.setBrush(QPalette::Inactive, QPalette::ButtonText, brush8);
         palette40.setBrush(QPalette::Inactive, QPalette::ToolTipText, brush8);
         QBrush brush121(QColor(255, 0, 0, 128));
         brush121.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette40.setBrush(QPalette::Inactive, QPalette::PlaceholderText, brush121);
+#endif
         palette40.setBrush(QPalette::Disabled, QPalette::WindowText, brush8);
         palette40.setBrush(QPalette::Disabled, QPalette::Text, brush8);
         palette40.setBrush(QPalette::Disabled, QPalette::ButtonText, brush8);
         palette40.setBrush(QPalette::Disabled, QPalette::ToolTipText, brush8);
         QBrush brush122(QColor(255, 0, 0, 128));
         brush122.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette40.setBrush(QPalette::Disabled, QPalette::PlaceholderText, brush122);
+#endif
         lineEdit_6->setPalette(palette40);
         lineEdit_6->setFont(font);
 
@@ -2260,21 +2470,27 @@ public:
         palette41.setBrush(QPalette::Active, QPalette::ToolTipText, brush8);
         QBrush brush123(QColor(255, 0, 0, 128));
         brush123.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette41.setBrush(QPalette::Active, QPalette::PlaceholderText, brush123);
+#endif
         palette41.setBrush(QPalette::Inactive, QPalette::WindowText, brush8);
         palette41.setBrush(QPalette::Inactive, QPalette::Text, brush8);
         palette41.setBrush(QPalette::Inactive, QPalette::ButtonText, brush8);
         palette41.setBrush(QPalette::Inactive, QPalette::ToolTipText, brush8);
         QBrush brush124(QColor(255, 0, 0, 128));
         brush124.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette41.setBrush(QPalette::Inactive, QPalette::PlaceholderText, brush124);
+#endif
         palette41.setBrush(QPalette::Disabled, QPalette::WindowText, brush8);
         palette41.setBrush(QPalette::Disabled, QPalette::Text, brush8);
         palette41.setBrush(QPalette::Disabled, QPalette::ButtonText, brush8);
         palette41.setBrush(QPalette::Disabled, QPalette::ToolTipText, brush8);
         QBrush brush125(QColor(255, 0, 0, 128));
         brush125.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette41.setBrush(QPalette::Disabled, QPalette::PlaceholderText, brush125);
+#endif
         lineEdit_7->setPalette(palette41);
         lineEdit_7->setFont(font);
 
@@ -2332,17 +2548,23 @@ public:
         palette42.setBrush(QPalette::Active, QPalette::ButtonText, brush);
         QBrush brush126(QColor(0, 0, 0, 128));
         brush126.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette42.setBrush(QPalette::Active, QPalette::PlaceholderText, brush126);
+#endif
         palette42.setBrush(QPalette::Inactive, QPalette::Text, brush);
         palette42.setBrush(QPalette::Inactive, QPalette::ButtonText, brush);
         QBrush brush127(QColor(0, 0, 0, 128));
         brush127.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette42.setBrush(QPalette::Inactive, QPalette::PlaceholderText, brush127);
+#endif
         palette42.setBrush(QPalette::Disabled, QPalette::Text, brush);
         palette42.setBrush(QPalette::Disabled, QPalette::ButtonText, brush);
         QBrush brush128(QColor(0, 0, 0, 128));
         brush128.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette42.setBrush(QPalette::Disabled, QPalette::PlaceholderText, brush128);
+#endif
         label_48->setPalette(palette42);
 
         horizontalLayout_36->addWidget(label_48);
@@ -2370,17 +2592,23 @@ public:
         palette43.setBrush(QPalette::Active, QPalette::ButtonText, brush);
         QBrush brush129(QColor(0, 0, 0, 128));
         brush129.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette43.setBrush(QPalette::Active, QPalette::PlaceholderText, brush129);
+#endif
         palette43.setBrush(QPalette::Inactive, QPalette::Text, brush);
         palette43.setBrush(QPalette::Inactive, QPalette::ButtonText, brush);
         QBrush brush130(QColor(0, 0, 0, 128));
         brush130.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette43.setBrush(QPalette::Inactive, QPalette::PlaceholderText, brush130);
+#endif
         palette43.setBrush(QPalette::Disabled, QPalette::Text, brush);
         palette43.setBrush(QPalette::Disabled, QPalette::ButtonText, brush);
         QBrush brush131(QColor(0, 0, 0, 128));
         brush131.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette43.setBrush(QPalette::Disabled, QPalette::PlaceholderText, brush131);
+#endif
         label_49->setPalette(palette43);
 
         horizontalLayout_36->addWidget(label_49);
@@ -2414,7 +2642,9 @@ public:
         palette44.setBrush(QPalette::Active, QPalette::ToolTipText, brush);
         QBrush brush132(QColor(0, 0, 0, 128));
         brush132.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette44.setBrush(QPalette::Active, QPalette::PlaceholderText, brush132);
+#endif
         palette44.setBrush(QPalette::Inactive, QPalette::WindowText, brush);
         palette44.setBrush(QPalette::Inactive, QPalette::Button, brush67);
         palette44.setBrush(QPalette::Inactive, QPalette::Light, brush68);
@@ -2432,7 +2662,9 @@ public:
         palette44.setBrush(QPalette::Inactive, QPalette::ToolTipText, brush);
         QBrush brush133(QColor(0, 0, 0, 128));
         brush133.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette44.setBrush(QPalette::Inactive, QPalette::PlaceholderText, brush133);
+#endif
         palette44.setBrush(QPalette::Disabled, QPalette::WindowText, brush70);
         palette44.setBrush(QPalette::Disabled, QPalette::Button, brush67);
         palette44.setBrush(QPalette::Disabled, QPalette::Light, brush68);
@@ -2450,7 +2682,9 @@ public:
         palette44.setBrush(QPalette::Disabled, QPalette::ToolTipText, brush);
         QBrush brush134(QColor(0, 0, 0, 128));
         brush134.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette44.setBrush(QPalette::Disabled, QPalette::PlaceholderText, brush134);
+#endif
         line_2->setPalette(palette44);
         line_2->setFrameShadow(QFrame::Sunken);
         line_2->setLineWidth(2);
@@ -2498,17 +2732,23 @@ public:
         palette45.setBrush(QPalette::Active, QPalette::ButtonText, brush);
         QBrush brush135(QColor(0, 0, 0, 128));
         brush135.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette45.setBrush(QPalette::Active, QPalette::PlaceholderText, brush135);
+#endif
         palette45.setBrush(QPalette::Inactive, QPalette::Text, brush);
         palette45.setBrush(QPalette::Inactive, QPalette::ButtonText, brush);
         QBrush brush136(QColor(0, 0, 0, 128));
         brush136.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette45.setBrush(QPalette::Inactive, QPalette::PlaceholderText, brush136);
+#endif
         palette45.setBrush(QPalette::Disabled, QPalette::Text, brush);
         palette45.setBrush(QPalette::Disabled, QPalette::ButtonText, brush);
         QBrush brush137(QColor(0, 0, 0, 128));
         brush137.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette45.setBrush(QPalette::Disabled, QPalette::PlaceholderText, brush137);
+#endif
         plainTextEdit_2->setPalette(palette45);
 
         verticalLayout_7->addWidget(plainTextEdit_2);
@@ -2546,17 +2786,23 @@ public:
         palette46.setBrush(QPalette::Active, QPalette::ButtonText, brush);
         QBrush brush138(QColor(0, 0, 0, 128));
         brush138.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette46.setBrush(QPalette::Active, QPalette::PlaceholderText, brush138);
+#endif
         palette46.setBrush(QPalette::Inactive, QPalette::Text, brush);
         palette46.setBrush(QPalette::Inactive, QPalette::ButtonText, brush);
         QBrush brush139(QColor(0, 0, 0, 128));
         brush139.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette46.setBrush(QPalette::Inactive, QPalette::PlaceholderText, brush139);
+#endif
         palette46.setBrush(QPalette::Disabled, QPalette::Text, brush);
         palette46.setBrush(QPalette::Disabled, QPalette::ButtonText, brush);
         QBrush brush140(QColor(0, 0, 0, 128));
         brush140.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette46.setBrush(QPalette::Disabled, QPalette::PlaceholderText, brush140);
+#endif
         pushButton->setPalette(palette46);
         pushButton->setFont(font);
 
@@ -2595,7 +2841,9 @@ public:
         palette47.setBrush(QPalette::Active, QPalette::ToolTipText, brush);
         QBrush brush141(QColor(0, 0, 0, 128));
         brush141.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette47.setBrush(QPalette::Active, QPalette::PlaceholderText, brush141);
+#endif
         palette47.setBrush(QPalette::Inactive, QPalette::WindowText, brush);
         palette47.setBrush(QPalette::Inactive, QPalette::Button, brush67);
         palette47.setBrush(QPalette::Inactive, QPalette::Light, brush68);
@@ -2613,7 +2861,9 @@ public:
         palette47.setBrush(QPalette::Inactive, QPalette::ToolTipText, brush);
         QBrush brush142(QColor(0, 0, 0, 128));
         brush142.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette47.setBrush(QPalette::Inactive, QPalette::PlaceholderText, brush142);
+#endif
         palette47.setBrush(QPalette::Disabled, QPalette::WindowText, brush70);
         palette47.setBrush(QPalette::Disabled, QPalette::Button, brush67);
         palette47.setBrush(QPalette::Disabled, QPalette::Light, brush68);
@@ -2631,7 +2881,9 @@ public:
         palette47.setBrush(QPalette::Disabled, QPalette::ToolTipText, brush);
         QBrush brush143(QColor(0, 0, 0, 128));
         brush143.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette47.setBrush(QPalette::Disabled, QPalette::PlaceholderText, brush143);
+#endif
         line_3->setPalette(palette47);
         line_3->setFrameShadow(QFrame::Raised);
         line_3->setLineWidth(2);
@@ -2690,17 +2942,23 @@ public:
         palette48.setBrush(QPalette::Active, QPalette::ButtonText, brush);
         QBrush brush144(QColor(0, 0, 0, 128));
         brush144.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette48.setBrush(QPalette::Active, QPalette::PlaceholderText, brush144);
+#endif
         palette48.setBrush(QPalette::Inactive, QPalette::Text, brush);
         palette48.setBrush(QPalette::Inactive, QPalette::ButtonText, brush);
         QBrush brush145(QColor(0, 0, 0, 128));
         brush145.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette48.setBrush(QPalette::Inactive, QPalette::PlaceholderText, brush145);
+#endif
         palette48.setBrush(QPalette::Disabled, QPalette::Text, brush8);
         palette48.setBrush(QPalette::Disabled, QPalette::ButtonText, brush8);
         QBrush brush146(QColor(0, 0, 0, 128));
         brush146.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette48.setBrush(QPalette::Disabled, QPalette::PlaceholderText, brush146);
+#endif
         doubleSpinBox_5->setPalette(palette48);
         doubleSpinBox_5->setSingleStep(0.100000000000000);
         doubleSpinBox_5->setValue(0.300000000000000);
@@ -2752,17 +3010,23 @@ public:
         palette49.setBrush(QPalette::Active, QPalette::ButtonText, brush);
         QBrush brush147(QColor(0, 0, 0, 128));
         brush147.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette49.setBrush(QPalette::Active, QPalette::PlaceholderText, brush147);
+#endif
         palette49.setBrush(QPalette::Inactive, QPalette::Text, brush);
         palette49.setBrush(QPalette::Inactive, QPalette::ButtonText, brush);
         QBrush brush148(QColor(0, 0, 0, 128));
         brush148.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette49.setBrush(QPalette::Inactive, QPalette::PlaceholderText, brush148);
+#endif
         palette49.setBrush(QPalette::Disabled, QPalette::Text, brush);
         palette49.setBrush(QPalette::Disabled, QPalette::ButtonText, brush);
         QBrush brush149(QColor(0, 0, 0, 128));
         brush149.setStyle(Qt::NoBrush);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
         palette49.setBrush(QPalette::Disabled, QPalette::PlaceholderText, brush149);
+#endif
         spinBox_6->setPalette(palette49);
         spinBox_6->setMaximum(9999);
 
@@ -2819,7 +3083,7 @@ public:
         MainWindow->setCentralWidget(centralWidget);
         menuBar = new QMenuBar(MainWindow);
         menuBar->setObjectName(QString::fromUtf8("menuBar"));
-        menuBar->setGeometry(QRect(0, 0, 2307, 33));
+        menuBar->setGeometry(QRect(0, 0, 2307, 24));
         menuTools = new QMenu(menuBar);
         menuTools->setObjectName(QString::fromUtf8("menuTools"));
         menuHelp = new QMenu(menuBar);
@@ -2863,120 +3127,120 @@ public:
 
     void retranslateUi(QMainWindow *MainWindow)
     {
-        MainWindow->setWindowTitle(QApplication::translate("MainWindow", "MainWindow", nullptr));
-        actionSpectrum_Plotter->setText(QApplication::translate("MainWindow", "Spectrum Plotter", nullptr));
-        actionAbout->setText(QApplication::translate("MainWindow", "About", nullptr));
-        actionBug_Report->setText(QApplication::translate("MainWindow", "Bug Report", nullptr));
-        actionCorrelation->setText(QApplication::translate("MainWindow", "Correlation", nullptr));
-        actionEditor->setText(QApplication::translate("MainWindow", "Editor", nullptr));
-        actionArithmetic->setText(QApplication::translate("MainWindow", "Arithmetic", nullptr));
-        actionManual->setText(QApplication::translate("MainWindow", "Manual", nullptr));
+        MainWindow->setWindowTitle(QCoreApplication::translate("MainWindow", "MainWindow", nullptr));
+        actionSpectrum_Plotter->setText(QCoreApplication::translate("MainWindow", "Spectrum Plotter", nullptr));
+        actionAbout->setText(QCoreApplication::translate("MainWindow", "About", nullptr));
+        actionBug_Report->setText(QCoreApplication::translate("MainWindow", "Bug Report", nullptr));
+        actionCorrelation->setText(QCoreApplication::translate("MainWindow", "Correlation", nullptr));
+        actionEditor->setText(QCoreApplication::translate("MainWindow", "Editor", nullptr));
+        actionArithmetic->setText(QCoreApplication::translate("MainWindow", "Arithmetic", nullptr));
+        actionManual->setText(QCoreApplication::translate("MainWindow", "Manual", nullptr));
         label_4->setText(QString());
         label_10->setText(QString());
-        checkBox->setText(QApplication::translate("MainWindow", "CroCo", nullptr));
+        checkBox->setText(QCoreApplication::translate("MainWindow", "CroCo", nullptr));
         lineEdit->setText(QString());
-        label_2->setText(QApplication::translate("MainWindow", ".txt from", nullptr));
-        label_3->setText(QApplication::translate("MainWindow", "to", nullptr));
-        checkBox_27->setText(QApplication::translate("MainWindow", "Sequence", nullptr));
-        checkBox_13->setText(QApplication::translate("MainWindow", "flip", nullptr));
-        checkBox_2->setText(QApplication::translate("MainWindow", "Your File", nullptr));
+        label_2->setText(QCoreApplication::translate("MainWindow", ".txt from", nullptr));
+        label_3->setText(QCoreApplication::translate("MainWindow", "to", nullptr));
+        checkBox_27->setText(QCoreApplication::translate("MainWindow", "Sequence", nullptr));
+        checkBox_13->setText(QCoreApplication::translate("MainWindow", "flip", nullptr));
+        checkBox_2->setText(QCoreApplication::translate("MainWindow", "Your File", nullptr));
         lineEdit_2->setText(QString());
-        checkBox_16->setText(QApplication::translate("MainWindow", "Orbit; Times:", nullptr));
-        label_34->setText(QApplication::translate("MainWindow", "lock", nullptr));
-        checkBox_18->setText(QApplication::translate("MainWindow", "P", nullptr));
-        checkBox_17->setText(QApplication::translate("MainWindow", "e", nullptr));
+        checkBox_16->setText(QCoreApplication::translate("MainWindow", "Orbit; Times:", nullptr));
+        label_34->setText(QCoreApplication::translate("MainWindow", "lock", nullptr));
+        checkBox_18->setText(QCoreApplication::translate("MainWindow", "P", nullptr));
+        checkBox_17->setText(QCoreApplication::translate("MainWindow", "e", nullptr));
         checkBox_31->setText(QString());
-        label_35->setText(QApplication::translate("MainWindow", "<html><head/><body><p>K<span style=\" vertical-align:sub;\">A</span></p></body></html>", nullptr));
+        label_35->setText(QCoreApplication::translate("MainWindow", "<html><head/><body><p>K<span style=\" vertical-align:sub;\">A</span></p></body></html>", nullptr));
         checkBox_36->setText(QString());
-        label_36->setText(QApplication::translate("MainWindow", "<html><head/><body><p>K<span style=\" vertical-align:sub;\">B</span></p></body></html>", nullptr));
-        checkBox_37->setText(QApplication::translate("MainWindow", "G", nullptr));
-        checkBox_35->setText(QApplication::translate("MainWindow", "T0", nullptr));
-        checkBox_38->setText(QApplication::translate("MainWindow", "O", nullptr));
-        label_7->setText(QApplication::translate("MainWindow", "Rebined Spectra:", nullptr));
+        label_36->setText(QCoreApplication::translate("MainWindow", "<html><head/><body><p>K<span style=\" vertical-align:sub;\">B</span></p></body></html>", nullptr));
+        checkBox_37->setText(QCoreApplication::translate("MainWindow", "G", nullptr));
+        checkBox_35->setText(QCoreApplication::translate("MainWindow", "T0", nullptr));
+        checkBox_38->setText(QCoreApplication::translate("MainWindow", "O", nullptr));
+        label_7->setText(QCoreApplication::translate("MainWindow", "Rebined Spectra:", nullptr));
         lineEdit_3->setText(QString());
-        label_9->setText(QApplication::translate("MainWindow", "to", nullptr));
-        label_12->setText(QApplication::translate("MainWindow", "<html><head/><body><p><span style=\" color:#000000;\">_*</span></p></body></html>", nullptr));
-        label_22->setText(QApplication::translate("MainWindow", "Flux Ratio A/B:", nullptr));
-        pushButton_13->setText(QApplication::translate("MainWindow", "Opt. Ratios", nullptr));
-        checkBox_29->setText(QApplication::translate("MainWindow", "Residuum", nullptr));
-        checkBox_30->setText(QApplication::translate("MainWindow", "m", nullptr));
-        label_16->setText(QApplication::translate("MainWindow", "FITS Extension:", nullptr));
+        label_9->setText(QCoreApplication::translate("MainWindow", "to", nullptr));
+        label_12->setText(QCoreApplication::translate("MainWindow", "<html><head/><body><p><span style=\" color:#000000;\">_*</span></p></body></html>", nullptr));
+        label_22->setText(QCoreApplication::translate("MainWindow", "Flux Ratio A/B:", nullptr));
+        pushButton_13->setText(QCoreApplication::translate("MainWindow", "Opt. Ratios", nullptr));
+        checkBox_29->setText(QCoreApplication::translate("MainWindow", "Residuum", nullptr));
+        checkBox_30->setText(QCoreApplication::translate("MainWindow", "m", nullptr));
+        label_16->setText(QCoreApplication::translate("MainWindow", "FITS Extension:", nullptr));
         lineEdit_9->setText(QString());
-        label_17->setText(QApplication::translate("MainWindow", "Col. Wavel.", nullptr));
+        label_17->setText(QCoreApplication::translate("MainWindow", "Col. Wavel.", nullptr));
         lineEdit_11->setText(QString());
-        label_20->setText(QApplication::translate("MainWindow", "Col. Intens", nullptr));
+        label_20->setText(QCoreApplication::translate("MainWindow", "Col. Intens", nullptr));
         lineEdit_12->setText(QString());
-        label_11->setText(QApplication::translate("MainWindow", "Path to work folder", nullptr));
+        label_11->setText(QCoreApplication::translate("MainWindow", "Path to work folder", nullptr));
         lineEdit_4->setText(QString());
-        pushButton_2->setText(QApplication::translate("MainWindow", "Read Data", nullptr));
-        checkBox_7->setText(QApplication::translate("MainWindow", "Bidiagonal Matrix", nullptr));
-        checkBox_8->setText(QApplication::translate("MainWindow", "Static Lines", nullptr));
-        checkBox_3->setText(QApplication::translate("MainWindow", "SB1", nullptr));
-        checkBox_4->setText(QApplication::translate("MainWindow", "SB2", nullptr));
-        checkBox_34->setText(QApplication::translate("MainWindow", "SB3", nullptr));
-        pushButton_5->setText(QApplication::translate("MainWindow", "ECON", nullptr));
-        checkBox_5->setText(QApplication::translate("MainWindow", "Standard", nullptr));
-        checkBox_6->setText(QApplication::translate("MainWindow", "DaC", nullptr));
-        checkBox_39->setText(QApplication::translate("MainWindow", "Trunc. SVD", nullptr));
-        pushButton_3->setText(QApplication::translate("MainWindow", "SVD", nullptr));
-        pushButton_14->setText(QApplication::translate("MainWindow", "SpSolve", nullptr));
-        pushButton_12->setText(QApplication::translate("MainWindow", "Subtract", nullptr));
-        checkBox_20->setText(QApplication::translate("MainWindow", "A", nullptr));
-        checkBox_21->setText(QApplication::translate("MainWindow", "B", nullptr));
-        checkBox_24->setText(QApplication::translate("MainWindow", "shift A", nullptr));
-        checkBox_25->setText(QApplication::translate("MainWindow", "shift B", nullptr));
-        checkBox_26->setText(QApplication::translate("MainWindow", "add", nullptr));
-        checkBox_28->setText(QApplication::translate("MainWindow", "mult", nullptr));
-        label_5->setText(QApplication::translate("MainWindow", "max. RV of component 1", nullptr));
-        label_6->setText(QApplication::translate("MainWindow", "max. RV of component 2", nullptr));
+        pushButton_2->setText(QCoreApplication::translate("MainWindow", "Read Data", nullptr));
+        checkBox_7->setText(QCoreApplication::translate("MainWindow", "Bidiagonal Matrix", nullptr));
+        checkBox_8->setText(QCoreApplication::translate("MainWindow", "Static Lines", nullptr));
+        checkBox_3->setText(QCoreApplication::translate("MainWindow", "SB1", nullptr));
+        checkBox_4->setText(QCoreApplication::translate("MainWindow", "SB2", nullptr));
+        checkBox_34->setText(QCoreApplication::translate("MainWindow", "SB3", nullptr));
+        pushButton_5->setText(QCoreApplication::translate("MainWindow", "ECON", nullptr));
+        checkBox_5->setText(QCoreApplication::translate("MainWindow", "Standard", nullptr));
+        checkBox_6->setText(QCoreApplication::translate("MainWindow", "DaC", nullptr));
+        checkBox_39->setText(QCoreApplication::translate("MainWindow", "Trunc. SVD", nullptr));
+        pushButton_3->setText(QCoreApplication::translate("MainWindow", "SVD", nullptr));
+        pushButton_14->setText(QCoreApplication::translate("MainWindow", "SpSolve", nullptr));
+        pushButton_12->setText(QCoreApplication::translate("MainWindow", "Subtract", nullptr));
+        checkBox_20->setText(QCoreApplication::translate("MainWindow", "A", nullptr));
+        checkBox_21->setText(QCoreApplication::translate("MainWindow", "B", nullptr));
+        checkBox_24->setText(QCoreApplication::translate("MainWindow", "shift A", nullptr));
+        checkBox_25->setText(QCoreApplication::translate("MainWindow", "shift B", nullptr));
+        checkBox_26->setText(QCoreApplication::translate("MainWindow", "add", nullptr));
+        checkBox_28->setText(QCoreApplication::translate("MainWindow", "mult", nullptr));
+        label_5->setText(QCoreApplication::translate("MainWindow", "max. RV of component 1", nullptr));
+        label_6->setText(QCoreApplication::translate("MainWindow", "max. RV of component 2", nullptr));
         plainTextEdit->setPlainText(QString());
-        pushButton_4->setText(QApplication::translate("MainWindow", "Optimization", nullptr));
-        label->setText(QApplication::translate("MainWindow", "# Iterations:", nullptr));
-        checkBox_9->setText(QApplication::translate("MainWindow", "New", nullptr));
-        checkBox_11->setText(QApplication::translate("MainWindow", "Continue", nullptr));
-        checkBox_12->setText(QApplication::translate("MainWindow", "Initial", nullptr));
-        checkBox_32->setText(QApplication::translate("MainWindow", "Reinitiate", nullptr));
-        checkBox_23->setText(QApplication::translate("MainWindow", "Auto Stop", nullptr));
-        pushButton_7->setText(QApplication::translate("MainWindow", "Stop", nullptr));
-        label_18->setText(QApplication::translate("MainWindow", "Iteration:", nullptr));
-        label_21->setText(QApplication::translate("MainWindow", "Evaluation:", nullptr));
-        label_25->setText(QApplication::translate("MainWindow", "Criterion:", nullptr));
-        checkBox_14->setText(QApplication::translate("MainWindow", "Mean", nullptr));
-        checkBox_15->setText(QApplication::translate("MainWindow", "Peak", nullptr));
-        label_28->setText(QApplication::translate("MainWindow", "# CPU Cores:", nullptr));
-        label_29->setText(QApplication::translate("MainWindow", "<html><head/><body><p><span style=\" font-weight:600; color:#000000;\">Use:</span></p></body></html>", nullptr));
-        label_32->setText(QApplication::translate("MainWindow", "Common Name:", nullptr));
-        label_33->setText(QApplication::translate("MainWindow", "Extension:", nullptr));
-        pushButton_11->setText(QApplication::translate("MainWindow", "Set File Names", nullptr));
-        label_23->setText(QApplication::translate("MainWindow", "<html><head/><body><p>Out Component 1:</p></body></html>", nullptr));
-        label_24->setText(QApplication::translate("MainWindow", "<html><head/><body><p>Out Component 2:</p></body></html>", nullptr));
-        label_45->setText(QApplication::translate("MainWindow", "<html><head/><body><p>Out Errors:</p></body></html>", nullptr));
-        label_26->setText(QApplication::translate("MainWindow", "<html><head/><body><p><span style=\" color:#000000;\">Out Static Comp:</span></p></body></html>", nullptr));
-        label_27->setText(QApplication::translate("MainWindow", "<html><head/><body><p><span style=\" color:#000000;\">Out Differences:</span></p></body></html>", nullptr));
-        label_46->setText(QApplication::translate("MainWindow", "Log-File", nullptr));
-        label_30->setText(QApplication::translate("MainWindow", "<html><head/><body><p><span style=\" color:#000000;\">I/O Initial Data:</span></p></body></html>", nullptr));
-        label_31->setText(QApplication::translate("MainWindow", "<html><head/><body><p><span style=\" color:#000000;\">I/O Optimisation Data:</span></p></body></html>", nullptr));
-        label_15->setText(QApplication::translate("MainWindow", "Time [min]:", nullptr));
+        pushButton_4->setText(QCoreApplication::translate("MainWindow", "Optimization", nullptr));
+        label->setText(QCoreApplication::translate("MainWindow", "# Iterations:", nullptr));
+        checkBox_9->setText(QCoreApplication::translate("MainWindow", "New", nullptr));
+        checkBox_11->setText(QCoreApplication::translate("MainWindow", "Continue", nullptr));
+        checkBox_12->setText(QCoreApplication::translate("MainWindow", "Initial", nullptr));
+        checkBox_32->setText(QCoreApplication::translate("MainWindow", "Reinitiate", nullptr));
+        checkBox_23->setText(QCoreApplication::translate("MainWindow", "Auto Stop", nullptr));
+        pushButton_7->setText(QCoreApplication::translate("MainWindow", "Stop", nullptr));
+        label_18->setText(QCoreApplication::translate("MainWindow", "Iteration:", nullptr));
+        label_21->setText(QCoreApplication::translate("MainWindow", "Evaluation:", nullptr));
+        label_25->setText(QCoreApplication::translate("MainWindow", "Criterion:", nullptr));
+        checkBox_14->setText(QCoreApplication::translate("MainWindow", "Mean", nullptr));
+        checkBox_15->setText(QCoreApplication::translate("MainWindow", "Peak", nullptr));
+        label_28->setText(QCoreApplication::translate("MainWindow", "# CPU Cores:", nullptr));
+        label_29->setText(QCoreApplication::translate("MainWindow", "<html><head/><body><p><span style=\" font-weight:600; color:#000000;\">Use:</span></p></body></html>", nullptr));
+        label_32->setText(QCoreApplication::translate("MainWindow", "Common Name:", nullptr));
+        label_33->setText(QCoreApplication::translate("MainWindow", "Extension:", nullptr));
+        pushButton_11->setText(QCoreApplication::translate("MainWindow", "Set File Names", nullptr));
+        label_23->setText(QCoreApplication::translate("MainWindow", "<html><head/><body><p>Out Component 1:</p></body></html>", nullptr));
+        label_24->setText(QCoreApplication::translate("MainWindow", "<html><head/><body><p>Out Component 2:</p></body></html>", nullptr));
+        label_45->setText(QCoreApplication::translate("MainWindow", "<html><head/><body><p>Out Errors:</p></body></html>", nullptr));
+        label_26->setText(QCoreApplication::translate("MainWindow", "<html><head/><body><p><span style=\" color:#000000;\">Out Static Comp:</span></p></body></html>", nullptr));
+        label_27->setText(QCoreApplication::translate("MainWindow", "<html><head/><body><p><span style=\" color:#000000;\">Out Differences:</span></p></body></html>", nullptr));
+        label_46->setText(QCoreApplication::translate("MainWindow", "Log-File", nullptr));
+        label_30->setText(QCoreApplication::translate("MainWindow", "<html><head/><body><p><span style=\" color:#000000;\">I/O Initial Data:</span></p></body></html>", nullptr));
+        label_31->setText(QCoreApplication::translate("MainWindow", "<html><head/><body><p><span style=\" color:#000000;\">I/O Optimisation Data:</span></p></body></html>", nullptr));
+        label_15->setText(QCoreApplication::translate("MainWindow", "Time [min]:", nullptr));
         lineEdit_6->setText(QString());
-        label_14->setText(QApplication::translate("MainWindow", " Residuum", nullptr));
+        label_14->setText(QCoreApplication::translate("MainWindow", " Residuum", nullptr));
         lineEdit_7->setText(QString());
-        label_19->setText(QApplication::translate("MainWindow", "Velocity Step Size [km/s]:", nullptr));
-        pushButton_9->setText(QApplication::translate("MainWindow", "Save", nullptr));
-        label_48->setText(QApplication::translate("MainWindow", ".sps", nullptr));
-        pushButton_10->setText(QApplication::translate("MainWindow", "Load", nullptr));
-        label_49->setText(QApplication::translate("MainWindow", "<html><head/><body><p><span style=\" color:#000000;\">.sps</span></p></body></html>", nullptr));
-        pushButton_8->setText(QApplication::translate("MainWindow", "Error", nullptr));
-        pushButton->setText(QApplication::translate("MainWindow", "Close", nullptr));
-        label_8->setText(QApplication::translate("MainWindow", "<html><head/><body><p>Result; <span style=\" color:#0000ff;\">Comp A,</span><span style=\" color:#ff0000;\">Comp B </span><span style=\" color:#000000;\">&amp; Error</span></p></body></html>", nullptr));
-        checkBox_22->setText(QApplication::translate("MainWindow", "Telluric", nullptr));
-        label_13->setText(QApplication::translate("MainWindow", "<html><head/><body><p>Difference; Offset:</p></body></html>", nullptr));
-        pushButton_6->setText(QApplication::translate("MainWindow", "Plot", nullptr));
-        checkBox_10->setText(QApplication::translate("MainWindow", "Live Update", nullptr));
-        checkBox_33->setText(QApplication::translate("MainWindow", "Compute Residuum from", nullptr));
-        label_47->setText(QApplication::translate("MainWindow", "<html><head/><body><p>to</p></body></html>", nullptr));
-        checkBox_19->setText(QApplication::translate("MainWindow", "Save all Updates", nullptr));
-        menuTools->setTitle(QApplication::translate("MainWindow", "Tools", nullptr));
-        menuHelp->setTitle(QApplication::translate("MainWindow", "Help", nullptr));
+        label_19->setText(QCoreApplication::translate("MainWindow", "Velocity Step Size [km/s]:", nullptr));
+        pushButton_9->setText(QCoreApplication::translate("MainWindow", "Save", nullptr));
+        label_48->setText(QCoreApplication::translate("MainWindow", ".sps", nullptr));
+        pushButton_10->setText(QCoreApplication::translate("MainWindow", "Load", nullptr));
+        label_49->setText(QCoreApplication::translate("MainWindow", "<html><head/><body><p><span style=\" color:#000000;\">.sps</span></p></body></html>", nullptr));
+        pushButton_8->setText(QCoreApplication::translate("MainWindow", "Error", nullptr));
+        pushButton->setText(QCoreApplication::translate("MainWindow", "Close", nullptr));
+        label_8->setText(QCoreApplication::translate("MainWindow", "<html><head/><body><p>Result; <span style=\" color:#0000ff;\">Comp A,</span><span style=\" color:#ff0000;\">Comp B </span><span style=\" color:#000000;\">&amp; Error</span></p></body></html>", nullptr));
+        checkBox_22->setText(QCoreApplication::translate("MainWindow", "Telluric", nullptr));
+        label_13->setText(QCoreApplication::translate("MainWindow", "<html><head/><body><p>Difference; Offset:</p></body></html>", nullptr));
+        pushButton_6->setText(QCoreApplication::translate("MainWindow", "Plot", nullptr));
+        checkBox_10->setText(QCoreApplication::translate("MainWindow", "Live Update", nullptr));
+        checkBox_33->setText(QCoreApplication::translate("MainWindow", "Compute Residuum from", nullptr));
+        label_47->setText(QCoreApplication::translate("MainWindow", "<html><head/><body><p>to</p></body></html>", nullptr));
+        checkBox_19->setText(QCoreApplication::translate("MainWindow", "Save all Updates", nullptr));
+        menuTools->setTitle(QCoreApplication::translate("MainWindow", "Tools", nullptr));
+        menuHelp->setTitle(QCoreApplication::translate("MainWindow", "Help", nullptr));
     } // retranslateUi
 
 };

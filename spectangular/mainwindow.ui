@@ -464,8 +464,8 @@
    <string>MainWindow</string>
   </property>
   <property name="windowIcon">
-   <iconset>
-    <normaloff>:/new/background/Binary.png</normaloff>:/new/background/Binary.png</iconset>
+   <iconset resource="images.qrc">
+    <normaloff>:/new/backround/Logo.png</normaloff>:/new/backround/Logo.png</iconset>
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QGridLayout" name="gridLayout">
@@ -496,8 +496,8 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>2396</width>
-         <height>1319</height>
+         <width>2287</width>
+         <height>1247</height>
         </rect>
        </property>
        <layout class="QGridLayout" name="gridLayout_2">
@@ -9305,7 +9305,7 @@
      <x>0</x>
      <y>0</y>
      <width>2307</width>
-     <height>33</height>
+     <height>24</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuTools">

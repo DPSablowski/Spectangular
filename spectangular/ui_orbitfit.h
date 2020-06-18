@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'orbitfit.ui'
 **
-** Created by: Qt User Interface Compiler version 5.12.0
+** Created by: Qt User Interface Compiler version 5.15.0
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
 ********************************************************************************/
@@ -360,27 +360,27 @@ public:
 
     void retranslateUi(QDialog *OrbitFit)
     {
-        OrbitFit->setWindowTitle(QApplication::translate("OrbitFit", "Dialog", nullptr));
-        label_2->setText(QApplication::translate("OrbitFit", "Times & RVs", nullptr));
-        label->setText(QApplication::translate("OrbitFit", "P:", nullptr));
-        label_9->setText(QApplication::translate("OrbitFit", "+/-", nullptr));
-        label_3->setText(QApplication::translate("OrbitFit", "e:", nullptr));
-        label_10->setText(QApplication::translate("OrbitFit", "+/-", nullptr));
-        label_4->setText(QApplication::translate("OrbitFit", "<html><head/><body><p>K<span style=\" vertical-align:sub;\">1</span>:</p></body></html>", nullptr));
-        label_11->setText(QApplication::translate("OrbitFit", "+/-", nullptr));
-        label_5->setText(QApplication::translate("OrbitFit", "<html><head/><body><p>K<span style=\" vertical-align:sub;\">2</span>:</p></body></html>", nullptr));
-        label_12->setText(QApplication::translate("OrbitFit", "+/-", nullptr));
-        label_6->setText(QApplication::translate("OrbitFit", "<html><head/><body><p>V:</p></body></html>", nullptr));
-        label_13->setText(QApplication::translate("OrbitFit", "+/-", nullptr));
-        label_7->setText(QApplication::translate("OrbitFit", "<html><head/><body><p>T<span style=\" vertical-align:sub;\">0</span>:</p></body></html>", nullptr));
-        label_14->setText(QApplication::translate("OrbitFit", "+/-", nullptr));
-        label_8->setText(QApplication::translate("OrbitFit", "<html><head/><body><p>w<span style=\" vertical-align:sub;\">1</span>:</p></body></html>", nullptr));
-        label_15->setText(QApplication::translate("OrbitFit", "+/-", nullptr));
-        label_16->setText(QApplication::translate("OrbitFit", "Work Path:", nullptr));
-        checkBox->setText(QApplication::translate("OrbitFit", "SB1", nullptr));
-        checkBox_2->setText(QApplication::translate("OrbitFit", "SB2", nullptr));
-        pushButton_2->setText(QApplication::translate("OrbitFit", "Go", nullptr));
-        pushButton->setText(QApplication::translate("OrbitFit", "Close", nullptr));
+        OrbitFit->setWindowTitle(QCoreApplication::translate("OrbitFit", "Dialog", nullptr));
+        label_2->setText(QCoreApplication::translate("OrbitFit", "Times & RVs", nullptr));
+        label->setText(QCoreApplication::translate("OrbitFit", "P:", nullptr));
+        label_9->setText(QCoreApplication::translate("OrbitFit", "+/-", nullptr));
+        label_3->setText(QCoreApplication::translate("OrbitFit", "e:", nullptr));
+        label_10->setText(QCoreApplication::translate("OrbitFit", "+/-", nullptr));
+        label_4->setText(QCoreApplication::translate("OrbitFit", "<html><head/><body><p>K<span style=\" vertical-align:sub;\">1</span>:</p></body></html>", nullptr));
+        label_11->setText(QCoreApplication::translate("OrbitFit", "+/-", nullptr));
+        label_5->setText(QCoreApplication::translate("OrbitFit", "<html><head/><body><p>K<span style=\" vertical-align:sub;\">2</span>:</p></body></html>", nullptr));
+        label_12->setText(QCoreApplication::translate("OrbitFit", "+/-", nullptr));
+        label_6->setText(QCoreApplication::translate("OrbitFit", "<html><head/><body><p>V:</p></body></html>", nullptr));
+        label_13->setText(QCoreApplication::translate("OrbitFit", "+/-", nullptr));
+        label_7->setText(QCoreApplication::translate("OrbitFit", "<html><head/><body><p>T<span style=\" vertical-align:sub;\">0</span>:</p></body></html>", nullptr));
+        label_14->setText(QCoreApplication::translate("OrbitFit", "+/-", nullptr));
+        label_8->setText(QCoreApplication::translate("OrbitFit", "<html><head/><body><p>w<span style=\" vertical-align:sub;\">1</span>:</p></body></html>", nullptr));
+        label_15->setText(QCoreApplication::translate("OrbitFit", "+/-", nullptr));
+        label_16->setText(QCoreApplication::translate("OrbitFit", "Work Path:", nullptr));
+        checkBox->setText(QCoreApplication::translate("OrbitFit", "SB1", nullptr));
+        checkBox_2->setText(QCoreApplication::translate("OrbitFit", "SB2", nullptr));
+        pushButton_2->setText(QCoreApplication::translate("OrbitFit", "Go", nullptr));
+        pushButton->setText(QCoreApplication::translate("OrbitFit", "Close", nullptr));
     } // retranslateUi
 
 };
