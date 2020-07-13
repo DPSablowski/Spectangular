@@ -2079,7 +2079,7 @@ void MainWindow::on_actionAbout_triggered()
 {
     QMessageBox::information(this, "About", "This open-source software was developed at Leibniz-Institute for Astrophysics Potsdam (Germany) by\n\n "
                                             "Daniel P. Sablowski\n\n"
-                                            "Version 1.0 2019\n\n"
+                                            "Version 1.01 2020\n\n"
                                             "It makes use of the 'Armadillo' C++ linear algebra library, OpenBLAS, CCfits and libraries therein.\n"
                                             "It uses the spline.h from https://kluge.in-chemnitz.de/opensource/spline/ \n"
                                             "It is provided AS IS WITHOUT WARRANTY of ANY KIND.\n\n"
