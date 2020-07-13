@@ -16,7 +16,7 @@ public:
     ~Arithmetic();
 
 public slots:
-    void seData(QString str);
+    void seData(QString str, QString str2, QString str3);
 
 private slots:
     void on_pushButton_2_clicked();
@@ -34,6 +34,8 @@ private slots:
     void on_checkBox_5_clicked();
 
     void on_checkBox_6_clicked();
+
+    void on_pushButton_3_clicked();
 
 private:
     Ui::Arithmetic *ui;

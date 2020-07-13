@@ -188,7 +188,7 @@ public:
     {
         if (Edit->objectName().isEmpty())
             Edit->setObjectName(QString::fromUtf8("Edit"));
-        Edit->resize(1674, 950);
+        Edit->resize(1141, 660);
         gridLayout = new QGridLayout(Edit);
         gridLayout->setObjectName(QString::fromUtf8("gridLayout"));
         scrollArea = new QScrollArea(Edit);
@@ -196,7 +196,7 @@ public:
         scrollArea->setWidgetResizable(true);
         scrollAreaWidgetContents = new QWidget();
         scrollAreaWidgetContents->setObjectName(QString::fromUtf8("scrollAreaWidgetContents"));
-        scrollAreaWidgetContents->setGeometry(QRect(0, 0, 1646, 922));
+        scrollAreaWidgetContents->setGeometry(QRect(0, 0, 1121, 640));
         verticalLayout_6 = new QVBoxLayout(scrollAreaWidgetContents);
         verticalLayout_6->setObjectName(QString::fromUtf8("verticalLayout_6"));
         horizontalLayout = new QHBoxLayout();

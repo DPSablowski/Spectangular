@@ -1361,7 +1361,7 @@ public:
 
         pushButton_14 = new QPushButton(scrollAreaWidgetContents);
         pushButton_14->setObjectName(QString::fromUtf8("pushButton_14"));
-        pushButton_14->setEnabled(true);
+        pushButton_14->setEnabled(false);
         sizePolicy1.setHeightForWidth(pushButton_14->sizePolicy().hasHeightForWidth());
         pushButton_14->setSizePolicy(sizePolicy1);
 

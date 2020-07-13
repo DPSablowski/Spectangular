@@ -804,8 +804,7 @@ qrc_images.cpp: images.qrc \
 		Corr.png \
 		run.png \
 		AIP.jpeg \
-		Logo.png \
-		Infected_Sith.jpg
+		Logo.png
 	/home/daniel/Qt/5.15.0/gcc_64/bin/rcc -name images images.qrc -o qrc_images.cpp
 
 compiler_moc_predefs_make_all: moc_predefs.h
@@ -4922,10 +4921,6 @@ correlation.o: correlation.cpp correlation.h \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtGui/qtouchdevice.h \
 		ui_correlation.h \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtCore/QVariant \
-		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/QAction \
-		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qaction.h \
-		/home/daniel/Qt/5.15.0/gcc_64/include/QtGui/qicon.h \
-		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qactiongroup.h \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/QApplication \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qapplication.h \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtCore/qcoreapplication.h \
@@ -4933,11 +4928,10 @@ correlation.o: correlation.cpp correlation.h \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qdesktopwidget.h \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtGui/qguiapplication.h \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtGui/qinputmethod.h \
-		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/QButtonGroup \
-		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qbuttongroup.h \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/QCheckBox \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qcheckbox.h \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qabstractbutton.h \
+		/home/daniel/Qt/5.15.0/gcc_64/include/QtGui/qicon.h \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/QDoubleSpinBox \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qspinbox.h \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qabstractspinbox.h \
@@ -4948,23 +4942,9 @@ correlation.o: correlation.cpp correlation.h \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qlayout.h \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qlayoutitem.h \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qgridlayout.h \
-		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/QHeaderView \
-		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qheaderview.h \
-		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qabstractitemview.h \
-		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qabstractscrollarea.h \
-		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qframe.h \
-		/home/daniel/Qt/5.15.0/gcc_64/include/QtCore/qabstractitemmodel.h \
-		/home/daniel/Qt/5.15.0/gcc_64/include/QtCore/qitemselectionmodel.h \
-		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qabstractitemdelegate.h \
-		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qstyleoption.h \
-		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qslider.h \
-		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qabstractslider.h \
-		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qstyle.h \
-		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qtabbar.h \
-		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qtabwidget.h \
-		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qrubberband.h \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/QLabel \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qlabel.h \
+		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qframe.h \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/QLineEdit \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qlineedit.h \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtGui/qtextcursor.h \
@@ -5088,10 +5068,6 @@ edit.o: edit.cpp edit.h \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtGui/qtouchdevice.h \
 		ui_edit.h \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtCore/QVariant \
-		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/QAction \
-		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qaction.h \
-		/home/daniel/Qt/5.15.0/gcc_64/include/QtGui/qicon.h \
-		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qactiongroup.h \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/QApplication \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qapplication.h \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtCore/qcoreapplication.h \
@@ -5099,11 +5075,10 @@ edit.o: edit.cpp edit.h \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qdesktopwidget.h \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtGui/qguiapplication.h \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtGui/qinputmethod.h \
-		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/QButtonGroup \
-		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qbuttongroup.h \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/QCheckBox \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qcheckbox.h \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qabstractbutton.h \
+		/home/daniel/Qt/5.15.0/gcc_64/include/QtGui/qicon.h \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/QComboBox \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qcombobox.h \
 		/home/daniel/Qt/5.15.0/gcc_64/include/QtWidgets/qabstractitemdelegate.h \

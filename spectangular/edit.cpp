@@ -37,11 +37,14 @@ Edit::Edit(QWidget *parent) :
     ui->tableWidget_4->setColumnCount(1);
     ui->tableWidget_4->setHorizontalHeaderLabels(QStringList()<<"Ratio");
 
+    // coefficients
     ui->doubleSpinBox->setValue(1.0);
     ui->doubleSpinBox_2->setValue(0.5);
     ui->doubleSpinBox_3->setValue(0.5);
     ui->doubleSpinBox_4->setValue(2.0);
-    ui->doubleSpinBox_5->setValue(1);
+
+    // step sizes
+    ui->doubleSpinBox_5->setValue(3);
 
     string sbin = "BinaryData.dat";
     ifstream binaries(sbin.c_str());
@@ -51,6 +54,14 @@ Edit::Edit(QWidget *parent) :
     if(!qBin.exists()){
         qDebug()<<"No data base file for orbits of binaries present.";
         QMessageBox::information(this, "Error", "Data base of orbital elements not present.");
+
+        ui->doubleSpinBox_13->setValue(1.0);
+        ui->doubleSpinBox_14->setValue(1.0);
+        ui->doubleSpinBox_15->setValue(1.0);
+        ui->doubleSpinBox_16->setValue(1.0);
+        ui->doubleSpinBox_17->setValue(1.0);
+        ui->doubleSpinBox_18->setValue(1.0);
+        ui->doubleSpinBox_19->setValue(1.0);
     }
 
 
@@ -103,6 +114,14 @@ Edit::Edit(QWidget *parent) :
         ui->doubleSpinBox_10->setValue(GAM[0]);
         ui->doubleSpinBox_11->setValue(PERI[0]);
         ui->doubleSpinBox_12->setValue(LPERI[0]);
+
+        ui->doubleSpinBox_13->setValue(PER[0]/10);
+        ui->doubleSpinBox_14->setValue(ECC[0]/10);
+        ui->doubleSpinBox_15->setValue(AMPA[0]/10);
+        ui->doubleSpinBox_16->setValue(AMPB[0]/10);
+        ui->doubleSpinBox_17->setValue(GAM[0]/10);
+        ui->doubleSpinBox_18->setValue(PER[0]/10);
+        ui->doubleSpinBox_19->setValue(LPERI[0]/20);
 
     }
 
@@ -298,6 +317,14 @@ void Edit::on_pushButton_10_clicked(){
     ui->doubleSpinBox_10->setValue(GAM[dey]);
     ui->doubleSpinBox_11->setValue(PERI[dey]);
     ui->doubleSpinBox_12->setValue(LPERI[dey]);
+
+    ui->doubleSpinBox_13->setValue(PER[dey]/10);
+    ui->doubleSpinBox_14->setValue(ECC[dey]/10);
+    ui->doubleSpinBox_15->setValue(AMPA[dey]/10);
+    ui->doubleSpinBox_16->setValue(AMPB[dey]/10);
+    ui->doubleSpinBox_17->setValue(GAM[dey]/10);
+    ui->doubleSpinBox_18->setValue(PER[dey]/10);
+    ui->doubleSpinBox_19->setValue(LPERI[dey]/20);
 
 }
 
@@ -640,10 +667,11 @@ void Edit::on_pushButton_15_clicked()
 //*******************************************
 void Edit::on_pushButton_16_clicked()
 {
-    QMessageBox::information(this, "Help", "In the upper three tables, you can specify the component strength for binary components A, B, and telluric (static) component. Thes strengths have to add to one in each row."
+    QMessageBox::information(this, "Help", "In the upper three tables, you can specify the component strength for binary components A, B, and telluric (static) component. These strengths have to add to one in each row.\n"
+                                           "If nothing is specified here, the overall value from the main window is used - do not apply anything here!"
                                            "\nYou can also load a file with ratios (one column, one row per spectrum) with the Load Ratios button at top."
                                            "\nThe 8 line edits at bottom are used to spedify points in the disentangled spectra to compute a linear function. The slope of the function can be used for optimization on flux ratios."
-                                           " Left two columns of these line edits for component A right for B, top ones for left, bottom for right point. See manual for more details.\n"
+                                           " Left two columns of these line edits refer for component A right to B, top ones for left, bottom for right point. See manual for more details.\n"
                                            "Hit the Apply button(s) to create a file with your definitions.\n"
                                            "Reset button will delete the file with the user defined values.");
 }
@@ -653,7 +681,8 @@ void Edit::on_pushButton_16_clicked()
 //*****************************************
 void Edit::on_pushButton_17_clicked()
 {
-    QMessageBox::information(this, "Halp", "The coef. for the transfomations of the simplex done by the Downhill-Simplex algorithm implemented, can be specified here. If not given, the default values given here are used."
+    QMessageBox::information(this, "Help", "The coef. for the transfomations of the simplex used by the Downhill-Simplex algorithm implemented, can be specified here. If not given, the default values given here are used.\n"
+                                           "To use the default values, do not click the Apply button.\n"
                                            "\nHit the Apply button to create a file with your definitions."
                                            "\nReset button will delete the file with the user defined values.");
 }
@@ -663,7 +692,8 @@ void Edit::on_pushButton_17_clicked()
 //****************************************
 void Edit::on_pushButton_18_clicked()
 {
-    QMessageBox::information(this, "Help", "The optimization algorithm creates an initial simplex. This is done by specifying step sizes, added to the initial values of the corresponding variables n to construct a simplex n+1 points.\n"
+    QMessageBox::information(this, "Help", "The optimization algorithm creates an initial simplex. This is done by specifying step sizes, added to the initial values of the corresponding variables n to construct a simplex with n+1 points.\n"
+                                           "To use the default values, do not click the Apply button.\n"
                                            "Step size is used for optimization on radial velocities and is given here as multiples of the pixel size in velocity space (output on main window).\n"
                                            "Optimization on flux ratios uses the step size as well, but multiplied by 0.1."
                                            "\nHit the Apply button to create a file with your definitions."
@@ -677,7 +707,7 @@ void Edit::on_pushButton_19_clicked()
 {
     QMessageBox::information(this, "Help", "The orbital elements used as start values for the optimization are set here.\n"
                                            "Orbital elements can also be loaded from the drop-down menu. Add an orbit to the file BinaryData.dat if not present in the list."
-                                           "\nThis setting is mandatory for optimization on orbital elements!."
+                                           "\nThis setting is mandatory for optimization on orbital elements!"
                                            "\nHit the Apply button to create a file with your definitions."
                                            "\nReset button will delete the file with the user defined values.");
 }

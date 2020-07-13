@@ -18,15 +18,17 @@
 #include <CCfits/CCfits>
 #include <ctime>
 #include <chrono>
-#include <thread>
+//#include <thread>
 #include <QFileInfo>
-#include <cblas.h>
+//#include <cblas.h>
 
 using namespace std;
 using namespace arma;
 using namespace arpack;
 using namespace blas;
 using std::chrono::system_clock;
+
+mat ZZ(2,3);
 
 int reinitiate=0, mini, CDI, maxi, num, checker=0, bso1, bso2, logbin, RV1m, RV3m, RV1a, RV3a, Mn, Mm, elements, bidi=0, error=0, zaehler, abortt=0, eval=0;
 int upda;       // live update
@@ -83,20 +85,20 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->lineEdit->setText("binaryrv_");
     ui->lineEdit_2->setText("velocities.txt");
-    ui->lineEdit_3->setText("spectra2m_");
+    ui->lineEdit_3->setText("rebined_spectra_");
     ui->lineEdit_18->setText("times.dat");
     ui->lineEdit_4->setText(QDir::currentPath());
     qPath=ui->lineEdit_4->text();
     path = qPath.toUtf8().constData();
 
-    ui->lineEdit_14->setText("initval_2orb.dat");
+    ui->lineEdit_14->setText("initval_star_orb.dat");
     qInitval = ui->lineEdit_14->text();
-    ui->lineEdit_15->setText("initmat_2orb.dat");
+    ui->lineEdit_15->setText("initmat_star_orb.dat");
     qInitmat = ui->lineEdit_15->text();
 
-    ui->lineEdit_16->setText("optval_2orb.dat");
+    ui->lineEdit_16->setText("optval_star_orb.dat");
     qOptval = ui->lineEdit_16->text();
-    ui->lineEdit_17->setText("optmat_2orb.dat");
+    ui->lineEdit_17->setText("optmat_star_orb.dat");
     qOptmat = ui->lineEdit_17->text();
 
     ui->lineEdit_6->setText("0");
@@ -135,14 +137,10 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->doubleSpinBox_4->setValue(1);
     fluxratio=ui->doubleSpinBox_4->value();
 
-    ui->lineEdit_5->setText("SN100_2orb_1.txt");
-    ui->lineEdit_8->setText("SN100_2orb_2.txt");
-    ui->lineEdit_10->setText("tell.txt");
-    ui->lineEdit_13->setText("SN100_2orb_diff.txt");
-    ui->lineEdit_20->setText("SN100_2orb_error.txt");
-    ui->lineEdit_21->setText("logfile_2orb.dat");
+    ui->lineEdit_26->setText("txt");
+    ui->lineEdit_25->setText("star_orb");
 
-    string slfile = "Ha_vel_conf";
+    string slfile = "star_orb_conf";
     QString qslfile = QString::fromStdString(slfile);
 
     ui->lineEdit_22->setText(qslfile);
@@ -210,15 +208,6 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->customPlot_4->yAxis->setLabel("Residuum");
     ui->customPlot_4->xAxis->setLabel("Iterations");
 
-    ui->pushButton->setStyleSheet("QPushButton{background: transparent; border: 1px solid black;}");
-    ui->pushButton_2->setStyleSheet("QPushButton{background: transparent; border: 1px solid black;}");
-    ui->pushButton_3->setStyleSheet("QPushButton{background: transparent; border: 1px solid black;}");
-    ui->pushButton_4->setStyleSheet("QPushButton{background: transparent; border: 1px solid black;}");
-    ui->pushButton_5->setStyleSheet("QPushButton{background: transparent; border: 1px solid black;}");
-    ui->pushButton_6->setStyleSheet("QPushButton{background: transparent; color: black;  border: 1px solid black;}");
-    ui->pushButton_7->setStyleSheet("QPushButton{background: transparent; border: 1px solid black;}");
-    ui->pushButton_8->setStyleSheet("QPushButton{background: transparent; color: black;  border: 1px solid black;}");
-
     ui->doubleSpinBox->setStyleSheet("QDoubleSpinBox{background: transparent; border: 1px solid black;}");
     ui->doubleSpinBox_2->setStyleSheet("QDoubleSpinBox{background: transparent; border: 1px solid black;}");
     ui->doubleSpinBox_3->setStyleSheet("QDoubleSpinBox{background: transparent; border: 1px solid black;}");
@@ -270,61 +259,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->lineEdit_25->setStyleSheet("QLineEdit{background: transparent; color: black; border: 1px solid black;}");
     ui->lineEdit_26->setStyleSheet("QLineEdit{background: transparent; color: black; border: 1px solid black;}");
     ui->lineEdit_27->setStyleSheet("QLineEdit{background: transparent; color: black; border: 1px solid black;}");
-
-    ui->label->setStyleSheet("QLabel{background: transparent; color: black;}");
-    ui->label_2->setStyleSheet("QLabel{background: transparent; color: black;}");
-    ui->label_3->setStyleSheet("QLabel{background: transparent; color: black;}");
-    ui->label_4->setStyleSheet("QLabel{background: transparent; color: black;}");
-    ui->label_5->setStyleSheet("QLabel{background: transparent; color: black;}");
-    ui->label_6->setStyleSheet("QLabel{background: transparent; color: black;}");
-    ui->label_7->setStyleSheet("QLabel{background: transparent; color: black;}");
-    ui->label_8->setStyleSheet("QLabel{background: transparent; color: black;}");
-    ui->label_10->setStyleSheet("QLabel{background: transparent; color: black;}");
-    ui->label_11->setStyleSheet("QLabel{background: transparent; color: black;}");
-    ui->label_12->setStyleSheet("QLabel{background: transparent; color: black;}");
-    ui->label_13->setStyleSheet("QLabel{background: transparent; color: black;}");
-    ui->label_14->setStyleSheet("QLabel{background: transparent; color: black;}");
-    ui->label_15->setStyleSheet("QLabel{background: transparent; color: black;}");
-    ui->label_16->setStyleSheet("QLabel{background: transparent; color: black;}");
-    ui->label_17->setStyleSheet("QLabel{background: transparent; color: black;}");
-    ui->label_18->setStyleSheet("QLabel{background: transparent; color: black;}");
-    ui->label_19->setStyleSheet("QLabel{background: transparent; color: black;}");
-    ui->label_20->setStyleSheet("QLabel{background: transparent; color: black;}");
-    ui->label_21->setStyleSheet("QLabel{background: transparent; color: black;}");
-    ui->label_22->setStyleSheet("QLabel{background: transparent; color: black;}");
-    ui->label_23->setStyleSheet("QLabel{background: transparent; color: black;}");
-    ui->label_24->setStyleSheet("QLabel{background: transparent; color: black;}");
-    ui->label_25->setStyleSheet("QLabel{background: transparent; color: black;}");
-    ui->label_26->setStyleSheet("QLabel{background: transparent; color: black;}");
-    ui->label_27->setStyleSheet("QLabel{background: transparent; color: black;}");
-    ui->label_28->setStyleSheet("QLabel{background: transparent; color: black;}");
-    ui->label_29->setStyleSheet("QLabel{background: transparent; color: black;}");
-    ui->label_30->setStyleSheet("QLabel{background: transparent; color: black;}");
-    ui->label_31->setStyleSheet("QLabel{background: transparent; color: black;}");
-
-    /*
-    ui->checkBox->setStyleSheet("QCheckBox{color: black;}");
-    ui->checkBox_2->setStyleSheet("QCheckBox{background: transparent; color: black;}");
-    ui->checkBox_3->setStyleSheet("QCheckBox{background: transparent; color: black;}");
-    ui->checkBox_4->setStyleSheet("QCheckBox{background: transparent; color: black;}");
-    ui->checkBox_5->setStyleSheet("QCheckBox{background: transparent; color: black;}");
-    ui->checkBox_6->setStyleSheet("QCheckBox{background: transparent; color: black;}");
-    ui->checkBox_7->setStyleSheet("QCheckBox{background: transparent; color: black;}");
-    ui->checkBox_8->setStyleSheet("QCheckBox{background: transparent; color: black;}");
-    ui->checkBox_9->setStyleSheet("QCheckBox{background: transparent; color: black;}");
-    ui->checkBox_10->setStyleSheet("QCheckBox{background: transparent; color: black;}");
-    ui->checkBox_11->setStyleSheet("QCheckBox{background: transparent; color: black;}");
-    ui->checkBox_12->setStyleSheet("QCheckBox{background: transparent; color: black;}");
-    ui->checkBox_13->setStyleSheet("QCheckBox{background: transparent; color: black;}");
-    ui->checkBox_14->setStyleSheet("QCheckBox{background: transparent; color: black;}");
-    ui->checkBox_15->setStyleSheet("QCheckBox{background: transparent; color: black;}");
-    ui->checkBox_16->setStyleSheet("QCheckBox{background: transparent; color: black;}");
-    ui->checkBox_17->setStyleSheet("QCheckBox{background: transparent; color: black;}");
-    ui->checkBox_18->setStyleSheet("QCheckBox{background: transparent; color: black;}");
-    ui->checkBox_32->setStyleSheet("QCheckBox{background: transparent; color: black;}");
-    ui->checkBox_33->setStyleSheet("QCheckBox{background: transparent; color: black;}");
-    ui->checkBox_35->setStyleSheet("QCheckBox{background: transparent; color: black;}");
-    */
+    ui->lineEdit_28->setStyleSheet("QLineEdit{background: transparent; color: black; border: 1px solid black;}");
 
     connect(ui->customPlot, SIGNAL(mouseMove(QMouseEvent*)), this ,SLOT(showPointToolTip(QMouseEvent*)));
     connect(ui->customPlot_3, SIGNAL(mouseMove(QMouseEvent*)), this ,SLOT(showPointToolTip_3(QMouseEvent*)));
@@ -334,6 +269,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->spinBox_7->setValue(cores);
     ui->spinBox_8->setValue(cores);
+    ui->spinBox_8->setMaximum(cores);
 
     //cout<<"Run optimization now? 0 no, 1 yes: "<<endl;
     //cin>>runow;
@@ -550,15 +486,15 @@ void MainWindow::read_data(){
             ifstream dat1(dat1Name.c_str());
 
             dat1 >> eins >>zwei;
-            istringstream ist(eins);
-            ist >> RV1[g-mini];
-            istringstream ist2(zwei);
-            ist2 >> RV2[g-mini];
-            RV3[g-mini]=RV1[g-mini]+RV2[g-mini];
-            if(ui->checkBox_13->isChecked()){
-            RV1[g-mini]=-RV1[g-mini];
-            RV3[g-mini]=-RV3[g-mini];
-            }
+                istringstream ist(eins);
+                ist >> RV1[g-mini];
+                istringstream ist2(zwei);
+                ist2 >> RV2[g-mini];
+                RV3[g-mini]=RV1[g-mini]+RV2[g-mini];
+                if(ui->checkBox_13->isChecked()){
+                    RV1[g-mini]=-RV1[g-mini];
+                    RV3[g-mini]=-RV3[g-mini];
+                }
 
             QString index= QString::number(g);
             QString velocity=QString::number(RV1[g-mini]);
@@ -566,8 +502,10 @@ void MainWindow::read_data(){
             QString sum=QString::number(RV3[g-mini]);
             ui->plainTextEdit->appendPlainText(index+" "+velocity+" "+doppler+" "+sum);
 
+            dat1.close();
             }
         }
+
         //from your file
         if(ui->checkBox_2->isChecked()){
             checker=2;
@@ -704,6 +642,7 @@ void MainWindow::read_data(){
                     istringstream istr(eins);
                     istr >> otimes[g];
                 }
+                dat.close();
             }
 
             string orbit = "orbitelements.dat";
@@ -735,6 +674,7 @@ void MainWindow::read_data(){
                     istringstream istr1(eins);
                     istr1 >> orbele[i];
                 }
+                initorbit.close();
             }
 
             MainWindow::VAmplitudeA();
@@ -1008,6 +948,7 @@ void MainWindow::read_data(){
                             istringstream istr(eins);
                             istr >> otimes[g];
                         }
+                        dat.close();
                     }
                 }
 
@@ -1031,13 +972,16 @@ void MainWindow::read_data(){
                     error=1;
                    return;
                 }
+                else{
 
-                ifstream initorbit(orbName.c_str());
+                    ifstream initorbit(orbName.c_str());
 
-                for(int i=0; i<7; i++){
-                    initorbit >> eins;
-                    istringstream istr1(eins);
-                    istr1 >> orbele[i];
+                    for(int i=0; i<7; i++){
+                        initorbit >> eins;
+                        istringstream istr1(eins);
+                        istr1 >> orbele[i];
+                    }
+                    initorbit.close();
                 }
 
                 MainWindow::VAmplitudeA();
@@ -1050,9 +994,6 @@ void MainWindow::read_data(){
                     ui->plainTextEdit->appendPlainText(index+" "+velocity);
                     cout<<RV1[i]<<endl;
                 }
-            }
-            else{
-                //
             }
 
             //looking for maximum RV absolute
@@ -1159,60 +1100,64 @@ void MainWindow::read_data(){
                 error=1;
                 return;
             }
-            ifstream dat3(dat3Name.c_str());
+            else{
+                ifstream dat3(dat3Name.c_str());
 
-            CCfits::FITS::setVerboseMode(true);
+                CCfits::FITS::setVerboseMode(true);
 
-            try
-            {
+                try
+                {
 
-                //open file for reading
-                shared_ptr<CCfits::FITS> input_file(new CCfits::FITS(dat3Name.c_str(),CCfits::Read,true));
+                    //open file for reading
+                    shared_ptr<CCfits::FITS> input_file(new CCfits::FITS(dat3Name.c_str(),CCfits::Read,true));
 
-                // Create pointer to extension
-                CCfits::ExtHDU& datavector = input_file->extension(Extension);
+                    // Create pointer to extension
+                    CCfits::ExtHDU& datavector = input_file->extension(Extension);
 
-                // Read rows
-                CCfits::Column& column = datavector.column(WCol);
-                column.read(wave, 1, column.rows());
+                    // Read rows
+                    CCfits::Column& column = datavector.column(WCol);
+                    column.read(wave, 1, column.rows());
 
-                // Read rows
-                CCfits::Column& column2 = datavector.column(ICol);
-                column2.read(intens, 1, column2.rows());
+                    // Read rows
+                    CCfits::Column& column2 = datavector.column(ICol);
+                    column2.read(intens, 1, column2.rows());
 
-                logbin=wave.size();
+                    logbin=wave.size();
 
-                C.resize(logbin*num);
-                W.resize(logbin*num);
-                int grar =0;
+                    C.resize(logbin*num);
+                    W.resize(logbin*num);
+                    int grar =0;
 
-                for(int i=(g-mini)*logbin; i<(g-mini+1)*logbin; i++){
-                     W[i]=wave[grar];
-                     C[i]=intens[grar];
-                     ++grar;
+                    for(int i=(g-mini)*logbin; i<(g-mini+1)*logbin; i++){
+                         W[i]=wave[grar];
+                         C[i]=intens[grar];
+                         ++grar;
+                    }
+                    if(ui->checkBox_33->isChecked() & (g==mini)){
+                          if(ui->doubleSpinBox_14->value()<W[0] or (ui->doubleSpinBox_14->value()>W[logbin-1]) or (ui->doubleSpinBox_15->value()<W[0]) or (ui->doubleSpinBox_15->value()>W[logbin-1])){
+                              if(runow==0){
+                                  QMessageBox::information(this, "Error", "Error 16: Please check the wavelength range for residuum computation.");
+                              }
+                              else{
+                                  cout<<"Error 16: Please check the wavelength range for residuum computation."<<endl;
+                                  MainWindow::Input();
+                              }
+                              error=1;
+                              this->setCursor(QCursor(Qt::ArrowCursor));
+                              return;
+                          }
+                     }
+                     else{
+                        //
+                     }
+                     }
+                        catch (CCfits::FitsException&)
+                     {
+                    std::cerr << " Fits Exception Thrown by test function \n";
+                    }
                 }
-                if(ui->checkBox_33->isChecked() & (g==mini)){
-                  if(ui->doubleSpinBox_14->value()<W[0] or (ui->doubleSpinBox_14->value()>W[logbin-1]) or (ui->doubleSpinBox_15->value()<W[0]) or (ui->doubleSpinBox_15->value()>W[logbin-1])){
-                      if(runow==0){
-                          QMessageBox::information(this, "Error", "Error 16: Please check the wavelength range for residuum computation.");
-                      }
-                      else{
-                          cout<<"Error 16: Please check the wavelength range for residuum computation."<<endl;
-                          MainWindow::Input();
-                      }
-                      error=1;
-                      this->setCursor(QCursor(Qt::ArrowCursor));
-                      return;
-                  }
-               }
             }
-            catch (CCfits::FitsException&)
-
-             {
-              std::cerr << " Fits Exception Thrown by test function \n";
-              }
         }
-    }
 
     //input as ASCII-file
     else if(ui->comboBox->currentIndex()==1){
@@ -1586,7 +1531,7 @@ void MainWindow::read_data(){
                         if(m==n-a*logbin+bso1+bso2){
                             M(n,m)=Mtel[a];
                         }
-                        if(n+bso1-1-a*logbin+RV3a==m){
+                        else if(n+bso1-1-a*logbin+RV3a==m){
                             M(n,m)=Mval2[a];
                         }
                         else M(n,m)=Mval1[a];
@@ -1594,24 +1539,30 @@ void MainWindow::read_data(){
                             if(m==n-a*logbin+bso1+bso2){
                                 M(n,m+1)=Mtel[a];
                             }
-                            if(n+bso1-1-a*logbin+RV3a==m){
+                            else if(n+bso1-1-a*logbin+RV3a==m){
                                 M(n,m+1)=Mval2[a];
                             }
                             else M(n,m+1)=Mval1[a];
                             m=m+1;
                             ++elements;
                         }
+                        else{
+                            //
+                        }
                         ++elements;
                     }
-                    if(bidi==0){
+                    else if(bidi==0){
                         if(m==n-a*logbin+bso1+bso2){
                             M(n,m)=Mtel[a];
                         }
-                        if(n+bso1-1-a*logbin+RV3a==m){
+                        else if(n+bso1-1-a*logbin+RV3a==m){
                             M(n,m)=Mval2[a];
                         }
                         else M(n,m)=Mval1[a];
                         ++elements;
+                    }
+                    else{
+                        //
                     }
                 }
                 else{
@@ -1640,7 +1591,7 @@ void MainWindow::read_data(){
                     RV3a=abs(RV2cmin)+RV3c[a];
                 }
             }
-            if(n==logbin+a*logbin){
+            else if(n==logbin+a*logbin){
                 a+=1;
 
                 if(RV1cmin>0){
@@ -1656,6 +1607,9 @@ void MainWindow::read_data(){
                 else{
                     RV3a=abs(RV2cmin)+RV3c[a];
                 }
+            }
+            else{
+                //
             }
 
             for (int m=0; m<Mm; m++){
@@ -1678,7 +1632,7 @@ void MainWindow::read_data(){
                         }
                         ++elements;
                     }
-                    if(bidi==0){
+                    else if(bidi==0){
                         if(n-a*logbin+RV1a==m){
 
                             M(n,m)=Mval1[a];
@@ -1701,7 +1655,7 @@ void MainWindow::read_data(){
     //file1<<M<<endl;
 
     //matrix for SB1 system
-    if(ui->checkBox_3->isChecked()){
+    else if(ui->checkBox_3->isChecked()){
 
         //constructing initial transformation matrix with tellric lines
         if(ui->checkBox_8->isChecked()){
@@ -1750,7 +1704,7 @@ void MainWindow::read_data(){
                             }
                             ++elements;
                         }
-                        if(bidi==0){
+                        else if(bidi==0){
                             if(m==n-a*logbin+bso1){
                                 M(n,m)=Mtel[a];
                             }
@@ -1805,9 +1759,12 @@ void MainWindow::read_data(){
                              m=m+1;
                              ++elements;
                           }
+                          else{
+                              //
+                          }
                           ++elements;
                        }
-                       if(bidi==0){
+                       else if(bidi==0){
                           M(n,m)=Mval1[a];
                           ++elements;
                        }
@@ -1826,7 +1783,7 @@ void MainWindow::read_data(){
 
     //matrix for SB3 systems without telluric
 
-    if(ui->checkBox_34->isChecked()){
+    else if(ui->checkBox_34->isChecked()){
 
         // with tellurics
         if(ui->checkBox_8->isChecked()){
@@ -1921,7 +1878,6 @@ void MainWindow::on_pushButton_3_clicked()
         MainWindow::enableButtons();
         return;
     }
-
     else{
         residu=0;
     }
@@ -2017,6 +1973,9 @@ void MainWindow::on_pushButton_3_clicked()
                         ++index3;
                     }
                 }
+                else{
+
+                }
             }
             index1=0;
             index2=0;
@@ -2036,25 +1995,24 @@ void MainWindow::on_pushButton_3_clicked()
             ofstream file4(file2Name.c_str());
 
             for(int i=0; i<Mm-1; i++){
-            X(i)=(X(i)+X(i+1))/2;
-            if(i<bso1){
+                X(i)=(X(i)+X(i+1))/2;
+                if(i<bso1){
 
-            file3<<setprecision(14)<<pow(10,(W(0)+(2*index1-RV1maxi/dv)*difference))<<"\t"<<X(i)<<endl;
-            //file3<<setprecision(14)<<pow(10,(W(i)-(RV1maxi/dv)*difference))<<"\t"<<X(i)<<endl;
-            ++index1;
-            }
-            if((i>=bso1) & (i<bso1+bso2)){
-
-                file4<<setprecision(14)<<pow(10,(W(0)+(index2*2+-RV3maxi/dv)*difference))<<"\t"<<X(i)<<endl;
-                //file4<<setprecision(14)<<pow(10,(W(i)-(RV3maxi/dv)*difference))<<"\t"<<X(i)<<endl;
-                ++index2;
-            }
-            if(i>=bso1+bso2){
-                tell<<setprecision(14)<<pow(10,(W(0)+2*index3*difference))<<"\t"<<X(i)<<endl;
-                //tell<<setprecision(14)<<pow(10,W(i))<<"\t"<<X(i)<<endl;
-                ++index3;
-            }
-            i=i+2;
+                    file3<<setprecision(14)<<pow(10,(W(0)+(2*index1-RV1maxi/dv)*difference))<<"\t"<<X(i)<<endl;
+                    //file3<<setprecision(14)<<pow(10,(W(i)-(RV1maxi/dv)*difference))<<"\t"<<X(i)<<endl;
+                    ++index1;
+                }
+                else if((i>=bso1) & (i<bso1+bso2)){
+                    file4<<setprecision(14)<<pow(10,(W(0)+(index2*2+-RV3maxi/dv)*difference))<<"\t"<<X(i)<<endl;
+                    //file4<<setprecision(14)<<pow(10,(W(i)-(RV3maxi/dv)*difference))<<"\t"<<X(i)<<endl;
+                    ++index2;
+                }
+                else if(i>=bso1+bso2){
+                    tell<<setprecision(14)<<pow(10,(W(0)+2*index3*difference))<<"\t"<<X(i)<<endl;
+                    //tell<<setprecision(14)<<pow(10,W(i))<<"\t"<<X(i)<<endl;
+                    ++index3;
+                }
+                i=i+2;
             }
         }
         index1=0;
@@ -2064,10 +2022,12 @@ void MainWindow::on_pushButton_3_clicked()
         res=M*X;
 
         for(int i=0; i<Mn; i++){
-
             if(res(i)>10*tsh){
                 file5<<setprecision(14)<<pow(10,W(i))<<" "<<res(i)-C(i)<<endl;
                 residu+=pow((res(i)-C(i)),2);
+            }
+            else{
+                //
             }
         }
 
@@ -2120,7 +2080,9 @@ void MainWindow::on_actionAbout_triggered()
     QMessageBox::information(this, "About", "This open-source software was developed at Leibniz-Institute for Astrophysics Potsdam (Germany) by\n\n "
                                             "Daniel P. Sablowski\n\n"
                                             "Version 1.0 2019\n\n"
-                                            "It makes use of the 'Armadillo' C++ linear algebra library, OpenBLAS, CCfits and libraries therein. It is provided AS IS WITHOUT WARRANTY of ANY KIND.\n\n"
+                                            "It makes use of the 'Armadillo' C++ linear algebra library, OpenBLAS, CCfits and libraries therein.\n"
+                                            "It uses the spline.h from https://kluge.in-chemnitz.de/opensource/spline/ \n"
+                                            "It is provided AS IS WITHOUT WARRANTY of ANY KIND.\n\n"
                                             "Licensed under the Apache 2.0 licence conditions.");
 }
 
@@ -2316,40 +2278,39 @@ void MainWindow::on_pushButton_5_clicked()
 
             for(j=0; j<Mm;j++){
                 if(abs(X(j))>10*tsh){
+                    if(j<bso1){
+                        file9<<setprecision(14)<<W(j)<<"\t"<<X(j)<<endl;
 
-                if(j<bso1){
+                        //if(ui->checkBox_4->isChecked()){
+                        //    X(j)=X(j)+(fluxratio/(fluxratio+1)-0.5);
+                        //}
 
-                    file9<<setprecision(14)<<W(j)<<"\t"<<X(j)<<endl;
+                        file1<<setprecision(14)<<pow(10,(W(0)+(index1-(RV3maxi+orbele[4])/dv)*difference))<<"\t"<<(X(j))<<endl;
+                        //file1<<setprecision(14)<<pow(10,(W(j)-((RV3maxi+orbele[4])/dv)*difference))<<"\t"<<(X(j))<<endl;
+                        ++index1;
+                    }
+                    if((j>=bso1)&(j<bso1+bso2)){
 
-                    //if(ui->checkBox_4->isChecked()){
-                    //    X(j)=X(j)+(fluxratio/(fluxratio+1)-0.5);
-                    //}
+                        file10<<setprecision(14)<<W(j)<<"\t"<<X(j)<<endl;
 
-                    file1<<setprecision(14)<<pow(10,(W(0)+(index1-(RV3maxi+orbele[4])/dv)*difference))<<"\t"<<(X(j))<<endl;
-                    //file1<<setprecision(14)<<pow(10,(W(j)-((RV3maxi+orbele[4])/dv)*difference))<<"\t"<<(X(j))<<endl;
-                    ++index1;
-                }
-                if((j>=bso1)&(j<bso1+bso2)){
+                        //if(ui->checkBox_4->isChecked()){
+                        //    X(j)=X(j)+(1.0/(fluxratio+1)-0.5);
+                        //}
+                        file2<<setprecision(14)<<pow(10,(W(0)+(index2-(RV1maxi+orbele[4])/dv)*difference))<<"\t"<<(X(j))<<endl;
+                        //file2<<setprecision(14)<<pow(10,(W(j)-((RV1maxi+orbele[4])/dv)*difference))<<"\t"<<(X(j))<<endl;
+                        ++index2;
+                    }
+                    if(j>=bso1+bso2){
 
-                    file10<<setprecision(14)<<W(j)<<"\t"<<X(j)<<endl;
-
-                    //if(ui->checkBox_4->isChecked()){
-                    //    X(j)=X(j)+(1.0/(fluxratio+1)-0.5);
-                    //}
-                    file2<<setprecision(14)<<pow(10,(W(0)+(index2-(RV1maxi+orbele[4])/dv)*difference))<<"\t"<<(X(j))<<endl;
-                    //file2<<setprecision(14)<<pow(10,(W(j)-((RV1maxi+orbele[4])/dv)*difference))<<"\t"<<(X(j))<<endl;
-                    ++index2;
-                }
-                if(j>=bso1+bso2){
-
-                    tell<<setprecision(14)<<pow(10,(W(0)+index3*difference))<<"\t"<<X(j)<<endl;
-                    //tell<<setprecision(14)<<pow(10,(W(j)))<<"\t"<<X(j)<<endl;
-                    ++index3;
+                        tell<<setprecision(14)<<pow(10,(W(0)+index3*difference))<<"\t"<<X(j)<<endl;
+                        //tell<<setprecision(14)<<pow(10,(W(j)))<<"\t"<<X(j)<<endl;
+                        ++index3;
+                    }
                 }
             }
-         }
+            int XSize= X.size();
 
-        for(int n=0; n<X.size(); n++){
+        for(int n=0; n<XSize; n++){
             file7<<n<<" "<<X(n)<<endl;
         }
         index1=0;
@@ -2380,7 +2341,7 @@ void MainWindow::on_pushButton_5_clicked()
                     file3<<setprecision(14)<<pow(10,(W(0)+(2*index1-(RV3maxi+orbele[4])/dv)*difference))<<"\t"<<X(i)<<endl;
                     ++index1;
                 }
-                if((i>=bso1) & (i<bso1+bso2)){
+                else if((i>=bso1) & (i<bso1+bso2)){
                     //X(i)=X(i)-0.5*(1/fluxratio+1)+fluxratio/(fluxratio+1);
                     file4<<setprecision(14)<<pow(10,(W(0)+(2*index2-(RV1maxi+orbele[4])/dv)*difference))<<"\t"<<X(i)<<endl;
                     ++index2;
@@ -2472,7 +2433,7 @@ void MainWindow::on_comboBox_currentIndexChanged()
         ui->lineEdit_12->setEnabled(true);
         ui->lineEdit_19->setText(".fits");
     }
-    if(ui->comboBox->currentIndex()==1){
+    else if(ui->comboBox->currentIndex()==1){
         ui->lineEdit_9->setEnabled(false);
         ui->lineEdit_11->setEnabled(false);
         ui->lineEdit_12->setEnabled(false);
@@ -2501,7 +2462,6 @@ void MainWindow::Optimisation()
     if(error==1){
         this->setCursor(QCursor(Qt::ArrowCursor));
         error=0;
-
         return;
     }
 
@@ -2602,10 +2562,10 @@ void MainWindow::Optimisation()
             if(i<num){
                 istr7>>Mtel[i];
             }
-            if((i>=num) & (i<2*num)){
+            else if((i>=num) & (i<2*num)){
                 istr7>>Mval1[i-num];
             }
-            if(i>=2*num){
+            else if(i>=2*num){
                 istr7>>Mval2[i-2*num];
             }
         }
@@ -2648,12 +2608,10 @@ void MainWindow::Optimisation()
         beta=optv[1];
         btot=optv[2];
         Gamma=optv[3];
-
     }
 
     else{
         LogFile<<"Default values for transformation coefficients used."<<endl;
-
         Gamma=2.0;
         alpha=1.0;
         beta=0.5;
@@ -2697,7 +2655,6 @@ void MainWindow::Optimisation()
     }
 
     else{
-
         LogFile<<"Default initial step size used."<<endl;
 
         step=3.0;
@@ -2805,12 +2762,12 @@ void MainWindow::Optimisation()
 
     for(int i=0; i<nu; i++){
         if(SB1==0){
-        if(i<nu/2){
-        P(0,i)=RV1[i];
-        }
-        else{
-        P(0,i)=RV3[i-nu/2];
-        }
+            if(i<nu/2){
+                P(0,i)=RV1[i];
+            }
+            else{
+                P(0,i)=RV3[i-nu/2];
+            }
         }
         if(SB1==1){
             P(0,i)=RV1[i];
@@ -2866,12 +2823,15 @@ void MainWindow::Optimisation()
                     LogFile<<RV1[i]<<endl;
                 }
             }
-            if(ui->checkBox_4->isChecked()){
+            else if(ui->checkBox_4->isChecked()){
                 for(int i = 0; i<nu/2;i++){
                     LogFile<<RV1[i]<<"\t"<<RV3[i]<<endl;
                 }
             }
             LogFile<<endl;
+        }
+        else {
+            //
         }
 
         if(abortt==1){
@@ -2886,11 +2846,14 @@ void MainWindow::Optimisation()
             r1 = y[i];
             MainWindow::on_pushButton_6_clicked();
         }
-        if(y[i] < r1){
+        else if(y[i] < r1){
             r1=y[i];
             if(ui->checkBox_10->isChecked()){
                 MainWindow::on_pushButton_6_clicked();
                 MainWindow::enableButtons();
+            }
+            else{
+                //
             }
         }
 
@@ -2906,7 +2869,7 @@ void MainWindow::Optimisation()
     }
 
     //continue with optimization data
-    if(ui->checkBox_11->isChecked()){
+    else if(ui->checkBox_11->isChecked()){
 
         string zeile, one;
 
@@ -2972,9 +2935,9 @@ void MainWindow::Optimisation()
             istringstream ist(one);
             ist >> y[i];
             if(i==0) r1=y[0];
-                if(y[i]<r1){
-                    r1=y[i];
-                }
+            else if(y[i]<r1){
+                r1=y[i];
+            }
             }
         ui->lineEdit_7->setText(QString::number(r1));
         initiate1.close();
@@ -2998,7 +2961,7 @@ void MainWindow::Optimisation()
     }
 
     //use initial data.
-    if(ui->checkBox_12->isChecked()){
+    else if(ui->checkBox_12->isChecked()){
 
         LogFile<<"Use available initial data."<<endl;
 
@@ -3057,13 +3020,16 @@ void MainWindow::Optimisation()
             MainWindow::enableButtons();
             return;
         }
+        else{
+            // do nothing
+        }
 
         for (int i=0; i<number_of_lines; i++){
             initiate1 >> one;
             istringstream ist(one);
             ist >> y[i];
             if(i==0) r1=y[0];
-                if(y[i]<r1){
+                else if(y[i]<r1){
                     r1=y[i];
                 }
             }
@@ -3073,14 +3039,17 @@ void MainWindow::Optimisation()
         int coun=0;
 
         for (int i=0; i<number_of_lines*nu; i++){
-        initiate2 >> one;
-        istringstream ist(one);
-        ist >> P(coun,i-coun*nu);
-        cout<<"P["<<coun<<"]["<<i-coun*nu<<"]: "<<P(coun,i-coun*nu)<<" ";
-        if(i==coun*nu+nu-1){
-            cout<<endl;
-            ++coun;
-        }
+            initiate2 >> one;
+            istringstream ist(one);
+            ist >> P(coun,i-coun*nu);
+            cout<<"P["<<coun<<"]["<<i-coun*nu<<"]: "<<P(coun,i-coun*nu)<<" ";
+            if(i==coun*nu+nu-1){
+                cout<<endl;
+                ++coun;
+            }
+            else{
+                //
+            }
         }
         initiate2.close();
 
@@ -3247,7 +3216,7 @@ void MainWindow::Optimisation()
                                 ReVel<<P(Pl,i)<<endl;
                             }
                         }
-                        if(ui->checkBox_4->isChecked()){
+                        else if(ui->checkBox_4->isChecked()){
                             for(int i = 0; i<nu/2;i++){
                                 ReVel<<P(Pl,i)<<"\t"<<P(Pl,i+nu/2)<<endl;
                             }
@@ -3287,7 +3256,7 @@ void MainWindow::Optimisation()
                             ReVel<<P(Pl,i)<<endl;
                         }
                     }
-                    if(ui->checkBox_4->isChecked()){
+                    else if(ui->checkBox_4->isChecked()){
                         for(int i = 0; i<nu/2;i++){
                             ReVel<<P(Pl,i)<<"\t"<<P(Pl,i+nu/2)<<endl;
                         }
@@ -3353,7 +3322,7 @@ void MainWindow::Optimisation()
                     RV3[i-nu/2]=Co[i];
                 }
             }
-            if(SB1==1){
+            else if(SB1==1){
                 RV1[i]=Co[i];
             }
         }
@@ -3374,7 +3343,7 @@ void MainWindow::Optimisation()
                     LogFile<<RV1[i]<<endl;
                 }
             }
-            if(ui->checkBox_4->isChecked()){
+            else if(ui->checkBox_4->isChecked()){
                 for(int i = 0; i<nu/2;i++){
                     LogFile<<RV1[i]<<"\t"<<RV3[i]<<endl;
                 }
@@ -3390,7 +3359,7 @@ void MainWindow::Optimisation()
                     LogFile<<P(Pl,i)<<endl;
                 }
             }
-            if(ui->checkBox_4->isChecked()){
+            else if(ui->checkBox_4->isChecked()){
                 for(int i = 0; i<nu/2;i++){
                     LogFile<<P(Pl,i)<<"\t"<<P(Pl,i+nu/2)<<endl;
                 }
@@ -3424,7 +3393,7 @@ void MainWindow::Optimisation()
                         RV3[i-nu/2]=Eo[i];
                     }
                 }
-                if(SB1==1){
+                else if(SB1==1){
                     RV1[i]=Eo[i];
                 }
             }
@@ -3445,7 +3414,7 @@ void MainWindow::Optimisation()
                         LogFile<<RV1[i]<<endl;
                     }
                 }
-                if(ui->checkBox_4->isChecked()){
+                else if(ui->checkBox_4->isChecked()){
                     for(int i = 0; i<nu/2;i++){
                         LogFile<<RV1[i]<<"\t"<<RV3[i]<<endl;
                     }
@@ -3461,7 +3430,7 @@ void MainWindow::Optimisation()
                         LogFile<<P(Pl,i)<<endl;
                     }
                 }
-                if(ui->checkBox_4->isChecked()){
+                else if(ui->checkBox_4->isChecked()){
                     for(int i = 0; i<nu/2;i++){
                         LogFile<<P(Pl,i)<<"\t"<<P(Pl,i+nu/2)<<endl;
                     }
@@ -3485,13 +3454,8 @@ void MainWindow::Optimisation()
                 for (int i=0; i<nu; i++){
                     P(Ph,i)=Eo[i];
                 }
-        /*
-        eval++;
-        ui->spinBox_5->setValue(eval);
-        qApp->processEvents(QEventLoop::AllEvents);
-        MainWindow::ConstructMatrix();
-        */
-            y[Ph]=yt;//MainWindow::DivideConquer();
+
+            y[Ph]=yt;
             if(abortt==1){
                 //output results
                 LogFile<<"Optimisation aborted. Current best RVs:"<<endl;
@@ -3500,7 +3464,7 @@ void MainWindow::Optimisation()
                         LogFile<<P(Pl,i)<<endl;
                     }
                 }
-                if(ui->checkBox_4->isChecked()){
+                else if(ui->checkBox_4->isChecked()){
                     for(int i = 0; i<nu/2;i++){
                         LogFile<<P(Pl,i)<<"\t"<<P(Pl,i+nu/2)<<endl;
                     }
@@ -3535,17 +3499,12 @@ void MainWindow::Optimisation()
                         RV3[i-nu/2]=Co[i];
                     }
                 }
-                if(SB1==1){
+                else if(SB1==1){
                     RV1[i]=Co[i];
                 }
             }
-        /*
-        eval++;
-        ui->spinBox_5->setValue(eval);
-        qApp->processEvents(QEventLoop::AllEvents);
-        MainWindow::ConstructMatrix();
-        */
-            y[Ph]=yi;//MainWindow::DivideConquer();
+
+            y[Ph]=yi;
             if(abortt==1){
                 //output results
                 LogFile<<"Optimisation aborted. Current best RVs:"<<endl;
@@ -3554,7 +3513,7 @@ void MainWindow::Optimisation()
                         LogFile<<P(Pl,i)<<endl;
                     }
                 }
-                if(ui->checkBox_4->isChecked()){
+                else if(ui->checkBox_4->isChecked()){
                     for(int i = 0; i<nu/2;i++){
                         LogFile<<P(Pl,i)<<"\t"<<P(Pl,i+nu/2)<<endl;
                     }
@@ -3594,17 +3553,12 @@ void MainWindow::Optimisation()
                             RV3[i-nu/2]=Co[i];
                         }
                     }
-                    if(SB1==1){
+                    else if(SB1==1){
                         RV1[i]=Co[i];
                     }
                 }
-        /*
-        eval++;
-        ui->spinBox_5->setValue(eval);
-        qApp->processEvents(QEventLoop::AllEvents);
-        MainWindow::ConstructMatrix();
-        */
-            y[Ph]=yi;//MainWindow::DivideConquer();
+
+            y[Ph]=yi;
             if(abortt==1){
                 //output results
                 LogFile<<"Optimisation aborted. Current best RVs:"<<endl;
@@ -3613,7 +3567,7 @@ void MainWindow::Optimisation()
                         LogFile<<P(Pl,i)<<endl;
                     }
                 }
-                if(ui->checkBox_4->isChecked()){
+                else if(ui->checkBox_4->isChecked()){
                     for(int i = 0; i<nu/2;i++){
                         LogFile<<P(Pl,i)<<"\t"<<P(Pl,i+nu/2)<<endl;
                     }
@@ -3652,17 +3606,12 @@ void MainWindow::Optimisation()
                             RV3[i-nu/2]=Co[i];
                         }
                     }
-                    if(SB1==1){
+                    else if(SB1==1){
                         RV1[i]=Co[i];
                     }
                 }
-        /*
-        eval++;
-        ui->spinBox_5->setValue(eval);
-        qApp->processEvents(QEventLoop::AllEvents);
-        MainWindow::ConstructMatrix();
-        */
-            y[Ph]=yi;//MainWindow::DivideConquer();
+
+            y[Ph]=yi;
             if(abortt==1){
                 //output results
                 LogFile<<"Optimisation aborted. Current best RVs:"<<endl;
@@ -3671,7 +3620,7 @@ void MainWindow::Optimisation()
                         LogFile<<P(Pl,i)<<endl;
                     }
                 }
-                if(ui->checkBox_4->isChecked()){
+                else if(ui->checkBox_4->isChecked()){
                     for(int i = 0; i<nu/2;i++){
                         LogFile<<P(Pl,i)<<"\t"<<P(Pl,i+nu/2)<<endl;
                     }
@@ -3704,7 +3653,7 @@ void MainWindow::Optimisation()
                     RV3[i-nu/2]=So[i];
                 }
             }
-            if(SB1==1){
+            else if(SB1==1){
                 RV1[i]=So[i];
             }
         }
@@ -3725,7 +3674,7 @@ void MainWindow::Optimisation()
                     LogFile<<RV1[i]<<endl;
                 }
             }
-            if(ui->checkBox_4->isChecked()){
+            else if(ui->checkBox_4->isChecked()){
                 for(int i = 0; i<nu/2;i++){
                     LogFile<<RV1[i]<<"\t"<<RV3[i]<<endl;
                 }
@@ -3741,7 +3690,7 @@ void MainWindow::Optimisation()
                     LogFile<<P(Pl,i)<<endl;
                 }
             }
-            if(ui->checkBox_4->isChecked()){
+            else if(ui->checkBox_4->isChecked()){
                 for(int i = 0; i<nu/2;i++){
                     LogFile<<P(Pl,i)<<"\t"<<P(Pl,i+nu/2)<<endl;
                 }
@@ -3777,7 +3726,7 @@ void MainWindow::Optimisation()
                             RV3[i-nu/2]=P(j,i);
                         }
                     }
-                    if(SB1==1){
+                    else if(SB1==1){
                         RV1[i]=P(j,i);
                     }
                 }
@@ -3800,7 +3749,7 @@ void MainWindow::Optimisation()
                     LogFile<<RV1[i]<<endl;
                 }
             }
-            if(ui->checkBox_4->isChecked()){
+            else if(ui->checkBox_4->isChecked()){
                 for(int i = 0; i<nu/2;i++){
                     LogFile<<RV1[i]<<"\t"<<RV3[i]<<endl;
                 }
@@ -3816,7 +3765,7 @@ void MainWindow::Optimisation()
                     LogFile<<P(Pl,i)<<endl;
                 }
             }
-            if(ui->checkBox_4->isChecked()){
+            else if(ui->checkBox_4->isChecked()){
                 for(int i = 0; i<nu/2;i++){
                     LogFile<<P(Pl,i)<<"\t"<<P(Pl,i+nu/2)<<endl;
                 }
@@ -3852,17 +3801,12 @@ void MainWindow::Optimisation()
                         RV3[i-nu/2]=So[i];
                     }
                 }
-                if(SB1==1){
+                else if(SB1==1){
                     RV1[i]=So[i];
                 }
             }
-        /*
-        eval++;
-        ui->spinBox_5->setValue(eval);
-        qApp->processEvents(QEventLoop::AllEvents);
-        MainWindow::ConstructMatrix();
-        */
-        y[Ph]=yt;//MainWindow::DivideConquer();
+
+        y[Ph]=yt;
         if(abortt==1){
             //output results
             LogFile<<"Optimisation aborted. Current best RVs:"<<endl;
@@ -3871,7 +3815,7 @@ void MainWindow::Optimisation()
                     LogFile<<P(Pl,i)<<endl;
                 }
             }
-            if(ui->checkBox_4->isChecked()){
+            else if(ui->checkBox_4->isChecked()){
                 for(int i = 0; i<nu/2;i++){
                     LogFile<<P(Pl,i)<<"\t"<<P(Pl,i+nu/2)<<endl;
                 }
@@ -3943,7 +3887,7 @@ void MainWindow::Optimisation()
                 LogFile<<P(Pl,i)<<endl;
             }
         }
-        if(ui->checkBox_4->isChecked()){
+        else if(ui->checkBox_4->isChecked()){
             for(int i = 0; i<nu/2;i++){
                 LogFile<<P(Pl,i)<<" "<<P(Pl,i+nu/2)<<endl;
             }
@@ -3957,9 +3901,8 @@ void MainWindow::Optimisation()
     }
 
       //optimization on orbit**********************************************************
-          if(ui->checkBox_16->isChecked()){
+      else{
 
-              //int Plock=0, elock=0, T0lock=0;
               nu=7;
               int add=0;
 
@@ -4024,27 +3967,8 @@ void MainWindow::Optimisation()
 
               LogFile<<"Optimisation on orbital parameters."<<endl;
 
-              /*
-              if(ui->checkBox_18->isChecked()){ // lock P
-                  ++add;
-                  Plock = 1;
-                  LogFile<<"P locked ";
-              }
-
-              if(ui->checkBox_17->isChecked()){ // lock e
-                  ++add;
-                  elock = 1;
-                  LogFile<<"e locked ";
-              }
-
-              if(ui->checkBox_35->isChecked()){ // lock T0
-                  ++add;
-                  T0lock = 1;
-                  LogFile<<"T0 locked"<<endl;
-              }*/
-
               nu = nu-add;
-              cout<<"add: "<<add<<endl;
+              //cout<<"add: "<<add<<endl;
 
               LogFile<<endl;
 
@@ -4145,58 +4069,6 @@ void MainWindow::Optimisation()
                       else{
                           //
                       }
-                      /*
-                      if(add==0){
-                      P[0][i]=orbele[i];
-                      }
-                      if(add==1){
-                          if(Plock==1){
-                              P[0][i]=orbele[i+1];
-                          }
-                          if(elock==1){
-                              if(i==0){
-                                  P[0][i]=orbele[0];
-                              }
-                              if(i>0){
-                                  P[0][i]=orbele[i+1];
-                              }
-                          }
-                          if(T0lock==1){
-                              if(i==5){
-                                  P[0][i]=orbele[6];
-                              }
-                              else P[0][i]=orbele[i];
-                          }
-                      }
-                      if(add==2){
-                          if((Plock==1) & (elock==1)){
-                              P[0][i]=orbele[i+2];
-                          }
-                          if((Plock==1) & (T0lock==1)){
-                              if(i==4){
-                                  P[0][i]=orbele[6];
-                              }
-                              else P[0][i]=orbele[i+1];
-                          }
-                          if((elock==1) & (T0lock==1)){
-
-                              if(i==0){
-                                  P[0][i]=orbele[0];
-                              }
-                              if(i==1) P[0][i]=orbele[2];
-                              if(i==2) P[0][i]=orbele[3];
-                              if(i==3) P[0][i]=orbele[4];
-                              if(i==4){
-                                  P[0][i]=orbele[6];
-                              }
-                          }
-                      }
-                      if(add==3){
-                          if(i==0) P[0][i]=orbele[2];
-                          if(i==1) P[0][i]=orbele[3];
-                          if(i==2) P[0][i]=orbele[4];
-                          if(i==3) P[0][i]=orbele[6];
-                      }*/
                   }
                   cout<<endl;
                   LogFile<<endl;
@@ -4206,155 +4078,6 @@ void MainWindow::Optimisation()
                       for(int j=0; j<nu; j++){
                           if((i>0)&(i==j+1)){
                               e[i][j]=ddorbele[i-1];
-                              /*
-                              if(add == 0){  // nothing locked
-                                  if(j==0){
-                                      e[i][j]=dP;
-                                  }
-                                  if(j==1){
-                                      e[i][j]=de;
-                                  }
-                                  if(j==2){
-                                      e[i][j]=dKA;
-                                  }
-                                  if(j==3){
-                                      e[i][j]=dKB;
-                                  }
-                                  if(j==4){
-                                      e[i][j]=dGamma;
-                                  }
-                                  if(j==5){
-                                      e[i][j]=dT0;
-                                  }
-                                  if(j==6){
-                                      e[i][j]=dOmega;
-                                  }
-                              }
-                              if((add == 1) & (Plock == 1)){ // only P locked
-
-                              if(j==0){     //Eccentricity
-                                  e[i][j]=de;
-                              }
-                              if(j==1){       //Velocities
-                                  e[i][j]=dKA;
-                              }
-                              if(j==2){
-                                  e[i][j]=dKB;
-                              }
-                              if(j==3){
-                                  e[i][j]=dGamma;
-                              }
-                              if(j==4){     //periastron passage
-                                  e[i][j]=dT0;
-                              }
-                              if(j==5){     //length periastron
-                                  e[i][j]=dOmega;
-                              }
-                              }
-                              if((add == 1) & (elock==1)){ // only e locked
-                                  if(j==0){
-                                      e[i][j]=dP; // Period
-                                  }
-                                  if(j==1){ // Amplitudes
-                                      e[i][j]=dKA;
-                                  }
-                                  if(j==2){
-                                      e[i][j]=dKB;
-                                  }
-                                  if(j==3){
-                                      e[i][j]=dGamma;
-                                  }
-                                  if(j==4){
-                                      e[i][j]=dT0; // T0
-                                  }
-                                  if(j==5){
-                                      e[i][j]=dOmega; // periastron length
-                                  }
-                              }
-                              if((add==1) & (T0lock==1)){    // only T0 locked
-                                  if(j==0){
-                                      e[i][j]=dP; // Period
-                                  }if(j==1){
-                                      e[i][j]=de; // Eccentricity
-                                  }
-                                  if(j==2){ // Amplitudes
-                                      e[i][j]=dKA;
-                                  }
-                                  if(j==3){
-                                      e[i][j]=dKB;
-                                  }
-                                  if(j==4){
-                                      e[i][j]=dGamma;
-                                  }
-                                  if(j==5){
-                                      e[i][j]=dOmega; // periastron length
-                                  }
-                              }
-                              if((add==2) & (Plock == 1) & (elock ==1)){ // P and e locked
-                                  if(j==0){ // Amplitudes
-                                      e[i][j]=dKA;
-                                  }
-                                  if(j==1){
-                                      e[i][j]=dKB;
-                                  }
-                                  if(j==2){
-                                      e[i][j]=dGamma;
-                                  }
-                                  if(j==3){
-                                      e[i][j]=dT0;
-                                  }
-                                  if(j==4){
-                                      e[i][j]=dOmega; // periastron length
-                                  }
-                              }
-                              if((add==2) & (Plock==1) & (T0lock==1)){ // P and T0 locked
-                                  if(j==0){
-                                      e[i][j]=de;
-                                  }
-                                  if(j==1){ // Amplitudes
-                                      e[i][j]=dKA;
-                                  }
-                                  if(j==2){
-                                      e[i][j]=dKB;
-                                  }
-                                  if(j==3){
-                                      e[i][j]=dGamma;
-                                  }
-                                  if(j==4){
-                                      e[i][j]=dOmega; // periastron length
-                                  }
-                              }
-                              if((add==2) & (elock==1) & (T0lock==1)){ // e and T0 locked
-                                  if(j==0){
-                                      e[i][j]=dP;
-                                  }
-                                  if(j==1){ // Amplitudes
-                                      e[i][j]=dKA;
-                                  }
-                                  if(j==2){
-                                      e[i][j]=dKB;
-                                  }
-                                  if(j==3){
-                                      e[i][j]=dGamma;
-                                  }
-                                  if(j==4){
-                                      e[i][j]=dOmega; // periastron length
-                                  }
-                              }
-                              if(add==3){ // P, e and T0 locked
-                                  if(j==0){ // Amplitudes
-                                      e[i][j]=dKA;
-                                    }
-                                  if(j==1){
-                                      e[i][j]=dKB;
-                                  }
-                                  if(j==2){
-                                      e[i][j]=dGamma;
-                                  }
-                                  if(j==3){
-                                      e[i][j]=dOmega; // periastron length
-                                  }
-                            }*/
                           }
                           else e[i][j]=0;
                           cout<<e[i][j]<<" ";
@@ -4372,69 +4095,6 @@ void MainWindow::Optimisation()
                           init2<<setprecision(14)<<P[i][j]<<endl;
                           cout<<P[i][j]<<" ";
                           LogFile<<P[i][j]<<" ";
-                          /*
-                          if(add==0){
-                              orbele[j]=P[i][j];    // no parameter locked
-                          }
-                          if(add==1){   // one parameter locked
-                              if(Plock==1){
-                                  orbele[j+1]=P[i][j];
-                              }
-                              if(elock==1){
-                                  if(j==0){
-                                      orbele[0]=P[i][0];
-                                  }
-                                  if(j>0){
-                                      orbele[j+1]=P[i][j];
-                                  }
-                              }
-                              if(T0lock==1){
-                                  if(j==5){
-                                      orbele[6]=P[i][j];
-                                  }
-                                  else orbele[j]=P[i][j];
-                              }
-                          }
-                          if(add==2){   // two parameters locked
-                              if((Plock==1) & (elock==1)){
-                                  orbele[j+2]=P[i][j];
-                              }
-                              if((Plock==1) & (T0lock==1)){
-                                  if(j==4){
-                                      orbele[6]=P[i][j];
-                                  }
-                                  else{
-                                      orbele[j+1]=P[i][j];
-                                  }
-                              }
-                              if((elock==1) & (T0lock==1)){
-                                  if(j==0){
-                                      orbele[0]=P[i][0];
-                                  }
-                                  if(j==1) orbele[2]=P[i][1];
-                                  if(j==2) orbele[3]=P[i][2];
-                                  if(j==3) orbele[4]=P[i][3];
-                                  if(j==4){
-                                      orbele[6]=P[i][4];
-                                  }
-                              }
-                          }
-                          if(add==3){      // three parameters locked
-                              if(j==0){
-                                  orbele[2]=P[i][j];
-                              }
-                              if(j==1){
-                                  orbele[3]=P[i][j];
-                              }
-                              if(j==2){
-                                  orbele[4]=P[i][j];
-                              }
-                              if(j==3){
-                                  orbele[6]=P[i][j];
-                              }
-
-                          }*/
-
                       }
                       LogFile<<endl;
 
@@ -4488,7 +4148,7 @@ void MainWindow::Optimisation()
                           r1=y[0];
                           MainWindow::on_pushButton_6_clicked();
                       }
-                      if(y[i] < r1){
+                      else if(y[i] < r1){
                         r1 = y[i];
                         if(ui->checkBox_10->isChecked()){
                             MainWindow::on_pushButton_6_clicked();
@@ -4567,9 +4227,9 @@ void MainWindow::Optimisation()
                     if(i==0){
                         r1=y[0];
                     }
-                        if(y[i]<r1){
-                            r1=y[i];
-                        }
+                    else if(y[i]<r1){
+                        r1=y[i];
+                    }
                   }
                   initiate1.close();
 
@@ -4658,7 +4318,7 @@ void MainWindow::Optimisation()
                     if(i==0){
                         r1=y[0];
                     }
-                    if(y[i]<r1){
+                    else if(y[i]<r1){
                         r1=y[i];
                     }
                   }
@@ -4830,69 +4490,6 @@ void MainWindow::Optimisation()
                                       std::string reinName = reinNameStream.str();
                                       ofstream borbit(reinName.c_str());
 
-                                      /*
-                                      if(add==0){
-                                          for(int k=0; k<7; k++){
-                                              borbit<<setprecision(14)<<P[Pl][k]<<endl;
-                                          }
-                                      }
-                                      if(add==1){
-                                        if(Plock==1){
-                                          borbit<<setprecision(14)<<orbele[0]<<endl;
-                                          for(int k=0; k<6; k++){
-                                              borbit<<setprecision(14)<<P[Pl][k]<<endl;
-                                          }
-                                        }
-                                        if(elock==1){
-                                            borbit<<setprecision(14)<<P[Pl][0]<<endl;
-                                            borbit<<setprecision(14)<<orbele[1]<<endl;
-                                            for(int k=0; k<5; k++){
-                                              borbit<<setprecision(14)<<P[Pl][k+1]<<endl;
-                                            }
-                                        }
-                                        if(T0lock==1){
-                                            for(int k=0; k<5; k++){
-                                              borbit<<setprecision(14)<<P[Pl][k]<<endl;
-                                            }
-                                            borbit<<setprecision(14)<<orbele[5]<<endl;
-                                            borbit<<setprecision(14)<<P[Pl][5]<<endl;
-                                        }
-                                      }
-                                      if(add==2){
-                                        if((Plock==1) & (elock==1)){
-                                            borbit<<setprecision(14)<<orbele[0]<<endl;
-                                            borbit<<setprecision(14)<<orbele[1]<<endl;
-                                            for(int k=0; k<5; k++){
-                                              borbit<<setprecision(14)<<P[Pl][k]<<endl;
-                                            }
-                                        }
-                                        if((Plock==1) & (T0lock==1)){
-                                            borbit<<setprecision(14)<<orbele[0]<<endl;
-                                            for(int k=0; k<4; k++){
-                                              borbit<<setprecision(14)<<P[Pl][k]<<endl;
-                                            }
-                                            borbit<<setprecision(14)<<orbele[5]<<endl;
-                                            borbit<<setprecision(14)<<P[Pl][4]<<endl;
-                                        }
-                                        if((elock==1) & (T0lock==1)){
-                                            borbit<<setprecision(14)<<P[Pl][0]<<endl;
-                                            borbit<<setprecision(14)<<orbele[1]<<endl;
-                                            borbit<<setprecision(14)<<P[Pl][1]<<endl;
-                                            borbit<<setprecision(14)<<P[Pl][2]<<endl;
-                                            borbit<<setprecision(14)<<P[Pl][3]<<endl;
-                                            borbit<<setprecision(14)<<orbele[5]<<endl;
-                                            borbit<<setprecision(14)<<P[Pl][4]<<endl;
-                                        }
-                                      }
-                                      if(add==3){
-                                        borbit<<setprecision(14)<<orbele[0]<<endl;
-                                        borbit<<setprecision(14)<<orbele[1]<<endl;
-                                        borbit<<setprecision(14)<<P[Pl][0]<<endl;
-                                        borbit<<setprecision(14)<<P[Pl][1]<<endl;
-                                        borbit<<setprecision(14)<<P[Pl][2]<<endl;
-                                        borbit<<setprecision(14)<<orbele[5]<<endl;
-                                        borbit<<setprecision(14)<<P[Pl][3]<<endl;
-                                      }*/
                                       for(int e=0; e<7; e++){
                                           if(pvf[e]==0){
                                               borbit<<setprecision(14)<<P[Pl][pcount]<<endl;
@@ -4926,69 +4523,6 @@ void MainWindow::Optimisation()
                                 std::string reinName = reinNameStream.str();
                                 ofstream borbit(reinName.c_str());
 
-                                /*
-                                if(add==0){
-                                    for(int k=0; k<7; k++){
-                                        borbit<<setprecision(14)<<P[Pl][k]<<endl;
-                                    }
-                                }
-                                if(add==1){
-                                  if(Plock==1){
-                                    borbit<<setprecision(14)<<orbele[0]<<endl;
-                                    for(int k=0; k<6; k++){
-                                        borbit<<setprecision(14)<<P[Pl][k]<<endl;
-                                    }
-                                  }
-                                  if(elock==1){
-                                      borbit<<setprecision(14)<<P[Pl][0]<<endl;
-                                      borbit<<setprecision(14)<<orbele[1]<<endl;
-                                      for(int k=0; k<5; k++){
-                                        borbit<<setprecision(14)<<P[Pl][k+1]<<endl;
-                                      }
-                                  }
-                                  if(T0lock==1){
-                                      for(int k=0; k<5; k++){
-                                        borbit<<setprecision(14)<<P[Pl][k]<<endl;
-                                      }
-                                      borbit<<setprecision(14)<<orbele[5]<<endl;
-                                      borbit<<setprecision(14)<<P[Pl][5]<<endl;
-                                  }
-                                }
-                                if(add==2){
-                                  if((Plock==1) & (elock==1)){
-                                      borbit<<setprecision(14)<<orbele[0]<<endl;
-                                      borbit<<setprecision(14)<<orbele[1]<<endl;
-                                      for(int k=0; k<5; k++){
-                                        borbit<<setprecision(14)<<P[Pl][k]<<endl;
-                                      }
-                                  }
-                                  if((Plock==1) & (T0lock==1)){
-                                      borbit<<setprecision(14)<<orbele[0]<<endl;
-                                      for(int k=0; k<4; k++){
-                                        borbit<<setprecision(14)<<P[Pl][k]<<endl;
-                                      }
-                                      borbit<<setprecision(14)<<orbele[5]<<endl;
-                                      borbit<<setprecision(14)<<P[Pl][4]<<endl;
-                                  }
-                                  if((elock==1) & (T0lock==1)){
-                                      borbit<<setprecision(14)<<P[Pl][0]<<endl;
-                                      borbit<<setprecision(14)<<orbele[1]<<endl;
-                                      borbit<<setprecision(14)<<P[Pl][1]<<endl;
-                                      borbit<<setprecision(14)<<P[Pl][2]<<endl;
-                                      borbit<<setprecision(14)<<P[Pl][3]<<endl;
-                                      borbit<<setprecision(14)<<orbele[5]<<endl;
-                                      borbit<<setprecision(14)<<P[Pl][4]<<endl;
-                                  }
-                                }
-                                if(add==3){
-                                  borbit<<setprecision(14)<<orbele[0]<<endl;
-                                  borbit<<setprecision(14)<<orbele[1]<<endl;
-                                  borbit<<setprecision(14)<<P[Pl][0]<<endl;
-                                  borbit<<setprecision(14)<<P[Pl][1]<<endl;
-                                  borbit<<setprecision(14)<<P[Pl][2]<<endl;
-                                  borbit<<setprecision(14)<<orbele[5]<<endl;
-                                  borbit<<setprecision(14)<<P[Pl][3]<<endl;
-                                }*/
                                 for(int e=0; e<7; e++){
                                     if(pvf[e]==0){
                                         borbit<<setprecision(14)<<P[Pl][pcount]<<endl;
@@ -5038,73 +4572,9 @@ void MainWindow::Optimisation()
                           }
                       }
 
-
-
                       //reflect highest value at centroid
                       for(int i=0; i<nu; i++){
                           Co[i]=Z[i]+alpha*(Z[i]-P[Ph][i]);
-                          /*
-                          if(add==0){
-                              orbele[i]=Co[i];    // no parameter locked
-                          }
-                          if(add==1){   // one parameter locked
-                              if(Plock==1){
-                                  orbele[i+1]=Co[i];
-                              }
-                              if(elock==1){
-                                  if(i==0){
-                                      orbele[0]=Co[i];
-                                  }
-                                  if(i>0){
-                                      orbele[i+1]=Co[i];
-                                  }
-                              }
-                              if(T0lock==1){
-                                  if(i==5){
-                                      orbele[6]=Co[i];
-                                  }
-                                  else orbele[i]=Co[i];
-                              }
-                          }
-                          if(add==2){   // two parameters locked
-                              if((Plock==1) & (elock==1)){
-                                  orbele[i+2]=Co[i];
-                              }
-                              if((Plock==1) & (T0lock==1)){
-                                  if(i==4){
-                                      orbele[6]=Co[i];
-                                  }
-                                  else{
-                                      orbele[i+1]=Co[i];
-                                  }
-                              }
-                              if((elock==1) & (T0lock==1)){
-                                  if(i==0){
-                                      orbele[0]=Co[i];
-                                  }
-                                  if(i==1) orbele[2]=Co[i];
-                                  if(i==2) orbele[3]=Co[i];
-                                  if(i==3) orbele[4]=Co[i];
-                                  if(i==4){
-                                      orbele[6]=Co[i];
-                                  }
-                              }
-                          }
-                          if(add==3){      // three parameters locked
-                              if(i==0){
-                                  orbele[2]=Co[i];
-                              }
-                              if(i==1){
-                                  orbele[3]=Co[i];
-                              }
-                              if(i==2){
-                                  orbele[4]=Co[i];
-                              }
-                              if(i==3){
-                                  orbele[6]=Co[i];
-                              }
-
-                          }*/
                       }
                       for(int e=0; e<7; e++){
                           if(pvf[e]==0){
@@ -5171,68 +4641,6 @@ void MainWindow::Optimisation()
                           LogFile<<"yi<yl, expansion; ";
                           for(int i=0; i<nu; i++){
                               Eo[i]=Z[i]+Gamma*(Co[i]-Z[i]);
-                              /*
-                              if(add==0){
-                                  orbele[i]=Eo[i];    // no parameter locked
-                              }
-                              if(add==1){   // one parameter locked
-                                  if(Plock==1){
-                                      orbele[i+1]=Eo[i];
-                                  }
-                                  if(elock==1){
-                                      if(i==0){
-                                          orbele[0]=Eo[i];
-                                      }
-                                      if(i>0){
-                                          orbele[i+1]=Eo[i];
-                                      }
-                                  }
-                                  if(T0lock==1){
-                                      if(i==5){
-                                          orbele[6]=Eo[i];
-                                      }
-                                      else orbele[i]=Eo[i];
-                                  }
-                              }
-                              if(add==2){   // two parameters locked
-                                  if((Plock==1) & (elock==1)){
-                                      orbele[i+2]=Eo[i];
-                                  }
-                                  if((Plock==1) & (T0lock==1)){
-                                      if(i==4){
-                                          orbele[6]=Eo[i];
-                                      }
-                                      else{
-                                          orbele[i+1]=Eo[i];
-                                      }
-                                  }
-                                  if((elock==1) & (T0lock==1)){
-                                      if(i==0){
-                                          orbele[0]=Eo[i];
-                                      }
-                                      if(i==1) orbele[2]=Eo[i];
-                                      if(i==2) orbele[3]=Eo[i];
-                                      if(i==3) orbele[4]=Eo[i];
-                                      if(i==4){
-                                          orbele[6]=Eo[i];
-                                      }
-                                  }
-                              }
-                              if(add==3){      // three parameters locked
-                                  if(i==0){
-                                      orbele[2]=Eo[i];
-                                  }
-                                  if(i==1){
-                                      orbele[3]=Eo[i];
-                                  }
-                                  if(i==2){
-                                      orbele[4]=Eo[i];
-                                  }
-                                  if(i==3){
-                                      orbele[6]=Eo[i];
-                                  }
-
-                              }*/
                           }
                           for(int e=0; e<7; e++){
                               if(pvf[e]==0){
@@ -5302,68 +4710,6 @@ void MainWindow::Optimisation()
                               cout<<"ref1 ";
                               for(int i=0; i<nu; i++){
                                   P[Ph][i]=Co[i];
-                                  /*
-                                  if(add==0){
-                                      orbele[i]=Co[i];    // no parameter locked
-                                  }
-                                  if(add==1){   // one parameter locked
-                                      if(Plock==1){
-                                          orbele[i+1]=Co[i];
-                                      }
-                                      if(elock==1){
-                                          if(i==0){
-                                              orbele[0]=Co[i];
-                                          }
-                                          if(i>0){
-                                              orbele[i+1]=Co[i];
-                                          }
-                                      }
-                                      if(T0lock==1){
-                                          if(i==5){
-                                              orbele[6]=Co[i];
-                                          }
-                                          else orbele[i]=Co[i];
-                                      }
-                                  }
-                                  if(add==2){   // two parameters locked
-                                      if((Plock==1) & (elock==1)){
-                                          orbele[i+2]=Co[i];
-                                      }
-                                      if((Plock==1) & (T0lock==1)){
-                                          if(i==4){
-                                              orbele[6]=Co[i];
-                                          }
-                                          else{
-                                              orbele[i+1]=Co[i];
-                                          }
-                                      }
-                                      if((elock==1) & (T0lock==1)){
-                                          if(i==0){
-                                              orbele[0]=Co[i];
-                                          }
-                                          if(i==1) orbele[2]=Co[i];
-                                          if(i==2) orbele[3]=Co[i];
-                                          if(i==3) orbele[4]=Co[i];
-                                          if(i==4){
-                                              orbele[6]=Co[i];
-                                          }
-                                      }
-                                  }
-                                  if(add==3){      // three parameters locked
-                                      if(i==0){
-                                          orbele[2]=Co[i];
-                                      }
-                                      if(i==1){
-                                          orbele[3]=Co[i];
-                                      }
-                                      if(i==2){
-                                          orbele[4]=Co[i];
-                                      }
-                                      if(i==3){
-                                          orbele[6]=Co[i];
-                                      }
-
-                                  }*/
                               }
                               for(int e=0; e<7; e++){
                                   if(pvf[e]==0){
@@ -5375,14 +4721,7 @@ void MainWindow::Optimisation()
                                   }
                               }
                               pcount=0;
-                              /*
-                              eval++;
-                              ui->spinBox_5->setValue(eval);
-                              qApp->processEvents(QEventLoop::AllEvents);
-                              MainWindow::VAmplitudeA();
-                              MainWindow::VAmplitudeB();
-                              MainWindow::ConstructMatrix();
-                              */
+
                               y[Ph]=yi;//MainWindow::DivideConquer();
                               if(abortt==1){
                                   //output results
@@ -5421,14 +4760,7 @@ void MainWindow::Optimisation()
                               for(int i=0; i<nu; i++){
                                   P[Ph][i]=Co[i];
                               }
-                              /*
-                              eval++;
-                              ui->spinBox_5->setValue(eval);
-                              qApp->processEvents(QEventLoop::AllEvents);
-                              MainWindow::VAmplitudeA();
-                              MainWindow::VAmplitudeB();
-                              MainWindow::ConstructMatrix();
-                              */
+
                               y[Ph]=yi;//MainWindow::DivideConquer();
                               if(abortt==1){
                                   //output results
@@ -5464,14 +4796,7 @@ void MainWindow::Optimisation()
                                   for(int i=0; i<nu; i++){
                                       P[Ph][i]=Co[i];
                                   }
-                                  /*
-                                  eval++;
-                                  ui->spinBox_5->setValue(eval);
-                                  qApp->processEvents(QEventLoop::AllEvents);
-                                  MainWindow::VAmplitudeA();
-                                  MainWindow::VAmplitudeB();
-                                  MainWindow::ConstructMatrix();
-                                  */
+
                                   y[Ph]=yi;//MainWindow::DivideConquer();
                                   if(abortt==1){
                                       //output results
@@ -5499,68 +4824,6 @@ void MainWindow::Optimisation()
                               }
                               for(int i=0; i<nu; i++){
                                   So[i]=Z[i]+beta*(P[Ph][i]-Z[i]);
-                                  /*
-                                  if(add==0){
-                                      orbele[i]=So[i];    // no parameter locked
-                                  }
-                                  if(add==1){   // one parameter locked
-                                      if(Plock==1){
-                                          orbele[i+1]=So[i];
-                                      }
-                                      if(elock==1){
-                                          if(i==0){
-                                              orbele[0]=So[i];
-                                          }
-                                          if(i>0){
-                                              orbele[i+1]=So[i];
-                                          }
-                                      }
-                                      if(T0lock==1){
-                                          if(i==5){
-                                              orbele[6]=So[i];
-                                          }
-                                          else orbele[i]=So[i];
-                                      }
-                                  }
-                                  if(add==2){   // two parameters locked
-                                      if((Plock==1) & (elock==1)){
-                                          orbele[i+2]=So[i];
-                                      }
-                                      if((Plock==1) & (T0lock==1)){
-                                          if(i==4){
-                                              orbele[6]=So[i];
-                                          }
-                                          else{
-                                              orbele[i+1]=So[i];
-                                          }
-                                      }
-                                      if((elock==1) & (T0lock==1)){
-                                          if(i==0){
-                                              orbele[0]=So[i];
-                                          }
-                                          if(i==1) orbele[2]=So[i];
-                                          if(i==2) orbele[3]=So[i];
-                                          if(i==3) orbele[4]=So[i];
-                                          if(i==4){
-                                              orbele[6]=So[i];
-                                          }
-                                      }
-                                  }
-                                  if(add==3){      // three parameters locked
-                                      if(i==0){
-                                          orbele[2]=So[i];
-                                      }
-                                      if(i==1){
-                                          orbele[3]=So[i];
-                                      }
-                                      if(i==2){
-                                          orbele[4]=So[i];
-                                      }
-                                      if(i==3){
-                                          orbele[6]=So[i];
-                                      }
-
-                                  }*/
                               }
                                   for(int e=0; e<7; e++){
                                       if(pvf[e]==0){
@@ -5626,68 +4889,7 @@ void MainWindow::Optimisation()
                                   for(int j=0; j<nu+1; j++){
                                       for(int i =0; i<nu; i++){
                                           P[j][i]=P[Pl][i]+btot*(P[j][i]-P[Pl][i]);
-                                          /*
-                                          if(add==0){
-                                              orbele[i]=P[j][i];    // no parameter locked
-                                          }
-                                          if(add==1){   // one parameter locked
-                                              if(Plock==1){
-                                                  orbele[i+1]=P[j][i];
-                                              }
-                                              if(elock==1){
-                                                  if(i==0){
-                                                      orbele[0]=P[j][i];
-                                                  }
-                                                  if(i>0){
-                                                      orbele[i+1]=P[j][i];
-                                                  }
-                                              }
-                                              if(T0lock==1){
-                                                  if(i==5){
-                                                      orbele[6]=P[j][i];
-                                                  }
-                                                  else orbele[i]=P[j][i];
-                                              }
-                                          }
-                                          if(add==2){   // two parameters locked
-                                              if((Plock==1) & (elock==1)){
-                                                  orbele[i+2]=P[j][i];
-                                              }
-                                              if((Plock==1) & (T0lock==1)){
-                                                  if(i==4){
-                                                      orbele[6]=P[j][i];
-                                                  }
-                                                  else{
-                                                      orbele[i+1]=P[j][i];
-                                                  }
-                                              }
-                                              if((elock==1) & (T0lock==1)){
-                                                  if(i==0){
-                                                      orbele[0]=P[j][i];
-                                                  }
-                                                  if(i==1) orbele[2]=P[j][i];
-                                                  if(i==2) orbele[3]=P[j][i];
-                                                  if(i==3) orbele[4]=P[j][i];
-                                                  if(i==4){
-                                                      orbele[6]=P[j][i];
-                                                  }
-                                              }
-                                          }
-                                          if(add==3){      // three parameters locked
-                                              if(i==0){
-                                                  orbele[2]=P[j][i];
-                                              }
-                                              if(i==1){
-                                                  orbele[3]=P[j][i];
-                                              }
-                                              if(i==2){
-                                                  orbele[4]=P[j][i];
-                                              }
-                                              if(i==3){
-                                                  orbele[6]=P[j][i];
-                                              }
 
-                                          }*/
                                           for(int e=0; e<7; e++){
                                               if(pvf[e]==0){
                                                   orbele[e]=P[j][pcount];
@@ -5755,68 +4957,6 @@ void MainWindow::Optimisation()
                                   LogFile<<"yt<=yh, single contraction; ";
                                   for(int i=0; i<nu; i++){
                                       P[Ph][i]=So[i];
-                                      /*
-                                      if(add==0){
-                                          orbele[i]=So[i];    // no parameter locked
-                                      }
-                                      if(add==1){   // one parameter locked
-                                          if(Plock==1){
-                                              orbele[i+1]=So[i];
-                                          }
-                                          if(elock==1){
-                                              if(i==0){
-                                                  orbele[0]=So[i];
-                                              }
-                                              if(i>0){
-                                                  orbele[i+1]=So[i];
-                                              }
-                                          }
-                                          if(T0lock==1){
-                                              if(i==5){
-                                                  orbele[6]=So[i];
-                                              }
-                                              else orbele[i]=So[i];
-                                          }
-                                      }
-                                      if(add==2){   // two parameters locked
-                                          if((Plock==1) & (elock==1)){
-                                              orbele[i+2]=So[i];
-                                          }
-                                          if((Plock==1) & (T0lock==1)){
-                                              if(i==4){
-                                                  orbele[6]=So[i];
-                                              }
-                                              else{
-                                                  orbele[i+1]=So[i];
-                                              }
-                                          }
-                                          if((elock==1) & (T0lock==1)){
-                                              if(i==0){
-                                                  orbele[0]=So[i];
-                                              }
-                                              if(i==1) orbele[2]=So[i];
-                                              if(i==2) orbele[3]=So[i];
-                                              if(i==3) orbele[4]=So[i];
-                                              if(i==4){
-                                                  orbele[6]=So[i];
-                                              }
-                                          }
-                                      }
-                                      if(add==3){      // three parameters locked
-                                          if(i==0){
-                                              orbele[2]=So[i];
-                                          }
-                                          if(i==1){
-                                              orbele[3]=So[i];
-                                          }
-                                          if(i==2){
-                                              orbele[4]=So[i];
-                                          }
-                                          if(i==3){
-                                              orbele[6]=So[i];
-                                          }
-
-                                      }*/
                                   }
                                   for(int e=0; e<7; e++){
                                       if(pvf[e]==0){
@@ -5828,14 +4968,6 @@ void MainWindow::Optimisation()
                                       }
                                   }
                                   pcount=0;
-                                  /*
-                                  eval++;
-                                  ui->spinBox_5->setValue(eval);
-                                  qApp->processEvents(QEventLoop::AllEvents);
-                                  MainWindow::VAmplitudeA();
-                                  MainWindow::VAmplitudeB();
-                                  MainWindow::ConstructMatrix();
-                                  */
                                   y[Ph]=yt;//MainWindow::DivideConquer();
                                   if(abortt==1){
                                       //output results
@@ -5915,76 +5047,8 @@ void MainWindow::Optimisation()
                           orbele[e]=P[Pl][pcount];
                           ++pcount;
                       }
-                      else{
-                          //
-                      }
                   }
                   pcount=0;
-
-                  /*
-               for(int i =0; i<nu; i++){
-                  if(add==0){
-                      orbele[i]=P[Pl][i];    // no parameter locked
-                  }
-                  if(add==1){   // one parameter locked
-                      if(Plock==1){
-                          orbele[i+1]=P[Pl][i];
-                      }
-                      if(elock==1){
-                          if(i==0){
-                              orbele[0]=P[Pl][i];
-                          }
-                          if(i>0){
-                              orbele[i+1]=P[Pl][i];
-                          }
-                      }
-                      if(T0lock==1){
-                          if(i==5){
-                              orbele[6]=P[Pl][i];
-                          }
-                          else orbele[i]=P[Pl][i];
-                      }
-                  }
-                  if(add==2){   // two parameters locked
-                      if((Plock==1) & (elock==1)){
-                          orbele[i+2]=P[Pl][i];
-                      }
-                      if((Plock==1) & (T0lock==1)){
-                          if(i==4){
-                              orbele[6]=P[Pl][i];
-                          }
-                          else{
-                              orbele[i+1]=P[Pl][i];
-                          }
-                      }
-                      if((elock==1) & (T0lock==1)){
-                          if(i==0){
-                              orbele[0]=So[i];
-                          }
-                          if(i==1) orbele[2]=P[Pl][i];
-                          if(i==2) orbele[3]=P[Pl][i];
-                          if(i==3) orbele[4]=P[Pl][i];
-                          if(i==4){
-                              orbele[6]=P[Pl][i];
-                          }
-                      }
-                  }
-                  if(add==3){      // three parameters locked
-                      if(i==0){
-                          orbele[2]=P[Pl][i];
-                      }
-                      if(i==1){
-                          orbele[3]=P[Pl][i];
-                      }
-                      if(i==2){
-                          orbele[4]=P[Pl][i];
-                      }
-                      if(i==3){
-                          orbele[6]=P[Pl][i];
-                      }
-
-                  }
-              }*/
 
                   cout<<endl;
                   cout<<setprecision(12)<<"Simplex Mean: "<<ym<<" Simplex STD: "<<ys<<endl;
@@ -6005,7 +5069,7 @@ void MainWindow::Optimisation()
                 cout<<endl;
                 LogFile<<endl;
 
-          }
+          } // end optimization on orbit
 
 
     system_clock::time_point time2 = system_clock::now();
@@ -6157,7 +5221,7 @@ void MainWindow::ConstructMatrix(){
             if(RV1[j]>=0){
                 RV1c[j]=RV1[j]/dv+1;
             }
-            if(RV1[j]<0){
+            else{
                 RV1c[j]=RV1[j]/dv-1;
             }
         }
@@ -6169,7 +5233,7 @@ void MainWindow::ConstructMatrix(){
             if(RV3[j]>=0){
                 RV3c[j]=RV3[j]/dv+1;
             }
-            if(RV3[j]<0){
+            else{
                 RV3c[j]=RV3[j]/dv-1;
             }
         }
@@ -6188,13 +5252,13 @@ void MainWindow::ConstructMatrix(){
             if(RV1c[j]<RV1cmin){
                 RV1cmin=RV1c[j];
             }
-            if(RV1c[j]>RV1cmax){
+            else if(RV1c[j]>RV1cmax){
                 RV1cmax=RV1c[j];
             }
             if(RV3c[j]<RV2cmin){
                 RV2cmin=RV3c[j];
             }
-            if(RV3c[j]>RV2cmax){
+            else if(RV3c[j]>RV2cmax){
                 RV2cmax=RV3c[j];
             }
             if(abs(RV1c[j])>RV1m){
@@ -6211,7 +5275,7 @@ void MainWindow::ConstructMatrix(){
 
     if(RV1cmin<0){
             if(RV1cmax<0){
-            bso1=logbin+abs(RV1cmin);
+                bso1=logbin+abs(RV1cmin);
             }
             else{
                 bso1=logbin+abs(RV1cmin)+RV1cmax;
@@ -6222,7 +5286,7 @@ void MainWindow::ConstructMatrix(){
         }
         if(RV2cmin<0){
             if(RV2cmax<0){
-            bso2=logbin+abs(RV2cmin);
+                bso2=logbin+abs(RV2cmin);
             }
             else{
                 bso2=logbin+abs(RV2cmin)+RV2cmax;
@@ -6292,7 +5356,7 @@ void MainWindow::ConstructMatrix(){
                         if(m==n-a*logbin+bso1+bso2){
                             M(n,m)=Mtel[a];
                         }
-                        if((n+bso1-1-a*logbin+RV3a==m) & (m>=bso1)){
+                        else if((n+bso1-1-a*logbin+RV3a==m) & (m>=bso1)){
                             M(n,m)=Mval2[a];
                         }
                         else M(n,m)=Mval1[a];
@@ -6300,7 +5364,7 @@ void MainWindow::ConstructMatrix(){
                             if(m==n-a*logbin+bso1+bso2){
                                 M(n,m+1)=Mtel[a];
                             }
-                        if(n+bso1-1-a*logbin+RV3a==m){
+                        else if(n+bso1-1-a*logbin+RV3a==m){
                             M(n,m+1)=Mval2[a];
                         }
                         else M(n,m+1)=Mval1[a];
@@ -6309,11 +5373,11 @@ void MainWindow::ConstructMatrix(){
                         }
                         ++elements;
                     }
-                    if(bidi==0){
+                    else if(bidi==0){
                         if(m==n-a*logbin+bso1+bso2){
                             M(n,m)=Mtel[a];
                         }
-                        if(n+bso1-1-a*logbin+RV3a==m){
+                        else if(n+bso1-1-a*logbin+RV3a==m){
                             M(n,m)=Mval2[a];
                         }
                         else M(n,m)=Mval1[a];
@@ -6335,7 +5399,7 @@ void MainWindow::ConstructMatrix(){
                     RV1a=RV1c[a];
                 }
                 else{
-                        RV1a=abs(RV1cmin)+RV1c[a];
+                    RV1a=abs(RV1cmin)+RV1c[a];
                 }
 
                 if(RV2cmin>0){
@@ -6370,7 +5434,7 @@ void MainWindow::ConstructMatrix(){
                             M(n,m)=Mval2[a];
                         }
                         else M(n,m)=Mval1[a];
-                        if(m<Mm-1) {
+                        if(m<Mm-1){
                             if((n+bso1-1-a*logbin+RV3a==m) & (m>=bso1)){
                                 M(n,m+1)=Mval2[a];
                             }
@@ -6380,7 +5444,7 @@ void MainWindow::ConstructMatrix(){
                         }
                         ++elements;
                     }
-                    if(bidi==0){
+                    else if(bidi==0){
                     if(n+bso1-1-a*logbin+RV3a==m){
                         M(n,m)=Mval2[a];
                     }
@@ -6418,7 +5482,7 @@ void MainWindow::ConstructMatrix(){
                 RV1min=RV1[i];
             }
 
-            if(RV1[i]>RV1maxi){
+            else if(RV1[i]>RV1maxi){
                 RV1maxi=RV1[i];
             }
 
@@ -6456,7 +5520,7 @@ void MainWindow::ConstructMatrix(){
             if(RV1[j]>=0){
                 RV1c[j]=RV1[j]/dv+1;
             }
-            if(RV1[j]<0){
+            else{
                 RV1c[j]=RV1[j]/dv-1;
             }
         }
@@ -6472,7 +5536,7 @@ void MainWindow::ConstructMatrix(){
             if(RV1c[j]<RV1cmin){
                 RV1cmin=RV1c[j];
             }
-            if(RV1c[j]>RV1cmax){
+            else if(RV1c[j]>RV1cmax){
                 RV1cmax=RV1c[j];
             }
             if(abs(RV1c[j])>RV1m){
@@ -6483,23 +5547,23 @@ void MainWindow::ConstructMatrix(){
     }
 
     if(RV1cmin<0){
-            if(RV1cmax<0){
+       if(RV1cmax<0){
             bso1=logbin+abs(RV1cmin);
-            }
-            else{
-                bso1=logbin+abs(RV1cmin)+RV1cmax;
-            }
         }
         else{
-            bso1=logbin+RV1cmax;
-        }
+            bso1=logbin+abs(RV1cmin)+RV1cmax;
+            }
+     }
+     else{
+          bso1=logbin+RV1cmax;
+     }
 
     cout<<"bso1 "<<bso1<<endl;
 
     Mn=num*logbin;
 
     if(ui->checkBox_8->isChecked()){
-    Mm=bso1+logbin;    //telluric +logbin
+        Mm=bso1+logbin;    //telluric +logbin
     }
     else{
         Mm=bso1;
@@ -6555,7 +5619,7 @@ void MainWindow::ConstructMatrix(){
                             }
                             ++elements;
                         }
-                        if(bidi==0){
+                        else if(bidi==0){
                             if(m==n-a*logbin+bso1){
                                 M(n,m)=Mtel[a];
                             }
@@ -6581,7 +5645,7 @@ void MainWindow::ConstructMatrix(){
                             RV1a=abs(RV1cmin)+RV1c[a];
                     }
                 }
-                if(n==logbin+a*logbin){
+                else if(n==logbin+a*logbin){
                     a+=1;
                     if(RV1cmin>0){
                         RV1a=RV1c[a];
@@ -6601,7 +5665,7 @@ void MainWindow::ConstructMatrix(){
                             }
                             ++elements;
                         }
-                        if(bidi==0){
+                        else if(bidi==0){
                             M(n,m)=Mval1[a];
                             ++elements;
                             }
@@ -6651,32 +5715,14 @@ double MainWindow::DivideConquer(){
 
     vec res(Mm);
 
-    int cBS;
-
     if(ui->checkBox_5->isChecked()){
         svd_econ(U,w,V,M, "both", "std");
     }
-
-    else ++cBS;
-
-    if(ui->checkBox_6->isChecked()){
+    else{
         svd_econ(U,w,V,M, "both", "dc");
     }
 
-    else ++cBS;
 
-    if(cBS == 0){
-        if(runow==0){
-            QMessageBox::information(this, "Error", "Select method for ECON.");
-        }
-        else{
-            cout<<"Select method for ECON."<<endl;
-            MainWindow::Input();
-        }
-        abortt=1;
-        sequence=0;
-        return 0;
-    }
 
     int i,j,jj;
         double s;
@@ -6730,17 +5776,16 @@ double MainWindow::DivideConquer(){
                 }
 
                 else{
-            if(ui->checkBox_14->isChecked()){
-                    ++resbins;
-                    residu+=pow((res(i)-C(i)),2);
-            }
-
-                else{
-                    if((pow((res(i)-C(i)),2)>residu) & (pow((res(i)-C(i)),2)<1)){
-                        residu=pow((res(i)-C(i)),2);
+                    if(ui->checkBox_14->isChecked()){
+                        ++resbins;
+                        residu+=pow((res(i)-C(i)),2);
                     }
-                }
 
+                    else{
+                        if((pow((res(i)-C(i)),2)>residu) & (pow((res(i)-C(i)),2)<1)){
+                            residu=pow((res(i)-C(i)),2);
+                        }
+                    }
                 }
             }
         }
@@ -6765,7 +5810,7 @@ double MainWindow::DivideConquer(){
                     QString velocity=QString::number(RV1[i]);
                     ui->plainTextEdit->appendPlainText(index+" "+velocity);
                 }
-                if(ui->checkBox_4->isChecked()){
+                else if(ui->checkBox_4->isChecked()){
                     QString velocity=QString::number(RV1[i]);
                     QString sum=QString::number(RV3[i]);
                     ui->plainTextEdit->appendPlainText(index+" "+velocity+" "+sum);
@@ -6868,28 +5913,30 @@ double MainWindow::DivideConquer(){
                         file1<<setprecision(14)<<pow(10,(W(0)+(index1-(RV3maxi+orbele[4])/dv)*difference))<<"\t"<<X(j)<<endl;
                         ++index1;
                     }
-                    if((j>=bso1)&(j<bso1+bso2)){
+                    else if((j>=bso1)&(j<bso1+bso2)){
                         //if(ui->checkBox_4->isChecked()){
                         //    X(j)=X(j)+(1.0/(fluxratio+1)-0.5);
                         //}
                         file2<<setprecision(14)<<pow(10,(W(0)+(index2-(RV1maxi+orbele[4])/dv)*difference))<<"\t"<<X(j)<<endl;
                         ++index2;
                     }
-                    if(j>=bso1+bso2){
+                    else if(j>=bso1+bso2){
                         tell<<setprecision(14)<<pow(10,(W(0)+index3*difference))<<"\t"<<X(j)<<endl;
                         ++index3;
                     }
                 }
             }
 
-        for(int n=0; n<X.size(); n++){
+            int XSize=X.size();
+        for(int n=0; n<XSize; n++){
             file7<<n<<" "<<X(n)<<endl;
         }
         index1=0;
         index2=0;
         index3=0;
 
-        for(int i=0; i<res.size(); i++){
+        int ressize=res.size();
+        for(int i=0; i<ressize; i++){
                 file5<<setprecision(14)<<pow(10,W(i))<<" "<<(res(i)-C(i))<<endl;
         }
 
@@ -6938,11 +5985,11 @@ double MainWindow::DivideConquer(){
                         upda2<<setprecision(14)<<pow(10,(W(0)+(index1-(RV3maxi+orbele[4])/dv)*difference))<<"\t"<<X(j)<<endl;
                         ++index1;
                     }
-                    if((j>=bso1)&(j<bso1+bso2)){
+                    else if((j>=bso1)&(j<bso1+bso2)){
                         upda3<<setprecision(14)<<pow(10,(W(0)+(index2-(RV1maxi+orbele[4])/dv)*difference))<<"\t"<<X(j)<<endl;
                         ++index2;
                     }
-                    if(j>=bso1+bso2){
+                    else if(j>=bso1+bso2){
                         upda5<<setprecision(14)<<pow(10,(W(0)+index3*difference))<<"\t"<<X(j)<<endl;
                         ++index3;
                     }
@@ -6953,7 +6000,8 @@ double MainWindow::DivideConquer(){
             index2=0;
             index3=0;
 
-            for(int i=0; i<res.size(); i++){
+            ressize=res.size();
+            for(int i=0; i<ressize; i++){
                     upda4<<pow(10,W(i))<<" "<<(res(i)-C(i))<<endl;
             }
 
@@ -6996,7 +6044,7 @@ double MainWindow::DivideConquer(){
                     file3<<setprecision(14)<<pow(10,(W(0)+(2*index1-(RV3maxi+orbele[4])/dv)*difference))<<"\t"<<Xr[index3]<<endl;
                     ++index1;
                 }
-                if((i>=bso1) & (i<bso1+bso2)){
+                else if((i>=bso1) & (i<bso1+bso2)){
                     file4<<setprecision(14)<<pow(10,(W(0)+(2*index2-(RV1maxi+orbele[4])/dv)*difference))<<"\t"<<Xr[index3]<<endl;
                     ++index2;
                 }
@@ -7058,11 +6106,11 @@ double MainWindow::DivideConquer(){
                             upda2<<setprecision(14)<<pow(10,(W(0)+(index1-(RV3maxi+orbele[4])/dv)*difference))<<"\t"<<X(j)<<endl;
                             ++index1;
                         }
-                        if((j>=bso1)&(j<bso1+bso2)){
+                        else if((j>=bso1)&(j<bso1+bso2)){
                             upda3<<setprecision(14)<<pow(10,(W(0)+(index2-(RV1maxi+orbele[4])/dv)*difference))<<"\t"<<X(j)<<endl;
                             ++index2;
                         }
-                        if(j>=bso1+bso2){
+                        else if(j>=bso1+bso2){
                             upda5<<setprecision(14)<<pow(10,(W(0)+index3*difference))<<"\t"<<X(j)<<endl;
                             ++index3;
                         }
@@ -7072,7 +6120,8 @@ double MainWindow::DivideConquer(){
                 index2=0;
                 index3=0;
 
-                for(int i=0; i<res.size(); i++){
+                int ressize=res.size();
+                for(int i=0; i<ressize; i++){
                         upda4<<pow(10,W(i))<<" "<<(res(i)-C(i))<<endl;
                 }
 
@@ -7269,7 +6318,7 @@ void MainWindow::on_pushButton_6_clicked()
         number_of_lines=0;
 
         while(std::getline(errors, zeile))
-       ++ number_of_lines;
+            ++number_of_lines;
 
         errors.clear();
         errors.seekg(0, ios::beg);
@@ -7355,7 +6404,7 @@ void MainWindow::on_pushButton_6_clicked()
                 //
             }
             if(ui->checkBox_33->isChecked()){
-                if(a[i]>ui->doubleSpinBox_14->value() & (a[i]<ui->doubleSpinBox_15->value())){
+                if((a[i]>ui->doubleSpinBox_14->value()) & (a[i]<ui->doubleSpinBox_15->value())){
                     sres+=b[i];
                     sres2+=pow(b[i],2);
                     ++count;
@@ -7423,7 +6472,7 @@ void MainWindow::on_pushButton_6_clicked()
                 // do nothing
             }
             if(ui->checkBox_33->isChecked()){
-                if(a[i]>ui->doubleSpinBox_14->value() & (a[i]<ui->doubleSpinBox_15->value())){
+                if((a[i]>ui->doubleSpinBox_14->value()) & (a[i]<ui->doubleSpinBox_15->value())){
                     sres+=vreasm[index]-b[i];
                     sres2+=pow((vreasm[index]-b[i]),2);
                     ++count;
@@ -7557,7 +6606,7 @@ void MainWindow::on_pushButton_6_clicked()
             int number_of_lines=0;
 
             while(std::getline(toplot1, zeile))
-                ++ number_of_lines;
+                ++number_of_lines;
 
             toplot1.clear();
             toplot1.seekg(0, ios::beg);
@@ -7605,7 +6654,7 @@ void MainWindow::on_pushButton_6_clicked()
             number_of_lines=0;
 
             while(std::getline(toplot2, zeile))
-                ++ number_of_lines;
+                ++number_of_lines;
 
             toplot2.clear();
             toplot2.seekg(0, ios::beg);
@@ -7705,7 +6754,7 @@ void MainWindow::on_pushButton_6_clicked()
             number_of_lines=0;
 
             while(std::getline(toplot3, zeile))
-            ++ number_of_lines;
+            ++number_of_lines;
 
             toplot3.clear();
             toplot3.seekg(0, ios::beg);
@@ -7723,21 +6772,25 @@ void MainWindow::on_pushButton_6_clicked()
                 ist >> a[i];
                 istringstream ist2(two);
                 ist2 >> b[i];
-                if((i>0) & (a[i]<a[i-1])){
+                if((i>0)){
                     reasm=sres/count;
-                    if(sres!=0){
+                    if((sres!=0) & (a[i]<a[i-1])){
+                        reasm=sres/count;
                         diffs<<sres<<"\t"<<sres2<<"\t"<<reasm<<"\t"<<count<<endl;
+                        sres = 0;
+                        sres2 = 0;
+                        count=0;
+                        ++index;
                     }
                     else{
                         //
                     }
-                    sres = 0;
-                    sres2 = 0;
-                    count=0;
-                    ++index;
+                }
+                else{
+                    // do nothing
                 }
                 if(ui->checkBox_33->isChecked()){
-                    if(a[i]>ui->doubleSpinBox_14->value() & (a[i]<ui->doubleSpinBox_15->value())){
+                    if((a[i]>ui->doubleSpinBox_14->value()) & (a[i]<ui->doubleSpinBox_15->value())){
                         sres+=b[i];
                         sres2+=pow(b[i],2);
                         ++count;
@@ -7787,16 +6840,24 @@ void MainWindow::on_pushButton_6_clicked()
             ofstream diffs2(dat5Name.c_str());
 
             for(int i=0; i<number_of_lines; i++){
-                if((i>0) & (a[i]<a[i-1])){
-                    reasm=sres/count;
-                    diffs2<<sres<<"\t"<<vsres[index]<<"\t"<<sres2<<"\t"<<vsres2[index]<<"\t"<<reasm<<"\t"<<count<<endl;
-                    sres = 0.0;
-                    sres2 = 0.0;
-                    count=0;
-                    ++index;
+                if((i>0)){
+                    if((sres!=0) & (a[i]<a[i-1])){
+                        reasm=sres/count;
+                        diffs2<<sres<<"\t"<<vsres[index]<<"\t"<<sres2<<"\t"<<vsres2[index]<<"\t"<<reasm<<"\t"<<count<<endl;
+                        sres = 0.0;
+                        sres2 = 0.0;
+                        count=0;
+                        ++index;
+                    }
+                    else{
+                        // do nothing
+                    }
+                }
+                else{
+                    //do noting
                 }
                 if(ui->checkBox_33->isChecked()){
-                    if(a[i]>ui->doubleSpinBox_14->value() & (a[i]<ui->doubleSpinBox_15->value())){
+                    if((a[i]>ui->doubleSpinBox_14->value()) & (a[i]<ui->doubleSpinBox_15->value())){
                         sres+=vreasm[index]-b[i];
                         sres2+=pow((vreasm[index]-b[i]),2);
                         ++count;
@@ -7931,7 +6992,9 @@ double Ofunction (double XX[], double RVt, double RVT0, double RVP, double RVe){
 
     }
 
+//***********************************
 // RVs for A
+//**********************************
 void MainWindow::VAmplitudeA()
 {
     double E, theta;
@@ -7959,7 +7022,9 @@ void MainWindow::VAmplitudeA()
     }
 }
 
+//**********************************
 // RVs for B
+//**********************************
 void MainWindow::VAmplitudeB()
 {
     double E, theta;
@@ -7989,7 +7054,7 @@ void MainWindow::VAmplitudeB()
 void MainWindow::on_actionArithmetic_triggered()
 {
     qArith =new Arithmetic(this);
-    qArith->seData(ui->lineEdit_4->text());
+    qArith->seData(ui->lineEdit_4->text(), ui->lineEdit_13->text(), ui->lineEdit_26->text());
     qArith->show();
 }
 
@@ -8027,8 +7092,9 @@ void MainWindow::ErrorEstimation()
         }
        return;
     }
-
-    epara=0;
+    else{
+        epara=0;
+    }
 
     while(std::getline(initiate1, zeile))
        ++ epara;
@@ -8039,11 +7105,12 @@ void MainWindow::ErrorEstimation()
     QVector<double> bestrB(epara), VariP(7);
 
     for (int i=0; i<epara; i++){
-    initiate1 >> one;
-    istringstream ist(one);
-    ist >> bestrB[i];
+        initiate1 >> one;
+        istringstream ist(one);
+        ist >> bestrB[i];
     }
     initiate1.close();
+
 
     bestr = bestrB[0];
 
@@ -8064,16 +7131,15 @@ void MainWindow::ErrorEstimation()
     }
     initorbit.close();
 
-
-    mat Errors(7,7);
-    QVector<double> STDError(7);
-
     MainWindow::read_data();
 
     if(error==1){
         this->setCursor(QCursor(Qt::ArrowCursor));
         error=0;
         return;
+    }
+    else{
+        //
     }
 
 
@@ -8089,6 +7155,9 @@ void MainWindow::ErrorEstimation()
             }
            this->setCursor(QCursor(Qt::ArrowCursor));
             return;
+        }
+        else{
+            //
         }
 
         QString qOptm = ui->lineEdit_17->text();
@@ -8116,20 +7185,67 @@ void MainWindow::ErrorEstimation()
 
         int NVar1=0, Plock=0, elock=0, T0lock=0;
         int Bin;
+        bool xyz;
+        double rv;
+
+        int nu=7;
         int add=0;
 
-        if(ui->checkBox_18->isChecked()){
+        QVector<int> pvf(7);
+
+        if(ui->checkBox_18->isChecked()){ // P
+            pvf[0]=1; // fixed
             ++add;
-            Plock=1;
         }
-        if(ui->checkBox_17->isChecked()){
+        else{
+            pvf[0]=0; // free
+        }
+        if(ui->checkBox_17->isChecked()){ // e
+            pvf[1]=1;
             ++add;
-            elock=1;
         }
-        if(ui->checkBox_35->isChecked()){
+        else{
+            pvf[1]=0;
+        }
+        if(ui->checkBox_31->isChecked()){ // KA
+            pvf[2]=1;
             ++add;
-            T0lock=1;
         }
+        else{
+            pvf[2]=0;
+        }
+        if(ui->checkBox_36->isChecked()){ // KB
+            pvf[3]=1;
+            ++add;
+        }
+        else{
+            pvf[3]=0;
+        }
+        if(ui->checkBox_37->isChecked()){ // Gamma
+            pvf[4]=1;
+            ++add;
+        }
+        else{
+            pvf[4]=0;
+        }
+        if(ui->checkBox_35->isChecked()){ // T0
+            pvf[5]=1;
+            ++add;
+        }
+        else{
+            pvf[5]=0;
+        }
+        if(ui->checkBox_38->isChecked()){ // Omega
+            pvf[6]=1;
+            ++add;
+        }
+        else{
+            pvf[6]=0;
+        }
+
+        nu = nu-add;
+        mat Errors(nu,nu);
+        QVector<double> STDError(nu);
 
         NVar1=7-add;
         cout<<add<<endl;
@@ -8149,21 +7265,23 @@ void MainWindow::ErrorEstimation()
         }
 
         double Bres;
-        int NVar = (NVar1+1)+(NVar1+1)*NVar1/2;
-        QVector<double> Res(NVar);
+        int NVar = (NVar1+1)*(NVar1+2)/2-(NVar1+1);
+        QVector<double> Res(epara);
+        double h(NVar);
+        mat Bi(nu,nu), Gam(nu,nu), Qt(nu,nu);
 
         for (int i=0; i<epara; i++){
-        initiate1 >> one;
-        istringstream ist(one);
-        ist >> Res[i];
-        if(i==0){
-            Bin = i;
-            Bres = Res[0];
-        }
-        if(Res[i]<Bres){
-            Bres=Res[i];
-            Bin = i;
-        }
+            initiate1 >> one;
+            istringstream ist(one);
+            ist >> Res[i];
+            if(i==0){
+                Bin = i;
+                Bres = Res[0];
+            }
+            else if(Res[i]<Bres){
+                Bres=Res[i];
+                Bin = i;
+            }
         }
         initiate1.close();
 
@@ -8191,9 +7309,9 @@ void MainWindow::ErrorEstimation()
 
         for (int i=0; i<NVar1+1; i++){
             for(int e =0; e<NVar1; e++){
-        initiate2 >> one;
-        istringstream ist(one);
-        ist >> V[i][e];
+                initiate2 >> one;
+                istringstream ist(one);
+                ist >> V[i][e];
             }
 
         }
@@ -8207,72 +7325,10 @@ void MainWindow::ErrorEstimation()
                     ++indicat;
                 }
             }
-            /*
-            if(indicat==NVar1){
-                QString ftar = QString::number(e);
-                if(runow==0){
-                    QMessageBox::StandardButton reply;
-                    reply = QMessageBox::question(this, "Warning!", "Parameter "+ftar+" has not changed. This will lead to a singular matrix inversion. Do you want to vary it?",
-                                              QMessageBox::Yes|QMessageBox::No);
-                    if (reply == QMessageBox::Yes) {    // Variing parameters
-                        qDebug() << "Variing Parameter "+ftar;
-                        if(e+add==0){
-
-                        }
-                        if(e+add==1){
-
-                        }
-                        if(e+add==2){
-
-                        }
-                        if(e+add==3){
-
-                        }
-                    }
-
-                    else{    //abort error estimation
-                        qDebug() << "Error estimation via curvature matrix aborted.";
-                        return;
-                    }
-                }
-                else{
-                    cout<<"Parameter "<<e<<" has not changed. This will lead to a singular matrix inversion. Do you want to vary it? 0 no, 1 yes: "<<endl;
-                    cin >> overw;
-                    if(overw==0){
-                        qDebug() << "Error estimation via curvature matrix aborted.";
-                        return;
-                    }
-                    else{
-                        qDebug() << "Variing Parameter "+ftar;
-                        if(e+add==0){
-
-                        }
-                        if(e+add==1){
-
-                        }
-                        if(e+add==2){
-
-                        }
-                        if(e+add==3){
-
-                        }
-                    }
-                }
-            }
-            else{
-                indicat=0;
-            }*/
         }
 
         int laufa=0, laufb=0, laufc=0;
         QVector<double> Theta0j(NVar1);
-
-        /*for(int i =0; i<NVar1; i++){
-            if(i!=Bin){
-                Theta0j(laufa)=EP
-            }
-        }*/
-
 
         QVector<double> Chi0i(NVar1);
         mat Chi(NVar1,NVar1);
@@ -8288,13 +7344,12 @@ void MainWindow::ErrorEstimation()
 
             laufc=0;
 
-            for(int n =i; n<NVar1+1; n++){
-                if(n!=i){
-
-                for(int j =0; j<NVar1; j++){
+            for(int n=i; n<NVar1+1; n++){
+                if((n!=i) & (n>i)){
+                    for(int j =0; j<NVar1; j++){
                         V[laufa+NVar1+1][j]=(V[i][j]+V[n][j])/2;
                         if(add==0){
-                        orbele[j]=V[laufa+NVar1+1][j];
+                            orbele[j]=V[laufa+NVar1+1][j];
                         }
                         if(add==1){
                             if(Plock==1){
@@ -9614,7 +8669,7 @@ void MainWindow::findroot(){
         //looking for second highest value
         rysh=ryl;
         for (int j=0; j<rn+1; j++){
-            if(ry[j]>rysh & ry[j]<ryh){
+            if((ry[j]>rysh) & (ry[j]<ryh)){
                 rysh=ry[j];
                 rPsh=j;
             }
@@ -9821,161 +8876,6 @@ void MainWindow::on_pushButton_12_clicked()
         }
      }
 
-     // without matrix
-/*
-     QVector<double> disw(1), disi(1),disw2(1), obsw(1), obsi(1);
-     int zlin2=0;
-
-     if(ui->checkBox_20->isChecked()){
-
-         QString input=ui->lineEdit_5->text();
-         string in = input.toUtf8().constData();
-         std::ostringstream inNameStream(in);
-         inNameStream<<path<<"/compl.txt";//<<in;
-         std::string inName = inNameStream.str();
-
-         QFile checkfile1(inName.c_str());
-
-         if(!checkfile1.exists()){
-             qDebug()<<"The file "<<checkfile1.fileName()<<" does not exist.";
-             QMessageBox::information(this, "Error", "Error 1: File"+qPath+"/"+input+" does not exist!");
-             this->setCursor(QCursor(Qt::ArrowCursor));
-             return;
-         }
-         ifstream file1(inName.c_str());
-
-         while(std::getline(file1, liner))
-            ++zlin2;
-
-         disw.resize(zlin2);
-         disw2.resize(zlin2);
-         disi.resize(zlin2);
-
-         file1.clear();
-         file1.seekg(0, ios::beg);
-
-         for(int i =0;i <zlin2; i++){
-
-             file1 >> ein1 >>zwei2;
-             istringstream ist(ein1);
-             ist >> disw[i];
-             istringstream ist2(zwei2);
-             ist2 >> disi[i];
-             disi[i]=disi[i]/(1+ui->doubleSpinBox_4->value());
-
-         }
-     }
-
-     else{
-         QString input=ui->lineEdit_8->text();
-         string in = input.toUtf8().constData();
-         std::ostringstream inNameStream(in);
-         inNameStream<<path<<"/compl.txt";//<<in;
-         std::string inName = inNameStream.str();
-
-         QFile checkfile1(inName.c_str());
-
-         if(!checkfile1.exists()){
-             qDebug()<<"The file "<<checkfile1.fileName()<<" does not exist.";
-             QMessageBox::information(this, "Error", "Error 1: File"+qPath+"/"+input+" does not exist!");
-             this->setCursor(QCursor(Qt::ArrowCursor));
-             return;
-         }
-         ifstream file1(inName.c_str());
-
-         while(std::getline(file1, liner))
-            ++zlin2;
-
-         disw.resize(zlin2);
-         disi.resize(zlin2);
-         disw2.resize(zlin2);
-
-         file1.clear();
-         file1.seekg(0, ios::beg);
-
-         for(int i =0;i <zlin2; i++){
-             file1 >> ein1 >>zwei2;
-             istringstream ist(ein1);
-             ist >> disw[i];
-             istringstream ist2(zwei2);
-             ist2 >> disi[i];
-             disi[i]=disi[i]*ui->doubleSpinBox_4->value()/(1+ui->doubleSpinBox_4->value());
-
-         }
-     }
-     double DI=0;
-
-     for(int i = 0; i<smax-smin+1; i++){
-
-         for(int e =0; e<zlin2; e++){
-             if(ui->checkBox_24->isChecked()){
-                 cout<<disw[e]<<"\t";
-                disw2[e]=disw[e]*(1+RV1[i]/c0);
-                cout<<disw2[e]<<endl;
-             }
-             else{
-                if(ui->checkBox_25->isChecked()){
-                    disw2[e]=disw[e]*(1+RV3[i]/c0);
-                }
-             }
-         }
-
-
-         zlin=0;
-
-         QString input=ui->lineEdit_3->text();
-         string in = input.toUtf8().constData();
-         std::ostringstream fileNameStream(in);
-         fileNameStream<<path<<"/"<<in<<i+smin<<sfext;
-         std::string fileName = fileNameStream.str();
-
-         QFile checkfile1(fileName.c_str());
-
-         if(!checkfile1.exists()){
-             qDebug()<<"The file "<<checkfile1.fileName()<<" does not exist.";
-             QString fers = QString::number(i+smin);
-             QMessageBox::information(this, "Error", "Error 1: File"+qPath+"/"+input+fers+fext+" does not exist!");
-             this->setCursor(QCursor(Qt::ArrowCursor));
-             return;
-         }
-         ifstream file1(fileName.c_str());
-
-         while(std::getline(file1, liner))
-            ++zlin;
-
-         obsw.resize(zlin);
-         obsi.resize(zlin);
-
-         file1.clear();
-         file1.seekg(0, ios::beg);
-
-         for(int i =0;i <zlin; i++){
-             file1 >> ein1 >>zwei2;
-             istringstream ist(ein1);
-             ist >> obsw[i];
-             istringstream ist2(zwei2);
-             ist2 >> obsi[i];
-         }
-
-         QString output=ui->lineEdit_27->text();
-         string out = output.toUtf8().constData();
-         std::ostringstream file1NameStream(out);
-         file1NameStream<<path<<"/"<<out<<"_"<<i+smin<<sfext;
-         std::string file1Name = file1NameStream.str();
-         ofstream file2(file1Name.c_str());
-
-         for(int e =0; e<zlin; e++){
-
-             for(int n =0; n<zlin2; n++){
-                 if(disw2[n]<=obsw[e] & disw2[n+1]>obsw[e]){
-                     DI = disi[n]+(obsw[e]-disw2[n])/(disw2[n+1]-disw2[n])*(disi[n+1]-disi[n]);
-                 }
-             }
-             file2<<obsw[e]<<"\t"<<obsi[e]-DI<<endl;
-
-         }
-
-     }*/
 
      this->setCursor(QCursor(Qt::ArrowCursor));
 }
@@ -9992,8 +8892,9 @@ void MainWindow::on_spinBox_8_valueChanged()
         return;
     }
 
-    openblas_set_num_threads(cores);
+    omp_set_num_threads(cores);
     */
+
 
 }
 
@@ -10168,7 +9069,7 @@ void MainWindow::on_pushButton_13_clicked()
     MainWindow::disableButtons();
 
     // optmisation on flux ratios
-    system_clock::time_point time1 = system_clock::now();
+    //system_clock::time_point time1 = system_clock::now();
 
     upda=0;
     updac=0;
