@@ -24,6 +24,8 @@ private slots:
 
     void on_lineEdit_2_editingFinished();
 
+    void readData();
+
 private:
     Ui::OrbitFit *ui;
 };

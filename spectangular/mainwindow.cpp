@@ -6186,8 +6186,13 @@ void MainWindow::on_pushButton_6_clicked()
             QMessageBox::information(this, "Error", "File "+qPath+"/"+plot1+" does not exist!");
             return;
         }
-        ifstream toplot1(datName.c_str());
 
+        ifstream toplot1(datName.c_str());
+        if(toplot1.peek() == std::ifstream::traits_type::eof()){
+            qDebug()<<"The file "<<checkfile.fileName()<<" is empty.";
+            QMessageBox::information(this, "Error", "File "+qPath+"/"+plot1+" is empty.");
+            return;
+        }
         QString plot2=ui->lineEdit_8->text();
         string plot12 = plot2.toUtf8().constData();
         std::ostringstream dat2NameStream(plot12);

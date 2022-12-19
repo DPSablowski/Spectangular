@@ -155,7 +155,7 @@ public:
     {
         if (PlotSpec->objectName().isEmpty())
             PlotSpec->setObjectName(QString::fromUtf8("PlotSpec"));
-        PlotSpec->resize(1944, 908);
+        PlotSpec->resize(1153, 632);
         PlotSpec->setMinimumSize(QSize(200, 50));
         QPalette palette;
         QBrush brush(QColor(0, 0, 0, 255));
@@ -243,7 +243,7 @@ public:
         scrollArea->setWidgetResizable(true);
         scrollAreaWidgetContents = new QWidget();
         scrollAreaWidgetContents->setObjectName(QString::fromUtf8("scrollAreaWidgetContents"));
-        scrollAreaWidgetContents->setGeometry(QRect(0, 0, 1895, 882));
+        scrollAreaWidgetContents->setGeometry(QRect(0, 0, 1133, 612));
         gridLayout_2 = new QGridLayout(scrollAreaWidgetContents);
         gridLayout_2->setObjectName(QString::fromUtf8("gridLayout_2"));
         horizontalLayout_9 = new QHBoxLayout();
