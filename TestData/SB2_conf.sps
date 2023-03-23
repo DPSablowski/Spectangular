@@ -15,7 +15,7 @@
 binaryrv_
 velocities.txt
 spectram_
-/media/sf_Software/SB2
+/media/sf_Software/Spectangular/TestData
 SB2_1.txt
 0
 0

@@ -8556,12 +8556,20 @@ void MainWindow::findroot(){
                     rPl = j;
                 }
             }
+            //rPsh=rPl;
+            rysh=ryl;
+            for (int j=0; j<rn+1; j++){
+                  if((ry[j]>rysh)&(ry[j]<ryh)){
+                      rysh=ry[j];
+                      rPsh=j;
+                  }
+            }
 
         // second highest value
-            rysh=ryl;
+         /*   rysh=ryl;
             ryh=ry[rPh];
             ryl=ry[rPl];
-            rysh=ry[rPsh];
+            rysh=ry[rPsh];*/
 
         //computing mean and sigma
             for (int i=0; i<rn+1; i++){
