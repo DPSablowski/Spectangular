@@ -513,7 +513,7 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>1578</width>
+         <width>1597</width>
          <height>936</height>
         </rect>
        </property>
@@ -788,6 +788,19 @@
                   </property>
                   <property name="text">
                    <string/>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="pushButton_15">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="text">
+                   <string>Test</string>
                   </property>
                  </widget>
                 </item>

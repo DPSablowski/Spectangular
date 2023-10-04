@@ -62,6 +62,7 @@ public:
     QHBoxLayout *horizontalLayout_10;
     QLabel *label_11;
     QLineEdit *lineEdit_4;
+    QPushButton *pushButton_15;
     QSpacerItem *horizontalSpacer_6;
     QHBoxLayout *horizontalLayout;
     QCheckBox *checkBox;
@@ -398,7 +399,7 @@ public:
         scrollArea->setWidgetResizable(true);
         scrollAreaWidgetContents = new QWidget();
         scrollAreaWidgetContents->setObjectName(QString::fromUtf8("scrollAreaWidgetContents"));
-        scrollAreaWidgetContents->setGeometry(QRect(0, 0, 1578, 936));
+        scrollAreaWidgetContents->setGeometry(QRect(0, 0, 1597, 936));
         gridLayout_2 = new QGridLayout(scrollAreaWidgetContents);
         gridLayout_2->setSpacing(6);
         gridLayout_2->setContentsMargins(11, 11, 11, 11);
@@ -497,6 +498,13 @@ public:
         lineEdit_4->setFont(font);
 
         horizontalLayout_10->addWidget(lineEdit_4);
+
+        pushButton_15 = new QPushButton(scrollAreaWidgetContents);
+        pushButton_15->setObjectName(QString::fromUtf8("pushButton_15"));
+        sizePolicy2.setHeightForWidth(pushButton_15->sizePolicy().hasHeightForWidth());
+        pushButton_15->setSizePolicy(sizePolicy2);
+
+        horizontalLayout_10->addWidget(pushButton_15);
 
         horizontalSpacer_6 = new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
 
@@ -3229,6 +3237,7 @@ public:
         label_10->setText(QString());
         label_11->setText(QCoreApplication::translate("MainWindow", "Work Path:", nullptr));
         lineEdit_4->setText(QString());
+        pushButton_15->setText(QCoreApplication::translate("MainWindow", "Test", nullptr));
         checkBox->setText(QCoreApplication::translate("MainWindow", "CroCo", nullptr));
         lineEdit->setText(QString());
         label_2->setText(QCoreApplication::translate("MainWindow", ".txt from", nullptr));

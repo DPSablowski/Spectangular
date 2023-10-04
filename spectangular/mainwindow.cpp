@@ -45,7 +45,7 @@ QString qPath, qExtension, qWCol, qICol, qInitval, qInitmat, qOptval, qOptmat;
 QVector<double> RV1(1), RV2(1), RV3(1), edits(5), Mval1(1), Mval2(1), Mtel(1), otimes(1), orbele(7), dorbele(7);
 QVector<double> cpoints(8);
 double RV1max, RV3max, dv, residu, RV1min, RV3min, RV1maxi, RV3maxi, difference, RV1amin, RV3amin, r1, Diff, fluxratio, ldiff, Per, T0, ecc, Omega1, gama, K1, K2;
-double RVT0, RVt, RVe, RVE, RVP;
+double RVT0, RVt, RVe, RVE, RVP, theta;
 const double c0 = 299792.458;
 string Extension, WCol, ICol;
 std::valarray<double> wave;
@@ -301,6 +301,8 @@ MainWindow::~MainWindow()
 {
     delete ui;
 }
+
+
 
 //************************************************
 // function to calculate inclination
@@ -2079,7 +2081,7 @@ void MainWindow::on_actionAbout_triggered()
 {
     QMessageBox::information(this, "About", "This open-source software was developed at Leibniz-Institute for Astrophysics Potsdam (Germany) by\n\n "
                                             "Daniel P. Sablowski\n\n"
-                                            "Version 1.01 2020\n\n"
+                                            "Version 1.10 2023\n\n"
                                             "It makes use of the 'Armadillo' C++ linear algebra library, OpenBLAS, CCfits and libraries therein.\n"
                                             "It uses the spline.h from https://kluge.in-chemnitz.de/opensource/spline/ \n"
                                             "It is provided AS IS WITHOUT WARRANTY of ANY KIND.\n\n"
@@ -7002,7 +7004,7 @@ double Ofunction (double XX[], double RVt, double RVT0, double RVP, double RVe){
 //**********************************
 void MainWindow::VAmplitudeA()
 {
-    double E, theta;
+    double E;
 
     RVT0 = orbele[5];
     RVP = orbele[0];
@@ -7018,11 +7020,12 @@ void MainWindow::VAmplitudeA()
             theta=2*(atan(tan(E/2)*sqrt((1+orbele[1])/(1-orbele[1]))));
         }
         else{
-            E = M_PI*(otimes[m]-orbele[5])/orbele[0];
-            theta=2*(atan(tan(E/2)));
+            E = 2*M_PI*(otimes[m]-orbele[5])/orbele[0];
+            RVE=E;
+            theta=E;
         }
 
-    RV1[m] = orbele[4] + orbele[2]*(cos(theta+orbele[6])+orbele[1]*cos(orbele[6]));
+        RV1[m] = orbele[4] + orbele[2]*(cos(theta+orbele[6])+orbele[1]*cos(orbele[6]));
 
     }
 }
@@ -7032,7 +7035,7 @@ void MainWindow::VAmplitudeA()
 //**********************************
 void MainWindow::VAmplitudeB()
 {
-    double E, theta;
+    double E;
 
     RVT0 = orbele[5];
     RVP = orbele[0];
@@ -7047,8 +7050,8 @@ void MainWindow::VAmplitudeB()
             theta=2*(atan(tan(E/2)*sqrt((1+orbele[1])/(1-orbele[1]))));
         }
         else{
-            E = M_PI*(otimes[m]-orbele[5])/orbele[0];
-            theta=2*(atan(tan(E/2)));
+            E = 2*M_PI*(otimes[m]-orbele[5])/orbele[0];
+            theta=E;
         }
 
     RV3[m] = orbele[4] + orbele[3]*(cos(theta+(orbele[6]+M_PI))+orbele[1]*cos(orbele[6]+M_PI));
@@ -8498,197 +8501,16 @@ void MainWindow::on_pushButton_10_clicked()
 //**************************************
 void MainWindow::findroot(){
 
-    int rn=1, rPh, rPl, rPsh, rzaehler=40, reval=0;
-    double ryh, rysh, ryl, rym, ryi, rys, ryt;
-    double rstep=0.1;
-    double rgamma=2.0;	//expansion coeff.
-    double ralpha =1.0;	//reflection coeff.
-    double rbeta=0.5;	//contraction coeff.
-    double rbtot=0.5;	//total contraction coeff.
-    double ry[rn+1], rPm[rn+1][rn], rZ[rn], rCX[rn], rS[rn], rEm[rn], rXX[rn], re[rn][rn];
+    double Estart=2*M_PI*(RVt-RVT0)/RVP-2*RVe;
+    double RE=2*M_PI*(RVt-RVT0)/RVP+RVe*sin(Estart);
+    double diff=abs(Estart-RE);
 
-        //initial points
-        rPm[0][0]=2*M_PI*(RVt-RVT0)/RVP-2*RVe;
-        for (int i=0; i<rn+1; i++){
-            for (int j=0; j<rn; j++){
-                if((i>0) & (i==j+1)){
-                    re[i][j]=1;
-                }
-                else{
-                    re[i][j]=0;
-                }
-                if(i==0){
-                    rXX[j]=rPm[i][j];
-                }
-                if(i!=0){
-                    rPm[i][j]=rPm[0][j]+rstep*re[i][j];
-                    rXX[j]=rPm[i][j];
-                }
-            }
-            ry[i]=Ofunction(rXX, RVt, RVT0, RVP, RVe);
-            reval++;
-        }
-
-        //start main loop
-        for (int tc=0; tc<rzaehler; tc++){
-
-        //initialize next step
-            rym=0;
-            rys=0;
-            for (int i=0; i<rn; i++){
-                rZ[i]=0;
-            }
-
-        //looking for highest value
-            ryh=ry[0];
-            for (int j=0; j<rn+1; j++){
-                if(ry[j]>=ryh){
-                    ryh = ry[j];
-                    rPh = j;
-                }
-            }
-
-        //looking for smallest value
-            ryl=ryh;
-            for (int j=0; j<rn+1; j++){
-                if(ry[j]<ryl){
-                    ryl=ry[j];
-                    rPl = j;
-                }
-            }
-            //rPsh=rPl;
-            rysh=ryl;
-            for (int j=0; j<rn+1; j++){
-                  if((ry[j]>rysh)&(ry[j]<ryh)){
-                      rysh=ry[j];
-                      rPsh=j;
-                  }
-            }
-
-        // second highest value
-         /*   rysh=ryl;
-            ryh=ry[rPh];
-            ryl=ry[rPl];
-            rysh=ry[rPsh];*/
-
-        //computing mean and sigma
-            for (int i=0; i<rn+1; i++){
-                rym+=ry[i]/(rn+1);
-            }
-            for (int i=0; i<rn+1; i++){
-                rys+=sqrt(pow((ry[i]-rym),2));
-            }
-            rys=rys/(rn);
-
-        //compute centroid
-            for (int j=0; j<rn; j++){
-                for (int i=0; i<rn+1; i++){
-                    if (i!=rPh){
-                        rZ[j]+=rPm[i][j]/rn;
-                    }
-                }
-            }
-
-        //reflect highest value at centroid
-            for (int i=0; i<rn; i++){
-                rCX[i]=rZ[i]+ralpha*(rZ[i]-rPm[rPh][i]);
-            }
-            ryi=Ofunction(rCX, RVt, RVT0, RVP, RVe);
-            reval++;
-
-            if(ryi<ryl){
-                for (int i=0; i<rn; i++){
-                    rEm[i]=rZ[i]+rgamma*(rCX[i]-rZ[i]);
-                }
-                ryt=Ofunction(rEm, RVt, RVT0, RVP, RVe);
-                reval++;
-                if(ryt<ryl){
-                    for (int i=0; i<rn; i++){
-                        rPm[rPh][i]=rEm[i];
-                    }
-                    ry[rPh]=ryt;
-                }
-                if (ryt>=ryl){
-                    for (int i=0; i<rn; i++){
-                        rPm[rPh][i]=rCX[i];
-                    }
-                    reval++;
-                    ry[rPh]=Ofunction(rCX, RVt, RVT0, RVP, RVe);
-                }
-            }
-
-            if(ryi>=ryl){
-                if(ryi<=rysh){
-                    for(int i=0; i<rn; i++){
-                        rPm[rPh][i]=rCX[i];
-                    }
-                    reval++;
-                    ry[rPh]=Ofunction(rCX, RVt, RVT0, RVP, RVe);
-                }
-                if(ryi>rysh){
-                    if(ryi<=ryh){
-                        for(int i=0; i<rn; i++){
-                            rPm[rPh][i]=rCX[i];
-                        }
-                        reval++;
-                        ry[rPh]=Ofunction(rCX, RVt, RVT0, RVP, RVe);
-                        ryh=ry[rPh];
-                    }
-                    for(int i=0; i<rn; i++){
-                        rS[i]=rZ[i]+rbeta*(rPm[rPh][i]-rZ[i]);
-                    }
-                    ryt=Ofunction(rS, RVt, RVT0, RVP, RVe);
-                    reval++;
-                    if(ryt>ryh){
-                        for (int j=0; j<rn+1; j++){
-                            for (int i=0; i<rn; i++){
-                                rPm[j][i]=rPm[rPl][i]+rbtot*(rPm[j][i]-rPm[rPl][i]); //total contraction
-                                rXX[i]=rPm[j][i];
-                            }
-                            ry[j]=Ofunction(rXX, RVt, RVT0, RVP, RVe);
-                            reval++;
-                        }
-                    }
-
-                    if(ryt<=ryh){
-                        for(int i=0; i<rn; i++){
-                            rPm[rPh][i]=rS[i];
-                        }
-                        reval++;
-                        ry[rPh]=Ofunction(rS, RVt, RVT0, RVP, RVe);
-                    }
-                }
-            }
-        }//end main loop
-
-        //looking for highest value
-        ryh=ry[0];
-        for (int j=0; j<rn+1; j++){
-            if(ry[j]>=ryh){
-                ryh = ry[j];
-                rPh = j;
-            }
-        }
-
-        //looking for smallest value
-        ryl=ryh;
-        for (int j=0; j<rn+1; j++){
-            if(ry[j]<ryl){
-                ryl=ry[j];
-                rPl = j;
-            }
-        }
-
-        //looking for second highest value
-        rysh=ryl;
-        for (int j=0; j<rn+1; j++){
-            if((ry[j]>rysh) & (ry[j]<ryh)){
-                rysh=ry[j];
-                rPsh=j;
-            }
-        }
-
-        RVE=rPm[rPl][0];
+    while(diff>10e-14){
+        Estart=(Estart+RE)/2;
+        RE=2*M_PI*(RVt-RVT0)/RVP+RVe*sin(Estart);
+        diff=abs(Estart-RE);
+    }
+    RVE=Estart;
 }
 
 //*************************
@@ -10084,4 +9906,181 @@ void MainWindow::separation()
 
     MainWindow::enableButtons();
     this->setCursor(QCursor(Qt::ArrowCursor));
+}
+
+void MainWindow::on_pushButton_15_clicked()
+{
+
+    checker=2;
+    mini=ui->spinBox->value();
+    maxi=ui->spinBox_2->value();
+    num=maxi-mini+1;
+
+    RV1.resize(num);
+    RV2.resize(num);
+    RV3.resize(num);
+    otimes.resize(num);
+
+    QString inputt=ui->lineEdit_18->text();
+    string times = inputt.toUtf8().constData();
+    std::ostringstream intNameStream(times);
+    intNameStream<<path<<"/"<<times;
+    std::string intName = intNameStream.str();
+
+    QFile checkfile2(intName.c_str());
+
+    if(!checkfile2.exists()){
+        qDebug()<<"The file "<<checkfile2.fileName()<<" does not exist.";
+        if(runow==0){
+            QMessageBox::information(this, "Error", "Error 4: File"+qPath+"/"+inputt+" does not exist!");
+        }
+        else{
+            cout<<"Error 4: File "<<path<<"/"<<times<<" does not exist!"<<endl;
+            MainWindow::Input();
+        }
+        this->setCursor(QCursor(Qt::ArrowCursor));
+        error=1;
+       return;
+    }
+    else{
+
+        ifstream dat(intName.c_str());
+
+        int entries=0;
+        string liner;
+        while(std::getline(dat, liner))
+           ++entries;
+
+        dat.clear();
+        dat.seekg(0, ios::beg);
+
+        if(entries!=num){
+            if(runow==0){
+                QMessageBox::information(this, "Error", "Error 5: Time file "+qPath+"/"+inputt+" does not match to the number of observations.");
+            }
+            else{
+                cout<<"Error 5: File "<<path<<"/"<<times<<" does not match to the number of observations."<<endl;
+                MainWindow::Input();
+            }
+            error=1;
+            this->setCursor(QCursor(Qt::ArrowCursor));
+            return;
+        }
+
+
+        for(int g=0; g<num; g++){
+            dat >> eins;
+            istringstream istr(eins);
+            istr >> otimes[g];
+        }
+        dat.close();
+    }
+
+    string orbit = "orbitelements.dat";
+    std::ostringstream orbNameStream(orbit);
+    orbNameStream<<path<<"/"<<orbit;
+    std::string orbName = orbNameStream.str();
+
+    QFile checkorb(orbName.c_str());
+
+    if(!checkorb.exists()){
+        qDebug()<<"The file "<<checkorb.fileName()<<" does not exist.";
+        if(runow==0){
+            QMessageBox::information(this, "Error", "Error 6: File "+checkorb.fileName()+" does not exist! Set the orbital elements via the Editor.");
+        }
+        else{
+            cout<<"Error 6: File "<<path<<"/"<<orbit<<" does not exist! Set the orbital elements via the Editor."<<endl;
+            MainWindow::Input();
+        }
+        this->setCursor(QCursor(Qt::ArrowCursor));
+        error=1;
+       return;
+    }
+    else{
+
+        ifstream initorbit(orbName.c_str());
+
+        for(int i=0; i<7; i++){
+            initorbit >> eins;
+            istringstream istr1(eins);
+            istr1 >> orbele[i];
+        }
+        initorbit.close();
+    }
+
+    MainWindow::VAmplitudeA();
+    MainWindow::VAmplitudeB();
+
+    for(int i=0; i<num; i++){
+        QString index= QString::number(i);
+        QString velocity=QString::number(RV1[i]);
+        QString sum=QString::number(RV3[i]);
+        ui->plainTextEdit->appendPlainText(index+" "+velocity+" "+sum);
+        //ui->plainTextEdit->appendPlainText(QString::number(RVE)+" "+QString::number(theta));
+        //cout<<RV1[i]<<" "<<RV3[i]<<endl;
+
+    }
+
+
+
+//looking for maximum RV absolute
+RV1max=abs(RV1[0]);
+RV3max=abs(RV3[0]);
+for (int i=0; i<num; i++){
+    if (abs(RV1[i])>abs(RV1max)){
+        RV1max=RV1[i];
+    }
+    else{
+        //
+    }
+    if (abs(RV3[i])>abs(RV3max)){
+        RV3max=RV3[i];
+    }
+    else{
+        //
+    }
+}
+
+//looking for minimum and maximum RV
+RV1min=RV1max;
+RV3min=RV3max;
+RV1maxi=RV1[0];
+RV3maxi=RV3[0];
+for(int i=0; i<num; i++){
+    if(RV1[i]<RV1min){
+        RV1min=RV1[i];
+    }
+    else{
+        //
+    }
+    if(RV3[i]<RV3min){
+        RV3min=RV3[i];
+    }
+    else{
+        //
+    }
+    if(RV1[i]>RV1maxi){
+        RV1maxi=RV1[i];
+    }
+    else{
+        //
+    }
+    if(RV3[i]>RV3maxi){
+        RV3maxi=RV3[i];
+    }
+    else{
+        //
+    }
+}
+
+RV1amin=RV1[0];
+for(int i=0; i<num; i++){
+    if(abs(RV1[i])<RV1amin){
+        RV1amin=RV1[i];
+    }
+    else{
+        //
+    }
+}
+
 }

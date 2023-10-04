@@ -156,6 +156,8 @@ private slots:
 
     void separation();
 
+    void on_pushButton_15_clicked();
+
 private:
     Ui::MainWindow *ui;
     PlotSpec *pSpec;
