@@ -39,6 +39,7 @@ int runow=0;    // start optimisation from terminal without windows; 1 for yes, 
 int overw=0;    //
 int sequence=0; // sequence
 int optfratios=0;   // optmize on flux ratios;
+int RVCalcCheck=0;
 unsigned int cores;
 string path, eins, zwei, line;
 QString qPath, qExtension, qWCol, qICol, qInitval, qInitmat, qOptval, qOptmat;
@@ -2081,7 +2082,7 @@ void MainWindow::on_actionAbout_triggered()
 {
     QMessageBox::information(this, "About", "This open-source software was developed at Leibniz-Institute for Astrophysics Potsdam (Germany) by\n\n "
                                             "Daniel P. Sablowski\n\n"
-                                            "Version 1.10 2023\n\n"
+                                            "Version 1.11 2023\n\n"
                                             "It makes use of the 'Armadillo' C++ linear algebra library, OpenBLAS, CCfits and libraries therein.\n"
                                             "It uses the spline.h from https://kluge.in-chemnitz.de/opensource/spline/ \n"
                                             "It is provided AS IS WITHOUT WARRANTY of ANY KIND.\n\n"
@@ -8501,14 +8502,20 @@ void MainWindow::on_pushButton_10_clicked()
 //**************************************
 void MainWindow::findroot(){
 
-    double Estart=2*M_PI*(RVt-RVT0)/RVP-2*RVe;
+    double Estart=2*M_PI*(RVt-RVT0)/RVP-M_PI/2;
     double RE=2*M_PI*(RVt-RVT0)/RVP+RVe*sin(Estart);
     double diff=abs(Estart-RE);
+    int fcount=0;
 
-    while(diff>10e-14){
+    while(diff>10e-12){
         Estart=(Estart+RE)/2;
         RE=2*M_PI*(RVt-RVT0)/RVP+RVe*sin(Estart);
         diff=abs(Estart-RE);
+        ++fcount;
+        if(fcount>200){
+            diff=0.0;
+            RVCalcCheck=1;
+        }
     }
     RVE=Estart;
 }
@@ -10020,7 +10027,10 @@ void MainWindow::on_pushButton_15_clicked()
         //cout<<RV1[i]<<" "<<RV3[i]<<endl;
 
     }
-
+    if(RVCalcCheck==1){
+        RVCalcCheck=0;
+        QMessageBox::information(this, "Warning", "Possible uncertainty in RV calculation. Please check.");
+    }
 
 
 //looking for maximum RV absolute
