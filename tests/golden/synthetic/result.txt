@@ -1,8 +1,0 @@
-Mval1 0.5
-Mval2 0.5
-bso1 185
-bso2 187
-residuum_negated 0.92468347566506004
-residuum_perturbed 0.20657956493839844
-residuum_physical 1.0556158143044933e-10
-residuum_physical_again 1.0556158143044933e-10

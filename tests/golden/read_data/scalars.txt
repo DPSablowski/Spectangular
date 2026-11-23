@@ -1,9 +1,0 @@
-M_cols 726
-M_rows 7080
-Mm 726
-Mn 7080
-bso1 363
-bso2 363
-dv 6.663189832606518
-logbin 354
-num 20
