@@ -2,6 +2,15 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include "fluxratio.h"
+#include <armadillo>
+#include "disentangle.h"
+#include "neldermead.h"
+#include <fstream>
+
+// Result of the per-iteration convergence check (Auto Stop, Reinitiate)
+enum class RunAction { Continue, Reinit, Done };
+#include <string>
 #include <plotspec.h>
 #include <correlation.h>
 #include <edit.h>
@@ -18,8 +27,21 @@ class MainWindow : public QMainWindow
 public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
+    QString loadConfiguration(const QString &file);   // error text or empty
+    bool saveConfiguration(const QString &file);
+    int runBatch(const QString &configName);
 
 private slots:
+    void on_actionSubtract_triggered();
+    void on_actionOrbitFit_triggered();
+    void on_actionFluxTemplate_triggered();
+    void on_actionBaryCorr_triggered();
+    void on_actionOpen_Configuration_triggered();
+    void on_actionSave_Configuration_triggered();
+    void on_actionSave_Configuration_As_triggered();
+    void on_actionQuit_triggered();
+    double evaluateOrbit();
+
     void Input();
 
     void on_checkBox_clicked();
@@ -38,7 +60,6 @@ private slots:
 
     void on_actionBug_Report_triggered();
 
-    void on_pushButton_5_clicked();
 
     void on_checkBox_5_clicked();
 
@@ -63,6 +84,7 @@ private slots:
     double DivideConquer();
 
     void on_pushButton_6_clicked();
+    void on_pushButton_stat_clicked();
 
     void on_spinBox_3_valueChanged();
 
@@ -100,7 +122,6 @@ private slots:
 
     void on_pushButton_8_clicked();
 
-    void ComputeDifferences();
 
     void Optimisation();
 
@@ -108,9 +129,7 @@ private slots:
 
     void on_checkBox_34_clicked();
 
-    void on_pushButton_9_clicked();
 
-    void on_pushButton_10_clicked();
 
     void findroot();
 
@@ -118,7 +137,7 @@ private slots:
 
     void on_pushButton_12_clicked();
 
-    void on_spinBox_8_valueChanged();
+    void on_spinBox_8_valueChanged(int);
 
     void on_checkBox_22_clicked();
 
@@ -134,7 +153,6 @@ private slots:
 
     void showPointToolTip_3(QMouseEvent *event);
 
-    void on_checkBox_27_clicked();
 
     void plot_functionvalues();
 
@@ -154,11 +172,54 @@ private slots:
 
     void on_checkBox_30_clicked();
 
-    void separation();
 
     void on_pushButton_15_clicked();
+    void on_pushButton_telldetect_clicked();
 
 private:
+    void reportError(const QString &msg);
+    bool loadComponentWeights();
+    bool loadBaryCorr();
+    bool loadStaticRanges();
+    // file of the ranges of the static lines (Data tab), log10 ranges; default list written for
+    // telluric_static.dat if missing; Error 50 otherwise
+    bool readStaticRangeFile(std::vector<std::pair<double, double>> &logRanges, std::vector<std::string> *labels,
+                             QString &name);
+    // rows left out of the residuum only (Model tab, "Exclude the ranges of the static lines")
+    bool buildResidualExclusion();
+    bool fitStaticStrengths(std::vector<std::vector<double>> &w);
+    bool fitStrengthsWindowed(int &iters, double &change, QString &note);
+    bool setupRatioShape();
+    bool freeRVIndices(bool sb1, std::vector<int> &freeIdx, QString &err) const;
+    arma::vec componentSpectra() const;
+    void plotResidualStatistics();
+    bool ratioModelFromUi(fr::Model &m, std::string &err) const;
+    void updateRatioControls();
+    bool buildDesignMatrix(bool interactive);
+    bool solveSystem(dis::Solver solver);
+    void resetRunState();
+    double knownSigma2() const;
+    double sigma2Now(double residuum) const;
+    void writeSnrEstimate(const arma::vec &res, int bins);
+    std::vector<double> estimateSnr(const arma::vec &res);
+    RunAction convergenceStep(nm::ProgressMonitor &mon, double bestS, int nParams, std::ofstream &log,
+                              bool allowReinit = true);
+    dis::Solver currentSolver() const;
+    double computeResiduum(const arma::vec &res, int *nbins = nullptr);
+    void writeRenormalised(const arma::vec &res, const arma::vec &Xc, const std::vector<double> wc[2],
+                           const std::vector<double> vc[2], const std::vector<int> cc[2],
+                           const QString &fileA, const QString &fileB, double knotA, double lowSigma);
+    arma::vec residualVector(const arma::vec &res);
+    void updateFitTarget();
+    void updateRunInfo();
+    bool optimiseLM(std::ofstream &LogFile, std::ofstream &soptd);
+    void writeSolution(const arma::vec &res, const QString &fA, const QString &fB, const QString &fT,
+                       const QString &fDiff, const QString &fErr, const QString &fCompl);
+    void solveOnce();
+    QString settingValue(const QString &key) const;
+    bool setSettingValue(const QString &key, const QString &value);
+    bool writeSettings(const QString &fileName);
+    QString readSettings(const QString &fileName);
     Ui::MainWindow *ui;
     PlotSpec *pSpec;
     correlation *qCorr;

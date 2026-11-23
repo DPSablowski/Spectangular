@@ -1,33 +1,45 @@
 #include "orbitfit.h"
 #include "ui_orbitfit.h"
+
+#include "dataio.h"
+#include "qcustomplot.h"
+
 #include <QFile>
-#include <sstream>
-#include <fstream>
-#include <cmath>
 #include <QMessageBox>
-#include <iostream>
+#include <algorithm>
+#include <cmath>
+#include <fstream>
 #include <iomanip>
-#include <QFileInfo>
 
-using namespace std;
-
-QString qOFPath;
-string OFPath;
-
-QVector<double> tfit(1), RVAfit(1), RVBfit(1);
-int numfit=0, SBfit=0;
-
+namespace {
+const char *kNames[8] = {"P", "e", "K_A", "K_B", "gamma", "T_peri", "omega_A", "offset_B"};
+}
 
 OrbitFit::OrbitFit(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::OrbitFit)
 {
     ui->setupUi(this);
-    this->setWindowTitle("Fit Orbital Paramters");
-
-    ui->lineEdit_2->setText("/home/daniels/Disentangling/Artificial/ErrorTest/SN100");
-    qOFPath=ui->lineEdit_2->text();
-    OFPath = qOFPath.toUtf8().constData();
+    setWindowTitle("Orbit fit");
+    ui->checkBox_2->setChecked(true);
+    ui->checkBox_file->setChecked(true);
+    ui->lineEdit->setText("rvs.dat");
+    ui->checkBox_main->setEnabled(false);
+    connect(ui->pushButton, &QPushButton::clicked, this, &QDialog::close);
+    for(QCustomPlot *p : {ui->customPlot, ui->customPlot_res}){
+        p->xAxis2->setVisible(true);
+        p->xAxis2->setTickLabels(false);
+        p->yAxis2->setVisible(true);
+        p->yAxis2->setTickLabels(false);
+        p->xAxis->setLabel("Orbital Phase");
+        p->xAxis->setRange(0.0, 1.0);
+    }
+    ui->customPlot->yAxis->setLabel("RV [km/s]");
+    ui->customPlot_res->yAxis->setLabel("O-C [km/s]");
+    ui->pushButton_write->setEnabled(false);
+    // room for three lines of statistics (a word-wrapped label in a grid gets too little height)
+    ui->labelStats->setMinimumHeight(3*ui->labelStats->fontMetrics().lineSpacing() + 4);
+    ui->labelStats->setAlignment(Qt::AlignLeft | Qt::AlignTop);
 }
 
 OrbitFit::~OrbitFit()
@@ -35,335 +47,208 @@ OrbitFit::~OrbitFit()
     delete ui;
 }
 
-//***************************
-// read RVs and Times
-//***************************
-void OrbitFit::readData()
+void OrbitFit::setMainData(const QString &workPath, const std::vector<double> &t, const std::vector<double> &rvA,
+                           const std::vector<double> &rvB, bool sb2, bool valid, const QString &note,
+                           bool offsetB)
 {
-    qOFPath=ui->lineEdit_2->text();
-    OFPath = qOFPath.toUtf8().constData();
-
-    // SB1 data
-    if(ui->checkBox->isChecked()){
-
-        QString input=ui->lineEdit->text();
-        string in = input.toUtf8().constData();
-        std::ostringstream datNameStream(in);
-        datNameStream<<OFPath<<"/"<<in;
-        std::string datName = datNameStream.str();
-
-        QFile checkfile(datName.c_str());
-
-        if(!checkfile.exists()){
-            QMessageBox::information(this, "Error", "File"+qOFPath+"/"+input+" does not exist!");
-            this->setCursor(QCursor(Qt::ArrowCursor));
-           return;
-        }
-        ifstream inp(datName.c_str());
-
-        numfit=0;
-        SBfit=0;
-
-        string line, eins, zwei;
-
-        while(std::getline(inp, line))
-           ++numfit;
-
-        inp.clear();
-        inp.seekg(0, ios::beg);
-
-        tfit.resize(numfit);
-        RVAfit.resize(numfit);
-
-        for(int g=0; g<numfit; g++){
-            inp >> eins >>zwei;
-            istringstream ist(eins);
-            ist >> tfit[g];
-            istringstream ist2(zwei);
-            ist2 >> RVAfit[g];
-        }
-
-        inp.close();
-
+    ui->checkBox_off->setChecked(offsetB);
+    ui->lineEdit_2->setText(workPath);
+    mainT = t;
+    mainA = rvA;
+    mainB = rvB;
+    mainSb2 = sb2;
+    mainValid = valid && !t.empty() && t.size() == rvA.size() && (!sb2 || rvB.size() == t.size());
+    ui->checkBox_main->setEnabled(mainValid);
+    ui->checkBox_main->setToolTip(note);
+    if(mainValid){
+        ui->checkBox_main->setChecked(true);
+        ui->checkBox_file->setChecked(false);
+        ui->checkBox->setChecked(!sb2);
+        ui->checkBox_2->setChecked(sb2);
     }
-
-    // SB2 data
-    else if(ui->checkBox_2->isChecked()){
-
-        QString input=ui->lineEdit->text();
-        string in = input.toUtf8().constData();
-        std::ostringstream datNameStream(in);
-        datNameStream<<OFPath<<"/"<<in;
-        std::string datName = datNameStream.str();
-
-        QFile checkfile(datName.c_str());
-
-        if(!checkfile.exists()){
-            QMessageBox::information(this, "Error", "File"+qOFPath+"/"+input+" does not exist!");
-            this->setCursor(QCursor(Qt::ArrowCursor));
-           return;
-        }
-        ifstream inp(datName.c_str());
-
-        numfit=0;
-        SBfit=1;
-
-        string line, eins, zwei, drei;
-
-        while(std::getline(inp, line))
-           ++numfit;
-
-        inp.clear();
-        inp.seekg(0, ios::beg);
-
-        tfit.resize(numfit);
-        RVAfit.resize(numfit);
-        RVBfit.resize(numfit);
-
-
-        for(int g=0; g<numfit; g++){
-            inp >> eins >>zwei>>drei;
-            istringstream ist(eins);
-            ist >> tfit[g];
-            istringstream ist2(zwei);
-            ist2 >> RVAfit[g];
-            istringstream ist3(drei);
-            ist3>>RVBfit[g];
-        }
-
-        inp.close();
-
-    }
+    ui->labelData->setText(note);
+    if(QFile::exists(workPath+"/"+orbitFile))
+        on_pushButton_load_clicked();
 }
 
-//******************************
-// compute residuum
-//******************************
-double residuumfunction(double ele[]){
+void OrbitFit::on_checkBox_clicked() { ui->checkBox->setChecked(true); ui->checkBox_2->setChecked(false); }
+void OrbitFit::on_checkBox_2_clicked() { ui->checkBox_2->setChecked(true); ui->checkBox->setChecked(false); }
+void OrbitFit::on_checkBox_main_clicked() { ui->checkBox_main->setChecked(true); ui->checkBox_file->setChecked(false); }
+void OrbitFit::on_checkBox_file_clicked() { ui->checkBox_file->setChecked(true); ui->checkBox_main->setChecked(false); }
 
-    if(SBfit==0){   // SB1
-        for(int i=0; i<numfit; i++){
-
-        }
+void OrbitFit::on_pushButton_load_clicked()
+{
+    std::vector<double> el;
+    std::string err;
+    if(!dataio::readNumbers((ui->lineEdit_2->text()+"/"+orbitFile).toStdString(), el, err) || el.size()<7){
+        QMessageBox::information(this, "Orbit fit", orbitFile+" not found or incomplete in the work folder.");
+        return;
     }
-
-    else if(SBfit==1){  // SB2
-        for(int i=0; i<numfit; i++){
-
-        }
-    }
+    QLineEdit *f[7] = {ui->lineEdit_17, ui->lineEdit_18, ui->lineEdit_19, ui->lineEdit_20,
+                       ui->lineEdit_21, ui->lineEdit_22, ui->lineEdit_23};
+    for(int i=0; i<7; i++)
+        f[i]->setText(QString::number(i==6 ? el[i]*180.0/M_PI : el[i], 'g', 12));
 }
 
-//******************************
-// Fit Orbital Elements
-//******************************
-void OrbitFit::on_pushButton_2_clicked(){
+bool OrbitFit::collectData(rvfit::Data &d, QString &err)
+{
+    const bool sb2 = ui->checkBox_2->isChecked();
+    if(ui->checkBox_main->isChecked()){
+        if(!mainValid){ err = "No times and RVs from the main window."; return false; }
+        d = rvfit::Data();
+        d.t = mainT;
+        d.rvA = mainA;
+        if(sb2) d.rvB = mainB;
+        return true;
+    }
+    std::string e;
+    if(!rvfit::readTable((ui->lineEdit_2->text()+"/"+ui->lineEdit->text()).toStdString(), sb2, d, e)){
+        err = QString::fromStdString(e);
+        return false;
+    }
+    return true;
+}
 
-    QString qlFile = ui->lineEdit_2->text()+"/logile.dat";
-    QFileInfo QLFile(qlFile);
-    string lFile = qlFile.toUtf8().constData();
-    std::ostringstream lFileNameStream(lFile);
-    lFileNameStream<<lFile;
-    std::string lFileName = lFileNameStream.str();
-    ofstream LogFile;
-
-    struct tm *ts;
-    time_t t;
-
-    t = time(NULL);
-    ts = localtime(&t);
-
-    if(QLFile.exists()){
-        LogFile.open(lFileName.c_str(), std::ios_base::app);
-        LogFile<<endl;
-        LogFile<<"__________________________________________________"<<endl;
-        LogFile<<" "<<asctime(ts)<<endl;
-        LogFile<<endl;
+void OrbitFit::on_pushButton_2_clicked()
+{
+    rvfit::Data d;
+    QString err;
+    if(!collectData(d, err)){
+        QMessageBox::information(this, "Error", "Orbit fit: "+err);
+        return;
     }
-
-    else{
-        LogFile.open(lFileName.c_str());
-        LogFile<<"******************************"<<endl;
-        LogFile<<"  Orbit Fit LogFile"<<endl;
-        LogFile<<"******************************"<<endl;
-        LogFile<<" "<<asctime(ts)<<endl;
-    }
-
-    int nu=7;
-    int add=0;
-
-    QVector<int> pvf(7);
-    LogFile<<"Locked parameters: ";
-
-    if(ui->checkBox_3->isChecked()){ // P
-        pvf[0]=1; // fixed
-        LogFile<<"P ";
-        ++add;
-    }
-    else{
-        pvf[0]=0; // free
-    }
-    if(ui->checkBox_4->isChecked()){ // e
-        pvf[1]=1;
-        LogFile<<"e ";
-        ++add;
-    }
-    else{
-        pvf[1]=0;
-    }
-    if(ui->checkBox_5->isChecked()){ // KA
-        pvf[2]=1;
-        LogFile<<"KA ";
-        ++add;
-    }
-    else{
-        pvf[2]=0;
-    }
-    if(ui->checkBox_6->isChecked()){ // KB
-        pvf[3]=1;
-        LogFile<<"KB ";
-        ++add;
-    }
-    else{
-        pvf[3]=0;
-    }
-    if(ui->checkBox_7->isChecked()){ // Gamma
-        pvf[4]=1;
-        LogFile<<"Gamma ";
-        ++add;
-    }
-    else{
-        pvf[4]=0;
-    }
-    if(ui->checkBox_8->isChecked()){ // T0
-        pvf[5]=1;
-        LogFile<<"T0 ";
-        ++add;
-    }
-    else{
-        pvf[5]=0;
-    }
-    if(ui->checkBox_9->isChecked()){ // Omega
-        pvf[6]=1;
-        LogFile<<"Omega ";
-        ++add;
-    }
-    else{
-        pvf[6]=0;
-    }
-
-    nu = nu-add;
-
-    double y[nu+1], P[nu+1][nu], Z[nu], Co[nu], So[nu], Eo[nu], e[nu+1][nu], X[nu];
-    QVector<double> porbele(nu), ddorbele(nu), orbele(7), dorbele(7);
-
-    orbele[0]=ui->lineEdit_17->text().toDouble();
-    orbele[1]=ui->lineEdit_18->text().toDouble();
-    orbele[2]=ui->lineEdit_19->text().toDouble();
-    orbele[3]=ui->lineEdit_20->text().toDouble();
-    orbele[4]=ui->lineEdit_21->text().toDouble();
-    orbele[5]=ui->lineEdit_22->text().toDouble();
-    orbele[6]=ui->lineEdit_23->text().toDouble();
-
-    X[0]=orbele[0];
-    X[1]=orbele[1];
-    X[2]=orbele[2];
-    X[3]=orbele[3];
-    X[4]=orbele[4];
-    X[5]=orbele[5];
-    X[6]=orbele[6];
-
-    dorbele[0]=orbele[0]/10;
-    dorbele[1]=orbele[1]/10;
-    dorbele[2]=orbele[2]/10;
-    dorbele[3]=orbele[3]/10;
-    dorbele[4]=orbele[4]/10;
-    dorbele[5]=orbele[5]/10;
-    dorbele[6]=orbele[6]/10;
-
-    int pcount=0;
-
-    for(int i=0; i<nu+add; i++){
-        if(pvf[i]==0){
-            porbele[pcount]=orbele[i];
-            ddorbele[pcount]=dorbele[i];
-            ++pcount;
-        }
-        else{
-            //
-        }
-    }
-    pcount=0;
-
-    // create new initial simplex
+    d.offsetB = d.sb2() && ui->checkBox_off->isChecked();
+    QLineEdit *f[7] = {ui->lineEdit_17, ui->lineEdit_18, ui->lineEdit_19, ui->lineEdit_20,
+                       ui->lineEdit_21, ui->lineEdit_22, ui->lineEdit_23};
+    QCheckBox *fx[7] = {ui->checkBox_3, ui->checkBox_4, ui->checkBox_5, ui->checkBox_6,
+                        ui->checkBox_7, ui->checkBox_8, ui->checkBox_9};
+    double start[7];
+    bool fixed[7];
     for(int i=0; i<7; i++){
-        if(pvf[i]==0){
-            P[0][pcount]=porbele[pcount];
-            cout<<P[0][pcount]<<" ";
-            LogFile<<P[0][pcount]<<" ";
-            ++pcount;
+        bool ok = false;
+        start[i] = f[i]->text().toDouble(&ok);
+        if(!ok || !std::isfinite(start[i])){
+            QMessageBox::information(this, "Error", QString("Orbit fit: start value of %1 missing or not a number.").arg(kNames[i]));
+            return;
         }
-        else{
-            //
-        }
+        fixed[i] = fx[i]->isChecked();
     }
-    cout<<endl;
-    LogFile<<endl;
-    pcount=0;
-
-    for(int i=0; i<nu+1; i++){
-        for(int j=0; j<nu; j++){
-            if((i>0)&(i==j+1)){
-                e[i][j]=ddorbele[i-1];
-            }
-            else e[i][j]=0;
-            cout<<e[i][j]<<" ";
-            LogFile<<e[i][j]<<" ";
-        }
-        cout<<endl;
-        LogFile<<endl;
+    if(!(start[0]>0) || !(start[1]>=0 && start[1]<1) || start[2]<0 || start[3]<0){
+        QMessageBox::information(this, "Error", "Orbit fit: start values need P > 0, 0 <= e < 1 and K >= 0.");
+        return;
     }
-    cout <<endl;
-    LogFile<<endl;
-
-    for(int i=0; i<nu+1; i++){
-        for(int j=0; j<nu; j++){
-            P[i][j]=P[0][j]+e[i][j];
-            cout<<P[i][j]<<" ";
-            LogFile<<P[i][j]<<" ";
-        }
-        LogFile<<endl;
-
-        for(int e=0; e<7; e++){
-            if(pvf[e]==0){
-                X[e]=P[i][pcount];
-                ++pcount;
-            }
-            else{
-                //
-            }
-        }
-        pcount=0;
-
-        y[i]=residuumfunction(X);
+    start[6] *= M_PI/180.0;
+    setCursor(Qt::WaitCursor);
+    res = rvfit::fit(d, start, fixed, ui->spinBox->value());
+    setCursor(Qt::ArrowCursor);
+    if(!res.ok){
+        QMessageBox::information(this, "Error", "Orbit fit: "+(res.message.empty()
+                                 ? QString("no valid solution; check the start values and the data.")
+                                 : QString::fromStdString(res.message)));
+        return;
     }
-
+    QLineEdit *v[7] = {ui->lineEdit_3, ui->lineEdit_4, ui->lineEdit_5, ui->lineEdit_6, ui->lineEdit_7,
+                       ui->lineEdit_8, ui->lineEdit_9};
+    QLineEdit *e[7] = {ui->lineEdit_10, ui->lineEdit_11, ui->lineEdit_12, ui->lineEdit_13, ui->lineEdit_14,
+                       ui->lineEdit_15, ui->lineEdit_16};
+    for(int i=0; i<7; i++){
+        const double s = i==6 ? 180.0/M_PI : 1.0;
+        const bool used = std::find(res.freeIdx.begin(), res.freeIdx.end(), i)!=res.freeIdx.end();
+        v[i]->setText(QString::number(res.el[i]*s, 'g', 12));
+        e[i]->setText(used ? QString::number(res.err[i]*s, 'g', 3) : (fixed[i] ? "fixed" : "-"));
+    }
+    QString stats = QString("RMS A %1, B %2 km/s; chi² %3 for %4 degrees of freedom; %5 (%6 steps)")
+                    .arg(res.rmsA, 0, 'g', 3).arg(d.sb2() ? QString::number(res.rmsB, 'g', 3) : "-")
+                    .arg(res.chi2, 0, 'g', 4).arg(res.dof).arg(QString::fromStdString(res.message))
+                    .arg(res.iterations);
+    if(d.offsetB) stats += QString("\nOffset of B: %1 ± %2 km/s").arg(res.offB, 0, 'f', 3).arg(res.errOffB, 0, 'g', 3);
+    ui->labelStats->setText(stats);
+    ui->pushButton_write->setEnabled(true);
+    plotResult(d);
+    writeResultFile(d);
 }
 
-void OrbitFit::on_checkBox_2_clicked()
+void OrbitFit::plotResult(const rvfit::Data &d)
 {
-    ui->checkBox->setChecked(false);
+    QCustomPlot *p = ui->customPlot, *q = ui->customPlot_res;
+    p->clearGraphs();
+    q->clearGraphs();
+    QVector<double> mx, ma, mb;
+    for(int k=0; k<=400; k++){
+        const double ph = k/400.0;
+        double vA, vB;
+        rvfit::model(res.el, res.el[5] + ph*res.el[0], vA, vB);
+        mx << ph; ma << vA; mb << vB + res.offB;
+    }
+    QVector<double> px, pa, pb, ra, rb;
+    for(size_t j=0; j<d.t.size(); j++){
+        px << rvfit::phase(d.t[j], res.el[0], res.el[5]);
+        pa << d.rvA[j];
+        ra << res.resA[j];
+        if(d.sb2()){ pb << d.rvB[j]; rb << res.resB[j]; }
+    }
+    auto curve = [&](QCustomPlot *pl, const QVector<double> &x, const QVector<double> &y, QColor c, bool points){
+        pl->addGraph();
+        QCPGraph *g = pl->graph(pl->graphCount()-1);
+        g->setData(x, y);
+        g->setPen(QPen(c));
+        if(points){
+            g->setLineStyle(QCPGraph::lsNone);
+            g->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssDisc, c, 6));
+        }
+    };
+    const QColor cA(31,119,180), cB(214,39,40);
+    curve(p, mx, ma, cA, false);
+    curve(p, px, pa, cA, true);
+    if(d.sb2()){
+        curve(p, mx, mb, cB, false);
+        curve(p, px, pb, cB, true);
+    }
+    p->rescaleAxes();
+    p->yAxis->scaleRange(1.12, p->yAxis->range().center());   // room for the points at the extremes
+    p->xAxis->setRange(0.0, 1.0);
+    p->replot();
+    curve(q, QVector<double>{0.0, 1.0}, QVector<double>{0.0, 0.0}, Qt::gray, false);
+    curve(q, px, ra, cA, true);
+    if(d.sb2()) curve(q, px, rb, cB, true);
+    q->rescaleAxes();
+    q->yAxis->scaleRange(1.2, q->yAxis->range().center());
+    q->xAxis->setRange(0.0, 1.0);
+    q->replot();
 }
 
-
-void OrbitFit::on_checkBox_clicked()
+void OrbitFit::writeResultFile(const rvfit::Data &d)
 {
-    ui->checkBox_2->setChecked(false);
+    std::ofstream o((ui->lineEdit_2->text()+"/orbitfit_result.txt").toStdString().c_str());
+    o<<std::setprecision(12);
+    o<<"# Orbit fit to "<<d.t.size()<<" epochs ("<<(d.sb2() ? "SB2" : "SB1")<<"), "<<res.message<<"\n";
+    o<<"# RMS A "<<res.rmsA<<" km/s";
+    if(d.sb2()) o<<", RMS B "<<res.rmsB<<" km/s";
+    o<<"; chi2 "<<res.chi2<<", dof "<<res.dof<<"; errors scaled with chi2/dof\n";
+    if(d.offsetB) o<<"# offset of the RVs of B: "<<res.offB<<" +- "<<res.errOffB<<" km/s (model B + offset)\n";
+    o<<"# element\tvalue\terror   (omega_A in rad; T_peri: passage nearest to the mean time)\n";
+    for(int i=0; i<7; i++){
+        const bool used = std::find(res.freeIdx.begin(), res.freeIdx.end(), i)!=res.freeIdx.end();
+        o<<kNames[i]<<"\t"<<res.el[i]<<"\t";
+        if(used) o<<res.err[i];
+        else o<<"fixed";
+        o<<"\n";
+    }
+    o<<"\n# covariance of the free elements:";
+    for(int k : res.freeIdx) o<<" "<<kNames[k];
+    o<<"\n"<<res.cov;
+    o<<"\n# time\tphase\tRV_A\tO-C_A"<<(d.sb2() ? "\tRV_B\tO-C_B" : "")<<"\n";
+    for(size_t j=0; j<d.t.size(); j++){
+        o<<d.t[j]<<"\t"<<rvfit::phase(d.t[j], res.el[0], res.el[5])<<"\t"<<d.rvA[j]<<"\t"<<res.resA[j];
+        if(d.sb2()) o<<"\t"<<d.rvB[j]<<"\t"<<res.resB[j];
+        o<<"\n";
+    }
 }
 
-
-void OrbitFit::on_lineEdit_2_editingFinished()
+void OrbitFit::on_pushButton_write_clicked()
 {
-    qOFPath=ui->lineEdit_2->text();
-    OFPath = qOFPath.toUtf8().constData();
+    if(!res.ok) return;
+    std::ofstream o((ui->lineEdit_2->text()+"/"+orbitFile).toStdString().c_str());
+    o<<std::setprecision(14);
+    for(int i=0; i<7; i++) o<<res.el[i]<<(i<6 ? "\n" : "");
 }

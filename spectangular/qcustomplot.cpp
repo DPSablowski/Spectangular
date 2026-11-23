@@ -1,3 +1,8 @@
+// Fremdcode (QCustomPlot 1.x) verwendet in Qt 5.15 veraltete Funktionen; die Warnungen
+// betreffen nur diese Datei und werden hier abgeschaltet.
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
 /***************************************************************************
 **                                                                        **
 **  QCustomPlot, an easy to use, modern plotting widget for Qt            **

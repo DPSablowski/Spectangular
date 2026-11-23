@@ -1,321 +1,382 @@
 /****************************************************************************
 ** Meta object code from reading C++ file 'mainwindow.h'
 **
-** Created by: The Qt Meta Object Compiler version 67 (Qt 5.15.0)
+** Created by: The Qt Meta Object Compiler version 69 (Qt 6.11.1)
 **
 ** WARNING! All changes made in this file will be lost!
 *****************************************************************************/
 
-#include <memory>
 #include "mainwindow.h"
-#include <QtCore/qbytearray.h>
 #include <QtCore/qmetatype.h>
+
+#include <QtCore/qtmochelpers.h>
+
+#include <memory>
+
+
+#include <QtCore/qxptype_traits.h>
 #if !defined(Q_MOC_OUTPUT_REVISION)
 #error "The header file 'mainwindow.h' doesn't include <QObject>."
-#elif Q_MOC_OUTPUT_REVISION != 67
-#error "This file was generated using the moc from 5.15.0. It"
+#elif Q_MOC_OUTPUT_REVISION != 69
+#error "This file was generated using the moc from 6.11.1. It"
 #error "cannot be used with the include files from this version of Qt."
 #error "(The moc has changed too much.)"
 #endif
 
-QT_BEGIN_MOC_NAMESPACE
+#ifndef Q_CONSTINIT
+#define Q_CONSTINIT
+#endif
+
 QT_WARNING_PUSH
 QT_WARNING_DISABLE_DEPRECATED
-struct qt_meta_stringdata_MainWindow_t {
-    QByteArrayData data[73];
-    char stringdata0[1556];
-};
-#define QT_MOC_LITERAL(idx, ofs, len) \
-    Q_STATIC_BYTE_ARRAY_DATA_HEADER_INITIALIZER_WITH_OFFSET(len, \
-    qptrdiff(offsetof(qt_meta_stringdata_MainWindow_t, stringdata0) + ofs \
-        - idx * sizeof(QByteArrayData)) \
-    )
-static const qt_meta_stringdata_MainWindow_t qt_meta_stringdata_MainWindow = {
-    {
-QT_MOC_LITERAL(0, 0, 10), // "MainWindow"
-QT_MOC_LITERAL(1, 11, 5), // "Input"
-QT_MOC_LITERAL(2, 17, 0), // ""
-QT_MOC_LITERAL(3, 18, 19), // "on_checkBox_clicked"
-QT_MOC_LITERAL(4, 38, 21), // "on_checkBox_2_clicked"
-QT_MOC_LITERAL(5, 60, 23), // "on_pushButton_2_clicked"
-QT_MOC_LITERAL(6, 84, 9), // "read_data"
-QT_MOC_LITERAL(7, 94, 23), // "on_pushButton_3_clicked"
-QT_MOC_LITERAL(8, 118, 35), // "on_actionSpectrum_Plotter_tri..."
-QT_MOC_LITERAL(9, 154, 24), // "on_actionAbout_triggered"
-QT_MOC_LITERAL(10, 179, 29), // "on_actionBug_Report_triggered"
-QT_MOC_LITERAL(11, 209, 23), // "on_pushButton_5_clicked"
-QT_MOC_LITERAL(12, 233, 21), // "on_checkBox_5_clicked"
-QT_MOC_LITERAL(13, 255, 21), // "on_checkBox_6_clicked"
-QT_MOC_LITERAL(14, 277, 21), // "on_checkBox_7_clicked"
-QT_MOC_LITERAL(15, 299, 29), // "on_lineEdit_4_editingFinished"
-QT_MOC_LITERAL(16, 329, 30), // "on_actionCorrelation_triggered"
-QT_MOC_LITERAL(17, 360, 25), // "on_lineEdit_9_textChanged"
-QT_MOC_LITERAL(18, 386, 26), // "on_lineEdit_11_textChanged"
-QT_MOC_LITERAL(19, 413, 26), // "on_lineEdit_12_textChanged"
-QT_MOC_LITERAL(20, 440, 31), // "on_comboBox_currentIndexChanged"
-QT_MOC_LITERAL(21, 472, 15), // "ConstructMatrix"
-QT_MOC_LITERAL(22, 488, 13), // "DivideConquer"
-QT_MOC_LITERAL(23, 502, 23), // "on_pushButton_6_clicked"
-QT_MOC_LITERAL(24, 526, 25), // "on_spinBox_3_valueChanged"
-QT_MOC_LITERAL(25, 552, 21), // "on_checkBox_9_clicked"
-QT_MOC_LITERAL(26, 574, 22), // "on_checkBox_11_clicked"
-QT_MOC_LITERAL(27, 597, 31), // "on_doubleSpinBox_4_valueChanged"
-QT_MOC_LITERAL(28, 629, 23), // "on_pushButton_7_clicked"
-QT_MOC_LITERAL(29, 653, 22), // "on_checkBox_12_clicked"
-QT_MOC_LITERAL(30, 676, 21), // "on_checkBox_4_clicked"
-QT_MOC_LITERAL(31, 698, 21), // "on_checkBox_3_clicked"
-QT_MOC_LITERAL(32, 720, 22), // "on_checkBox_14_clicked"
-QT_MOC_LITERAL(33, 743, 22), // "on_checkBox_15_clicked"
-QT_MOC_LITERAL(34, 766, 25), // "on_actionEditor_triggered"
-QT_MOC_LITERAL(35, 792, 22), // "on_checkBox_16_clicked"
-QT_MOC_LITERAL(36, 815, 11), // "VAmplitudeA"
-QT_MOC_LITERAL(37, 827, 11), // "VAmplitudeB"
-QT_MOC_LITERAL(38, 839, 29), // "on_actionArithmetic_triggered"
-QT_MOC_LITERAL(39, 869, 25), // "on_actionManual_triggered"
-QT_MOC_LITERAL(40, 895, 15), // "ErrorEstimation"
-QT_MOC_LITERAL(41, 911, 23), // "on_pushButton_8_clicked"
-QT_MOC_LITERAL(42, 935, 18), // "ComputeDifferences"
-QT_MOC_LITERAL(43, 954, 12), // "Optimisation"
-QT_MOC_LITERAL(44, 967, 23), // "on_pushButton_4_clicked"
-QT_MOC_LITERAL(45, 991, 22), // "on_checkBox_34_clicked"
-QT_MOC_LITERAL(46, 1014, 23), // "on_pushButton_9_clicked"
-QT_MOC_LITERAL(47, 1038, 24), // "on_pushButton_10_clicked"
-QT_MOC_LITERAL(48, 1063, 8), // "findroot"
-QT_MOC_LITERAL(49, 1072, 24), // "on_pushButton_11_clicked"
-QT_MOC_LITERAL(50, 1097, 24), // "on_pushButton_12_clicked"
-QT_MOC_LITERAL(51, 1122, 25), // "on_spinBox_8_valueChanged"
-QT_MOC_LITERAL(52, 1148, 22), // "on_checkBox_22_clicked"
-QT_MOC_LITERAL(53, 1171, 22), // "on_checkBox_20_clicked"
-QT_MOC_LITERAL(54, 1194, 22), // "on_checkBox_21_clicked"
-QT_MOC_LITERAL(55, 1217, 22), // "on_checkBox_24_clicked"
-QT_MOC_LITERAL(56, 1240, 22), // "on_checkBox_25_clicked"
-QT_MOC_LITERAL(57, 1263, 16), // "showPointToolTip"
-QT_MOC_LITERAL(58, 1280, 12), // "QMouseEvent*"
-QT_MOC_LITERAL(59, 1293, 5), // "event"
-QT_MOC_LITERAL(60, 1299, 18), // "showPointToolTip_3"
-QT_MOC_LITERAL(61, 1318, 22), // "on_checkBox_27_clicked"
-QT_MOC_LITERAL(62, 1341, 19), // "plot_functionvalues"
-QT_MOC_LITERAL(63, 1361, 22), // "on_checkBox_26_clicked"
-QT_MOC_LITERAL(64, 1384, 22), // "on_checkBox_28_clicked"
-QT_MOC_LITERAL(65, 1407, 14), // "disableButtons"
-QT_MOC_LITERAL(66, 1422, 13), // "enableButtons"
-QT_MOC_LITERAL(67, 1436, 24), // "on_pushButton_13_clicked"
-QT_MOC_LITERAL(68, 1461, 12), // "inclinations"
-QT_MOC_LITERAL(69, 1474, 22), // "on_checkBox_29_clicked"
-QT_MOC_LITERAL(70, 1497, 22), // "on_checkBox_30_clicked"
-QT_MOC_LITERAL(71, 1520, 10), // "separation"
-QT_MOC_LITERAL(72, 1531, 24) // "on_pushButton_15_clicked"
+QT_WARNING_DISABLE_GCC("-Wuseless-cast")
+namespace {
+struct qt_meta_tag_ZN10MainWindowE_t {};
+} // unnamed namespace
 
-    },
-    "MainWindow\0Input\0\0on_checkBox_clicked\0"
-    "on_checkBox_2_clicked\0on_pushButton_2_clicked\0"
-    "read_data\0on_pushButton_3_clicked\0"
-    "on_actionSpectrum_Plotter_triggered\0"
-    "on_actionAbout_triggered\0"
-    "on_actionBug_Report_triggered\0"
-    "on_pushButton_5_clicked\0on_checkBox_5_clicked\0"
-    "on_checkBox_6_clicked\0on_checkBox_7_clicked\0"
-    "on_lineEdit_4_editingFinished\0"
-    "on_actionCorrelation_triggered\0"
-    "on_lineEdit_9_textChanged\0"
-    "on_lineEdit_11_textChanged\0"
-    "on_lineEdit_12_textChanged\0"
-    "on_comboBox_currentIndexChanged\0"
-    "ConstructMatrix\0DivideConquer\0"
-    "on_pushButton_6_clicked\0"
-    "on_spinBox_3_valueChanged\0"
-    "on_checkBox_9_clicked\0on_checkBox_11_clicked\0"
-    "on_doubleSpinBox_4_valueChanged\0"
-    "on_pushButton_7_clicked\0on_checkBox_12_clicked\0"
-    "on_checkBox_4_clicked\0on_checkBox_3_clicked\0"
-    "on_checkBox_14_clicked\0on_checkBox_15_clicked\0"
-    "on_actionEditor_triggered\0"
-    "on_checkBox_16_clicked\0VAmplitudeA\0"
-    "VAmplitudeB\0on_actionArithmetic_triggered\0"
-    "on_actionManual_triggered\0ErrorEstimation\0"
-    "on_pushButton_8_clicked\0ComputeDifferences\0"
-    "Optimisation\0on_pushButton_4_clicked\0"
-    "on_checkBox_34_clicked\0on_pushButton_9_clicked\0"
-    "on_pushButton_10_clicked\0findroot\0"
-    "on_pushButton_11_clicked\0"
-    "on_pushButton_12_clicked\0"
-    "on_spinBox_8_valueChanged\0"
-    "on_checkBox_22_clicked\0on_checkBox_20_clicked\0"
-    "on_checkBox_21_clicked\0on_checkBox_24_clicked\0"
-    "on_checkBox_25_clicked\0showPointToolTip\0"
-    "QMouseEvent*\0event\0showPointToolTip_3\0"
-    "on_checkBox_27_clicked\0plot_functionvalues\0"
-    "on_checkBox_26_clicked\0on_checkBox_28_clicked\0"
-    "disableButtons\0enableButtons\0"
-    "on_pushButton_13_clicked\0inclinations\0"
-    "on_checkBox_29_clicked\0on_checkBox_30_clicked\0"
-    "separation\0on_pushButton_15_clicked"
-};
-#undef QT_MOC_LITERAL
+template <> constexpr inline auto MainWindow::qt_create_metaobjectdata<qt_meta_tag_ZN10MainWindowE_t>()
+{
+    namespace QMC = QtMocConstants;
+    QtMocHelpers::StringRefStorage qt_stringData {
+        "MainWindow",
+        "Input",
+        "",
+        "on_checkBox_clicked",
+        "on_checkBox_2_clicked",
+        "on_pushButton_2_clicked",
+        "read_data",
+        "on_pushButton_3_clicked",
+        "on_actionSpectrum_Plotter_triggered",
+        "on_actionAbout_triggered",
+        "on_actionBug_Report_triggered",
+        "on_pushButton_5_clicked",
+        "on_checkBox_5_clicked",
+        "on_checkBox_6_clicked",
+        "on_checkBox_7_clicked",
+        "on_lineEdit_4_editingFinished",
+        "on_actionCorrelation_triggered",
+        "on_lineEdit_9_textChanged",
+        "on_lineEdit_11_textChanged",
+        "on_lineEdit_12_textChanged",
+        "on_comboBox_currentIndexChanged",
+        "ConstructMatrix",
+        "DivideConquer",
+        "on_pushButton_6_clicked",
+        "on_spinBox_3_valueChanged",
+        "on_checkBox_9_clicked",
+        "on_checkBox_11_clicked",
+        "on_doubleSpinBox_4_valueChanged",
+        "on_pushButton_7_clicked",
+        "on_checkBox_12_clicked",
+        "on_checkBox_4_clicked",
+        "on_checkBox_3_clicked",
+        "on_checkBox_14_clicked",
+        "on_checkBox_15_clicked",
+        "on_actionEditor_triggered",
+        "on_checkBox_16_clicked",
+        "VAmplitudeA",
+        "VAmplitudeB",
+        "on_actionArithmetic_triggered",
+        "on_actionManual_triggered",
+        "ErrorEstimation",
+        "on_pushButton_8_clicked",
+        "ComputeDifferences",
+        "Optimisation",
+        "on_pushButton_4_clicked",
+        "on_checkBox_34_clicked",
+        "on_pushButton_9_clicked",
+        "on_pushButton_10_clicked",
+        "findroot",
+        "on_pushButton_11_clicked",
+        "on_pushButton_12_clicked",
+        "on_spinBox_8_valueChanged",
+        "on_checkBox_22_clicked",
+        "on_checkBox_20_clicked",
+        "on_checkBox_21_clicked",
+        "on_checkBox_24_clicked",
+        "on_checkBox_25_clicked",
+        "showPointToolTip",
+        "QMouseEvent*",
+        "event",
+        "showPointToolTip_3",
+        "on_checkBox_27_clicked",
+        "plot_functionvalues",
+        "on_checkBox_26_clicked",
+        "on_checkBox_28_clicked",
+        "disableButtons",
+        "enableButtons",
+        "on_pushButton_13_clicked",
+        "inclinations",
+        "on_checkBox_29_clicked",
+        "on_checkBox_30_clicked",
+        "separation",
+        "on_pushButton_15_clicked",
+        "on_spinBox_valueChanged",
+        "on_spinBox_2_valueChanged",
+        "on_checkBox_8_stateChanged",
+        "on_checkBox_10_stateChanged",
+        "on_checkBox_13_stateChanged",
+        "on_checkBox_17_stateChanged",
+        "on_checkBox_18_stateChanged",
+        "on_checkBox_31_stateChanged",
+        "on_checkBox_36_stateChanged",
+        "on_checkBox_37_stateChanged",
+        "on_checkBox_35_stateChanged",
+        "on_checkBox_38_stateChanged",
+        "on_checkBox_19_stateChanged",
+        "on_checkBox_22_stateChanged",
+        "on_checkBox_23_stateChanged",
+        "on_checkBox_32_stateChanged",
+        "on_checkBox_33_stateChanged",
+        "on_checkBox_39_stateChanged",
+        "on_spinBox_4_valueChanged",
+        "on_spinBox_9_valueChanged",
+        "on_spinBox_10_valueChanged",
+        "on_doubleSpinBox_3_valueChanged",
+        "on_doubleSpinBox_5_valueChanged",
+        "on_lineEdit_editingFinished",
+        "on_lineEdit_2_editingFinished",
+        "on_lineEdit_18_editingFinished",
+        "on_lineEdit_3_editingFinished",
+        "on_lineEdit_19_editingFinished",
+        "on_lineEdit_27_editingFinished",
+        "on_lineEdit_28_editingFinished",
+        "on_lineEdit_23_editingFinished",
+        "on_lineEdit_22_editingFinished",
+        "on_checkBox_40_clicked"
+    };
 
-static const uint qt_meta_data_MainWindow[] = {
-
- // content:
-       8,       // revision
-       0,       // classname
-       0,    0, // classinfo
-      69,   14, // methods
-       0,    0, // properties
-       0,    0, // enums/sets
-       0,    0, // constructors
-       0,       // flags
-       0,       // signalCount
-
- // slots: name, argc, parameters, tag, flags
-       1,    0,  359,    2, 0x08 /* Private */,
-       3,    0,  360,    2, 0x08 /* Private */,
-       4,    0,  361,    2, 0x08 /* Private */,
-       5,    0,  362,    2, 0x08 /* Private */,
-       6,    0,  363,    2, 0x08 /* Private */,
-       7,    0,  364,    2, 0x08 /* Private */,
-       8,    0,  365,    2, 0x08 /* Private */,
-       9,    0,  366,    2, 0x08 /* Private */,
-      10,    0,  367,    2, 0x08 /* Private */,
-      11,    0,  368,    2, 0x08 /* Private */,
-      12,    0,  369,    2, 0x08 /* Private */,
-      13,    0,  370,    2, 0x08 /* Private */,
-      14,    0,  371,    2, 0x08 /* Private */,
-      15,    0,  372,    2, 0x08 /* Private */,
-      16,    0,  373,    2, 0x08 /* Private */,
-      17,    0,  374,    2, 0x08 /* Private */,
-      18,    0,  375,    2, 0x08 /* Private */,
-      19,    0,  376,    2, 0x08 /* Private */,
-      20,    0,  377,    2, 0x08 /* Private */,
-      21,    0,  378,    2, 0x08 /* Private */,
-      22,    0,  379,    2, 0x08 /* Private */,
-      23,    0,  380,    2, 0x08 /* Private */,
-      24,    0,  381,    2, 0x08 /* Private */,
-      25,    0,  382,    2, 0x08 /* Private */,
-      26,    0,  383,    2, 0x08 /* Private */,
-      27,    0,  384,    2, 0x08 /* Private */,
-      28,    0,  385,    2, 0x08 /* Private */,
-      29,    0,  386,    2, 0x08 /* Private */,
-      30,    0,  387,    2, 0x08 /* Private */,
-      31,    0,  388,    2, 0x08 /* Private */,
-      32,    0,  389,    2, 0x08 /* Private */,
-      33,    0,  390,    2, 0x08 /* Private */,
-      34,    0,  391,    2, 0x08 /* Private */,
-      35,    0,  392,    2, 0x08 /* Private */,
-      36,    0,  393,    2, 0x08 /* Private */,
-      37,    0,  394,    2, 0x08 /* Private */,
-      38,    0,  395,    2, 0x08 /* Private */,
-      39,    0,  396,    2, 0x08 /* Private */,
-      40,    0,  397,    2, 0x08 /* Private */,
-      41,    0,  398,    2, 0x08 /* Private */,
-      42,    0,  399,    2, 0x08 /* Private */,
-      43,    0,  400,    2, 0x08 /* Private */,
-      44,    0,  401,    2, 0x08 /* Private */,
-      45,    0,  402,    2, 0x08 /* Private */,
-      46,    0,  403,    2, 0x08 /* Private */,
-      47,    0,  404,    2, 0x08 /* Private */,
-      48,    0,  405,    2, 0x08 /* Private */,
-      49,    0,  406,    2, 0x08 /* Private */,
-      50,    0,  407,    2, 0x08 /* Private */,
-      51,    0,  408,    2, 0x08 /* Private */,
-      52,    0,  409,    2, 0x08 /* Private */,
-      53,    0,  410,    2, 0x08 /* Private */,
-      54,    0,  411,    2, 0x08 /* Private */,
-      55,    0,  412,    2, 0x08 /* Private */,
-      56,    0,  413,    2, 0x08 /* Private */,
-      57,    1,  414,    2, 0x08 /* Private */,
-      60,    1,  417,    2, 0x08 /* Private */,
-      61,    0,  420,    2, 0x08 /* Private */,
-      62,    0,  421,    2, 0x08 /* Private */,
-      63,    0,  422,    2, 0x08 /* Private */,
-      64,    0,  423,    2, 0x08 /* Private */,
-      65,    0,  424,    2, 0x08 /* Private */,
-      66,    0,  425,    2, 0x08 /* Private */,
-      67,    0,  426,    2, 0x08 /* Private */,
-      68,    0,  427,    2, 0x08 /* Private */,
-      69,    0,  428,    2, 0x08 /* Private */,
-      70,    0,  429,    2, 0x08 /* Private */,
-      71,    0,  430,    2, 0x08 /* Private */,
-      72,    0,  431,    2, 0x08 /* Private */,
-
- // slots: parameters
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Double,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void, 0x80000000 | 58,   59,
-    QMetaType::Void, 0x80000000 | 58,   59,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Double,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-
-       0        // eod
-};
+    QtMocHelpers::UintData qt_methods {
+        // Slot 'Input'
+        QtMocHelpers::SlotData<void()>(1, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_checkBox_clicked'
+        QtMocHelpers::SlotData<void()>(3, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_checkBox_2_clicked'
+        QtMocHelpers::SlotData<void()>(4, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_pushButton_2_clicked'
+        QtMocHelpers::SlotData<void()>(5, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'read_data'
+        QtMocHelpers::SlotData<void()>(6, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_pushButton_3_clicked'
+        QtMocHelpers::SlotData<void()>(7, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_actionSpectrum_Plotter_triggered'
+        QtMocHelpers::SlotData<void()>(8, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_actionAbout_triggered'
+        QtMocHelpers::SlotData<void()>(9, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_actionBug_Report_triggered'
+        QtMocHelpers::SlotData<void()>(10, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_pushButton_5_clicked'
+        QtMocHelpers::SlotData<void()>(11, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_checkBox_5_clicked'
+        QtMocHelpers::SlotData<void()>(12, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_checkBox_6_clicked'
+        QtMocHelpers::SlotData<void()>(13, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_checkBox_7_clicked'
+        QtMocHelpers::SlotData<void()>(14, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_lineEdit_4_editingFinished'
+        QtMocHelpers::SlotData<void()>(15, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_actionCorrelation_triggered'
+        QtMocHelpers::SlotData<void()>(16, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_lineEdit_9_textChanged'
+        QtMocHelpers::SlotData<void()>(17, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_lineEdit_11_textChanged'
+        QtMocHelpers::SlotData<void()>(18, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_lineEdit_12_textChanged'
+        QtMocHelpers::SlotData<void()>(19, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_comboBox_currentIndexChanged'
+        QtMocHelpers::SlotData<void()>(20, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'ConstructMatrix'
+        QtMocHelpers::SlotData<void()>(21, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'DivideConquer'
+        QtMocHelpers::SlotData<double()>(22, 2, QMC::AccessPrivate, QMetaType::Double),
+        // Slot 'on_pushButton_6_clicked'
+        QtMocHelpers::SlotData<void()>(23, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_spinBox_3_valueChanged'
+        QtMocHelpers::SlotData<void()>(24, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_checkBox_9_clicked'
+        QtMocHelpers::SlotData<void()>(25, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_checkBox_11_clicked'
+        QtMocHelpers::SlotData<void()>(26, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_doubleSpinBox_4_valueChanged'
+        QtMocHelpers::SlotData<void()>(27, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_pushButton_7_clicked'
+        QtMocHelpers::SlotData<void()>(28, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_checkBox_12_clicked'
+        QtMocHelpers::SlotData<void()>(29, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_checkBox_4_clicked'
+        QtMocHelpers::SlotData<void()>(30, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_checkBox_3_clicked'
+        QtMocHelpers::SlotData<void()>(31, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_checkBox_14_clicked'
+        QtMocHelpers::SlotData<void()>(32, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_checkBox_15_clicked'
+        QtMocHelpers::SlotData<void()>(33, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_actionEditor_triggered'
+        QtMocHelpers::SlotData<void()>(34, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_checkBox_16_clicked'
+        QtMocHelpers::SlotData<void()>(35, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'VAmplitudeA'
+        QtMocHelpers::SlotData<void()>(36, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'VAmplitudeB'
+        QtMocHelpers::SlotData<void()>(37, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_actionArithmetic_triggered'
+        QtMocHelpers::SlotData<void()>(38, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_actionManual_triggered'
+        QtMocHelpers::SlotData<void()>(39, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'ErrorEstimation'
+        QtMocHelpers::SlotData<void()>(40, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_pushButton_8_clicked'
+        QtMocHelpers::SlotData<void()>(41, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'ComputeDifferences'
+        QtMocHelpers::SlotData<void()>(42, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'Optimisation'
+        QtMocHelpers::SlotData<void()>(43, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_pushButton_4_clicked'
+        QtMocHelpers::SlotData<void()>(44, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_checkBox_34_clicked'
+        QtMocHelpers::SlotData<void()>(45, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_pushButton_9_clicked'
+        QtMocHelpers::SlotData<void()>(46, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_pushButton_10_clicked'
+        QtMocHelpers::SlotData<void()>(47, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'findroot'
+        QtMocHelpers::SlotData<void()>(48, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_pushButton_11_clicked'
+        QtMocHelpers::SlotData<void()>(49, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_pushButton_12_clicked'
+        QtMocHelpers::SlotData<void()>(50, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_spinBox_8_valueChanged'
+        QtMocHelpers::SlotData<void()>(51, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_checkBox_22_clicked'
+        QtMocHelpers::SlotData<void()>(52, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_checkBox_20_clicked'
+        QtMocHelpers::SlotData<void()>(53, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_checkBox_21_clicked'
+        QtMocHelpers::SlotData<void()>(54, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_checkBox_24_clicked'
+        QtMocHelpers::SlotData<void()>(55, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_checkBox_25_clicked'
+        QtMocHelpers::SlotData<void()>(56, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'showPointToolTip'
+        QtMocHelpers::SlotData<void(QMouseEvent *)>(57, 2, QMC::AccessPrivate, QMetaType::Void, {{
+            { 0x80000000 | 58, 59 },
+        }}),
+        // Slot 'showPointToolTip_3'
+        QtMocHelpers::SlotData<void(QMouseEvent *)>(60, 2, QMC::AccessPrivate, QMetaType::Void, {{
+            { 0x80000000 | 58, 59 },
+        }}),
+        // Slot 'on_checkBox_27_clicked'
+        QtMocHelpers::SlotData<void()>(61, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'plot_functionvalues'
+        QtMocHelpers::SlotData<void()>(62, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_checkBox_26_clicked'
+        QtMocHelpers::SlotData<void()>(63, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_checkBox_28_clicked'
+        QtMocHelpers::SlotData<void()>(64, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'disableButtons'
+        QtMocHelpers::SlotData<void()>(65, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'enableButtons'
+        QtMocHelpers::SlotData<void()>(66, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_pushButton_13_clicked'
+        QtMocHelpers::SlotData<void()>(67, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'inclinations'
+        QtMocHelpers::SlotData<double()>(68, 2, QMC::AccessPrivate, QMetaType::Double),
+        // Slot 'on_checkBox_29_clicked'
+        QtMocHelpers::SlotData<void()>(69, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_checkBox_30_clicked'
+        QtMocHelpers::SlotData<void()>(70, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'separation'
+        QtMocHelpers::SlotData<void()>(71, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_pushButton_15_clicked'
+        QtMocHelpers::SlotData<void()>(72, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_spinBox_valueChanged'
+        QtMocHelpers::SlotData<void()>(73, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_spinBox_2_valueChanged'
+        QtMocHelpers::SlotData<void()>(74, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_checkBox_8_stateChanged'
+        QtMocHelpers::SlotData<void()>(75, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_checkBox_10_stateChanged'
+        QtMocHelpers::SlotData<void()>(76, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_checkBox_13_stateChanged'
+        QtMocHelpers::SlotData<void()>(77, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_checkBox_17_stateChanged'
+        QtMocHelpers::SlotData<void()>(78, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_checkBox_18_stateChanged'
+        QtMocHelpers::SlotData<void()>(79, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_checkBox_31_stateChanged'
+        QtMocHelpers::SlotData<void()>(80, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_checkBox_36_stateChanged'
+        QtMocHelpers::SlotData<void()>(81, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_checkBox_37_stateChanged'
+        QtMocHelpers::SlotData<void()>(82, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_checkBox_35_stateChanged'
+        QtMocHelpers::SlotData<void()>(83, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_checkBox_38_stateChanged'
+        QtMocHelpers::SlotData<void()>(84, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_checkBox_19_stateChanged'
+        QtMocHelpers::SlotData<void()>(85, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_checkBox_22_stateChanged'
+        QtMocHelpers::SlotData<void()>(86, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_checkBox_23_stateChanged'
+        QtMocHelpers::SlotData<void()>(87, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_checkBox_32_stateChanged'
+        QtMocHelpers::SlotData<void()>(88, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_checkBox_33_stateChanged'
+        QtMocHelpers::SlotData<void()>(89, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_checkBox_39_stateChanged'
+        QtMocHelpers::SlotData<void()>(90, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_spinBox_4_valueChanged'
+        QtMocHelpers::SlotData<void()>(91, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_spinBox_9_valueChanged'
+        QtMocHelpers::SlotData<void()>(92, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_spinBox_10_valueChanged'
+        QtMocHelpers::SlotData<void()>(93, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_doubleSpinBox_3_valueChanged'
+        QtMocHelpers::SlotData<void()>(94, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_doubleSpinBox_5_valueChanged'
+        QtMocHelpers::SlotData<void()>(95, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_lineEdit_editingFinished'
+        QtMocHelpers::SlotData<void()>(96, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_lineEdit_2_editingFinished'
+        QtMocHelpers::SlotData<void()>(97, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_lineEdit_18_editingFinished'
+        QtMocHelpers::SlotData<void()>(98, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_lineEdit_3_editingFinished'
+        QtMocHelpers::SlotData<void()>(99, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_lineEdit_19_editingFinished'
+        QtMocHelpers::SlotData<void()>(100, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_lineEdit_27_editingFinished'
+        QtMocHelpers::SlotData<void()>(101, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_lineEdit_28_editingFinished'
+        QtMocHelpers::SlotData<void()>(102, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_lineEdit_23_editingFinished'
+        QtMocHelpers::SlotData<void()>(103, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_lineEdit_22_editingFinished'
+        QtMocHelpers::SlotData<void()>(104, 2, QMC::AccessPrivate, QMetaType::Void),
+        // Slot 'on_checkBox_40_clicked'
+        QtMocHelpers::SlotData<void()>(105, 2, QMC::AccessPrivate, QMetaType::Void),
+    };
+    QtMocHelpers::UintData qt_properties {
+    };
+    QtMocHelpers::UintData qt_enums {
+    };
+    return QtMocHelpers::metaObjectData<MainWindow, qt_meta_tag_ZN10MainWindowE_t>(QMC::MetaObjectFlag{}, qt_stringData,
+            qt_methods, qt_properties, qt_enums);
+}
+Q_CONSTINIT const QMetaObject MainWindow::staticMetaObject = { {
+    QMetaObject::SuperData::link<QMainWindow::staticMetaObject>(),
+    qt_staticMetaObjectStaticContent<qt_meta_tag_ZN10MainWindowE_t>.stringdata,
+    qt_staticMetaObjectStaticContent<qt_meta_tag_ZN10MainWindowE_t>.data,
+    qt_static_metacall,
+    nullptr,
+    qt_staticMetaObjectRelocatingContent<qt_meta_tag_ZN10MainWindowE_t>.metaTypes,
+    nullptr
+} };
 
 void MainWindow::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void **_a)
 {
+    auto *_t = static_cast<MainWindow *>(_o);
     if (_c == QMetaObject::InvokeMetaMethod) {
-        auto *_t = static_cast<MainWindow *>(_o);
-        Q_UNUSED(_t)
         switch (_id) {
         case 0: _t->Input(); break;
         case 1: _t->on_checkBox_clicked(); break;
@@ -338,7 +399,7 @@ void MainWindow::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, 
         case 18: _t->on_comboBox_currentIndexChanged(); break;
         case 19: _t->ConstructMatrix(); break;
         case 20: { double _r = _t->DivideConquer();
-            if (_a[0]) *reinterpret_cast< double*>(_a[0]) = std::move(_r); }  break;
+            if (_a[0]) *reinterpret_cast<double*>(_a[0]) = std::move(_r); }  break;
         case 21: _t->on_pushButton_6_clicked(); break;
         case 22: _t->on_spinBox_3_valueChanged(); break;
         case 23: _t->on_checkBox_9_clicked(); break;
@@ -373,8 +434,8 @@ void MainWindow::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, 
         case 52: _t->on_checkBox_21_clicked(); break;
         case 53: _t->on_checkBox_24_clicked(); break;
         case 54: _t->on_checkBox_25_clicked(); break;
-        case 55: _t->showPointToolTip((*reinterpret_cast< QMouseEvent*(*)>(_a[1]))); break;
-        case 56: _t->showPointToolTip_3((*reinterpret_cast< QMouseEvent*(*)>(_a[1]))); break;
+        case 55: _t->showPointToolTip((*reinterpret_cast<std::add_pointer_t<QMouseEvent*>>(_a[1]))); break;
+        case 56: _t->showPointToolTip_3((*reinterpret_cast<std::add_pointer_t<QMouseEvent*>>(_a[1]))); break;
         case 57: _t->on_checkBox_27_clicked(); break;
         case 58: _t->plot_functionvalues(); break;
         case 59: _t->on_checkBox_26_clicked(); break;
@@ -383,25 +444,48 @@ void MainWindow::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, 
         case 62: _t->enableButtons(); break;
         case 63: _t->on_pushButton_13_clicked(); break;
         case 64: { double _r = _t->inclinations();
-            if (_a[0]) *reinterpret_cast< double*>(_a[0]) = std::move(_r); }  break;
+            if (_a[0]) *reinterpret_cast<double*>(_a[0]) = std::move(_r); }  break;
         case 65: _t->on_checkBox_29_clicked(); break;
         case 66: _t->on_checkBox_30_clicked(); break;
         case 67: _t->separation(); break;
         case 68: _t->on_pushButton_15_clicked(); break;
+        case 69: _t->on_spinBox_valueChanged(); break;
+        case 70: _t->on_spinBox_2_valueChanged(); break;
+        case 71: _t->on_checkBox_8_stateChanged(); break;
+        case 72: _t->on_checkBox_10_stateChanged(); break;
+        case 73: _t->on_checkBox_13_stateChanged(); break;
+        case 74: _t->on_checkBox_17_stateChanged(); break;
+        case 75: _t->on_checkBox_18_stateChanged(); break;
+        case 76: _t->on_checkBox_31_stateChanged(); break;
+        case 77: _t->on_checkBox_36_stateChanged(); break;
+        case 78: _t->on_checkBox_37_stateChanged(); break;
+        case 79: _t->on_checkBox_35_stateChanged(); break;
+        case 80: _t->on_checkBox_38_stateChanged(); break;
+        case 81: _t->on_checkBox_19_stateChanged(); break;
+        case 82: _t->on_checkBox_22_stateChanged(); break;
+        case 83: _t->on_checkBox_23_stateChanged(); break;
+        case 84: _t->on_checkBox_32_stateChanged(); break;
+        case 85: _t->on_checkBox_33_stateChanged(); break;
+        case 86: _t->on_checkBox_39_stateChanged(); break;
+        case 87: _t->on_spinBox_4_valueChanged(); break;
+        case 88: _t->on_spinBox_9_valueChanged(); break;
+        case 89: _t->on_spinBox_10_valueChanged(); break;
+        case 90: _t->on_doubleSpinBox_3_valueChanged(); break;
+        case 91: _t->on_doubleSpinBox_5_valueChanged(); break;
+        case 92: _t->on_lineEdit_editingFinished(); break;
+        case 93: _t->on_lineEdit_2_editingFinished(); break;
+        case 94: _t->on_lineEdit_18_editingFinished(); break;
+        case 95: _t->on_lineEdit_3_editingFinished(); break;
+        case 96: _t->on_lineEdit_19_editingFinished(); break;
+        case 97: _t->on_lineEdit_27_editingFinished(); break;
+        case 98: _t->on_lineEdit_28_editingFinished(); break;
+        case 99: _t->on_lineEdit_23_editingFinished(); break;
+        case 100: _t->on_lineEdit_22_editingFinished(); break;
+        case 101: _t->on_checkBox_40_clicked(); break;
         default: ;
         }
     }
 }
-
-QT_INIT_METAOBJECT const QMetaObject MainWindow::staticMetaObject = { {
-    QMetaObject::SuperData::link<QMainWindow::staticMetaObject>(),
-    qt_meta_stringdata_MainWindow.data,
-    qt_meta_data_MainWindow,
-    qt_static_metacall,
-    nullptr,
-    nullptr
-} };
-
 
 const QMetaObject *MainWindow::metaObject() const
 {
@@ -411,7 +495,7 @@ const QMetaObject *MainWindow::metaObject() const
 void *MainWindow::qt_metacast(const char *_clname)
 {
     if (!_clname) return nullptr;
-    if (!strcmp(_clname, qt_meta_stringdata_MainWindow.stringdata0))
+    if (!strcmp(_clname, qt_staticMetaObjectStaticContent<qt_meta_tag_ZN10MainWindowE_t>.strings))
         return static_cast<void*>(this);
     return QMainWindow::qt_metacast(_clname);
 }
@@ -422,15 +506,15 @@ int MainWindow::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 69)
+        if (_id < 102)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 69;
-    } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 69)
-            *reinterpret_cast<int*>(_a[0]) = -1;
-        _id -= 69;
+        _id -= 102;
+    }
+    if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
+        if (_id < 102)
+            *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType();
+        _id -= 102;
     }
     return _id;
 }
 QT_WARNING_POP
-QT_END_MOC_NAMESPACE

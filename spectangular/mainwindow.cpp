@@ -1,4 +1,6 @@
 #include "mainwindow.h"
+#include "resources.h"
+#include <QFileDialog>
 #include "ui_mainwindow.h"
 #include <QLineEdit>
 #include <string>
@@ -8,18 +10,43 @@
 #include <QDebug>
 #include <QMessageBox>
 #include <cmath>
+#include <cstdlib>
 #include <QVector>
 #include "plotspec.h"
+#include "orbit.h"
+#include "disentangle.h"
+#include "dataio.h"
+#include "continuum.h"
+#include "version.h"
+#include "neldermead.h"
+#include "errorestimate.h"
+#include "fluxratio.h"
+#include "orbitfit.h"
+#include "fluxtemplate.h"
+#include "barycorrdialog.h"
+#include <random>
+#include <functional>
+#include "levmar.h"
+#include <limits>
 #include <correlation.h>
 #include <edit.h>
 #include <iostream>
 #define ARMA_64BIT_WORD
 #include <armadillo>
 #include <CCfits/CCfits>
+#include <algorithm>
+#include <cctype>
+#include <valarray>
 #include <ctime>
 #include <chrono>
 //#include <thread>
 #include <QFileInfo>
+#include <QElapsedTimer>
+#include <QCheckBox>
+#include <QComboBox>
+#include <QDoubleSpinBox>
+#include <QSpinBox>
+#include <QTextStream>
 //#include <cblas.h>
 
 using namespace std;
@@ -37,12 +64,53 @@ int inrein=0;   // reinitiate
 int abauto=0;   // auto abort
 int runow=0;    // start optimisation from terminal without windows; 1 for yes, 0 for no.
 int overw=0;    //
-int sequence=0; // sequence
 int optfratios=0;   // optmize on flux ratios;
 int RVCalcCheck=0;
+QString g_configFile;                    // most recently loaded or saved configuration
+QString g_configName = "star_orb_conf";  // suggestion for "Save Configuration As"
+// Auto Stop: best residuum of the previous run (Reinitiate), iterations across all
+// restarts, last used sigma^2 (for the plot)
+double g_prevRunBestS = std::numeric_limits<double>::quiet_NaN();
+int g_itersUsed = 0;
+double g_sigma2 = std::numeric_limits<double>::quiet_NaN();
+// Best state of the optimisation, written on every improvement while an optimisation runs:
+// beststate_rv.dat (RVs of all spectra) and beststate_orbit.dat (7 elements) in the work
+// folder. "Continue" and "Reinitiate" start from it, independent of the start values in the
+// inputs and of the method (Nelder-Mead / Levenberg-Marquardt) that found it.
+int g_trackBest = 0;            // 0: off, 1: RV mode, 2: orbit mode
+double g_bestStateS = std::numeric_limits<double>::quiet_NaN();
+bool g_contFromBest = false;     // this optimisation starts from the best state
+// Excluded wavelength ranges (Model tab, e.g. telluric bands): per row of M (spectrum x pixel)
+// 1 = left out of the solution and the residuum
+std::vector<char> g_rowMasked;
+inline bool rowMasked(arma::uword i){ return i<g_rowMasked.size() && g_rowMasked[i]; }
+// With "Exclude edges": rows within the edge margin of an excluded range (same spectrum) see
+// component pixels that lost most of their data to the range; like the spectrum edges they
+// do not count in the residuum (they stay in the solution)
+std::vector<char> g_rowNearMask;
+inline bool rowUncounted(arma::uword i){ return rowMasked(i) || (i<g_rowNearMask.size() && g_rowNearMask[i]); }
+// Rows in the ranges of the static lines, left out of the residuum only (Model tab, "Exclude the
+// ranges of the static lines from the residuum"): residuum, residual statistics, S/N estimate
+std::vector<char> g_rowResExcl;
+inline bool rowResExcluded(arma::uword i){ return i<g_rowResExcl.size() && g_rowResExcl[i]; }
+// entries per column in total and in non-excluded rows (component pixels that lost more than
+// half of their data are not written)
+std::vector<arma::uword> g_colCountFull, g_colCountReal;
+int g_lsqrThreadsLast = 0;        // threads of the last LSQR solve (status line)
+bool g_abortableRun = false;     // optimisation / error estimation running: Abort ends a solve
+int optimisationFinished=0;  // 1: optimisation finished normally (exit code in batch mode)
+int batchOverwrite=0;  // --overwrite: overwrite existing start files
+int batchThreads=0;    // --threads N: number of cores in batch mode (0: default)
+const unsigned kDefaultCores = 2;   // default number of cores (see the constructor)
 unsigned int cores;
 string path, eins, zwei, line;
 QString qPath, qExtension, qWCol, qICol, qInitval, qInitmat, qOptval, qOptmat;
+// File names set in the Output tab (best state, convergence data, residual statistics) and in
+// the Data tab (orbital elements); kept in sync with the line edits (MainWindow constructor).
+// Empty fields fall back to the defaults.
+QString qBestState = "beststate.dat", qOptdata = "optdata.dat", qDiffStat = "diffstatistic.dat",
+        qOrbitFile = "orbitelements.dat";
+
 QVector<double> RV1(1), RV2(1), RV3(1), edits(5), Mval1(1), Mval2(1), Mtel(1), otimes(1), orbele(7), dorbele(7);
 QVector<double> cpoints(8);
 double RV1max, RV3max, dv, residu, RV1min, RV3min, RV1maxi, RV3maxi, difference, RV1amin, RV3amin, r1, Diff, fluxratio, ldiff, Per, T0, ecc, Omega1, gama, K1, K2;
@@ -55,7 +123,7 @@ std::valarray<double> intens;
 double step=1;  //step size for initial points, used: dv
 double Gamma=2.0;   //expansion coeff.
 double alpha=1.0;   //reflection coeff.
-double beta=0.5;    //contraction coeff.
+double nmBeta=0.5;  // contraction coeff. (not "beta": std::beta in C++17)
 double btot=0.5;    //total contraction coeff.
 
 double dP;
@@ -66,9 +134,8 @@ double dGamma;
 double dT0;
 double dOmega;
 
-mat M(Mn,Mm);   //transformation matrix
+sp_mat M;       //transformation matrix (sparse)
 mat Mt(Mm,Mn); //transpose of transformation matrix
-sp_mat A(Mm,Mn);
 vec X(Mm);      //solution vector of SVD
 vec C(Mn);      //measurement vector
 vec W(Mm);      //wavelength vector of measurement
@@ -76,13 +143,101 @@ vec XW1(Mm);    //wavelength vector component 1
 vec XW2(Mm);    //wavelength vector component 2
 umat loc(2,Mm); //matrix of positions for sparse SVD
 vec val(Mm);    //vector with values for sparse SVD
+dis::Layout g_layout;   // column layout of the current matrix
+double g_dlog = 0.0;    // grid step in log10(lambda)
+bool g_matrixValid = false;
+int g_lastResBins = 0;   // number of bins of the last residuum
+int g_lastResCols = 0;   // unknowns determined by these bins
+// Edge per spectrum (pixels) that does not count in the residuum ("Exclude edges").
+// -1: determine from the RV span at the next matrix construction. read_data() resets
+// it; within one optimisation or error estimate it stays fixed, so that the
+// residuum is a continuous function of the parameters.
+int g_edgeMargin = -1;
+// Barycentric correction BC [km/s] per spectrum (Data tab, read by read_data); empty: none
+std::vector<double> g_bc;
+// strength of the static lines per spectrum to be fitted at the next solve (Data tab)
+bool g_tellFitPending = false;
+// static lines only in these ranges (log10 lambda, observatory frame; Data tab); empty: all
+std::vector<std::pair<double, double>> g_tellRanges;
+// groups of static lines with their own strength (label of the ranges, e.g. O2, H2O): group
+// of each range, names, strengths per group and spectrum (only with more than one group)
+std::vector<int> g_tellRangeGroup;
+std::vector<QString> g_tellGroupNames;
+std::vector<std::vector<double>> g_MtelG;
+constexpr int kTellFitMaxIter = 10;
+// strength of the static lines: lower bound of the fit (relative, before the scaling to a mean
+// of 1), and below which a spectrum is reported as not fitting the static lines
+constexpr double kMinStrength = 1e-3;
+constexpr double kWeakStrength = 0.1;
+
+// Velocity in the observatory frame for a barycentric velocity v and the correction bc:
+// lambda_bary = lambda_obs (1 + bc/c), so (1 + v_obs/c) = (1 + v/c) / (1 + bc/c)
+static double toObservatory(double v, double bc)
+{
+    const double c = dis::kSpeedOfLight;
+    return c*((1.0+v/c)/(1.0+bc/c)-1.0);
+}
+static double toBarycentric(double vObs, double bc)
+{
+    const double c = dis::kSpeedOfLight;
+    return c*((1.0+vObs/c)*(1.0+bc/c)-1.0);
+}
+// Wavelength dependence of the flux ratio: s(lambda) per pixel of the common grid
+// (empty: constant ratio, the weights stay per spectrum as before)
+std::vector<double> g_ratioShape;
+double g_ratioLref = 0.0;   // reference wavelength used (resolved "auto")
+fr::Model g_ratioModel;     // model used for g_ratioShape
+double g_ratioKref = 1.0;   // reference ratio of the diluted unknowns (buildDesignMatrix)
+arma::vec g_colScale;       // x = g_colScale % X for the component output (empty: x = X)
+// Weighting by S/N per spectrum ("Weight by S/N from"): weight w_j = sigma_bar/sigma_j with
+// sigma_j = 1/(S/N)_j and sigma_bar^2 = 1/mean(1/sigma_j^2), so that the weighted residuum
+// stays in flux units and chi^2 = residuum^2/sigma_bar^2. Empty: unweighted.
+std::vector<double> g_specW;
+double g_sigmaBar2 = 0.0;
+// S/N file "auto": weights are estimated at the first solve after reading the data
+// (3 iterations solve - estimate - weight) and then kept fixed for the run
+bool g_autoWeightsPending = false;
+// estimated weights are kept for restarts (Reinitiate) and a following error estimation, so
+// that all runs of an optimisation use the same objective; cleared at the start of an
+// optimisation, by "Read Data" and by "Solve"
+std::vector<double> g_autoSpecW;
+double g_autoSigmaBar2 = 0.0;
+// LSQR warm start: the last LSQR solution and its column layout. The next solve starts
+// from it (transferred to the new layout) and only solves for the correction; the
+// inherited continuum offsets are removed afterwards (removeOffsetNullspace), so the
+// result is the minimum-norm solution as from a cold start. Cleared by read_data(), after
+// a failed solve and by the SVD solver. SPECTANGULAR_COLD_START=1 disables it.
+arma::vec g_warmX;
+dis::Layout g_warmLayout;
+bool g_warmValid = false;
+long long g_lsqrIterations = 0;   // LSQR iterations since the last read_data() (statistics)
+long long g_lsqrSolves = 0;
+
+// weights w_j = sigma_bar/sigma_j from S/N values (see g_specW); false if a value is not positive
+static bool setWeightsFromSnr(const std::vector<double> &snr)
+{
+    double m2 = 0.0;
+    for(double v : snr){
+        if(!(v>0) || !std::isfinite(v)) return false;
+        m2 += v*v/snr.size();
+    }
+    g_sigmaBar2 = 1.0/m2;
+    g_specW.clear();
+    for(double v : snr) g_specW.push_back(v/std::sqrt(m2));
+    return true;
+}
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    this->setWindowTitle("Spectangular - Spectral Disentangling via Singular Value Decomposition");
+    this->setWindowTitle("Spectangular - Spectral Disentangling");
+    {   // build identification (commit), so that results can be traced to a program version
+        const QString b = QString("Spectangular build %1").arg(spectangularCommit());
+        cout<<b.toStdString()<<endl;
+        ui->plainTextEdit_2->appendPlainText(b);
+    }
 
     ui->lineEdit->setText("binaryrv_");
     ui->lineEdit_2->setText("velocities.txt");
@@ -106,19 +261,18 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->lineEdit_7->setText("0");
 
     ui->checkBox->setChecked(true);
-    ui->checkBox_6->setChecked(true);
+    ui->checkBox_5->setChecked(true);    // solver: LSQR
     ui->checkBox_7->setChecked(false);
     ui->checkBox_4->setChecked(true);
     ui->checkBox_10->setChecked(true);
     ui->checkBox_11->setChecked(true);
     ui->checkBox_14->setChecked(true);
     ui->checkBox_22->setChecked(false);
+    ui->checkBox_40->setChecked(true);   // residuum without edge pixels
 
     ui->comboBox->addItem("fits");
     ui->comboBox->addItem("ASCII");
 
-    ui->doubleSpinBox->setEnabled(false);
-    ui->doubleSpinBox_2->setEnabled(false);
 
     ui->lineEdit_9->setText("DataVector");
     qExtension=ui->lineEdit_9->text();
@@ -141,20 +295,37 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->lineEdit_26->setText("txt");
     ui->lineEdit_25->setText("star_orb");
 
-    string slfile = "star_orb_conf";
-    QString qslfile = QString::fromStdString(slfile);
-
-    ui->lineEdit_22->setText(qslfile);
-    ui->lineEdit_23->setText(qslfile);
 
     ui->lineEdit_24->setText("errors.dat");
+    ui->lineEdit_tellrange->setText("telluric_static.dat");
+    // file names of the Output tab and the orbit file: globals follow the fields
+    {
+        struct F { QLineEdit *e; QString *g; const char *def; };
+        const F fs[] = {{ui->lineEdit_best, &qBestState, "beststate.dat"},
+                        {ui->lineEdit_optdata, &qOptdata, "optdata.dat"},
+                        {ui->lineEdit_stat, &qDiffStat, "diffstatistic.dat"},
+                        {ui->lineEdit_orbit, &qOrbitFile, "orbitelements.dat"}};
+        for(const F &f : fs){
+            QString *g = f.g;
+            const QString def = f.def;
+            connect(f.e, &QLineEdit::textChanged, this, [g, def](const QString &t){
+                *g = t.trimmed().isEmpty() ? def : t.trimmed();
+            });
+            f.e->setText(f.def);
+        }
+    }
 
     ui->checkBox_32->setChecked(true);
     ui->checkBox_23->setChecked(true);
     ui->checkBox_29->setChecked(true);
 
-    ui->spinBox_10->setEnabled(false);
-    ui->spinBox_9->setEnabled(false);
+
+    // "Bidiagonal Matrix" has been replaced by linear interpolation in the matrix construction.
+    ui->checkBox_7->setChecked(false);
+    ui->checkBox_7->setEnabled(false);
+    ui->checkBox_7->setToolTip("Replaced by interpolation between pixels.");
+    ui->checkBox_7->setVisible(false);   // kept only for the config file format
+    bidi=0;
     //ui->lineEdit_19->setEnabled(false);
 
     ui->customPlot->xAxis2->setVisible(true);
@@ -209,93 +380,356 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->customPlot_4->yAxis->setLabel("Residuum");
     ui->customPlot_4->xAxis->setLabel("Iterations");
 
-    ui->doubleSpinBox->setStyleSheet("QDoubleSpinBox{background: transparent; border: 1px solid black;}");
-    ui->doubleSpinBox_2->setStyleSheet("QDoubleSpinBox{background: transparent; border: 1px solid black;}");
-    ui->doubleSpinBox_3->setStyleSheet("QDoubleSpinBox{background: transparent; border: 1px solid black;}");
-    ui->doubleSpinBox_4->setStyleSheet("QDoubleSpinBox{background: transparent; border: 1px solid black;}");
-    ui->doubleSpinBox_5->setStyleSheet("QDoubleSpinBox{background: transparent; color:black; border: 1px solid black;}");
-    ui->doubleSpinBox_14->setStyleSheet("QDoubleSpinBox{background: transparent; color:black; border: 1px solid black;}");
-    ui->doubleSpinBox_15->setStyleSheet("QDoubleSpinBox{background: transparent; color:black; border: 1px solid black;}");
-
-    ui->comboBox->setStyleSheet("QComboBox{background: transparent; color: black;  border: 1px solid black;}");
-
-    ui->spinBox->setStyleSheet("QSpinBox{background: transparent; border: 1px solid black;}");
-    ui->spinBox_2->setStyleSheet("QSpinBox{background: transparent; border: 1px solid black;}");
-    ui->spinBox_3->setStyleSheet("QSpinBox{background: transparent; border: 1px solid black;}");
-    ui->spinBox_4->setStyleSheet("QSpinBox{background: transparent; border: 1px solid black;}");
-    ui->spinBox_5->setStyleSheet("QSpinBox{background: transparent; border: 1px solid black;}");
-    ui->spinBox_6->setStyleSheet("QSpinBox{background: transparent; border: 1px solid black;}");
-    ui->spinBox_7->setStyleSheet("QSpinBox{background: transparent; border: 1px solid black;}");
-    ui->spinBox_8->setStyleSheet("QSpinBox{background: transparent; border: 1px solid black;}");
-    ui->spinBox_9->setStyleSheet("QSpinBox{background: transparent; border: 1px solid black;}");
-    ui->spinBox_10->setStyleSheet("QSpinBox{background: transparent; border: 1px solid black;}");
-
-    ui->plainTextEdit->setStyleSheet("QPlainTextEdit{background: transparent; color: black; border: 1px solid black;}");
-    ui->plainTextEdit_2->setStyleSheet("QPlainTextEdit{background: transparent; color: black; border: 1px solid black;}");
-
-    ui->lineEdit->setStyleSheet("QLineEdit{background: transparent; color: black;  border: 1px solid black;}");
-    ui->lineEdit_2->setStyleSheet("QLineEdit{background: transparent; color: black;  border: 1px solid black;}");
-    ui->lineEdit_3->setStyleSheet("QLineEdit{background: transparent; color: black;  border: 1px solid black;}");
-    ui->lineEdit_4->setStyleSheet("QLineEdit{background: transparent; color: black;  border: 1px solid black;}");
-    ui->lineEdit_5->setStyleSheet("QLineEdit{background: transparent; color: black;  border: 1px solid black;}");
-    ui->lineEdit_6->setStyleSheet("QLineEdit{background: transparent; color: black;  border: 1px solid black;}");
-    ui->lineEdit_7->setStyleSheet("QLineEdit{background: transparent; color: black;  border: 1px solid black;}");
-    ui->lineEdit_8->setStyleSheet("QLineEdit{background: transparent; color: black;  border: 1px solid black;}");
-    ui->lineEdit_9->setStyleSheet("QLineEdit{background: transparent; color: black;  border: 1px solid black;}");
-    ui->lineEdit_10->setStyleSheet("QLineEdit{background: transparent; color: black;   border: 1px solid black;}");
-    ui->lineEdit_11->setStyleSheet("QLineEdit{background: transparent; color: black;  border: 1px solid black;}");
-    ui->lineEdit_12->setStyleSheet("QLineEdit{background: transparent; color: black;   border: 1px solid black;}");
-    ui->lineEdit_13->setStyleSheet("QLineEdit{background: transparent; color: black;   border: 1px solid black;}");
-    ui->lineEdit_14->setStyleSheet("QLineEdit{background: transparent; color: black;   border: 1px solid black;}");
-    ui->lineEdit_15->setStyleSheet("QLineEdit{background: transparent; color: black;   border: 1px solid black;}");
-    ui->lineEdit_16->setStyleSheet("QLineEdit{background: transparent; color: black;   border: 1px solid black;}");
-    ui->lineEdit_17->setStyleSheet("QLineEdit{background: transparent; color: black; border: 1px solid black;}");
-    ui->lineEdit_18->setStyleSheet("QLineEdit{background: transparent; color: black; border: 1px solid black;}");
-    ui->lineEdit_19->setStyleSheet("QLineEdit{background: transparent; color: black; border: 1px solid black;}");
-    ui->lineEdit_20->setStyleSheet("QLineEdit{background: transparent; color: black; border: 1px solid black;}");
-    ui->lineEdit_21->setStyleSheet("QLineEdit{background: transparent; color: black; border: 1px solid black;}");
-    ui->lineEdit_22->setStyleSheet("QLineEdit{background: transparent; color: black; border: 1px solid black;}");
-    ui->lineEdit_23->setStyleSheet("QLineEdit{background: transparent; color: black; border: 1px solid black;}");
-    ui->lineEdit_24->setStyleSheet("QLineEdit{background: transparent; color: black; border: 1px solid black;}");
-    ui->lineEdit_25->setStyleSheet("QLineEdit{background: transparent; color: black; border: 1px solid black;}");
-    ui->lineEdit_26->setStyleSheet("QLineEdit{background: transparent; color: black; border: 1px solid black;}");
-    ui->lineEdit_27->setStyleSheet("QLineEdit{background: transparent; color: black; border: 1px solid black;}");
-    ui->lineEdit_28->setStyleSheet("QLineEdit{background: transparent; color: black; border: 1px solid black;}");
+    // residuals per spectrum (x label set in plotResidualStatistics: phase, time or number)
+    ui->customPlot_5->xAxis2->setVisible(true);
+    ui->customPlot_5->xAxis2->setTickLabels(false);
+    ui->customPlot_5->yAxis2->setVisible(true);
+    ui->customPlot_5->yAxis2->setTickLabels(false);
+    ui->customPlot_5->yAxis->setLabel("O-M");
+    ui->customPlot_5->xAxis->setLabel("Orbital Phase");
 
     connect(ui->customPlot, SIGNAL(mouseMove(QMouseEvent*)), this ,SLOT(showPointToolTip(QMouseEvent*)));
     connect(ui->customPlot_3, SIGNAL(mouseMove(QMouseEvent*)), this ,SLOT(showPointToolTip_3(QMouseEvent*)));
 
-    //openblas_set_num_threads(2);
-    cores =thread::hardware_concurrency();
-
-    ui->spinBox_7->setValue(cores);
-    ui->spinBox_8->setValue(cores);
-    ui->spinBox_8->setMaximum(cores);
+    // Number of cores: the machine's count is displayed, the "Use" setting is applied.
+    // Default 2 (if available): only the matrix-vector products of LSQR run in parallel and
+    // are limited by the memory bandwidth; in a scaling test on long spectra (14-core
+    // machine) 2 cores were fastest, more and fewer took longer. Batch mode: --threads N.
+    // SPECTANGULAR_CORES overrides the detected number (tests, containers).
+    cores = std::max(1u, thread::hardware_concurrency());
+    if(const char *ec = std::getenv("SPECTANGULAR_CORES")){
+        const int n = std::atoi(ec);
+        if(n>=1) cores = unsigned(n);
+    }
+    ui->spinBox_7->setValue(int(cores));
+    ui->spinBox_8->setMinimum(1);
+    ui->spinBox_8->setMaximum(int(cores));
+    ui->spinBox_8->setValue(int(std::min(cores, kDefaultCores)));
+    cores = unsigned(ui->spinBox_8->value());
+    dis::setThreads(int(cores));
+    // long solves (LSQR on long spectra take seconds): keep the window responsive and let
+    // "Abort" end a solve of an optimisation or error estimation
+    // (user input only while the buttons are disabled, i.e. during these runs; otherwise only
+    // repaints, so that no second action starts in the middle of a solve)
+    dis::setProgressHook([]{
+        qApp->processEvents(g_abortableRun ? QEventLoop::AllEvents : QEventLoop::ExcludeUserInputEvents);
+        return g_abortableRun && abortt==1;
+    });
+    if(!dis::openmpAvailable()){
+        const char *m = "Note: built without OpenMP; LSQR uses one core whatever the number of cores "
+                        "(compiler without OpenMP support, e.g. Clang without libomp-dev; see the qmake output).";
+        cout<<m<<endl;
+        ui->plainTextEdit_2->appendPlainText(m);
+    }
+    if(dis::setBlasThreads(int(cores))==0){
+        cout<<"Note: no multi-threaded BLAS (OpenBLAS/BLIS/MKL) loaded; SVD (DaC) uses one core."<<endl;
+    }
 
     //cout<<"Run optimization now? 0 no, 1 yes: "<<endl;
     //cin>>runow;
     //runow=1;
 
-    if(runow==1){
-        MainWindow::Input();
+    // Batch mode is started via main.cpp (--batch).
+
+    // Layout: subtract tool as a dock (Tools menu), live summary of what is fitted and how
+    ui->dockSubtract->hide();
+    // "Bidiagonal Matrix" has no effect on the solution (flag unused); kept only so that
+    // configuration files keep their format
+    ui->checkBox_7->hide();
+    for(QCheckBox *c : {ui->checkBox, ui->checkBox_2, ui->checkBox_16})
+        connect(c, &QCheckBox::toggled, this, [this]{ updateFitTarget(); });
+    for(QCheckBox *c : {ui->checkBox_5, ui->checkBox_6})
+        connect(c, &QCheckBox::toggled, this, [this]{ updateRunInfo(); });
+    connect(ui->comboBox_interp, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this]{ updateRunInfo(); });
+    // residuum without the ranges of the static lines: with read data at once (clicked: not
+    // while a configuration is loaded)
+    connect(ui->checkBox_resstatic, &QCheckBox::clicked, this, [this](bool){
+        if(!g_matrixValid) return;
+        if(!buildResidualExclusion()) ui->checkBox_resstatic->setChecked(false);
+    });
+    connect(ui->comboBox_method, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this]{ updateRunInfo(); });
+    connect(ui->spinBox_8, QOverload<int>::of(&QSpinBox::valueChanged), this, [this]{ updateRunInfo(); });
+    connect(ui->comboBox_ratio, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this]{ updateRatioControls(); });
+    updateFitTarget();
+    updateRunInfo();
+    updateRatioControls();
+}
+
+// Flux-ratio model: only the fields of the chosen model are active
+void MainWindow::updateRatioControls()
+{
+    const int m = ui->comboBox_ratio->currentIndex();
+    ui->doubleSpinBox_TA->setEnabled(m==1);
+    ui->doubleSpinBox_TB->setEnabled(m==1);
+    ui->lineEdit_ratio->setEnabled(m==2);
+    ui->doubleSpinBox_lref->setEnabled(m!=0);
+}
+
+// "What is fitted" follows the RV source: file or cross-correlation -> individual RVs,
+// orbit -> orbital elements (free elements only then)
+void MainWindow::updateFitTarget()
+{
+    const bool orbitMode = ui->checkBox_16->isChecked();
+    ui->labelFitTarget->setText(orbitMode
+        ? "Orbital elements (RV source: orbit, Data tab)"
+        : "Individual RVs (RV source: file or cross-correlation, Data tab)");
+    for(QWidget *w : std::initializer_list<QWidget*>{ui->labelFreeElements, ui->checkBox_18, ui->checkBox_17,
+                     ui->checkBox_31, ui->checkBox_36, ui->checkBox_37, ui->checkBox_35, ui->checkBox_38}){
+        // K_A, K_B, T_peri sit in a row with their rich-text label: disable the row
+        QWidget *row = w->parentWidget();
+        (row && row->objectName().startsWith("row_") ? row : w)->setEnabled(orbitMode);
     }
-    else{
-        cout<<"Open GUI."<<endl;
+    for(QWidget *w : std::initializer_list<QWidget*>{ui->labelFixedRV, ui->lineEdit_fixA, ui->labelFixedRVB,
+                     ui->lineEdit_fixB}){
+        w->setEnabled(!orbitMode);
     }
+}
+
+// Spectrum numbers "0, 3, 7-9" (as in the file names, mini..maxi) -> indices 0..num-1
+static bool parseSpectrumList(const QString &text, int first, int last, std::vector<int> &out, QString &err)
+{
+    out.clear();
+    for(QString part : text.split(',', Qt::SkipEmptyParts)){
+        part = part.trimmed();
+        if(part.isEmpty()) continue;
+        bool ok1 = true, ok2 = true;
+        int a, b;
+        const int dash = part.indexOf('-', 1);
+        if(dash>0){
+            a = part.left(dash).trimmed().toInt(&ok1);
+            b = part.mid(dash+1).trimmed().toInt(&ok2);
+        }
+        else{
+            a = b = part.toInt(&ok1);
+        }
+        if(!ok1 || !ok2 || a>b){
+            err = "'"+part+"' is not a spectrum number or range.";
+            return false;
+        }
+        if(a<first || b>last){
+            err = "spectrum "+part+" is outside "+QString::number(first)+"-"+QString::number(last)+".";
+            return false;
+        }
+        for(int k=a; k<=b; k++) out.push_back(k-first);
+    }
+    std::sort(out.begin(), out.end());
+    out.erase(std::unique(out.begin(), out.end()), out.end());
+    return true;
+}
+
+// Free RVs of the RV optimisation as full indices (A: 0..num-1, B: num..2num-1), from the
+// fields "Fixed RVs A / B" of the Optimisation tab.
+bool MainWindow::freeRVIndices(bool sb1, std::vector<int> &freeIdx, QString &err) const
+{
+    std::vector<int> fa, fb;
+    if(!parseSpectrumList(ui->lineEdit_fixA->text(), mini, maxi, fa, err)){ err = "Fixed RVs A: "+err; return false; }
+    if(!parseSpectrumList(ui->lineEdit_fixB->text(), mini, maxi, fb, err)){ err = "Fixed RVs B: "+err; return false; }
+    freeIdx.clear();
+    for(int j=0; j<num; j++) if(!std::binary_search(fa.begin(), fa.end(), j)) freeIdx.push_back(j);
+    if(!sb1) for(int j=0; j<num; j++) if(!std::binary_search(fb.begin(), fb.end(), j)) freeIdx.push_back(num+j);
+    if(freeIdx.empty()){
+        err = "All RVs are fixed.";
+        return false;
+    }
+    return true;
+}
+
+void MainWindow::updateRunInfo()
+{
+    QString cores = QString("%1 core%2").arg(ui->spinBox_8->value()).arg(ui->spinBox_8->value()==1 ? "" : "s");
+    if(!dis::openmpAvailable()) cores = "LSQR 1 core (built without OpenMP)";
+    else if(g_lsqrThreadsLast>0 && !ui->checkBox_6->isChecked())
+        cores += QString(", LSQR %1 used").arg(g_lsqrThreadsLast);
+    ui->labelRunInfo->setText(QString("%1 · %2 · %3 · %4")
+        .arg(ui->checkBox_6->isChecked() ? "SVD (DaC)" : "LSQR")
+        .arg(ui->comboBox_interp->currentIndex()==1 ? "cubic" : "linear")
+        .arg(ui->comboBox_method->currentIndex()==1 ? "Levenberg–Marquardt" : "Nelder–Mead")
+        .arg(cores));
+}
+
+// Tools -> Orbit fit: Keplerian orbit fitted to the current RVs (e.g. after an optimisation
+// of individual RVs) and the times of observation, or to a file
+void MainWindow::on_actionOrbitFit_triggered()
+{
+    qPath = ui->lineEdit_4->text();
+    std::vector<double> t, a, b;
+    QString note;
+    bool valid = false;
+    const bool sb2 = ui->checkBox_4->isChecked();
+    if(num>0 && RV1.size()>=num && (!sb2 || RV3.size()>=num)){
+        if(int(otimes.size())>=num && ui->checkBox_16->isChecked()){
+            t.assign(otimes.begin(), otimes.begin()+num);
+        }
+        else{
+            std::vector<std::vector<double>> rows;
+            std::string err;
+            if(dataio::readTable((qPath+"/"+ui->lineEdit_18->text()).toStdString(), 1, rows, err)
+                    && int(rows.size())==num){
+                for(const auto &r : rows) t.push_back(r[0]);
+            }
+        }
+        if(int(t.size())==num){
+            a.assign(RV1.begin(), RV1.begin()+num);
+            if(sb2) b.assign(RV3.begin(), RV3.begin()+num);
+            // RV mode on spectra in the observatory frame: barycentric RVs for the orbit fit
+            if(!ui->checkBox_16->isChecked() && int(g_bc.size())>=num && ui->comboBox_bcframe->currentIndex()==0){
+                for(int j=0; j<num; j++){
+                    a[j] = toBarycentric(a[j], g_bc[j]);
+                    if(sb2) b[j] = toBarycentric(b[j], g_bc[j]);
+                }
+            }
+            valid = true;
+            note = QString("Main window: %1 spectra, times from %2, current RVs%3.").arg(num)
+                   .arg(ui->checkBox_16->isChecked() ? "the orbit mode" : ui->lineEdit_18->text())
+                   .arg(ui->checkBox_16->isChecked() ? " (computed from the orbit)" : "");
+        }
+        else note = "Main window: no times file with one time per spectrum ("+ui->lineEdit_18->text()+").";
+    }
+    else note = "Main window: no data read.";
+    OrbitFit *dlg = new OrbitFit(this);
+    dlg->setOrbitFile(qOrbitFile);
+    // RVs of the RV mode: zero point of each component arbitrary (also with static lines)
+    dlg->setMainData(qPath, t, a, b, sb2, valid, note, !ui->checkBox_16->isChecked());
+    dlg->show();
+}
+
+// Tools -> Flux ratio from synthetic spectra: flux ratio from a synthetic spectrum per
+// component, renormalisation of the disentangled spectra
+void MainWindow::on_actionFluxTemplate_triggered()
+{
+    qPath = ui->lineEdit_4->text();
+    fr::Model m;
+    std::string err;
+    if(!ratioModelFromUi(m, err)){
+        ui->plainTextEdit_2->appendPlainText("Flux ratio from synthetic spectra: "+QString::fromStdString(err)+" Constant ratio assumed.");
+        m = fr::Model();
+    }
+    if(!(m.lambdaRef>0) && g_ratioLref>0) m.lambdaRef = g_ratioLref;   // "auto" as resolved when reading
+    FluxTemplate *dlg = new FluxTemplate(this);
+    dlg->setMainData(qPath, ui->lineEdit_5->text(), ui->lineEdit_8->text(), ui->doubleSpinBox_4->value(), m);
+    connect(dlg, &FluxTemplate::ratioAccepted, this, [this](double k){
+        ui->doubleSpinBox_4->setValue(k);
+        ui->plainTextEdit_2->appendPlainText(QString("Flux ratio set to %1 (from synthetic spectra); "
+                                                     "disentangle again to use it.").arg(ui->doubleSpinBox_4->value()));
+    });
+    dlg->show();
+}
+
+static bool readFitsSpectrum(const std::string &file, const std::string &extName, const std::string &wcol,
+                             const std::string &icol, std::valarray<double> &w, std::valarray<double> &f,
+                             std::string &usedExt, std::string &err);
+
+// Tools -> Barycentric correction: spectra (and start RVs) shifted to the barycentre
+void MainWindow::on_actionBaryCorr_triggered()
+{
+    qPath = ui->lineEdit_4->text();
+    BaryCorrDialog::MainData d;
+    d.work = qPath;
+    d.prefix = ui->lineEdit_3->text();
+    d.ext = ui->lineEdit_19->text();
+    d.first = ui->spinBox->value();
+    d.last = ui->spinBox_2->value();
+    d.fits = ui->comboBox->currentIndex()==0;
+    d.timesFile = ui->lineEdit_18->text();
+    d.rvFile = ui->checkBox_2->isChecked() ? ui->lineEdit_2->text() : QString();
+    d.rvColumns = ui->checkBox_3->isChecked() ? 1 : 2;
+    // files with one line per spectrum (adapted when spectra are rejected)
+    if(ui->lineEdit_29->text().trimmed().compare("auto", Qt::CaseInsensitive)!=0) d.perSpectrum << ui->lineEdit_29->text().trimmed();
+    d.perSpectrum << ui->lineEdit_bc->text().trimmed() << ui->lineEdit_tellw->text().trimmed();
+    if(!ui->checkBox_2->isChecked()) d.perSpectrum << ui->lineEdit_2->text().trimmed();
+    const std::string ext = ui->lineEdit_9->text().toStdString(), wc = ui->lineEdit_11->text().toStdString(),
+                      ic = ui->lineEdit_12->text().toStdString();
+    d.read = [d, ext, wc, ic](int g, std::vector<double> &w, std::vector<double> &f, std::string &err){
+        const std::string file = (d.work+"/"+d.prefix+QString::number(g)+d.ext).toStdString();
+        w.clear(); f.clear();
+        if(d.fits){
+            std::valarray<double> wv, fv;
+            std::string used;
+            if(!readFitsSpectrum(file, ext, wc, ic, wv, fv, used, err)){ err = file+": "+err; return false; }
+            w.assign(std::begin(wv), std::end(wv));
+            f.assign(std::begin(fv), std::end(fv));
+            return true;
+        }
+        std::vector<std::vector<double>> rows;
+        if(!dataio::readTable(file, 2, rows, err)) return false;
+        for(const auto &r : rows){ w.push_back(r[0]); f.push_back(r[1]); }
+        return true;
+    };
+    BaryCorrDialog *dlg = new BaryCorrDialog(this);
+    dlg->setMainData(d);
+    connect(dlg, &BaryCorrDialog::useAirmassFile, this, [this](const QString &file){
+        ui->lineEdit_tellw->setText(file);
+        ui->plainTextEdit_2->appendPlainText("Airmass as start strength of the static lines: "+file+".");
+    });
+    connect(dlg, &BaryCorrDialog::useBcFile, this, [this](const QString &file, bool corrected){
+        ui->lineEdit_bc->setText(file);
+        ui->comboBox_bcframe->setCurrentIndex(corrected ? 1 : 0);
+        ui->plainTextEdit_2->appendPlainText("Barycentric correction file in use: "+file+" (spectra "
+                                             +(corrected ? "barycentrically corrected" : "in the observatory frame")
+                                             +"); takes effect with Read data.");
+    });
+    connect(dlg, &BaryCorrDialog::spectraRejected, this, [this](int last, const QString &note){
+        ui->spinBox_2->setValue(last);
+        ui->plainTextEdit_2->appendPlainText(note);
+    });
+    connect(dlg, &BaryCorrDialog::useInMain, this, [this](const QString &prefix, const QString &fext, const QString &rv){
+        ui->lineEdit_3->setText(prefix);
+        ui->lineEdit_19->setText(fext);
+        ui->comboBox->setCurrentIndex(1);                 // ASCII
+        if(!rv.isEmpty()) ui->lineEdit_2->setText(rv);
+        // the correction itself, for static lines (shifted by BC in corrected spectra)
+        ui->lineEdit_bc->setText(prefix+"barycorr.txt");
+        ui->comboBox_bcframe->setCurrentIndex(1);
+        ui->plainTextEdit_2->appendPlainText("Barycentrically corrected spectra in use: "+prefix+"<index>"+fext
+                                             +(rv.isEmpty() ? QString() : ", start RVs "+rv)+".");
+    });
+    dlg->show();
+}
+
+void MainWindow::on_actionSubtract_triggered()
+{
+    ui->dockSubtract->show();
+    ui->dockSubtract->raise();
 }
 
 void MainWindow::Input()
 {
     string slfile;
     cout<<"Name of config file:"<<endl;
-    cin>>slfile;
-    QString qslfile = QString::fromStdString(slfile);
-    ui->lineEdit_22->setText(qslfile);
-    ui->lineEdit_23->setText(qslfile);
-    MainWindow::on_pushButton_10_clicked();     // load Data
-    //MainWindow::on_pushButton_5_clicked();      // ECON SVD
+    if(!(cin>>slfile)){
+        cerr<<"No config file given."<<endl;
+        return;
+    }
+    MainWindow::runBatch(QString::fromStdString(slfile));
+}
+
+//****************************************
+// Batch mode: load configuration and optimise, without a window.
+// Returns 0 on success, 1 on error.
+//****************************************
+int MainWindow::runBatch(const QString &configName)
+{
+    runow=1;
+    error=0;
+    // configuration from the current folder (name with or without .sps)
+    QString file = configName.endsWith(".sps") ? configName : configName+".sps";
+    file = QDir::current().absoluteFilePath(file);
+    QString err = loadConfiguration(file);
+    if(!err.isEmpty()){
+        reportError(err);
+        return 1;
+    }
+    if(batchThreads>0){
+        ui->spinBox_8->setValue(std::min(batchThreads, ui->spinBox_8->maximum()));
+    }
+    cout<<"Cores used: "<<dis::threads()<<endl;
     MainWindow::on_pushButton_4_clicked();      // optimise
+    if(optimisationFinished!=1){
+        cerr<<"Optimisation did not finish."<<endl;
+        return 1;
+    }
     cout<<"The END."<<endl;
+    return 0;
 }
 
 MainWindow::~MainWindow()
@@ -339,12 +773,12 @@ double MainWindow::inclinations (){
         ist >> x;
         istringstream ist2(zwei);
         ist2 >> y;
-        if((x>=cpoints[0]) & (x<=cpoints[1])){
+        if((x>=cpoints[0]) && (x<=cpoints[1])){
             meanA1+=y;
             ++nmean1;
         }
         else{
-            if((x>=cpoints[4]) & (x<=cpoints[5])){
+            if((x>=cpoints[4]) && (x<=cpoints[5])){
                 meanA2+=y;
                 ++nmean2;
             }
@@ -352,6 +786,10 @@ double MainWindow::inclinations (){
                 //
             }
         }
+    }
+    if(nmean1==0 || nmean2==0 || xA2==xA1){
+        cerr<<"inclinations: no pixels in the continuum windows of component A."<<endl;
+        return orbit::kInvalidPenalty;
     }
     meanA1=meanA1/nmean1;
     meanA2=meanA2/nmean2;
@@ -382,12 +820,12 @@ double MainWindow::inclinations (){
         ist >> x;
         istringstream ist2(zwei);
         ist2 >> y;
-        if((x>=cpoints[2]) & (x<=cpoints[3])){
+        if((x>=cpoints[2]) && (x<=cpoints[3])){
             meanB1+=y;
             ++nmean1;
         }
         else{
-            if((x>=cpoints[6]) & (x<=cpoints[7])){
+            if((x>=cpoints[6]) && (x<=cpoints[7])){
                 meanB2+=y;
                 ++nmean2;
             }
@@ -395,6 +833,10 @@ double MainWindow::inclinations (){
                 //
             }
         }
+    }
+    if(nmean1==0 || nmean2==0 || xB2==xB1){
+        cerr<<"inclinations: no pixels in the continuum windows of component B."<<endl;
+        return orbit::kInvalidPenalty;
     }
     meanB1=meanB1/nmean1;
     meanB2=meanB2/nmean2;
@@ -434,630 +876,191 @@ void MainWindow::showPointToolTip_3(QMouseEvent *event)
 //**********************************************************
 //read data
 //**********************************************************
+//****************************************
+// Read a spectrum from a FITS binary table. Looks for the extension extName
+// (case-insensitive); if the name is empty or not present, the first table
+// extension with both columns. Column names are also case-insensitive.
+// usedExt: name of the extension that was read.
+//****************************************
+static bool readFitsSpectrum(const std::string &file, const std::string &extName, const std::string &wcol,
+                             const std::string &icol, std::valarray<double> &w, std::valarray<double> &f,
+                             std::string &usedExt, std::string &err)
+{
+    auto lower = [](std::string x){ for(char &c : x) c = char(std::tolower((unsigned char)c)); return x; };
+    try{
+        CCfits::FITS::setVerboseMode(false);
+        CCfits::FITS in(file, CCfits::Read, true);
+        // extensions in file order, requested name first
+        std::vector<CCfits::ExtHDU*> exts;
+        for(const auto &kv : in.extension()) exts.push_back(kv.second);
+        std::sort(exts.begin(), exts.end(), [](CCfits::ExtHDU *a, CCfits::ExtHDU *b){ return a->index() < b->index(); });
+        if(!extName.empty()){
+            std::stable_partition(exts.begin(), exts.end(),
+                                  [&](CCfits::ExtHDU *e){ return lower(e->name())==lower(extName); });
+        }
+        for(CCfits::ExtHDU *e : exts){
+            CCfits::Column *cw = nullptr, *ci = nullptr;
+            try{
+                cw = &e->column(wcol, false);
+                ci = &e->column(icol, false);
+            }
+            catch(CCfits::FitsException&){
+                continue;   // image extension or table without these columns
+            }
+            cw->read(w, 1, cw->rows());
+            ci->read(f, 1, ci->rows());
+            usedExt = e->name().empty() ? "HDU "+std::to_string(e->index()) : e->name();
+            return true;
+        }
+        err = "no table extension with columns '"+wcol+"' and '"+icol+"'";
+        return false;
+    }
+    catch(CCfits::FitsException &e){
+        err = e.message();
+        return false;
+    }
+}
+
 void MainWindow::read_data(){
 
+    error=0;   // discard stale error status from earlier calls (M3)
+    // Edge margin of the residuum: fixed for one optimisation. At a reinitiation the data are
+    // read again with the best RVs; a margin recomputed from their (smaller) RV range changed
+    // the definition of the residuum, so the restarted run started several chi^2 above the
+    // best value and the gain against the previous run was wrong.
+    if(inrein!=1) g_edgeMargin = -1;
+    g_warmValid = false;
+    g_lsqrIterations = g_lsqrSolves = 0;
     ui->plainTextEdit->clear();
 
     qPath=ui->lineEdit_4->text();
     path = qPath.toUtf8().constData();
 
-    int entries=0;
-    string liner;
+    // output names of the components (Output tab): without them nothing is written, and the
+    // plot afterwards reported the work folder itself as an "empty file"
+    {
+        QStringList missing;
+        if(ui->lineEdit_5->text().trimmed().isEmpty()) missing << "Component A";
+        if(!ui->checkBox_3->isChecked() && ui->lineEdit_8->text().trimmed().isEmpty()) missing << "Component B";
+        if(ui->checkBox_8->isChecked() && ui->lineEdit_10->text().trimmed().isEmpty()) missing << "Static lines";
+        if(!missing.isEmpty()){
+            reportError("Error 46: No output file name for "+missing.join(", ")
+                        +" (Output tab).");
+            return;
+        }
+    }
 
-    // Read SB2 RV Data
-        if(ui->checkBox_4->isChecked()){
-        //from CroCo
-        if(ui->checkBox->isChecked()){
-            checker=2;
-            orbele[4]=0;
-            mini=ui->spinBox->value();
-            maxi=ui->spinBox_2->value();
-            num=maxi-mini+1;
+    std::string ioErr;
+    auto fileIn = [&](const QString &name){ return (qPath+"/"+name).toStdString(); };
 
-            RV1.resize(num);
-            RV2.resize(num);
-            RV3.resize(num);
+    // radial velocities
+    if(ui->checkBox_34->isChecked()){
+        reportError("Error 25: SB3 systems are not supported.");
+        return;
+    }
+    const bool sb2 = ui->checkBox_4->isChecked();
+    const bool sb1 = ui->checkBox_3->isChecked();
+    if(!sb1 && !sb2){
+        reportError("Error 26: Please choose SB1 or SB2.");
+        return;
+    }
+    mini=ui->spinBox->value();
+    maxi=ui->spinBox_2->value();
+    num=maxi-mini+1;
+    if(num<1){
+        reportError("Error 30: The last spectrum must not be smaller than the first one.");
+        return;
+    }
+    RV1.fill(0.0, num);
+    RV2.fill(0.0, num);
+    RV3.fill(0.0, num);
+    const int ncol = sb2 ? 2 : 1;
 
-            for(int g=mini; g<=maxi; g++){
+    // If several boxes are checked, the last source wins as before: orbit, then file, then CroCo.
+    if(ui->checkBox_16->isChecked()){
+        // from orbital elements
+        std::vector<std::vector<double>> t;
+        if(!dataio::readTable(fileIn(ui->lineEdit_18->text()), 1, t, ioErr)){
+            reportError(QString(sb2 ? "Error 4: " : "Error 10: ")+QString::fromStdString(ioErr));
+            return;
+        }
+        if(int(t.size())!=num){
+            reportError(QString(sb2 ? "Error 5" : "Error 11")+": Time file "+qPath+"/"+ui->lineEdit_18->text()
+                        +" does not match to the number of observations.");
+            return;
+        }
+        otimes.resize(num);
+        for(int i=0; i<num; i++) otimes[i]=t[i][0];
 
-            QString input=ui->lineEdit->text();
-            string data1 = input.toUtf8().constData();
-            std::ostringstream dat1NameStream(data1);
-            dat1NameStream<<path<<"/"<<data1<<g<<".txt";
-            std::string dat1Name = dat1NameStream.str();
-
-            QFile checkfile1(dat1Name.c_str());
-
-            if(!checkfile1.exists()){
-                qDebug()<<"The file "<<checkfile1.fileName()<<" does not exist.";
-                QString fError= QString::number(g);
-                if(runow==0){
-                    QMessageBox::information(this, "Error", "Error 1: File"+qPath+"/"+input+fError+".txt does not exist!");
-                }
-                else{
-                    cout<<"Error 1: File "<<path<<"/"<<data1<<g<<" does not exist!"<<endl;
-                    MainWindow::Input();
-                }
-                this->setCursor(QCursor(Qt::ArrowCursor));
-                error=1;
+        std::vector<double> el;
+        if(!dataio::readNumbers(fileIn(qOrbitFile), el, ioErr) || el.size()<7){
+            reportError(QString(sb2 ? "Error 6" : "Error 12")+": File "+qPath+"/"+qOrbitFile
+                        +" (orbital elements, Data tab) does not exist or is incomplete! Set the orbital elements via the Editor.");
+            return;
+        }
+        for(int i=0; i<7; i++) orbele[i]=el[i];
+        {
+            QString bad;
+            for(int i=0; i<7; i++) if(!std::isfinite(el[i])) bad = "element "+QString::number(i+1)+" is not a number";
+            if(bad.isEmpty() && !(el[0]>0)) bad = "the period must be positive";
+            if(bad.isEmpty() && !(el[1]>=0 && el[1]<1)) bad = "the eccentricity must be in [0, 1)";
+            if(!bad.isEmpty()){
+                reportError(QString(sb2 ? "Error 6" : "Error 12")+": Orbital elements in "+qPath+"/"+qOrbitFile+": "+bad+".");
                 return;
             }
-            else{
-                // do nothing
+        }
+        MainWindow::VAmplitudeA();
+        if(sb2) MainWindow::VAmplitudeB();
+    }
+    else if(ui->checkBox_2->isChecked()){
+        // from the RV file: one line per spectrum (SB2: RV_A RV_B)
+        orbele[4]=0;
+        std::vector<std::vector<double>> rows;
+        if(!dataio::readTable(fileIn(ui->lineEdit_2->text()), ncol, rows, ioErr)){
+            reportError(QString(sb2 ? "Error 2: " : "Error 8: ")+QString::fromStdString(ioErr));
+            return;
+        }
+        if(int(rows.size())!=num){
+            reportError(QString(sb2 ? "Error 3" : "Error 9")+": RV file "+qPath+"/"+ui->lineEdit_2->text()
+                        +" does not match to the number of observations.");
+            return;
+        }
+        for(int i=0; i<num; i++){
+            RV1[i]=rows[i][0];
+            if(sb2) RV3[i]=rows[i][1];
+        }
+    }
+    else if(ui->checkBox->isChecked()){
+        // from CroCo: one file <name><g>.txt per spectrum
+        orbele[4]=0;
+        for(int g=mini; g<=maxi; g++){
+            QString name = ui->lineEdit->text()+QString::number(g)+".txt";
+            std::vector<std::vector<double>> rows;
+            if(!dataio::readTable(fileIn(name), ncol, rows, ioErr)){
+                reportError(QString(sb2 ? "Error 1: " : "Error 7: ")+QString::fromStdString(ioErr));
+                return;
             }
-
-            ifstream dat1(dat1Name.c_str());
-
-            dat1 >> eins >>zwei;
-                istringstream ist(eins);
-                ist >> RV1[g-mini];
-                istringstream ist2(zwei);
-                ist2 >> RV2[g-mini];
+            RV1[g-mini]=rows[0][0];
+            if(sb2){
+                RV2[g-mini]=rows[0][1];
                 RV3[g-mini]=RV1[g-mini]+RV2[g-mini];
                 if(ui->checkBox_13->isChecked()){
                     RV1[g-mini]=-RV1[g-mini];
                     RV3[g-mini]=-RV3[g-mini];
                 }
-
-            QString index= QString::number(g);
-            QString velocity=QString::number(RV1[g-mini]);
-            QString doppler=QString::number(RV2[g-mini]);
-            QString sum=QString::number(RV3[g-mini]);
-            ui->plainTextEdit->appendPlainText(index+" "+velocity+" "+doppler+" "+sum);
-
-            dat1.close();
             }
         }
-
-        //from your file
-        if(ui->checkBox_2->isChecked()){
-            checker=2;
-            orbele[4]=0;
-            mini=ui->spinBox->value();
-            maxi=ui->spinBox_2->value();
-            num=maxi-mini+1;
-
-            RV1.resize(num);
-            RV2.resize(num);
-            RV3.resize(num);
-
-            QString input2=ui->lineEdit_2->text();
-            string data2 = input2.toUtf8().constData();
-            std::ostringstream dat2NameStream(data2);
-            dat2NameStream<<path<<"/"<<data2;
-            std::string dat2Name = dat2NameStream.str();
-
-            QFile checkfile2(dat2Name.c_str());
-
-            if(!checkfile2.exists()){
-                qDebug()<<"The file "<<checkfile2.fileName()<<" does not exist.";
-                if(runow==0){
-                    QMessageBox::information(this, "Error", "Error 2: File "+qPath+"/"+input2+" does not exist!");
-                }
-                else{
-                    cout<<"Error 2: File "<<path<<"/"<<data2<<" does not exist!"<<endl;
-                    MainWindow::Input();
-                }
-                this->setCursor(QCursor(Qt::ArrowCursor));
-                error=1;
-               return;
-            }
-            else{
-
-                ifstream dat2(dat2Name.c_str());
-
-                entries=0;
-                while(std::getline(dat2, liner))
-                    ++entries;
-
-                dat2.clear();
-                dat2.seekg(0, ios::beg);
-
-                if(entries!=num){
-                    if(runow==0){
-                        QMessageBox::information(this, "Error", "Error 3: Time file "+qPath+"/"+input2+" does not match to the number of observations.");
-                    }
-                    else{
-                        cout<<"Error 3: File "<<path<<"/"<<data2<<" does not match to the number of observations."<<endl;
-                        MainWindow::Input();
-                    }
-                    error=1;
-                    this->setCursor(QCursor(Qt::ArrowCursor));
-                    return;
-                }
-
-                for(int g=mini; g<=maxi; g++){
-                    dat2 >> eins >>zwei;
-                    istringstream ist(eins);
-                    ist >> RV1[g-mini];
-                    istringstream ist2(zwei);
-                    ist2 >> RV3[g-mini];
-                    QString index= QString::number(g-mini);
-                    QString velocity=QString::number(RV1[g-mini]);
-                    //QString doppler=QString::number(RV2[g]);
-                    QString sum=QString::number(RV3[g-mini]);
-                    ui->plainTextEdit->appendPlainText(index+" "+velocity+" "+sum);
-                }
-            dat2.close();
-            }
-        }
-
-        //unknown RVs
-        if(ui->checkBox_16->isChecked()){
-            checker=2;
-            mini=ui->spinBox->value();
-            maxi=ui->spinBox_2->value();
-            num=maxi-mini+1;
-
-            RV1.resize(num);
-            RV2.resize(num);
-            RV3.resize(num);
-            otimes.resize(num);
-
-            QString inputt=ui->lineEdit_18->text();
-            string times = inputt.toUtf8().constData();
-            std::ostringstream intNameStream(times);
-            intNameStream<<path<<"/"<<times;
-            std::string intName = intNameStream.str();
-
-            QFile checkfile2(intName.c_str());
-
-            if(!checkfile2.exists()){
-                qDebug()<<"The file "<<checkfile2.fileName()<<" does not exist.";
-                if(runow==0){
-                    QMessageBox::information(this, "Error", "Error 4: File"+qPath+"/"+inputt+" does not exist!");
-                }
-                else{
-                    cout<<"Error 4: File "<<path<<"/"<<times<<" does not exist!"<<endl;
-                    MainWindow::Input();
-                }
-                this->setCursor(QCursor(Qt::ArrowCursor));
-                error=1;
-               return;
-            }
-            else{
-
-                ifstream dat(intName.c_str());
-
-                entries=0;
-                while(std::getline(dat, liner))
-                   ++entries;
-
-                dat.clear();
-                dat.seekg(0, ios::beg);
-
-                if(entries!=num){
-                    if(runow==0){
-                        QMessageBox::information(this, "Error", "Error 5: Time file "+qPath+"/"+inputt+" does not match to the number of observations.");
-                    }
-                    else{
-                        cout<<"Error 5: File "<<path<<"/"<<times<<" does not match to the number of observations."<<endl;
-                        MainWindow::Input();
-                    }
-                    error=1;
-                    this->setCursor(QCursor(Qt::ArrowCursor));
-                    return;
-                }
-
-
-                for(int g=0; g<num; g++){
-                    dat >> eins;
-                    istringstream istr(eins);
-                    istr >> otimes[g];
-                }
-                dat.close();
-            }
-
-            string orbit = "orbitelements.dat";
-            std::ostringstream orbNameStream(orbit);
-            orbNameStream<<path<<"/"<<orbit;
-            std::string orbName = orbNameStream.str();
-
-            QFile checkorb(orbName.c_str());
-
-            if(!checkorb.exists()){
-                qDebug()<<"The file "<<checkorb.fileName()<<" does not exist.";
-                if(runow==0){
-                    QMessageBox::information(this, "Error", "Error 6: File "+checkorb.fileName()+" does not exist! Set the orbital elements via the Editor.");
-                }
-                else{
-                    cout<<"Error 6: File "<<path<<"/"<<orbit<<" does not exist! Set the orbital elements via the Editor."<<endl;
-                    MainWindow::Input();
-                }
-                this->setCursor(QCursor(Qt::ArrowCursor));
-                error=1;
-               return;
-            }
-            else{
-
-                ifstream initorbit(orbName.c_str());
-
-                for(int i=0; i<7; i++){
-                    initorbit >> eins;
-                    istringstream istr1(eins);
-                    istr1 >> orbele[i];
-                }
-                initorbit.close();
-            }
-
-            MainWindow::VAmplitudeA();
-            MainWindow::VAmplitudeB();
-
-            for(int i=0; i<num; i++){
-                QString index= QString::number(i);
-                QString velocity=QString::number(RV1[i]);
-                QString sum=QString::number(RV3[i]);
-                ui->plainTextEdit->appendPlainText(index+" "+velocity+" "+sum);
-                cout<<RV1[i]<<" "<<RV3[i]<<endl;
-            }
-        }
-
-        //looking for maximum RV absolute
-        RV1max=abs(RV1[0]);
-        RV3max=abs(RV3[0]);
-        for (int i=0; i<num; i++){
-            if (abs(RV1[i])>abs(RV1max)){
-                RV1max=RV1[i];
-            }
-            else{
-                //
-            }
-            if (abs(RV3[i])>abs(RV3max)){
-                RV3max=RV3[i];
-            }
-            else{
-                //
-            }
-        }
-
-        //looking for minimum and maximum RV
-        RV1min=RV1max;
-        RV3min=RV3max;
-        RV1maxi=RV1[0];
-        RV3maxi=RV3[0];
-        for(int i=0; i<num; i++){
-            if(RV1[i]<RV1min){
-                RV1min=RV1[i];
-            }
-            else{
-                //
-            }
-            if(RV3[i]<RV3min){
-                RV3min=RV3[i];
-            }
-            else{
-                //
-            }
-            if(RV1[i]>RV1maxi){
-                RV1maxi=RV1[i];
-            }
-            else{
-                //
-            }
-            if(RV3[i]>RV3maxi){
-                RV3maxi=RV3[i];
-            }
-            else{
-                //
-            }
-        }
-
-        RV1amin=RV1[0];
-        for(int i=0; i<num; i++){
-            if(abs(RV1[i])<RV1amin){
-                RV1amin=RV1[i];
-            }
-            else{
-                //
-            }
-        }
-
-}
-
-        // Read SB1 RV Data
-        if(ui->checkBox_3->isChecked()){
-
-            //from CroCo
-            if(ui->checkBox->isChecked()){
-                checker=2;
-                orbele[4]=0;
-                mini=ui->spinBox->value();
-                maxi=ui->spinBox_2->value();
-                num=maxi-mini+1;
-
-                RV1.resize(num);
-
-                for(int g=mini; g<=maxi; g++){
-
-                    QString input=ui->lineEdit->text();
-                    string data1 = input.toUtf8().constData();
-                    std::ostringstream dat1NameStream(data1);
-                    dat1NameStream<<path<<"/"<<data1<<g<<".txt";
-                    std::string dat1Name = dat1NameStream.str();
-
-                    QFile checkfile1(dat1Name.c_str());
-
-                    if(!checkfile1.exists()){
-                        qDebug()<<"The file "<<checkfile1.fileName()<<" does not exist.";
-                        QString fError= QString::number(g);
-                        if(runow==0){
-                            QMessageBox::information(this, "Error", "Error 7: File"+qPath+"/"+input+fError+".txt does not exist!");
-                        }
-                        else{
-                            cout<<"Error 7: File "<<path<<"/"<<data1<<g<<" does not exist!"<<endl;
-                            MainWindow::Input();
-                        }
-                        this->setCursor(QCursor(Qt::ArrowCursor));
-                        error=1;
-                        return;
-                    }
-                    else{
-
-                        ifstream dat1(dat1Name.c_str());
-
-                        dat1 >> eins;
-                        istringstream ist(eins);
-                        ist >> RV1[g-mini];
-
-                        QString index= QString::number(g);
-                        QString velocity=QString::number(RV1[g-mini]);
-
-                        ui->plainTextEdit->appendPlainText(index+" "+velocity);
-                        dat1.close();
-                    }
-                }
-            }
-            else{
-               //
-            }
-            //from your file
-            if(ui->checkBox_2->isChecked()){
-                checker=2;
-                orbele[4]=0;
-                mini=ui->spinBox->value();
-                maxi=ui->spinBox_2->value();
-                num=maxi-mini+1;
-
-                RV1.resize(num);
-
-                QString input2=ui->lineEdit_2->text();
-                string data2 = input2.toUtf8().constData();
-                std::ostringstream dat2NameStream(data2);
-                dat2NameStream<<path<<"/"<<data2;
-                std::string dat2Name = dat2NameStream.str();
-
-                QFile checkfile2(dat2Name.c_str());
-
-                if(!checkfile2.exists()){
-                    qDebug()<<"The file "<<checkfile2.fileName()<<" does not exist.";
-                    if(runow==0){
-                        QMessageBox::information(this, "Error", "Error 8: File"+qPath+"/"+input2+" does not exist!");
-                    }
-                    else{
-                        cout<<"Error 8: File "<<path<<"/"<<data2<<" does not exist!"<<endl;
-                        MainWindow::Input();
-                    }
-                    this->setCursor(QCursor(Qt::ArrowCursor));
-                    error=1;
-                   return;
-                }
-
-                else{
-                    ifstream dat2(dat2Name.c_str());
-
-                    entries=0;
-                    while(std::getline(dat2, liner))
-                       ++entries;
-
-                    dat2.clear();
-                    dat2.seekg(0, ios::beg);
-
-                    if(entries!=num){
-                        if(runow==0){
-                            QMessageBox::information(this, "Error", "Error 9: Time file "+qPath+"/"+input2+" does not match to the number of observations.");
-                        }
-                        else{
-                            cout<<"Error 9: File "<<path<<"/"<<data2<<" does not match to the number of observations."<<endl;
-                            MainWindow::Input();
-                        }
-                        error=1;
-                        this->setCursor(QCursor(Qt::ArrowCursor));
-                        return;
-                    }
-                    else{
-
-                        for(int g=0; g<=maxi; g++){
-                            dat2 >> eins;
-                            istringstream ist(eins);
-
-                            if(g>=mini){
-                                ist >> RV1[g-mini];
-                                QString index= QString::number(g);
-                                QString velocity=QString::number(RV1[g]);
-                                ui->plainTextEdit->appendPlainText(index+" "+velocity);
-                            }
-                            else{
-                                // do nothing
-                            }
-                        }
-                        dat2.close();
-                    }
-                }
-            }
-            else{
-                //
-            }
-
-            //unknown RVs
-            if(ui->checkBox_16->isChecked()){
-                checker=2;
-                mini=ui->spinBox->value();
-                maxi=ui->spinBox_2->value();
-                num=maxi-mini+1;
-
-                RV1.resize(num);
-                RV2.resize(num);
-                //RV3.resize(num);
-                otimes.resize(num);
-
-                QString inputt=ui->lineEdit_18->text();
-                string times = inputt.toUtf8().constData();
-                std::ostringstream intNameStream(times);
-                intNameStream<<path<<"/"<<times;
-                std::string intName = intNameStream.str();
-
-                QFile checkfile2(intName.c_str());
-
-                if(!checkfile2.exists()){
-                    qDebug()<<"The file "<<checkfile2.fileName()<<" does not exist.";
-                    if(runow==0){
-                        QMessageBox::information(this, "Error", "Error 10: File"+qPath+"/"+inputt+" does not exist!");
-                    }
-                    else{
-                        cout<<"Error 10: File "<<path<<"/"<<times<<" does not exist!"<<endl;
-                        MainWindow::Input();
-                    }
-                    this->setCursor(QCursor(Qt::ArrowCursor));
-                    error=1;
-                   return;
-                }
-                else{
-
-                    ifstream dat(intName.c_str());
-
-                    entries=0;
-                    while(std::getline(dat, liner))
-                       ++entries;
-
-                    dat.clear();
-                    dat.seekg(0, ios::beg);
-
-                    if(entries!=num){
-                        if(runow==0){
-                            QMessageBox::information(this, "Error", "Error 11: Time file "+qPath+"/"+inputt+" does not match to the number of observations.");
-                        }
-                        else{
-                            cout<<"Error 1: File "<<path<<"/"<<times<<" does not match to the number of observations."<<endl;
-                            MainWindow::Input();
-                        }
-                        error=1;
-                        this->setCursor(QCursor(Qt::ArrowCursor));
-                        return;
-                    }
-                    else{
-
-                        for(int g=0; g<num; g++){
-                            dat >> eins;
-                            istringstream istr(eins);
-                            istr >> otimes[g];
-                        }
-                        dat.close();
-                    }
-                }
-
-                string orbit = "orbitelements.dat";
-                std::ostringstream orbNameStream(orbit);
-                orbNameStream<<path<<"/"<<orbit;
-                std::string orbName = orbNameStream.str();
-
-                QFile checkorb2(orbName.c_str());
-
-                if(!checkorb2.exists()){
-                    qDebug()<<"The file "<<checkorb2.fileName()<<" does not exist.";
-                    if(runow==0){
-                        QMessageBox::information(this, "Error", "Error 12: File "+checkorb2.fileName()+" does not exist! Set the orbital elements via the Editor.");
-                    }
-                    else{
-                        cout<<"Error 12: File "<<path<<"/"<<orbit<<" does not exist! Set the orbital elements via the Editor."<<endl;
-                        MainWindow::Input();
-                    }
-                    this->setCursor(QCursor(Qt::ArrowCursor));
-                    error=1;
-                   return;
-                }
-                else{
-
-                    ifstream initorbit(orbName.c_str());
-
-                    for(int i=0; i<7; i++){
-                        initorbit >> eins;
-                        istringstream istr1(eins);
-                        istr1 >> orbele[i];
-                    }
-                    initorbit.close();
-                }
-
-                MainWindow::VAmplitudeA();
-                //MainWindow::VAmplitudeB();
-
-                for(int i=0; i<num; i++){
-                    QString index= QString::number(i);
-                    QString velocity=QString::number(RV1[i]);
-                    //QString sum=QString::number(RV3[i]);
-                    ui->plainTextEdit->appendPlainText(index+" "+velocity);
-                    cout<<RV1[i]<<endl;
-                }
-            }
-
-            //looking for maximum RV absolute
-            RV1max=abs(RV1[0]);
-
-            for (int i=0; i<num; i++){
-                if (abs(RV1[i])>abs(RV1max)){
-                    RV1max=RV1[i];
-                }
-                else{
-                    //
-                }
-            }
-
-            RV1amin=RV1[0];
-            RV1min=RV1[0];
-            for(int i=0; i<num; i++){
-                if(abs(RV1[i])<RV1amin){
-                    RV1amin=RV1[i];
-                }
-                else{
-                    //
-                }
-                if(RV1[i]<RV1min){
-                    RV1min=RV1[i];
-                }
-                else{
-                    //
-                }
-            }
+    }
+    else{
+        reportError("Error 14: Please choose input data from file or unknown (via global optimization).");
+        return;
     }
 
-        ui->doubleSpinBox->setValue(RV1max);
-        ui->doubleSpinBox_2->setValue(RV3max);
-
-        if(checker==1){
-            if(runow==0){
-                QMessageBox::information(this,"Choose Input", "Error 13: Please choose input file.");
-            }
-            else{
-                cout<<"Error 13: Please choose intput file."<<endl;
-                MainWindow::Input();
-            }
-            this->setCursor(QCursor(Qt::ArrowCursor));
-            error=1;
-            return;
-        }
-
-        else if(checker==0){
-            if(runow==0){
-                QMessageBox::information(this,"Choose Input", "Error 14: Please choose input data from file or unknown (via global optimization).");
-            }
-            else{
-                cout<<"Error 14: Please choose input data from file or unknown (via global optimization)."<<endl;
-                MainWindow::Input();
-            }
-            this->setCursor(QCursor(Qt::ArrowCursor));
-            error=1;
-            return;
-        }
-        checker=0;
+    for(int i=0; i<num; i++){
+        QString line = QString::number(i)+" "+QString::number(RV1[i]);
+        if(sb2) line += " "+QString::number(RV3[i]);
+        ui->plainTextEdit->appendPlainText(line);
+    }
 
     //read measurements and write to solution vector
 
@@ -1068,182 +1071,206 @@ void MainWindow::read_data(){
     ofstream file1(MName.c_str());
 
     QString fext=ui->lineEdit_19->text();
-    string sfext = fext.toUtf8().constData();
+    this->setCursor(QCursor(Qt::WaitCursor));
 
-    //input as fits-file
-    if(ui->comboBox->currentIndex()==0){
-        this->setCursor(QCursor(Qt::WaitCursor));
+    std::vector<std::vector<double>> waves(num), fluxes(num);
+    for(int g=mini; g<=maxi; g++){
+        QString name = ui->lineEdit_3->text()+QString::number(g)+fext;
+        std::string fname = fileIn(name);
 
-        for(int g=mini; g<=maxi; g++){
-
-            QString input3=ui->lineEdit_3->text();
-            string data3 = input3.toUtf8().constData();
-            std::ostringstream dat3NameStream(data3);
-            if(ui->checkBox_27->isChecked()){
-                dat3NameStream<<path<<"/"<<data3<<sequence<<"_"<<g<<sfext;
-            }
-            else{
-                dat3NameStream<<path<<"/"<<data3<<g<<sfext;
-            }
-            std::string dat3Name = dat3NameStream.str();
-
-            QFile checkfile3(dat3Name.c_str());
-
-            if(!checkfile3.exists()){
-                qDebug()<<"The file "<<checkfile3.fileName()<<" does not exist.";
-                QString fError= QString::number(g);
-                if(runow==0){
-                    QMessageBox::information(this, "Error", "Error 15: Spectrum "+qPath+"/"+input3+fError+fext+" does not exist!");
-                }
-                else{
-                    cout<<"Error 15: File "<<path<<"/"<<data3<<g<<" does not exist!"<<endl;
-                MainWindow::Input();
-                }
-                this->setCursor(QCursor(Qt::ArrowCursor));
-                error=1;
+        if(!QFile::exists(QString::fromStdString(fname))){
+            reportError(QString(ui->comboBox->currentIndex()==0 ? "Error 15" : "Error 17")
+                        +": Spectrum "+qPath+"/"+name+" does not exist!");
+            return;
+        }
+        if(ui->comboBox->currentIndex()==0){
+            //input as fits-file
+            std::string fitsErr, usedExt;
+            if(!readFitsSpectrum(fname, Extension, WCol, ICol, wave, intens, usedExt, fitsErr)){
+                reportError("Error 32: Cannot read FITS file "+qPath+"/"+name+": "
+                            +QString::fromStdString(fitsErr));
                 return;
             }
-            else{
-                ifstream dat3(dat3Name.c_str());
-
-                CCfits::FITS::setVerboseMode(true);
-
-                try
-                {
-
-                    //open file for reading
-                    shared_ptr<CCfits::FITS> input_file(new CCfits::FITS(dat3Name.c_str(),CCfits::Read,true));
-
-                    // Create pointer to extension
-                    CCfits::ExtHDU& datavector = input_file->extension(Extension);
-
-                    // Read rows
-                    CCfits::Column& column = datavector.column(WCol);
-                    column.read(wave, 1, column.rows());
-
-                    // Read rows
-                    CCfits::Column& column2 = datavector.column(ICol);
-                    column2.read(intens, 1, column2.rows());
-
-                    logbin=wave.size();
-
-                    C.resize(logbin*num);
-                    W.resize(logbin*num);
-                    int grar =0;
-
-                    for(int i=(g-mini)*logbin; i<(g-mini+1)*logbin; i++){
-                         W[i]=wave[grar];
-                         C[i]=intens[grar];
-                         ++grar;
-                    }
-                    if(ui->checkBox_33->isChecked() & (g==mini)){
-                          if(ui->doubleSpinBox_14->value()<W[0] or (ui->doubleSpinBox_14->value()>W[logbin-1]) or (ui->doubleSpinBox_15->value()<W[0]) or (ui->doubleSpinBox_15->value()>W[logbin-1])){
-                              if(runow==0){
-                                  QMessageBox::information(this, "Error", "Error 16: Please check the wavelength range for residuum computation.");
-                              }
-                              else{
-                                  cout<<"Error 16: Please check the wavelength range for residuum computation."<<endl;
-                                  MainWindow::Input();
-                              }
-                              error=1;
-                              this->setCursor(QCursor(Qt::ArrowCursor));
-                              return;
-                          }
-                     }
-                     else{
-                        //
-                     }
-                     }
-                        catch (CCfits::FitsException&)
-                     {
-                    std::cerr << " Fits Exception Thrown by test function \n";
-                    }
-                }
+            if(g==mini && !Extension.empty() && usedExt!=Extension){
+                cout<<"FITS: extension '"<<Extension<<"' not found, using '"<<usedExt<<"'."<<endl;
             }
-        }
-
-    //input as ASCII-file
-    else if(ui->comboBox->currentIndex()==1){
-        for(int g=mini; g<=maxi; g++){
-
-            QString input3=ui->lineEdit_3->text();
-            string data3 = input3.toUtf8().constData();
-            std::ostringstream dat3NameStream(data3);
-            if(ui->checkBox_27->isChecked()){
-                dat3NameStream<<path<<"/"<<data3<<sequence<<"_"<<g<<sfext;
-            }
-            else{
-                dat3NameStream<<path<<"/"<<data3<<g<<sfext;
-            }
-            std::string dat3Name = dat3NameStream.str();
-
-            QFile checkfile3(dat3Name.c_str());
-
-            if(!checkfile3.exists()){
-                qDebug()<<"The file "<<checkfile3.fileName()<<" does not exist.";
-                QString fError= QString::number(g);
-                if(runow==0){
-                    QMessageBox::information(this, "Error", "Error 17: Spectrum "+qPath+"/"+input3+fError+fext+" does not exist!");
-                }
-                else{
-                    cout<<"Error 17: File "<<path<<"/"<<data3<<g<<sfext<<" does not exist!"<<endl;
-                    MainWindow::Input();
-                }
-                this->setCursor(QCursor(Qt::ArrowCursor));
-                error=1;
-                return;
-            }
-            else{
-                ifstream dat3(dat3Name.c_str());
-
-                this->setCursor(QCursor(Qt::WaitCursor));
-
-                logbin=0;
-
-                while(std::getline(dat3, line))
-                ++logbin;
-
-                dat3.clear();
-                dat3.seekg(0, ios::beg);
-
-                C.resize(logbin*num);
-                W.resize(logbin*num);
-
-                for(int i=(g-mini)*logbin; i<(g-mini+1)*logbin; i++){
-                    dat3 >> eins >>zwei;
-                    istringstream ist3(eins);
-                    ist3 >> W(i);
-                    istringstream ist4(zwei);
-                    ist4 >> C(i);
-
-                }
-                dat3.close();
-            }
-            /*
-            if(ui->checkBox_33->isChecked() & (g==mini)){
-                if(ui->doubleSpinBox_14->value()<W[0] or (ui->doubleSpinBox_14->value()>W[logbin-1]) or (ui->doubleSpinBox_15->value()<W[0]) or (ui->doubleSpinBox_15->value()>W[logbin-1])){
-                    QMessageBox::information(this, "Warning", "Please check the wavelength range for residuum computation.");
-                    error=1;
-                    this->setCursor(QCursor(Qt::ArrowCursor));
-                    return;
-                }
-            }*/
-        }
-    }
-
-    // sequence; compute residuum in...
-    if(ui->checkBox_27->isChecked()){
-        if(logbin<81){
-            //
+            waves[g-mini].assign(std::begin(wave), std::end(wave));
+            fluxes[g-mini].assign(std::begin(intens), std::end(intens));
         }
         else{
-            ui->checkBox_33->setChecked(true);
-            ui->doubleSpinBox_14->setValue(pow(10,W(40)));
-            ui->doubleSpinBox_15->setValue(pow(10,W(logbin-41)));
+            //input as ASCII-file
+            std::vector<std::vector<double>> rows;
+            if(!dataio::readTable(fname, 2, rows, ioErr)){
+                reportError("Error 33: "+QString::fromStdString(ioErr));
+                return;
+            }
+            for(const auto &r : rows){
+                waves[g-mini].push_back(r[0]);
+                fluxes[g-mini].push_back(r[1]);
+            }
+        }
+        qApp->processEvents(QEventLoop::ExcludeUserInputEvents);   // long spectra: window stays responsive
+    }
+
+    // Resample onto one common log10(lambda) grid: always with "to log grid", otherwise
+    // automatically when the spectra are not on one common equidistant log grid (linear
+    // Angstrom, or each spectrum rebinned on its own log grid).
+    bool resample = ui->checkBox_42->isChecked();
+    QString gridReason;
+    if(!resample && !dataio::checkCommonGrid(waves, ioErr)){
+        resample = true;
+        gridReason = QString::fromStdString(ioErr);
+    }
+    if(resample){
+        const double vstep = ui->doubleSpinBox_18->value();
+        const double lstep = vstep>0 ? std::log10(1.0+vstep/c0) : 0.0;
+        dataio::GridInfo gi;
+        if(!dataio::resampleToLogGrid(waves, fluxes, lstep, gi, ioErr)){
+            reportError((gridReason.isEmpty() ? QString("Error 43: Resampling to a log grid failed: ")
+                                              : "Error 31: "+gridReason+" Resampling to a common log grid failed: ")
+                        +QString::fromStdString(ioErr));
+            return;
+        }
+        const double kms = (std::pow(10.0, gi.step)-1.0)*c0;
+        QString msg = QString("Resampled %1 spectra (%2 on a linear scale) to a common log grid: "
+                              "%3 pixels, %4-%5 A, %6 km/s per pixel.")
+                      .arg(num).arg(gi.linearInputs).arg(gi.n)
+                      .arg(std::pow(10.0, gi.w0), 0, 'f', 2)
+                      .arg(std::pow(10.0, gi.w0+(gi.n-1)*gi.step), 0, 'f', 2)
+                      .arg(kms, 0, 'f', 3);
+        if(!gridReason.isEmpty()){
+            msg = "The spectra are not on one common log10(lambda) grid ("+gridReason+"). "+msg
+                  +" Tick \"to log grid\" to choose the step.";
+        }
+        cout<<msg.toStdString()<<endl;
+        ui->plainTextEdit_2->appendPlainText(msg);
+    }
+    logbin = int(waves[0].size());
+    C.set_size(num*logbin);
+    W.set_size(num*logbin);
+    for(int a=0; a<num; a++){
+        for(int i=0; i<logbin; i++){
+            W(a*logbin+i)=waves[a][i];
+            C(a*logbin+i)=fluxes[a][i];
         }
     }
-    else{
-        //
+
+    // excluded wavelength ranges (Model tab)
+    g_rowMasked.clear();
+    g_rowNearMask.clear();
+    if(ui->checkBox_mask->isChecked()){
+        const QString name = ui->lineEdit_mask->text().trimmed();
+        if(name.isEmpty()){
+            reportError("Error 47: No file of excluded wavelength ranges given (Model tab).");
+            return;
+        }
+        const QString file = qPath+"/"+name;
+        if(!QFile::exists(file)){
+            if(name!="telluric_mask.dat"){
+                reportError("Error 47: File of excluded wavelength ranges "+file+" does not exist.");
+                return;
+            }
+            // default list (strongest telluric bands, strong chromospheric lines), written for editing
+            std::ofstream out(file.toStdString().c_str());
+            out<<dataio::kTelluricMask;
+            const QString m = "Excluded ranges: default list (strongest telluric bands, strong chromospheric lines) written to "+file+".";
+            cout<<m.toStdString()<<endl;
+            ui->plainTextEdit_2->appendPlainText(m);
+        }
+        std::vector<std::pair<double, double>> ranges;
+        std::string rerr;
+        if(!dataio::readRanges(file.toStdString(), ranges, rerr)){
+            reportError("Error 47: "+QString::fromStdString(rerr));
+            return;
+        }
+        std::vector<double> lw(W.begin(), W.end());
+        const size_t nm = dataio::markRanges(lw, ranges, g_rowMasked);
+        if(nm>=size_t(W.n_elem)){
+            reportError("Error 47: The excluded ranges cover all pixels.");
+            return;
+        }
+        std::ostringstream m;
+        m<<"Excluded ranges ("<<name.toStdString()<<"): "<<ranges.size()<<" ranges, "
+         <<nm<<" of "<<W.n_elem<<" pixels ("<<setprecision(3)<<100.0*double(nm)/double(W.n_elem)<<" %).";
+        cout<<m.str()<<endl;
+        ui->plainTextEdit_2->appendPlainText(QString::fromStdString(m.str()));
+        if(nm==0) g_rowMasked.clear();
+    }
+
+    // align the continua of the spectra to their mean (Data tab, Noise): removes differences of
+    // the normalisation between the spectra, which the disentangling turns into broad
+    // anti-correlated wiggles of A and B
+    if(ui->checkBox_align->isChecked() && num>=2 && logbin>=3){
+        std::vector<std::vector<double>> fl(num, std::vector<double>(logbin));
+        std::vector<std::vector<char>> mk;
+        for(int j=0; j<num; j++) for(int i=0; i<logbin; i++) fl[j][i] = C(j*logbin+i);
+        if(!g_rowMasked.empty()){
+            mk.assign(num, std::vector<char>(logbin, 0));
+            for(int j=0; j<num; j++) for(int i=0; i<logbin; i++) mk[j][i] = g_rowMasked[size_t(j)*logbin+i];
+        }
+        const double dl = W(1)-W(0);
+        const double lamMid = std::pow(10.0, W(logbin/2));
+        const int widthPx = std::max(3, int(std::lround(ui->doubleSpinBox_alignWidth->value()/(lamMid*std::log(10.0)*dl))));
+        std::vector<double> rms;
+        std::string aerr;
+        if(cont::alignToMean(fl, mk, widthPx, rms, aerr)){
+            for(int j=0; j<num; j++) for(int i=0; i<logbin; i++) C(j*logbin+i) = fl[j][i];
+            std::ostringstream m;
+            m<<setprecision(3)<<"Continua aligned to the mean spectrum ("<<ui->doubleSpinBox_alignWidth->value()
+             <<" A, "<<widthPx<<" px); rms of the correction per spectrum:";
+            for(double v : rms) m<<" "<<v;
+            cout<<m.str()<<endl;
+            double mx = 0.0;
+            for(double v : rms) mx = std::max(mx, v);
+            std::ostringstream m2;
+            m2<<setprecision(3)<<"Continua aligned to the mean spectrum: correction up to "<<100.0*mx<<" % rms (per spectrum in the console).";
+            ui->plainTextEdit_2->appendPlainText(QString::fromStdString(m2.str()));
+        }
+        else cerr<<"Aligning the continua failed: "<<aerr<<endl;
+    }
+
+    // wavelength-dependent flux ratio F_A/F_B = k_j s(lambda)
+    if(!MainWindow::setupRatioShape()){
+        return;
+    }
+
+    // S/N per spectrum for weighted least squares
+    g_specW.clear();
+    g_sigmaBar2 = 0.0;
+    g_autoWeightsPending = false;
+    if(ui->checkBox_41->isChecked() && ui->lineEdit_29->text().trimmed().compare("auto", Qt::CaseInsensitive)==0){
+        if(int(g_autoSpecW.size())==num && g_autoSigmaBar2>0){
+            g_specW = g_autoSpecW;           // same weights as before in this optimisation
+            g_sigmaBar2 = g_autoSigmaBar2;
+        }
+        else{
+            g_autoWeightsPending = true;     // estimated at the first solve (solveSystem)
+        }
+    }
+    else if(ui->checkBox_41->isChecked()){
+        std::vector<double> snr;
+        if(!dataio::readNumbers(fileIn(ui->lineEdit_29->text()), snr, ioErr)){
+            reportError("Error 40: "+QString::fromStdString(ioErr));
+            return;
+        }
+        if(int(snr.size())!=num){
+            reportError("Error 40: The S/N file "+ui->lineEdit_29->text()+" has "+QString::number(snr.size())
+                        +" values, but "+QString::number(num)+" spectra are used.");
+            return;
+        }
+        if(!setWeightsFromSnr(snr)){
+            reportError("Error 40: All S/N values in "+ui->lineEdit_29->text()+" must be positive.");
+            return;
+        }
+        cout<<"Weighted by S/N per spectrum; mean noise sigma = "<<std::sqrt(g_sigmaBar2)<<endl;
+    }
+
+    if(ui->checkBox_33->isChecked()){
+        double lo = log10(ui->doubleSpinBox_14->value()), hi = log10(ui->doubleSpinBox_15->value());
+        if(lo<W(0) || lo>W(logbin-1) || hi<W(0) || hi>W(logbin-1) || !(lo<hi)){
+            reportError("Error 16: Please check the wavelength range for residuum computation.");
+            return;
+        }
     }
 
     /*ofstream file4("observation.txt");
@@ -1252,578 +1279,45 @@ void MainWindow::read_data(){
     file4<<setprecision(14)<<W(i)<<" "<<C(i)<<endl;
     }*/
 
-    dv=(pow(10,(W(5)-W(4)))-1)*c0;
-    difference=W(5)-W(4);
-    ldiff=pow(10,W(5))-pow(10,W(4));
-    ui->doubleSpinBox_3->setValue(dv);
+    g_dlog = (W(logbin-1)-W(0))/(logbin-1);
 
-    elements=0;
-    int a=0;
+    if(!MainWindow::loadComponentWeights()){
+        return;
+    }
+    if(!MainWindow::loadBaryCorr()){
+        return;
+    }
+    if(!MainWindow::loadStaticRanges()){
+        return;
+    }
+    if(g_tellGroupNames.size()>1)        // start strengths: the same for every group
+        g_MtelG.assign(g_tellGroupNames.size(), std::vector<double>(Mtel.begin(), Mtel.begin()+num));
+    g_tellFitPending = ui->checkBox_8->isChecked() && ui->checkBox_tellfit->isChecked();
+    if(g_tellFitPending && !ui->checkBox_mask->isChecked()){
+        const QString m = "Note: strength of the static lines fitted per spectrum without excluded ranges: saturated "
+                          "telluric bands do not scale linearly; exclude them (Model tab).";
+        cout<<m.toStdString()<<endl;
+        if(runow==0) ui->plainTextEdit_2->appendPlainText(m);
+    }
+    if(!MainWindow::buildDesignMatrix(true)){
+        return;
+    }
+    if(!buildResidualExclusion()){
+        return;
+    }
 
-    double RV1b[num], RV3b[num];
-    int RV1c[num], RV3c[num], RV1cmin, RV1cmax, RV2cmin, RV2cmax;
-
+    file1<<"# Spectrum\tRV_A[km/s]\tRV_B[km/s]\tShift_A[px]\tShift_B[px]"<<endl;
     for(int j=0; j<num; j++){
-        RV1a=RV1[j]/dv;
-        RV3a=RV3[j]/dv;
-        RV1b[j]=abs(RV1[j])/dv-abs(RV1a);
-        RV3b[j]=abs(RV3[j])/dv-abs(RV3a);
-        file1<<RV1[j]<<"\t"<<RV3[j]<<"\t"<<RV1a<<"\t"<<RV3a<<"\t"<<RV1b[j]<<"\t"<<RV3b[j]<<"\t";
-
-        if(RV1b[j]>=0.5){
-            if(RV1[j]>=0){
-                RV1c[j]=RV1[j]/dv+1;
-            }
-            else{
-
-            }
-            if(RV1[j]<0){
-                RV1c[j]=RV1[j]/dv-1;
-            }
-            else{
-
-            }
-        }
-        else{
-            RV1c[j]=RV1[j]/dv;
-        }
-
-        if(RV3b[j]>=0.5){
-            if(RV3[j]>=0){
-                RV3c[j]=RV3[j]/dv+1;
-            }
-            else{
-
-            }
-            if(RV3[j]<0){
-                RV3c[j]=RV3[j]/dv-1;
-            }
-            else{
-
-            }
-        }
-        else{
-            RV3c[j]=RV3[j]/dv;
-        }
-        if(j==0){
-            RV1cmin=RV1c[j];
-            RV1cmax=RV1c[j];
-            RV2cmin=RV3c[j];
-            RV2cmax=RV3c[j];
-            RV1m=abs(RV1c[j]);
-            RV3m=abs(RV3c[j]);
-        }
-        else{
-            if(RV1c[j]<RV1cmin){
-                RV1cmin=RV1c[j];
-            }
-            else{
-
-            }
-            if(RV1c[j]>RV1cmax){
-                RV1cmax=RV1c[j];
-            }
-            else{
-
-            }
-            if(RV3c[j]<RV2cmin){
-                RV2cmin=RV3c[j];
-            }
-            else{
-
-            }
-            if(RV3c[j]>RV2cmax){
-                RV2cmax=RV3c[j];
-            }
-            else{
-
-            }
-            if(abs(RV1c[j])>RV1m){
-                RV1m = abs(RV1c[j]);
-            }
-            else{
-
-            }
-            if(abs(RV3c[j])>RV3m){
-                RV3m = abs(RV3c[j]);
-            }
-            else{
-
-            }
-        }
-
-        file1<<RV1c[j]<<"\t"<<RV3c[j]<<"\t"<<endl;
+        bool sb2 = bso2>0;
+        file1<<j<<"\t"<<RV1[j]<<"\t"<<(sb2 ? RV3[j] : 0.0)<<"\t"<<dis::pixelShift(RV1[j], g_dlog)
+             <<"\t"<<(sb2 ? dis::pixelShift(RV3[j], g_dlog) : 0.0)<<endl;
     }
-    file1<<endl;
-    file1<<RV1cmin<<"\t"<<RV1cmax<<"\t"<<RV2cmin<<"\t"<<RV2cmax<<"\t"<<RV1m<<"\t"<<RV3m<<endl;
-
-    RV1a=RV1c[0];
-    RV3a=RV3c[0];
-    file1<<endl;
-
-    if(RV1cmin<0){
-        if(RV1cmax<0){
-            bso1=logbin+abs(RV1cmin);
-        }
-        else{
-            bso1=logbin+abs(RV1cmin)+RV1cmax;
-        }
-    }
-    else{
-        bso1=logbin+RV1cmax;
-    }
-    if(RV2cmin<0){
-        if(RV2cmax<0){
-        bso2=logbin+abs(RV2cmin);
-        }
-        else{
-            bso2=logbin+abs(RV2cmin)+RV2cmax;
-        }
-    }
-    else{
-        bso2=logbin+RV2cmax;
-    }
-
-    if(ui->checkBox_3->isChecked()){
-        bso2=0;
-    }
-    else{
-
-    }
+    file1<<"# M: "<<Mn<<" x "<<Mm<<"; A: "<<g_layout.nA<<" columns from rest pixel "<<g_layout.x0A
+         <<"; B: "<<g_layout.nB<<" from "<<g_layout.x0B<<"; static: "<<g_layout.nT<<endl;
 
     cout<<"bso1 "<<bso1<<endl;
     cout<<"bso2 "<<bso2<<endl;
-
-    file1<<"M is a "<<num*logbin<<" x "<<bso1+bso2<<" Matrix."<<endl;
-    file1<<endl;
-
-    Mn=num*logbin;
-    if(ui->checkBox_8->isChecked()){
-        Mm=bso1+bso2+logbin;    //telluric +logbin
-    }
-    else{
-        Mm=bso1+bso2;
-    }
-    M.resize(Mn,Mm);
-    Mt.resize(Mm,Mn);
-    X.resize(Mm);
     cout<<Mm<<" "<<Mn<<endl;
-
-    Mval1.resize(num);
-    Mval2.resize(num);
-    Mtel.resize(num);
-
-    string sstrength = "edit.dat";
-    std::ostringstream ediNameStream(sstrength);
-    ediNameStream<<path<<"/"<<sstrength;
-    std::string ediName = ediNameStream.str();
-
-    QFileInfo lstrength(ediName.c_str());
-
-    if(lstrength.exists()){
-
-        ifstream edit(ediName.c_str());
-
-        string lines, einse;
-
-        int num_lines1=0;
-
-        while(std::getline(edit, lines))
-              ++ num_lines1;
-
-        edit.clear();
-        edit.seekg(0, ios::beg);
-
-        if(num_lines1!=3*num){
-           if(runow==0){
-              QMessageBox::information(this, "Error", "Error 18: Edit file does not match to specified number of observations.");
-           }
-           else{
-               cout<<"Error 18: Edit file does not match to specified number of observations."<<endl;
-               MainWindow::Input();
-          }
-          this->setCursor(QCursor(Qt::ArrowCursor));
-          error=1;
-          return;
-        }
-        else{
-
-            for(int i=0; i<num_lines1; i++){
-                edit >> einse;
-                istringstream istr7(einse);
-
-                if(i<num){
-                    istr7>>Mtel[i];
-                }
-                else{
-                    //
-                }
-                if((i>=num) & (i<2*num)){
-                    istr7>>Mval1[i-num];
-                }
-                else{
-                    //
-                }
-                if((i>=2*num) & (i<3*num)){
-                    istr7>>Mval2[i-2*num];
-                }
-                else{
-                    //
-                }
-            }
-            edit.close();
-        }
-    }
-
-    else {
-        for(int i=0; i<num; i++){
-            Mtel[i]=1.0;
-            Mval2[i]=1.0/(1.0+ui->doubleSpinBox_4->value());
-            Mval1[i]=ui->doubleSpinBox_4->value()/(1.0+ui->doubleSpinBox_4->value());
-        }
-         cout<<"Elements A:\t"<<Mval1[0]<<endl;
-         cout<<"Elements B:\t"<<Mval2[0]<<endl;
-         cout<<"Elements static:\t"<<Mtel[0]<<endl;
-    }
-
-
-    // matrix for SB2 system
-    if(ui->checkBox_4->isChecked()){
-
-        //constructing initial transformation matrix with telluric lines
-        if(ui->checkBox_8->isChecked()){
-
-            for (int n=0; n<num*logbin; n++){//num*logbin
-
-                if(n==0){
-                    if(RV1cmin>0){
-                        RV1a=RV1c[a];
-                    }
-                    else{
-                        RV1a=abs(RV1cmin)+RV1c[a];
-                    }
-
-                    if(RV2cmin>0){
-                        RV3a=RV3c[a];
-                    }
-                    else{
-                        RV3a=abs(RV2cmin)+RV3c[a];
-                    }
-                }
-
-            if(n==logbin+a*logbin){
-                a+=1;
-                if(RV1cmin>0){
-                    RV1a=RV1c[a];
-                }
-                else{
-                    RV1a=abs(RV1cmin)+RV1c[a];
-                }
-
-                if(RV2cmin>0){
-                RV3a=RV3c[a];
-                }
-                else{
-                    RV3a=abs(RV2cmin)+RV3c[a];
-                }
-            }
-
-            for (int m=0; m<Mm; m++){
-                if((n-a*logbin+RV1a)==m or (n+bso1-1-a*logbin+RV3a==m) or (m==n-a*logbin+bso1+bso2)){//or n+logbin+2*abs(RV1m)-a*logbin+RV3a+abs(RV3m)==m
-                    if(bidi==1){
-                        if(m==n-a*logbin+bso1+bso2){
-                            M(n,m)=Mtel[a];
-                        }
-                        else if(n+bso1-1-a*logbin+RV3a==m){
-                            M(n,m)=Mval2[a];
-                        }
-                        else M(n,m)=Mval1[a];
-                        if(m<Mm-1) {
-                            if(m==n-a*logbin+bso1+bso2){
-                                M(n,m+1)=Mtel[a];
-                            }
-                            else if(n+bso1-1-a*logbin+RV3a==m){
-                                M(n,m+1)=Mval2[a];
-                            }
-                            else M(n,m+1)=Mval1[a];
-                            m=m+1;
-                            ++elements;
-                        }
-                        else{
-                            //
-                        }
-                        ++elements;
-                    }
-                    else if(bidi==0){
-                        if(m==n-a*logbin+bso1+bso2){
-                            M(n,m)=Mtel[a];
-                        }
-                        else if(n+bso1-1-a*logbin+RV3a==m){
-                            M(n,m)=Mval2[a];
-                        }
-                        else M(n,m)=Mval1[a];
-                        ++elements;
-                    }
-                    else{
-                        //
-                    }
-                }
-                else{
-                    M(n,m)=0;
-                }
-            }
-        }
-    }
-
-    //without telluric lines
-    else{
-        for (int n=0; n<num*logbin; n++){//num*logbin
-
-            if(n==0){
-                if(RV1cmin>0){
-                    RV1a=RV1c[a];
-                }
-                else{
-                        RV1a=abs(RV1cmin)+RV1c[a];
-                }
-
-                if(RV2cmin>0){
-                    RV3a=RV3c[a];
-                }
-                else{
-                    RV3a=abs(RV2cmin)+RV3c[a];
-                }
-            }
-            else if(n==logbin+a*logbin){
-                a+=1;
-
-                if(RV1cmin>0){
-                    RV1a=RV1c[a];
-                }
-                else{
-                        RV1a=abs(RV1cmin)+RV1c[a];
-                }
-
-                if(RV2cmin>0){
-                    RV3a=RV3c[a];
-                }
-                else{
-                    RV3a=abs(RV2cmin)+RV3c[a];
-                }
-            }
-            else{
-                //
-            }
-
-            for (int m=0; m<Mm; m++){
-                if((n-a*logbin+RV1a)==m or (n+bso1-1-a*logbin+RV3a==m)){//or n+logbin+2*abs(RV1m)-a*logbin+RV3a+abs(RV3m)==m
-                    if(bidi==1){
-                        if((n+bso1-1-a*logbin+RV3a==m) & (m>=bso1)){
-                            M(n,m)=Mval2[a];
-                        }
-                        else M(n,m)=Mval1[a];
-                        if(m<Mm-1) {
-                            if((n+bso1-1-a*logbin+RV3a==m) & (m>=bso1)){
-                                M(n,m+1)=Mval2[a];
-                            }
-                            else M(n,m+1)=Mval1[a];
-                            m=m+1;
-                            ++elements;
-                        }
-                        else{
-                            //
-                        }
-                        ++elements;
-                    }
-                    else if(bidi==0){
-                        if(n-a*logbin+RV1a==m){
-
-                            M(n,m)=Mval1[a];
-                        }
-                        else M(n,m)=Mval2[a];
-                        ++elements;
-                    }
-                    else{
-                        //
-                    }
-                }
-                else{
-                    M(n,m)=0;
-                }
-            }
-        }
-    }
-}
-
-    //file1<<M<<endl;
-
-    //matrix for SB1 system
-    else if(ui->checkBox_3->isChecked()){
-
-        //constructing initial transformation matrix with tellric lines
-        if(ui->checkBox_8->isChecked()){
-
-            for (int n=0; n<num*logbin; n++){//num*logbin
-
-                if(n==0){
-                    if(RV1cmin>0){
-                        RV1a=RV1c[a];
-                    }
-                    else{
-                            RV1a=abs(RV1cmin)+RV1c[a];
-                    }
-                }
-
-                if(n==logbin+a*logbin){
-                    a+=1;
-                    if(RV1cmin>0){
-                        RV1a=RV1c[a];
-                    }
-                    else{
-                            RV1a=abs(RV1cmin)+RV1c[a];
-                    }
-                }
-                else{
-                    //
-                }
-                for (int m=0; m<Mm; m++){
-                    if((n-a*logbin+RV1a)==m or (m==n-a*logbin+bso1)){//or n+logbin+2*abs(RV1m)-a*logbin+RV3a+abs(RV3m)==m
-                        if(bidi==1){
-                            if(m==n-a*logbin+bso1){
-                                M(n,m)=Mtel[a];
-                            }
-                            else M(n,m)=Mval1[a];
-                            if(m<Mm-1) {
-                                if(m==n-a*logbin+bso1){
-                                    M(n,m+1)=Mtel[a];
-                                }
-
-                                else M(n,m+1)=Mval1[a];
-                                m=m+1;
-                                ++elements;
-                            }
-                            else{
-                                //
-                            }
-                            ++elements;
-                        }
-                        else if(bidi==0){
-                            if(m==n-a*logbin+bso1){
-                                M(n,m)=Mtel[a];
-                            }
-                            else M(n,m)=Mval1[a];
-                            ++elements;
-                        }
-                        else{
-                            //
-                        }
-                    }
-                    else{
-                        M(n,m)=0;
-                    }
-                }
-            }
-        }
-
-        //without telluric lines
-        else{
-            for (int n=0; n<num*logbin; n++){//num*logbin
-
-                if(n==0){
-                    if(RV1cmin>0){
-                        RV1a=RV1c[a];
-                    }
-                    else{
-                            RV1a=abs(RV1cmin)+RV1c[a];
-                    }
-                }
-                else{
-                    //
-                }
-
-                if(n==logbin+a*logbin){
-                    a+=1;
-                    if(RV1cmin>0){
-                        RV1a=RV1c[a];
-                    }
-                    else{
-                            RV1a=abs(RV1cmin)+RV1c[a];
-                    }
-                }
-                else{
-                    //
-                }
-                for (int m=0; m<Mm; m++){
-                    if((n-a*logbin+RV1a)==m){
-                       if(bidi==1){
-                          M(n,m)=Mval1[a];
-                          if(m<Mm-1) {
-                             M(n,m+1)=Mval1[a];
-                             m=m+1;
-                             ++elements;
-                          }
-                          else{
-                              //
-                          }
-                          ++elements;
-                       }
-                       else if(bidi==0){
-                          M(n,m)=Mval1[a];
-                          ++elements;
-                       }
-                       else{
-                           //
-                       }
-                    }
-                    else{
-                         M(n,m)=0;
-                        }
-                 }
-            }
-        }
-        //file1<<M<<endl;
-    }
-
-    //matrix for SB3 systems without telluric
-
-    else if(ui->checkBox_34->isChecked()){
-
-        // with tellurics
-        if(ui->checkBox_8->isChecked()){
-
-        }
-
-        // without tellurics
-        else{
-
-        }
-
-    }
-
-
-    a=0;
-
-    loc.resize(2,elements);
-    val.resize(elements);
-    int elcount=0;
-
-    for(int i=0; i<elements; i++){
-        val(i)=Mval1[a];
-    }
-
-    for(int n=0; n<Mn;n++){
-        for(int m=0; m<Mm;m++){
-            if(M(n,m)>0){
-                loc(0,elcount)=n;
-                loc(1,elcount)=m;
-                ++elcount;
-            }
-            else{
-                //
-            }
-        }
-    }
-
 
     qApp->processEvents(QEventLoop::AllEvents);
 
@@ -1848,231 +1342,90 @@ void MainWindow::on_checkBox_2_clicked()
 //**********************************************************
 void MainWindow::on_pushButton_2_clicked()
 {
+    MainWindow::resetRunState();   // S/N "auto": estimate anew
     MainWindow::read_data();
 }
 
 //**********************************************************
-//SVD
+// Solve: solve once with the RVs read in and write the output.
+// Solver as selected: LSQR (checkBox_5) or SVD with divide and conquer (checkBox_6).
 //**********************************************************
-void MainWindow::on_pushButton_3_clicked()
+void MainWindow::solveOnce()
 {
-
-    this->setCursor(QCursor(Qt::WaitCursor));
     if(ui->spinBox_2->value()-ui->spinBox->value()<1){
-        if(runow==0){
-            QMessageBox::information(this, "Error", "Error 19: At least two observations at (hopefully) different phases are necessary.");
-        }
-        else{
-            cout<<"Error 19: At least two observations at (hopefully) different phases are necessary."<<endl;
-            MainWindow::Input();
-        }
-        this->setCursor(QCursor(Qt::ArrowCursor));
+        reportError("Error 19: At least two observations at (hopefully) different phases are necessary.");
+        error=0;
         return;
     }
 
-    else{
-        MainWindow::disableButtons();
-        MainWindow::read_data();
-    }
+    abortt=0;
+    g_abortableRun = true;          // the window takes input during the solve: Stop ends it
+    MainWindow::disableButtons();
+    MainWindow::resetRunState();   // S/N "auto": estimate anew
+    MainWindow::read_data();
 
     if(error==1){
         this->setCursor(QCursor(Qt::ArrowCursor));
         error=0;
+        g_abortableRun = false;
         MainWindow::enableButtons();
         return;
     }
-    else{
-        residu=0;
-    }
+    this->setCursor(QCursor(Qt::WaitCursor));
 
-    QString output=ui->lineEdit_5->text();
-    string out = output.toUtf8().constData();
-    std::ostringstream file1NameStream(out);
-    file1NameStream<<path<<"/"<<out;
-    std::string file1Name = file1NameStream.str();
-    ofstream file1(file1Name.c_str());
+    auto time1 = std::chrono::steady_clock::now();
 
-    QString output2=ui->lineEdit_8->text();
-    string out2 = output2.toUtf8().constData();
-    std::ostringstream file2NameStream(out2);
-    file2NameStream<<path<<"/"<<out2;
-    std::string file2Name = file2NameStream.str();
-    ofstream file2(file2Name.c_str());
-
-    QString tel=ui->lineEdit_10->text();
-    string telout = tel.toUtf8().constData();
-    std::ostringstream telNameStream(telout);
-    telNameStream<<path<<"/"<<telout;
-    std::string telName = telNameStream.str();
-    ofstream tell(telName.c_str());
-
-    QString output3=ui->lineEdit_13->text();
-    string out3 = output3.toUtf8().constData();
-    std::ostringstream file3NameStream(out3);
-    file3NameStream<<path<<"/"<<out3;
-    std::string file3Name = file3NameStream.str();
-    ofstream file5(file3Name.c_str());
-
-    QString QError=ui->lineEdit_20->text();
-    string errout = QError.toUtf8().constData();
-    std::ostringstream file6NameStream(errout);
-    file6NameStream<<path<<"/"<<errout;
-    std::string file6Name = file6NameStream.str();
-    ofstream file8(file6Name.c_str());
-
-    system_clock::time_point time1 = system_clock::now();
-
-    mat U, V;
-    vec w;
-
-    if(Mm>Mn){
-        Mm=Mn;
-    }
-
-    vec res(Mm);
-    svd(U,w,V,M);
-
-    int i,j,jj;
-        double s;
-        double thresh =-1;
-        double eps = numeric_limits<double>::epsilon();
-        vec tmp(Mm);
-        double tsh = (thresh >= 0. ? thresh : 0.5*sqrt(Mm+Mn+1.)*w(0)*eps);
-        for (j=0;j<Mm;j++) {
-            s=0.0;
-            if (w(j) > tsh) {
-                for (i=0;i<Mn;i++) s += U(i,j)*C(i);
-                s /= w(j);
-            }
-            tmp(j)=s;
+    const bool solved = MainWindow::solveSystem(MainWindow::currentSolver());
+    g_abortableRun = false;
+    if(!solved){
+        this->setCursor(QCursor(Qt::ArrowCursor));
+        if(abortt==1){
+            abortt = 0;
+            const char *m = "Solve stopped.";
+            cout<<m<<endl;
+            ui->plainTextEdit_2->appendPlainText(m);
         }
-
-        int index1=0;
-        int index2=0;
-        int index3=0;
-
-        for (j=0;j<Mm;j++) {
-            s=0.0;
-            for (jj=0;jj<Mm;jj++) s += V(j,jj)*tmp(jj);
-                X(j)=s;
-                if(X(j)>10*tsh){
-
-                    if(j<bso1){
-                        //if(ui->checkBox_4->isChecked()){
-                        //    X(j)=X(j)+(fluxratio/(fluxratio+1)-0.5);
-                        //}
-                        file1<<setprecision(14)<<pow(10,(W(0)+(index1+RV1min/dv)*difference))<<"\t"<<X(j)<<endl;
-                        ++index1;
-                    }
-                    else if((j>=bso1) & (j<bso1+bso2)){
-                        //if(ui->checkBox_4->isChecked()){
-                        //    X(j)=X(j)+(1.0/(fluxratio+1)-0.5);
-                        //}
-                        file2<<setprecision(14)<<pow(10,(W(0)+(index2+RV3min/dv)*difference))<<"\t"<<X(j)<<endl;
-                        ++index2;
-                    }
-                    else if(j>=bso1+bso2){
-                        tell<<setprecision(14)<<pow(10,(W(0)+index3*difference))<<"\t"<<X(j)<<endl;
-                        ++index3;
-                    }
-                }
-                else{
-
-                }
-            }
-            index1=0;
-            index2=0;
-            index3=0;
-
-        if(ui->checkBox_7->isChecked()){
-            index1=0;
-            index2=0;
-            std::ostringstream file1NameStream("rcomp1.txt");
-            file1NameStream<<path<<"/rcomp1.txt";
-            std::string file1Name = file1NameStream.str();
-            ofstream file3(file1Name.c_str());
-
-            std::ostringstream file2NameStream("rcomp2.txt");
-            file2NameStream<<path<<"/rcomp2.txt";
-            std::string file2Name = file2NameStream.str();
-            ofstream file4(file2Name.c_str());
-
-            for(int i=0; i<Mm-1; i++){
-                X(i)=(X(i)+X(i+1))/2;
-                if(i<bso1){
-
-                    file3<<setprecision(14)<<pow(10,(W(0)+(2*index1-RV1maxi/dv)*difference))<<"\t"<<X(i)<<endl;
-                    //file3<<setprecision(14)<<pow(10,(W(i)-(RV1maxi/dv)*difference))<<"\t"<<X(i)<<endl;
-                    ++index1;
-                }
-                else if((i>=bso1) & (i<bso1+bso2)){
-                    file4<<setprecision(14)<<pow(10,(W(0)+(index2*2+-RV3maxi/dv)*difference))<<"\t"<<X(i)<<endl;
-                    //file4<<setprecision(14)<<pow(10,(W(i)-(RV3maxi/dv)*difference))<<"\t"<<X(i)<<endl;
-                    ++index2;
-                }
-                else if(i>=bso1+bso2){
-                    tell<<setprecision(14)<<pow(10,(W(0)+2*index3*difference))<<"\t"<<X(i)<<endl;
-                    //tell<<setprecision(14)<<pow(10,W(i))<<"\t"<<X(i)<<endl;
-                    ++index3;
-                }
-                i=i+2;
-            }
-        }
-        index1=0;
-        index2=0;
-        index3=0;
-
-        res=M*X;
-
-        for(int i=0; i<Mn; i++){
-            if(res(i)>10*tsh){
-                file5<<setprecision(14)<<pow(10,W(i))<<" "<<res(i)-C(i)<<endl;
-                residu+=pow((res(i)-C(i)),2);
-            }
-            else{
-                //
-            }
-        }
-
-        residu=sqrt(residu);
-
-        QVector<double> errmean(logbin);
-
-        for(int i =0; i<logbin;i++){
-            for(int n = 0; n<num; n++){
-                errmean[i]+=(res(i+n*logbin)-C(i+n*logbin))/num;
-
-            }
-            file8<<pow(10,W(i))<<"\t"<<errmean[i]<<endl;
-            errmean[i]=0;
-        }
-
-
-        cout<<"residuum of SVD: "<<residu<<endl;
-
-        system_clock::time_point time2 = system_clock::now();
-
-        std::time_t tt1, tt2;
-
-          tt1 = system_clock::to_time_t ( time1 );
-
-          tt2 = system_clock::to_time_t ( time2 );
-
-        double CPUtime = std::difftime(tt2, tt1);
-        QString CPtime = QString::number(CPUtime/60);
-        ui->lineEdit_6->setText(CPtime);
-
-        QString residual=QString::number(residu);
-        ui->lineEdit_7->setText(residual);
+        else reportError("Error 29: Solving the linear system failed.");
+        error=0;
         MainWindow::enableButtons();
+        return;
+    }
+    vec res = M*X;
+    int resBins = 0;
+    residu = MainWindow::computeResiduum(res, &resBins);
+    MainWindow::writeSolution(res, ui->lineEdit_5->text(), ui->lineEdit_8->text(), ui->lineEdit_10->text(),
+                              ui->lineEdit_13->text(), ui->lineEdit_20->text(), "compl.txt");
+    MainWindow::writeSnrEstimate(res, resBins);
 
-         this->setCursor(QCursor(Qt::ArrowCursor));
+    cout<<"residuum: "<<residu<<endl;
+
+    double minutes = std::chrono::duration<double>(std::chrono::steady_clock::now()-time1).count()/60.0;
+    ui->lineEdit_6->setText(QString::number(minutes));
+    ui->lineEdit_7->setText(QString::number(residu));
+
+    MainWindow::on_pushButton_6_clicked();
+    MainWindow::enableButtons();
+    this->setCursor(QCursor(Qt::ArrowCursor));
+}
+
+void MainWindow::on_pushButton_3_clicked()
+{
+    MainWindow::solveOnce();
 }
 
 void MainWindow::on_actionSpectrum_Plotter_triggered()
 {
     pSpec =new PlotSpec(this);
     pSpec->seData(ui->lineEdit_4->text(), ui->lineEdit_5->text(), ui->lineEdit_8->text(), ui->lineEdit_20->text());
+    // flux-ratio model for the continuum correction of the components
+    fr::Model m;
+    std::string err;
+    if(!ratioModelFromUi(m, err)){
+        ui->plainTextEdit_2->appendPlainText("Spectrum Plotter: "+QString::fromStdString(err)+" Constant ratio used.");
+        m = fr::Model();
+    }
+    if(!(m.lambdaRef>0) && g_ratioLref>0) m.lambdaRef = g_ratioLref;   // "auto" as resolved when reading
+    pSpec->setRatioModel(m, ui->doubleSpinBox_4->value());
     pSpec->on_pushButton_3_clicked();
     pSpec->on_pushButton_2_clicked();
     pSpec->show();
@@ -2082,7 +1435,7 @@ void MainWindow::on_actionAbout_triggered()
 {
     QMessageBox::information(this, "About", "This open-source software was developed at Leibniz-Institute for Astrophysics Potsdam (Germany) by\n\n "
                                             "Daniel P. Sablowski\n\n"
-                                            "Version 1.11 2023\n\n"
+                                            "Version 2.0 (2026)\n\n"
                                             "It makes use of the 'Armadillo' C++ linear algebra library, OpenBLAS, CCfits and libraries therein.\n"
                                             "It uses the spline.h from https://kluge.in-chemnitz.de/opensource/spline/ \n"
                                             "It is provided AS IS WITHOUT WARRANTY of ANY KIND.\n\n"
@@ -2091,300 +1444,27 @@ void MainWindow::on_actionAbout_triggered()
 
 void MainWindow::on_actionBug_Report_triggered()
 {
-    QMessageBox::information(this, "Bug Rebort", "Please contact: dsablowski@aip.de");
+    QMessageBox::information(this, "Bug Report", "Please contact: dsablowski@aip.de");
 }
 
 //**********************************************************
-//ECON
+// Solver: LSQR or SVD (DaC), exactly one option active
 //**********************************************************
-void MainWindow::on_pushButton_5_clicked()
-{
-
-    if(ui->spinBox_2->value()-ui->spinBox->value()<1){
-        if(runow==0){
-            QMessageBox::information(this, "Error", "Error 20: At least two observations at (hopefully) different phases are necessary.");
-        }
-        else{
-            cout<<"Error 20: At least two observations at (hopefully) different phases are necessary."<<endl;
-            MainWindow::Input();
-        }
-        return;
-    }
-
-    MainWindow::disableButtons();
-    MainWindow::read_data();
-
-    if(error==1){
-        this->setCursor(QCursor(Qt::ArrowCursor));
-        error=0;
-        MainWindow::enableButtons();
-        return;
-    }
-
-    residu=0;
-    this->setCursor(QCursor(Qt::WaitCursor));
-
-    QString output=ui->lineEdit_5->text();
-    string out = output.toUtf8().constData();
-    std::ostringstream file1NameStream(out);
-    file1NameStream<<path<<"/"<<out;
-    std::string file1Name = file1NameStream.str();
-    ofstream file1(file1Name.c_str());
-
-    QString output2=ui->lineEdit_8->text();
-    string out2 = output2.toUtf8().constData();
-    std::ostringstream file2NameStream(out2);
-    file2NameStream<<path<<"/"<<out2;
-    std::string file2Name = file2NameStream.str();
-    ofstream file2(file2Name.c_str());
-
-    QString tel=ui->lineEdit_10->text();
-    string telout = tel.toUtf8().constData();
-    std::ostringstream telNameStream(telout);
-    telNameStream<<path<<"/"<<telout;
-    std::string telName = telNameStream.str();
-    ofstream tell(telName.c_str());
-
-    QString output3=ui->lineEdit_13->text();
-    string out3 = output3.toUtf8().constData();
-    std::ostringstream file3NameStream(out3);
-    file3NameStream<<path<<"/"<<out3;
-    std::string file3Name = file3NameStream.str();
-    ofstream file5(file3Name.c_str());
-
-    std::ostringstream file5NameStream("compl.txt");
-    file5NameStream<<path<<"/compl.txt";
-    std::string file5Name = file5NameStream.str();
-    ofstream file7(file5Name.c_str());
-
-    QString QError=ui->lineEdit_20->text();
-    string errout = QError.toUtf8().constData();
-    std::ostringstream file6NameStream(errout);
-    file6NameStream<<path<<"/"<<errout;
-    std::string file6Name = file6NameStream.str();
-    ofstream file8(file6Name.c_str());
-
-    string CA = "CompmA.dat";
-    std::ostringstream file7NameStream(CA);
-    file7NameStream<<path<<"/"<<CA;
-    std::string file7Name = file7NameStream.str();
-    ofstream file9(file7Name.c_str());
-
-    string CB = "CompmB.dat";
-    std::ostringstream file8NameStream(CB);
-    file8NameStream<<path<<"/"<<CB;
-    std::string file8Name = file8NameStream.str();
-    ofstream file10(file8Name.c_str());
-
-    system_clock::time_point time1 = system_clock::now();
-
-    mat U, V;
-    vec w;
-
-    if(Mm>Mn){
-        Mm=Mn;
-    }
-
-    vec res(Mm);
-
-    int cBS=0;
-
-    if(ui->checkBox_5->isChecked()){
-        svd_econ(U,w,V,M, "both", "std");
-    }
-    else ++cBS;
-
-    if(ui->checkBox_6->isChecked()){
-        svd_econ(U,w,V,M, "both", "dc");
-    }
-    else ++cBS;
-
-    if(ui->checkBox_39->isChecked()){
-        A = M;
-        svds(U,w,V,A,Mm);
-    }
-    else ++cBS;
-
-    if(cBS == 0){
-        if(runow==0){
-            QMessageBox::information(this, "Error", "Error 21: Select method for ECON.");
-        }
-        else{
-            cout<<"Error 21: Select method for ECON."<<endl;
-            MainWindow::Input();
-        }
-        return;
-    }
-
-
-    int i,j,jj, svalues=0;
-        double s;
-        double thresh =-1;
-        double eps = numeric_limits<double>::epsilon();
-        vec tmp(Mm);
-        double tsh = (thresh >= 0. ? thresh : 0.5*sqrt(Mm+Mn+1.)*w(0)*eps);
-        cout <<"tsh "<<tsh<<endl;
-        for (j=0;j<Mm;j++) {
-            s=0.0;
-            if (w(j) > tsh) {
-                for (i=0;i<Mn;i++) s += U(i,j)*C(i);
-                s /= w(j);
-
-            }
-            tmp(j)=s;
-        }
-
-        int index1=0;
-        int index2=0;
-        int index3=0;
-        for (j=0;j<Mm;j++) {
-            s=0.0;
-            if(w(j)>tsh){
-                for (jj=0;jj<Mm;jj++) s += V(j,jj)*tmp(jj);
-                    X(j)=s;
-                ++svalues;
-                }
-            }
-
-        cout<<"# singular values: "<<svalues<<endl;
-
-        res=M*X;
-
-        for(int i=0; i<Mn; i++){
-
-            if(res(i)>10*tsh){
-                file5<<setprecision(14)<<pow(10,W(i))<<" "<<res(i)-C(i)<<endl;
-                if(ui->checkBox_33->isChecked()){//(abs(C(i)-res(i))<C(i)/3) &
-                    if((W(i)>log10(ui->doubleSpinBox_14->value())) & (W(i)<log10(ui->doubleSpinBox_15->value()))){
-                        residu+=pow((res(i)-C(i)),2);
-                    }
-                }
-
-                else{
-                        residu+=pow((res(i)-C(i)),2);
-                }
-
-            }
-        }
-
-        residu=sqrt(residu);
-
-        QVector<double> errmean(logbin);
-
-        for(int i =0; i<logbin;i++){
-            for(int n = 0; n<num; n++){
-                errmean[i]+=(res(i+n*logbin)-C(i+n*logbin))/num;
-            }
-            file8<<setprecision(14)<<pow(10,W(i))<<"\t"<<errmean[i]<<endl;
-            errmean[i]=0;
-        }
-
-            for(j=0; j<Mm;j++){
-                if(abs(X(j))>10*tsh){
-                    if(j<bso1){
-                        file9<<setprecision(14)<<W(j)<<"\t"<<X(j)<<endl;
-
-                        //if(ui->checkBox_4->isChecked()){
-                        //    X(j)=X(j)+(fluxratio/(fluxratio+1)-0.5);
-                        //}
-
-                        file1<<setprecision(14)<<pow(10,(W(0)+(index1-(RV3maxi+orbele[4])/dv)*difference))<<"\t"<<(X(j))<<endl;
-                        //file1<<setprecision(14)<<pow(10,(W(j)-((RV3maxi+orbele[4])/dv)*difference))<<"\t"<<(X(j))<<endl;
-                        ++index1;
-                    }
-                    if((j>=bso1)&(j<bso1+bso2)){
-
-                        file10<<setprecision(14)<<W(j)<<"\t"<<X(j)<<endl;
-
-                        //if(ui->checkBox_4->isChecked()){
-                        //    X(j)=X(j)+(1.0/(fluxratio+1)-0.5);
-                        //}
-                        file2<<setprecision(14)<<pow(10,(W(0)+(index2-(RV1maxi+orbele[4])/dv)*difference))<<"\t"<<(X(j))<<endl;
-                        //file2<<setprecision(14)<<pow(10,(W(j)-((RV1maxi+orbele[4])/dv)*difference))<<"\t"<<(X(j))<<endl;
-                        ++index2;
-                    }
-                    if(j>=bso1+bso2){
-
-                        tell<<setprecision(14)<<pow(10,(W(0)+index3*difference))<<"\t"<<X(j)<<endl;
-                        //tell<<setprecision(14)<<pow(10,(W(j)))<<"\t"<<X(j)<<endl;
-                        ++index3;
-                    }
-                }
-            }
-            int XSize= X.size();
-
-        for(int n=0; n<XSize; n++){
-            file7<<n<<" "<<X(n)<<endl;
-        }
-        index1=0;
-        index2=0;
-        index3=0;
-
-
-        if(ui->checkBox_7->isChecked()){
-            index1=0;
-            index2=0;
-
-
-            std::ostringstream file1NameStream("rcomp1.txt");
-            file1NameStream<<path<<"/rcomp1.txt";
-            std::string file1Name = file1NameStream.str();
-            ofstream file3(file1Name.c_str());
-
-            std::ostringstream file2NameStream("rcomp2.txt");
-            file2NameStream<<path<<"/rcomp2.txt";
-            std::string file2Name = file2NameStream.str();
-            ofstream file4(file2Name.c_str());
-
-            for(int i=0; i<Mm-1; i++){
-                X(i)=(X(i)+X(i+1))/2;
-
-                if(i<bso1){
-                    //X(i)=X(i)-0.5*(1/fluxratio+1)+1/(fluxratio+1);
-                    file3<<setprecision(14)<<pow(10,(W(0)+(2*index1-(RV3maxi+orbele[4])/dv)*difference))<<"\t"<<X(i)<<endl;
-                    ++index1;
-                }
-                else if((i>=bso1) & (i<bso1+bso2)){
-                    //X(i)=X(i)-0.5*(1/fluxratio+1)+fluxratio/(fluxratio+1);
-                    file4<<setprecision(14)<<pow(10,(W(0)+(2*index2-(RV1maxi+orbele[4])/dv)*difference))<<"\t"<<X(i)<<endl;
-                    ++index2;
-                }
-                ++i;
-            }
-        }
-
-
-        cout<<"residuum of SVD: "<<residu<<endl;
-
-        system_clock::time_point time2 = system_clock::now();
-
-        std::time_t tt1, tt2;
-
-          tt1 = system_clock::to_time_t ( time1 );
-
-          tt2 = system_clock::to_time_t ( time2 );
-
-        double CPUtime = std::difftime(tt2, tt1);
-        QString CPtime = QString::number(CPUtime/60);
-        ui->lineEdit_6->setText(CPtime);
-        QString residual=QString::number(residu);
-        ui->lineEdit_7->setText(residual);
-
-        MainWindow::on_pushButton_6_clicked();
-        MainWindow::enableButtons();
-
-         this->setCursor(QCursor(Qt::ArrowCursor));
-
-}
-
 void MainWindow::on_checkBox_5_clicked()
 {
+    ui->checkBox_5->setChecked(true);
     ui->checkBox_6->setChecked(false);
 }
 
 void MainWindow::on_checkBox_6_clicked()
 {
-     ui->checkBox_5->setChecked(false);
+    ui->checkBox_6->setChecked(true);
+    ui->checkBox_5->setChecked(false);
+}
+
+dis::Solver MainWindow::currentSolver() const
+{
+    return ui->checkBox_6->isChecked() ? dis::Solver::SvdDc : dis::Solver::Lsqr;
 }
 
 void MainWindow::on_checkBox_7_clicked()
@@ -2447,6 +1527,160 @@ void MainWindow::on_comboBox_currentIndexChanged()
 //******************************************************
 //optimization DSM
 //******************************************************
+// Steps of the new simplex when the optimisation is reinitiated ("Reinitiate after
+// convergence"). The steps of the very first simplex (initialstep.dat or the defaults, e.g.
+// P/10 and T/10, or 2*step pixels per RV) are meant to search far from a rough start; around a
+// converged point they put the vertices many sigma away, the residuum of the first
+// evaluations was orders of magnitude above the best value and the restart spent its
+// iterations shrinking back. Here each step is adjusted (errest::probeSimplex) so that chi^2
+// rises by about kReinitChi2 per vertex, i.e. about 2 standard deviations per parameter.
+// h0: steps of the first construction (start values and sign); residuum(x): residuum at x
+// (sets the parameters). Falls back to h0 per parameter where no step can be determined.
+constexpr double kReinitChi2 = 4.0;
+
+arma::vec reinitSteps(const arma::rowvec &x0, const arma::vec &h0,
+                      const std::function<double(const arma::rowvec &)> &residuum,
+                      std::ofstream &log)
+{
+    arma::vec h = h0;
+    const double r0 = residuum(x0);
+    if(!std::isfinite(r0) || r0>=orbit::kInvalidPenalty) return h;
+    // sigma^2 of the last convergence test; without one (Continue in a new session) estimated
+    // from the residuum per degree of freedom
+    double s2 = g_sigma2;
+    if(!(s2>0)){
+        const int dof = g_lastResBins - g_lastResCols - int(x0.n_elem);
+        if(dof>0) s2 = r0*r0/dof;
+    }
+    if(!(s2>0)) return h;
+    auto S = [&](const arma::rowvec &x){ const double r = residuum(x); return r*r; };
+    errest::ProbeResult pr = errest::probeSimplex(x0, r0*r0, h0, kReinitChi2*s2, S,
+                                                  []{ return abortt==1; });
+    int kept = 0;
+    for(arma::uword i=0; i<h.n_elem; i++){
+        if(i<pr.steps.n_elem && std::isfinite(pr.steps(i)) && pr.steps(i)!=0.0) h(i) = pr.steps(i);
+        else ++kept;
+    }
+    log<<"Reinitiation: new simplex around the best point, steps adjusted so that chi^2 rises by about "
+       <<kReinitChi2<<" per vertex ("<<pr.evaluations+1<<" evaluations"
+       <<(kept>0 ? ", "+std::to_string(kept)+" steps kept from the first construction" : std::string())
+       <<")."<<endl;
+    return h;
+}
+
+// gamma free in the orbit mode: not determined by the disentangling
+static const char *kGammaNote = "Note: gamma is free, but the disentangling does not determine it: a common shift "
+    "of the RVs is absorbed by the shift of the component spectra (also with static lines). It stays near its start "
+    "value and its error is meaningless; lock gamma (Optimisation tab) and take it from elsewhere.";
+
+// Inserts a suffix before the extension: beststate.dat + _rv -> beststate_rv.dat
+static QString withSuffix(const QString &name, const QString &suffix)
+{
+    const int dot = name.lastIndexOf('.');
+    if(dot>0 && dot>name.lastIndexOf('/')+1) return name.left(dot)+suffix+name.mid(dot);
+    return name+suffix;
+}
+
+// Best state (see g_trackBest): file name, write and load. One name in the Output tab, the
+// program adds _rv (RVs of all spectra) or _orbit (orbital elements).
+static QString bestStateFile(bool rvMode)
+{
+    return qPath+"/"+withSuffix(qBestState, rvMode ? "_rv" : "_orbit");
+}
+
+static void writeBestState(bool rvMode, double residuum)
+{
+    std::ofstream o(bestStateFile(rvMode).toStdString().c_str());
+    if(!o) return;
+    o<<setprecision(15);
+    if(rvMode){
+        o<<"# Spectangular best state (RVs A B per spectrum) residuum "<<residuum
+         <<" spectra "<<mini<<" "<<maxi<<"\n";
+        for(int j=0; j<num; j++) o<<RV1[j]<<"\t"<<RV3[j]<<"\n";
+    }
+    else{
+        o<<"# Spectangular best state (P e K_A K_B gamma T_peri omega) residuum "<<residuum<<"\n";
+        for(int e=0; e<7; e++) o<<orbele[e]<<"\n";
+    }
+}
+
+// Loads the best state into RV1/RV3 or orbele. false (nothing changed) if there is none or it
+// belongs to another set of spectra. residuum: as stored (with the settings of that run).
+static bool loadBestState(bool rvMode, double &residuum)
+{
+    std::ifstream in(bestStateFile(rvMode).toStdString().c_str());
+    if(!in) return false;
+    std::string head;
+    if(!std::getline(in, head) || head.rfind("# Spectangular best state", 0)!=0) return false;
+    // the kind must match (the same name could have been given to both)
+    if(head.find(rvMode ? "(RVs " : "(P e ")==std::string::npos) return false;
+    residuum = std::numeric_limits<double>::quiet_NaN();
+    {
+        const size_t k = head.find("residuum ");
+        if(k!=std::string::npos) residuum = std::atof(head.c_str()+k+9);
+    }
+    if(rvMode){
+        const size_t k = head.find("spectra ");
+        if(k==std::string::npos) return false;
+        int a=0, b=0;
+        std::istringstream hs(head.substr(k+8));
+        if(!(hs>>a>>b) || a!=mini || b!=maxi) return false;
+        std::vector<double> va(num), vb(num);
+        for(int j=0; j<num; j++) if(!(in>>va[j]>>vb[j]) || !std::isfinite(va[j]) || !std::isfinite(vb[j])) return false;
+        for(int j=0; j<num; j++){ RV1[j]=va[j]; RV3[j]=vb[j]; }
+        return true;
+    }
+    double el[7];
+    for(int e=0; e<7; e++) if(!(in>>el[e]) || !std::isfinite(el[e])) return false;
+    if(!orbit::elementsValid(el[0], el[1])) return false;
+    for(int e=0; e<7; e++) orbele[e]=el[e];
+    return true;
+}
+
+// Stored simplex for "Continue": nu+1 residua (optval) and (nu+1)*nu values (optmat).
+// false if a file is missing or does not match nu.
+static bool readStoredSimplex(int nu, std::vector<double> &y, std::vector<double> &P)
+{
+    std::vector<double> a, b;
+    std::string err;
+    if(!dataio::readNumbers((qPath+"/"+qOptval).toStdString(), a, err)) return false;
+    if(!dataio::readNumbers((qPath+"/"+qOptmat).toStdString(), b, err)) return false;
+    if(int(a.size())!=nu+1 || int(b.size())!=(nu+1)*nu) return false;
+    for(double v : a) if(!std::isfinite(v)) return false;
+    for(double v : b) if(!std::isfinite(v)) return false;
+    y = a; P = b;
+    return true;
+}
+
+// Continue with Nelder-Mead: the stored simplex is used if it matches the free parameters and
+// its best vertex is the best state (cur: free parameters of the best state, loaded before).
+// Otherwise (simplex missing, other parameters free, or the best was found later, e.g. by
+// Levenberg-Marquardt) a new simplex is built around the current best values. Returns the
+// reason for the new simplex, empty if the stored one is used.
+static std::string continueNeedsNewSimplex(int nu, const std::vector<double> &cur)
+{
+    std::vector<double> y, P;
+    if(!readStoredSimplex(nu, y, P))
+        return "the stored simplex ("+qOptval.toStdString()+", "+qOptmat.toStdString()
+               +") is missing or does not match the free parameters";
+    if(!g_contFromBest) return "";
+    const int b = int(std::min_element(y.begin(), y.end())-y.begin());
+    for(int j=0; j<nu; j++){
+        if(std::fabs(P[b*nu+j]-cur[j]) > 1e-8*std::max(1.0, std::fabs(cur[j])))
+            return "the best state differs from the best vertex of the stored simplex (found later, e.g. by Levenberg-Marquardt)";
+    }
+    return "";
+}
+
+// Called by DivideConquer for every evaluation during an optimisation.
+static void trackBest(double r)
+{
+    if(g_trackBest==0 || optfratios!=0 || !std::isfinite(r) || r>=orbit::kInvalidPenalty) return;
+    if(std::isfinite(g_bestStateS) && !(r<g_bestStateS)) return;
+    g_bestStateS = r;
+    writeBestState(g_trackBest==1, r);
+}
+
 void MainWindow::Optimisation()
 {
     system_clock::time_point time1 = system_clock::now();
@@ -2454,6 +1688,7 @@ void MainWindow::Optimisation()
     upda=0;
     updac=0;
     abauto=0;
+    optimisationFinished=0;
 
     ui->spinBox_4->setValue(0);
     ui->spinBox_5->setValue(0);
@@ -2464,8 +1699,7 @@ void MainWindow::Optimisation()
 
     if(error==1){
         this->setCursor(QCursor(Qt::ArrowCursor));
-        error=0;
-        return;
+        return;   // error stays set (batch mode: exit code 1)
     }
 
     qApp->processEvents(QEventLoop::AllEvents);
@@ -2479,7 +1713,7 @@ void MainWindow::Optimisation()
     }
 
     zaehler=ui->spinBox_3->value();
-    double yh, ysh, yl, ym, yi, ys, yt;
+    double ym=0, ys=0;
 
     int nu=2*num;
     if(SB1==1){
@@ -2522,67 +1756,17 @@ void MainWindow::Optimisation()
     else{
         LogFile<<"Compute Residuum in full range."<<endl;
     }
+    if(!g_rowResExcl.empty()){
+        LogFile<<"Residuum without the ranges of the static lines ("<<ui->lineEdit_tellrange->text().toStdString()<<")."<<endl;
+    }
     LogFile<<endl;
 
-    string sstrength = "edit.dat";
-    std::ostringstream ediNameStream(sstrength);
-    ediNameStream<<path<<"/"<<sstrength;
-    std::string ediName = ediNameStream.str();
-
-        QFileInfo lstrength(ediName.c_str());
-
-    if(lstrength.exists()){
-
+    // weights (light fractions) are set by read_data() via loadComponentWeights()
+    if(QFileInfo::exists(qPath+"/edit.dat")){
         LogFile<<"Relative component strength and telluric line strength set via Editor."<<endl;
-
-        ifstream edit(ediName.c_str());
-        string lines, einse;
-
-        int num_lines1=0;
-
-        while(std::getline(edit, lines))
-                   ++ num_lines1;
-
-                edit.clear();
-                edit.seekg(0, ios::beg);
-
-                if(num_lines1!=3*num){
-                    if(runow==0){
-                        QMessageBox::information(this, "Error", "Error 22: Edit file does not match to specified number of observations.");
-                    }
-                    else{
-                        cout<<"Error 22: Edit file does not match to specified number of observations."<<endl;
-                        MainWindow::Input();
-                    }
-                    error=1;
-                    return;
-                }
-
-        for(int i=0; i<num_lines1; i++){
-            edit >> einse;
-            istringstream istr7(einse);
-
-            if(i<num){
-                istr7>>Mtel[i];
-            }
-            else if((i>=num) & (i<2*num)){
-                istr7>>Mval1[i-num];
-            }
-            else if(i>=2*num){
-                istr7>>Mval2[i-2*num];
-            }
-        }
     }
-
-    else {
-
-        LogFile<<"No relative values set via Editor."<<endl;
-
-        for(int i=0; i<num; i++){
-            Mtel[i]=1.0;
-            Mval1[i]=1/(1+ui->doubleSpinBox_4->value());
-            Mval2[i]=ui->doubleSpinBox_4->value()/(1+ui->doubleSpinBox_4->value());
-        }
+    else{
+        LogFile<<"No relative values set via Editor; flux ratio A/B = "<<ui->doubleSpinBox_4->value()<<endl;
     }
 
     LogFile<<endl;
@@ -2608,7 +1792,7 @@ void MainWindow::Optimisation()
             istr8 >> optv[i];
         }
         alpha=optv[0];
-        beta=optv[1];
+        nmBeta=optv[1];
         btot=optv[2];
         Gamma=optv[3];
     }
@@ -2617,11 +1801,11 @@ void MainWindow::Optimisation()
         LogFile<<"Default values for transformation coefficients used."<<endl;
         Gamma=2.0;
         alpha=1.0;
-        beta=0.5;
+        nmBeta=0.5;
         btot=0.5;
     }
 
-    LogFile<<"Alpha: "<<alpha<<"; Beta: "<<beta<<"; Beta_tot: "<<btot<<"; Gamma: "<<Gamma<<"; Step: "<<step<<endl;
+    LogFile<<"Alpha: "<<alpha<<"; Beta: "<<nmBeta<<"; Beta_tot: "<<btot<<"; Gamma: "<<Gamma<<"; Step: "<<step<<endl;
 
 
     LogFile<<endl;
@@ -2662,7 +1846,7 @@ void MainWindow::Optimisation()
 
         step=3.0;
         dP = orbele[0]/10;
-        de = orbele[1]/10;
+        de = (orbele[1]>0.05 ? orbele[1]/10 : 0.005);   // otherwise degenerate simplex at e=0
         dKA = 3*dv;
         dKB = 3*dv;
         dGamma = 3*dv;
@@ -2680,27 +1864,110 @@ void MainWindow::Optimisation()
     double ym2=0, ys2=0;
     int stagnate=0;
 
-    string sopt = "optdata.dat";
+    string sopt = qOptdata.toStdString();
     std::ostringstream soptNameStream(sopt);
     soptNameStream<<path<<"/"<<sopt;
     std::string soptName = soptNameStream.str();
     ofstream soptd(soptName.c_str());
+    soptd<<setprecision(15);   // full precision (plot in Delta-chi^2)
+    LogFile<<setprecision(15);
 
     LogFile<<"Step: "<<step<<"; dP: "<<dP<<"; de: "<<de<<"; dKA: "<<dKA<<"; dKB: "<<dKB<<"; dGamma: "<<dGamma<<"; dT0: "<<dT0<<"; dOmega: "<<dOmega<<endl;
     LogFile<<endl;
 
+    // Continue and reinitiation start from the best state of the previous optimisation (either
+    // method, see g_trackBest), independent of the start values in the inputs.
+    const bool rvModeOpt = ui->checkBox->isChecked() || ui->checkBox_2->isChecked();
+    g_contFromBest = false;
+    if(inrein==1 || ui->checkBox_11->isChecked()){
+        double sOld = std::numeric_limits<double>::quiet_NaN();
+        g_contFromBest = loadBestState(rvModeOpt, sOld);
+        if(g_contFromBest){
+            if(!rvModeOpt){            // RVs of the best orbit
+                RVCalcCheck = 0;
+                MainWindow::VAmplitudeA();
+                MainWindow::VAmplitudeB();
+            }
+            // "Exclude edges": margin from the RV span of the best values, not of the inputs
+            // (otherwise the residuum would depend on the start values in the inputs)
+            if(inrein==0) g_edgeMargin = -1;
+            LogFile<<"Start values from the best state of the previous optimisation ("
+                   <<QFileInfo(bestStateFile(rvModeOpt)).fileName().toStdString()<<", residuum "<<sOld<<")."<<endl;
+        }
+        else if(ui->checkBox_11->isChecked()){
+            LogFile<<"No best state of a previous optimisation for these spectra ("
+                   <<QFileInfo(bestStateFile(rvModeOpt)).fileName().toStdString()<<"); start values from the simplex or the inputs."<<endl;
+        }
+    }
+    g_trackBest = rvModeOpt ? 1 : 2;
+    g_bestStateS = std::numeric_limits<double>::quiet_NaN();
+
+    // Levenberg-Marquardt (alternative to Nelder-Mead) for both parameter sets
+    if(ui->comboBox_method->currentIndex()==1){
+        MainWindow::optimiseLM(LogFile, soptd);
+        LogFile.close();
+    }
     // optimisation on individual RVs
-    if(ui->checkBox->isChecked() or ui->checkBox_2->isChecked()){
+    else if(ui->checkBox->isChecked() or ui->checkBox_2->isChecked()){
 
         LogFile<<"Optimisation on individual RVs."<<endl;
 
+        // free RVs (full index: A 0..num-1, B num..2num-1); fixed ones keep their start value
+        std::vector<int> rvIdx;
+        {
+            QString ferr;
+            if(!MainWindow::freeRVIndices(SB1==1, rvIdx, ferr)){
+                reportError("Error 45: "+ferr);
+                LogFile.close();
+                return;
+            }
+        }
+        nu = int(rvIdx.size());
+        if(nu < (SB1==1 ? num : 2*num)){
+            LogFile<<"Fixed RVs (spectrum: A / B):";
+            for(int j=0; j<num; j++){
+                const bool fa = std::find(rvIdx.begin(), rvIdx.end(), j)==rvIdx.end();
+                const bool fb = SB1==0 && std::find(rvIdx.begin(), rvIdx.end(), num+j)==rvIdx.end();
+                if(fa || fb) LogFile<<" "<<(j+mini)<<(fa ? "A" : "")<<(fb ? "B" : "");
+            }
+            LogFile<<"; "<<nu<<" free."<<endl;
+        }
+        auto setRV = [&](int k, double v){ if(k<num) RV1[k]=v; else RV3[k-num]=v; };
+        auto getRV = [&](int k){ return k<num ? RV1[k] : RV3[k-num]; };
+        auto applyRow = [&](const arma::rowvec &x){ for(int k=0; k<nu; k++) setRV(rvIdx[k], x(k)); };
+        auto logRVs = [&](std::ostream &o){
+            for(int j=0; j<num; j++){
+                o<<RV1[j];
+                if(SB1==0) o<<"\t"<<RV3[j];
+                o<<endl;
+            }
+        };
+
         LogFile<<endl;
 
-        double y[nu+1], Z[nu], Co[nu], So[nu], Eo[nu];
+        std::vector<double> y(nu+1), Z(nu), Co(nu), So(nu), Eo(nu);
         mat P(nu+1,nu), e(nu+1,nu);
 
+    // Continue: stored simplex or a new one around the best values; reinitiation: new one
+    qOptval = ui->lineEdit_16->text();
+    qOptmat = ui->lineEdit_17->text();
+    bool contRebuild = false;
+    if(inrein==0 && !ui->checkBox_9->isChecked() && ui->checkBox_11->isChecked()){
+        std::vector<double> cur(nu);
+        for(int j=0; j<nu; j++) cur[j]=getRV(rvIdx[j]);
+        const std::string why = continueNeedsNewSimplex(nu, cur);
+        if(!why.empty()){
+            contRebuild = true;
+            const std::string m = "Continue: new simplex around the current best RVs because "+why+".";
+            LogFile<<m<<endl;
+            cout<<m<<endl;
+            ui->plainTextEdit_2->appendPlainText(QString::fromStdString(m));
+        }
+    }
+    const bool rebuild = inrein==1 || contRebuild;
+
     //create new initial data
-    if(ui->checkBox_9->isChecked()){
+    if(ui->checkBox_9->isChecked() || rebuild){
         r1=0.0;
 
         LogFile<<"Creating new initial simplex with "<<nu+1<<" points."<<endl;
@@ -2716,12 +1983,16 @@ void MainWindow::Optimisation()
         std::ostringstream file2NameStream(file2init);
         file2NameStream<<path<<"/"<<file2init;
         std::string file2Name = file2NameStream.str();
+        if(rebuild){   // new simplex around the best values: written as the optimisation files
+            file1Name = (qPath+"/"+qOptval).toStdString();
+            file2Name = (qPath+"/"+qOptmat).toStdString();
+        }
 
-        if(ui->checkBox_9->isChecked()){
+        if(ui->checkBox_9->isChecked() && !rebuild){
             QFile QIn(file1Name.c_str());
             QFile QIn2(file2Name.c_str());
 
-            if((inrein==0) & (QIn.exists() or QIn2.exists())){
+            if((QIn.exists() or QIn2.exists())){
                 if(runow==0){
                     QMessageBox::StandardButton reply;
                     reply = QMessageBox::question(this, "Warning!", "The optimisation files already exists. \n\n Do you want to overwrite it?",
@@ -2738,7 +2009,9 @@ void MainWindow::Optimisation()
                 }
                 else{
                     cout<<"Warning: The optimisation files already exists. Do you want to overwrite it? 0 no, yes 1: "<<endl;
-                    cin >> overw;
+                    if(batchOverwrite==1) overw=1;
+                    else if(!(cin >> overw)) overw=0;
+                    if(overw==0) cerr<<"Existing optimisation files are not overwritten (use --overwrite)."<<endl;
                     if(overw==0){
                         this->setCursor(QCursor(Qt::ArrowCursor));
                         MainWindow::enableButtons();
@@ -2763,19 +2036,7 @@ void MainWindow::Optimisation()
         ofstream init2(file2Name.c_str());
 
 
-    for(int i=0; i<nu; i++){
-        if(SB1==0){
-            if(i<nu/2){
-                P(0,i)=RV1[i];
-            }
-            else{
-                P(0,i)=RV3[i-nu/2];
-            }
-        }
-        if(SB1==1){
-            P(0,i)=RV1[i];
-        }
-    }
+    for(int i=0; i<nu; i++) P(0,i)=getRV(rvIdx[i]);
 
     for(int i=0; i<nu+1; i++){
         for(int j=0; j<nu; j++){
@@ -2789,23 +2050,29 @@ void MainWindow::Optimisation()
         }
     }
 
+    if(rebuild){
+        // reinitiation: steps on the scale of the uncertainty instead of the first construction
+        arma::vec h0(nu);
+        for(int j=0; j<nu; j++) h0(j) = dv*e(j+1,j);
+        auto setRVs = [&](const arma::rowvec &x){
+            applyRow(x);
+            eval++;
+            ui->spinBox_5->setValue(eval);
+            qApp->processEvents(QEventLoop::AllEvents);
+            MainWindow::ConstructMatrix();
+            return MainWindow::DivideConquer();
+        };
+        const arma::vec h = reinitSteps(P.row(0), h0, setRVs, LogFile);
+        for(int j=0; j<nu; j++) e(j+1,j) = h(j)/dv;
+        upda = 0;
+    }
+
     for (int i=0; i<nu+1; i++){
         for (int j=0; j<nu; j++){
 
             P(i,j)=P(0,j)+dv*e(i,j);
             init2<<setprecision(14)<<P(i,j)<<endl;
-            //cout<<P[i][j]<<" ";
-            if(SB1==0){
-                if(j<nu/2){
-                    RV1[j]=P(i,j);
-                }
-                else{
-                    RV3[j-nu/2]=P(i,j);
-                }
-            }
-            if(SB1==1){
-                RV1[j]=P(i,j);
-            }
+            setRV(rvIdx[j], P(i,j));
         }
 
         eval++;
@@ -2813,7 +2080,7 @@ void MainWindow::Optimisation()
         qApp->processEvents(QEventLoop::AllEvents);
         MainWindow::ConstructMatrix();
         y[i]=MainWindow::DivideConquer();
-        soptd<<"0\t"<<eval<<"\t"<<y[i]<<endl;
+        soptd<<"0\t"<<eval<<"\t"<<y[i]<<"\t"<<sigma2Now(y[i])<<endl;
         qApp->processEvents(QEventLoop::AllEvents);
         if(upda==1){
             upda=0;
@@ -2821,16 +2088,7 @@ void MainWindow::Optimisation()
             LogFile<<endl;
             LogFile<<"New RVs found; Residuum: "<<y[i]<<endl;
             MainWindow::plot_functionvalues();
-            if(ui->checkBox_3->isChecked()){
-                for(int i = 0; i<nu;i++){
-                    LogFile<<RV1[i]<<endl;
-                }
-            }
-            else if(ui->checkBox_4->isChecked()){
-                for(int i = 0; i<nu/2;i++){
-                    LogFile<<RV1[i]<<"\t"<<RV3[i]<<endl;
-                }
-            }
+            logRVs(LogFile);
             LogFile<<endl;
         }
         else {
@@ -2840,7 +2098,6 @@ void MainWindow::Optimisation()
         if(abortt==1){
             LogFile<<"Initiation was aborted."<<endl;
             abortt=0;
-            sequence=0;
             this->setCursor(QCursor(Qt::ArrowCursor));
             MainWindow::enableButtons();
             return;
@@ -2902,7 +2159,6 @@ void MainWindow::Optimisation()
             }
             else{
                 cout<<"Error 23: The optimisation file does not exist! When running optimization the first time for a given set of data, the optimization needs to be initiated first."<<endl;
-                MainWindow::Input();
             }
            this->setCursor(QCursor(Qt::ArrowCursor));
             LogFile<<"The optimisation file does not exist! When running optimization the first time for a given set of data, the optimization needs to be initiated first."<<endl;
@@ -2912,8 +2168,10 @@ void MainWindow::Optimisation()
 
         int number_of_lines =0;
 
-        while(std::getline(initiate1, zeile))
-           ++ number_of_lines;
+        while(std::getline(initiate1, zeile)){
+           ++number_of_lines;
+           dis::keepAlive();
+       }
 
         initiate1.clear();
         initiate1.seekg(0, ios::beg);
@@ -2925,7 +2183,6 @@ void MainWindow::Optimisation()
             }
             else{
                 cout<<"Error 24: The optimisation file does not exist! When running optimization the first time for a given set of data, the optimization needs to be initiated first."<<endl;
-                MainWindow::Input();
             }
            this->setCursor(QCursor(Qt::ArrowCursor));
             LogFile<<"The optimisation file does not match to the data! When running optimization the first time for a given set of data, the optimization needs to be initiated first."<<endl;
@@ -2944,6 +2201,7 @@ void MainWindow::Optimisation()
             }
         ui->lineEdit_7->setText(QString::number(r1));
         initiate1.close();
+        g_bestStateS = r1;   // best state: only real improvements on the stored simplex
 
         int coun=0;
 
@@ -2993,7 +2251,6 @@ void MainWindow::Optimisation()
             }
             else{
                 cout<<"Error 25: The initiation file does not exist! When running optimisation the first time for a given set of data, the optimisation needs to be initiated first."<<endl;
-                MainWindow::Input();
             }
            this->setCursor(QCursor(Qt::ArrowCursor));
             LogFile<<"The initiation file does not exist! When running optimization the first time for a given set of data, the optimisation needs to be initiated first."<<endl;
@@ -3003,8 +2260,10 @@ void MainWindow::Optimisation()
 
         int number_of_lines =0;
 
-        while(std::getline(initiate1, zeile))
-           ++ number_of_lines;
+        while(std::getline(initiate1, zeile)){
+           ++number_of_lines;
+           dis::keepAlive();
+       }
 
         initiate1.clear();
         initiate1.seekg(0, ios::beg);
@@ -3016,7 +2275,6 @@ void MainWindow::Optimisation()
             }
             else{
                 cout<<"Error 26: The initiation file does not exist! When running optimisation the first time for a given set of data, the optimisation needs to be initiated first."<<endl;
-                MainWindow::Input();
             }
            this->setCursor(QCursor(Qt::ArrowCursor));
             LogFile<<"The initiation file does not match to the data! When running optimization the first time for a given set of data, the optimisation needs to be initiated first."<<endl;
@@ -3065,14 +2323,27 @@ void MainWindow::Optimisation()
     std::ostringstream file1NameStream(file1opt);
     file1NameStream<<path<<"/"<<file1opt;
     std::string file1Name = file1NameStream.str();
-    ofstream opt1(file1Name.c_str());
 
     qOptmat = ui->lineEdit_17->text();
     string file2opt = qOptmat.toUtf8().constData();
     std::ostringstream file2NameStream(file2opt);
     file2NameStream<<path<<"/"<<file2opt;
     std::string file2Name = file2NameStream.str();
-    ofstream opt2(file2Name.c_str());
+    // save simplex (bug report H12: files were emptied beforehand)
+    auto saveSimplex = [&](){
+        ofstream o1(file1Name.c_str()), o2(file2Name.c_str());
+        for(int i=0; i<nu+1;i++){
+            o1<<setprecision(14)<<y[i]<<endl;
+            for(int j=0; j<nu; j++){
+                o2<<setprecision(14)<<P(i,j)<<endl;
+            }
+        }
+    };
+        nm::Coefficients nmCoef;
+        nmCoef.alpha=alpha;
+        nmCoef.gamma=Gamma;
+        nmCoef.beta=nmBeta;
+        nmCoef.delta=btot;
 
 
     LogFile<<endl;
@@ -3086,18 +2357,28 @@ void MainWindow::Optimisation()
     }
 
 
+    // progress for Auto Stop; window from the GUI or 10 per parameter
+    nm::ProgressMonitor progress(ui->spinBox_11->value()>0 ? ui->spinBox_11->value() : nm::defaultWindow(nu));
+    int itersDone = zaehler;
+
     //start main loop
         for (int t=0; t<zaehler; t++){
+            // iteration limit applies across all restarts (Reinitiate)
+            if(++g_itersUsed>zaehler){
+                LogFile<<"Maximum number of iterations reached (including restarts)."<<endl;
+                itersDone = t;
+                break;
+            }
             ui->spinBox_4->setValue(t+1);
 
-            string optback1 = "optval_vel_backup.dat";
+            string optback1 = withSuffix(ui->lineEdit_16->text(), "_backup").toStdString();
             std::ostringstream back1NameStream(optback1);
             back1NameStream<<path<<"/"<<optback1;
             std::string back1Name = back1NameStream.str();
             ofstream back1(back1Name.c_str());
 
 
-            string optback2 = "optmat_vel_backup.dat";
+            string optback2 = withSuffix(ui->lineEdit_17->text(), "_backup").toStdString();
             std::ostringstream back2NameStream(optback2);
             back2NameStream<<path<<"/"<<optback2;
             std::string back2Name = back2NameStream.str();
@@ -3127,37 +2408,7 @@ void MainWindow::Optimisation()
             Z[i]=0;
         }
 
-        //looking for highest value
-        yh=y[0];
-        Ph = 0;
-        for (int j=0; j<nu+1; j++){
-            if(y[j]>yh){
-                yh = y[j];
-                Ph = j;
-            }
-        }
-
-        //looking for smallest value
-        yl=yh;
-        for (int j=0; j<nu+1; j++){
-            if(y[j]<yl){
-                yl=y[j];
-                Pl = j;
-            }
-        }
-
-        //looking for second highest value
-        ysh=yl;
-        for (int j=0; j<nu+1; j++){
-            if((y[j]>ysh) & (y[j]<yh) & (y[j]>yl) & (j !=Pl)){
-                ysh=y[j];
-                Psh=j;
-            }
-        }
-
-        yh=y[Ph];
-        yl=y[Pl];
-        ysh=y[Psh];
+        nm::order(y, Ph, Psh, Pl);
 
         //computing mean and sigma
         for (int i=0; i<nu+1; i++){
@@ -3169,130 +2420,38 @@ void MainWindow::Optimisation()
         ys=ys/(nu);
 
 
-        // stagnation
-        if((ys==ys2) & (ym==ym2)){
-            ++stagnate;
+        // stagnation (exactly equal simplex values) only as a notice now
+        if((ys==ys2) && (ym==ym2)) ++stagnate;
+        else stagnate=0;
 
-            // reinitiation activated
-            if(ui->checkBox_32->isChecked()){
+        // Auto Stop / Reinitiate based on the progress in chi^2 (Delta-chi^2 over a window)
+        {
+            RunAction act = MainWindow::convergenceStep(progress, y[Pl], nu, LogFile);
+            if(act==RunAction::Reinit){
+                cout<<"Reinitiate optimisation with current best RVs."<<endl;
+                ui->plainTextEdit_2->appendPlainText("Reinitiate optimisation with current best RVs.");
+                LogFile<<endl<<"Reinitiate optimisation with current best RVs."<<endl;
+                // strengths of the static lines again, at the next solve (best point)
+                g_tellFitPending = ui->checkBox_8->isChecked() && ui->checkBox_tellfit->isChecked();
 
-                // auto stop
-                if(ui->checkBox_23->isChecked()){
-                    if(ui->spinBox_6->value()==1){
-                        // use next sequence and start optimisation
-                        if(ui->checkBox_27->isChecked()){
-
-                            LogFile<<"Finished Sequence "<<sequence<<". Setting up next sequence."<<endl;
-                            LogFile<<"Using optimized RVs from last sequence."<<endl;
-                            ++sequence;
-                            MainWindow::on_pushButton_11_clicked(); // setting file names
-                            ui->checkBox_9->setChecked(true);       // new optimisaton
-                            ui->checkBox_11->setChecked(false);     // disable continue
-                            ui->spinBox_3->setValue(9999);          // # iterations
-                            MainWindow::on_pushButton_4_clicked();  // start optimisation
-
-                        }
-                        // stop optimisation
-                        else{
-                            cout<<"Optimisatin stopped; no better parameters found; stagnating."<<endl;
-                            LogFile<<"Optimisatin stopped; no better parameters found; stagnating."<<endl;
-                            MainWindow::enableButtons();
-                            return;
-                        }
-                    }
-                    // no auto stop applied but active
-                    else{
-                        cout<<"Reinitiate optimisation with current best RVs."<<endl;
-                        ui->plainTextEdit_2->appendPlainText("Reinitiate optimisation with current best RVs.");
-                        LogFile<<"Stagnation of DSM: "<<stagnate<<endl;
-                        LogFile<<endl;
-                        LogFile<<"Reinitiate optimisation with current best RV."<<endl;
-
-                        string ReinV = ("rein_vel.dat");
-                        std::ostringstream ReNameStream(ReinV);
-                        ReNameStream<<path<<"/"<<ReinV;
-                        std::string ReName = ReNameStream.str();
-                        ofstream ReVel(ReName.c_str());
-
-                        if(ui->checkBox_3->isChecked()){
-                            for(int i = 0; i<nu;i++){
-                                ReVel<<P(Pl,i)<<endl;
-                            }
-                        }
-                        else if(ui->checkBox_4->isChecked()){
-                            for(int i = 0; i<nu/2;i++){
-                                ReVel<<P(Pl,i)<<"\t"<<P(Pl,i+nu/2)<<endl;
-                            }
-                        }
-
-                        ui->lineEdit_2->setText("rein_vel.dat");
-
-                        ui->checkBox->setChecked(false);
-                        ui->checkBox_2->setChecked(true);
-                        ui->checkBox_16->setChecked(false);
-
-                        ui->checkBox_9->setChecked(true);
-                        ui->checkBox_11->setChecked(false);
-                        ui->checkBox_12->setChecked(false);
-
-                        reinitiate=1;
-                        return;
-                    }
-                }
-
-                // no auto stop activated, reinitiate
-                else{
-                    cout<<"Reinitiate optimisation with current best RVs."<<endl;
-                    ui->plainTextEdit_2->appendPlainText("Reinitiate optimisation with current best RVs.");
-                    LogFile<<"Stagnation of DSM: "<<stagnate<<endl;
-                    LogFile<<endl;
-                    LogFile<<"Reinitiate optimisation with current best RV."<<endl;
-
-                    string ReinV = ("rein_vel.dat");
-                    std::ostringstream ReNameStream(ReinV);
-                    ReNameStream<<path<<"/"<<ReinV;
-                    std::string ReName = ReNameStream.str();
-                    ofstream ReVel(ReName.c_str());
-
-                    if(ui->checkBox_3->isChecked()){
-                        for(int i = 0; i<nu;i++){
-                            ReVel<<P(Pl,i)<<endl;
-                        }
-                    }
-                    else if(ui->checkBox_4->isChecked()){
-                        for(int i = 0; i<nu/2;i++){
-                            ReVel<<P(Pl,i)<<"\t"<<P(Pl,i+nu/2)<<endl;
-                        }
-                    }
-
-                    ui->lineEdit_2->setText("rein_vel.dat");
-
-                    ui->checkBox->setChecked(false);
-                    ui->checkBox_2->setChecked(true);
-                    ui->checkBox_16->setChecked(false);
-
-                    ui->checkBox_9->setChecked(true);
-                    ui->checkBox_11->setChecked(false);
-                    ui->checkBox_12->setChecked(false);
-
-                    reinitiate=1;
-
-                    return;
-                }
-
+                applyRow(P.row(Pl));
+                std::ofstream ReVel(withSuffix(bestStateFile(true), "_restart").toStdString().c_str());
+                ReVel<<setprecision(14);
+                logRVs(ReVel);
+                ReVel.close();
+                // the restart takes the best state (not the inputs); the settings stay as they are
+                writeBestState(true, y[Pl]);
+                g_bestStateS = y[Pl];
+                saveSimplex();
+                reinitiate=1;
+                return;
             }
-            // no auto stop and reinitiation activated
-            else{
-                QString stagn = QString::number(stagnate);
-                LogFile<<"Stagnation of DSM: "<<stagnate<<endl;
-                cout<<"Optimisation may stagnate. No change in mean and STD of simplex points since "<<stagnate<<" iterations."<<endl;
-                ui->plainTextEdit_2->appendPlainText("Optimisation may stagnate. No change in mean and STD of simplex points since "+stagn+" iterations.");
+            if(act==RunAction::Done){
+                cout<<"Optimisation stopped (Auto Stop)."<<endl;
+                LogFile<<"Optimisation stopped (Auto Stop)."<<endl;
+                itersDone = t;
+                break;                                      // regular completion after the loop
             }
-        }
-
-        // no stagnation
-        else {
-            stagnate =0;
         }
 
         cout<<"Stag-Index: "<<stagnate<<endl;
@@ -3304,603 +2463,60 @@ void MainWindow::Optimisation()
 
         LogFile<<setprecision(12)<<"Mean: "<<ym<<"\tSTD: "<<ys<<endl;
 
-        //compute centroid
-        for (int j=0; j<nu; j++){
-            for (int i=0; i<nu+1; i++){
-                if (i!=Ph){
-                    Z[j]+=P(i,j)/nu;
+        //Nelder-Mead step (neldermead.h)
+        {
+            auto fRV = [&](const arma::rowvec &x){
+                applyRow(x);
+                eval++;
+                ui->spinBox_5->setValue(eval);
+                qApp->processEvents(QEventLoop::AllEvents);
+                MainWindow::ConstructMatrix();
+                double r=MainWindow::DivideConquer();
+                soptd<<t<<"\t"<<eval<<"\t"<<r<<"\t"<<sigma2Now(r)<<endl;
+                qApp->processEvents(QEventLoop::AllEvents);
+                if(upda==1){
+                    upda=0;
+                    LogFile<<endl;
+                    LogFile<<setprecision(15)<<"New RVs found; Residuum: "<<r<<endl;
+                    logRVs(LogFile);
+                    LogFile<<endl;
                 }
-            }
-        }
-
-        //reflect highest value at centroid
-        cout<<"reflection at centroid..."<<endl;
-        for (int i=0; i<nu; i++){
-            Co[i]=Z[i]+alpha*(Z[i]-P(Ph,i));
-            if(SB1==0){
-                if(i<nu/2){
-                    RV1[i]=Co[i];
-                }
-                else{
-                    RV3[i-nu/2]=Co[i];
-                }
-            }
-            else if(SB1==1){
-                RV1[i]=Co[i];
-            }
-        }
-        eval++;
-        ui->spinBox_5->setValue(eval);
-        qApp->processEvents(QEventLoop::AllEvents);
-        MainWindow::ConstructMatrix();
-        yi=MainWindow::DivideConquer();
-        soptd<<t<<"\t"<<eval<<"\t"<<yi<<endl;
-        qApp->processEvents(QEventLoop::AllEvents);
-
-        if(upda==1){
-            upda=0;
-            LogFile<<endl;
-            LogFile<<"New RVs found; Residuum: "<<yi<<endl;
-            if(ui->checkBox_3->isChecked()){
-                for(int i = 0; i<nu;i++){
-                    LogFile<<RV1[i]<<endl;
-                }
-            }
-            else if(ui->checkBox_4->isChecked()){
-                for(int i = 0; i<nu/2;i++){
-                    LogFile<<RV1[i]<<"\t"<<RV3[i]<<endl;
-                }
-            }
-            LogFile<<endl;
-        }
-
-        if(abortt==1){
-            //output results
-            LogFile<<"Optimisation aborted. Current best RVs:"<<endl;
-            if(ui->checkBox_3->isChecked()){
-                for(int i = 0; i<nu;i++){
-                    LogFile<<P(Pl,i)<<endl;
-                }
-            }
-            else if(ui->checkBox_4->isChecked()){
-                for(int i = 0; i<nu/2;i++){
-                    LogFile<<P(Pl,i)<<"\t"<<P(Pl,i+nu/2)<<endl;
-                }
-            }
-            LogFile<<endl;
-            for(int i=0; i<nu+1;i++){
-                cout<<y[i]<<endl;
-                opt1<<setprecision(12)<<y[i]<<endl;
-                for(int j=0; j<nu; j++){
-                    opt2<<setprecision(12)<<P(i,j)<<endl;
-                }
-            }
-                abortt=0;
-                sequence=0;
-                this->setCursor(QCursor(Qt::ArrowCursor));
-                MainWindow::enableButtons();
-                return;
-        }
-
-        //Alpha Branch, better than best point
-        if(yi<yl){
-           cout<<"expansion 1 ";
-            LogFile<<"yi<yl; ";
-            for (int i=0; i<nu; i++){
-                Eo[i]=Z[i]+Gamma*(Z[i]-P(Ph,i));  //Expansion over worst point
-                if(SB1==0){
-                    if(i<nu/2){
-                        RV1[i]=Eo[i];
-                    }
-                    else{
-                        RV3[i-nu/2]=Eo[i];
-                    }
-                }
-                else if(SB1==1){
-                    RV1[i]=Eo[i];
-                }
-            }
-            eval++;
-            ui->spinBox_5->setValue(eval);
-            qApp->processEvents(QEventLoop::AllEvents);
-            MainWindow::ConstructMatrix();
-            yt=MainWindow::DivideConquer();
-            soptd<<t<<"\t"<<eval<<"\t"<<yt<<endl;
-            qApp->processEvents(QEventLoop::AllEvents);
-
-            if(upda==1){
-                upda=0;
-                LogFile<<endl;
-                LogFile<<"New RVs found; Residuum: "<<yt<<endl;
-                if(ui->checkBox_3->isChecked()){
-                    for(int i = 0; i<nu;i++){
-                        LogFile<<RV1[i]<<endl;
-                    }
-                }
-                else if(ui->checkBox_4->isChecked()){
-                    for(int i = 0; i<nu/2;i++){
-                        LogFile<<RV1[i]<<"\t"<<RV3[i]<<endl;
-                    }
-                }
-                LogFile<<endl;
-            }
-
-            if(abortt==1){
-                //output results
+                return r;
+            };
+            nm::StepResult st = nm::step(P, y, nmCoef, fRV, [&]{ return abortt==1; });
+            LogFile<<st.log;
+            if(st.aborted){
+                nm::order(y, Ph, Psh, Pl);
                 LogFile<<"Optimisation aborted. Current best RVs:"<<endl;
-                if(ui->checkBox_3->isChecked()){
-                    for(int i = 0; i<nu;i++){
-                        LogFile<<P(Pl,i)<<endl;
-                    }
-                }
-                else if(ui->checkBox_4->isChecked()){
-                    for(int i = 0; i<nu/2;i++){
-                        LogFile<<P(Pl,i)<<"\t"<<P(Pl,i+nu/2)<<endl;
-                    }
-                }
+                applyRow(P.row(Pl));
+                logRVs(LogFile);
                 LogFile<<endl;
-                for(int i=0; i<nu+1;i++){
-                    cout<<y[i]<<endl;
-                    opt1<<setprecision(12)<<y[i]<<endl;
-                    for(int j=0; j<nu; j++){
-                        opt2<<setprecision(12)<<P(i,j)<<endl;
-                    }
-                }
+                saveSimplex();
                 abortt=0;
-                sequence=0;
                 this->setCursor(QCursor(Qt::ArrowCursor));
                 MainWindow::enableButtons();
                 return;
             }
-            if(yt<yl){
-                cout<<"exp ";
-                for (int i=0; i<nu; i++){
-                    P(Ph,i)=Eo[i];
-                }
-
-            y[Ph]=yt;
-            if(abortt==1){
-                //output results
-                LogFile<<"Optimisation aborted. Current best RVs:"<<endl;
-                if(ui->checkBox_3->isChecked()){
-                    for(int i = 0; i<nu;i++){
-                        LogFile<<P(Pl,i)<<endl;
-                    }
-                }
-                else if(ui->checkBox_4->isChecked()){
-                    for(int i = 0; i<nu/2;i++){
-                        LogFile<<P(Pl,i)<<"\t"<<P(Pl,i+nu/2)<<endl;
-                    }
-                }
-                LogFile<<endl;
-                for(int i=0; i<nu+1;i++){
-                    cout<<y[i]<<endl;
-                    opt1<<setprecision(12)<<y[i]<<endl;
-                    for(int j=0; j<nu; j++){
-                        opt2<<setprecision(12)<<P(i,j)<<endl;
-                    }
-                }
-                abortt=0;
-                sequence=0;
-                this->setCursor(QCursor(Qt::ArrowCursor));
-                MainWindow::enableButtons();
-                return;
-            }
-            qApp->processEvents(QEventLoop::AllEvents);
-
-        }
-        if (yt>=yl){
-            cout<<"ref1 ";
-            LogFile<<"yt<=yl, reflection; ";
-            for (int i=0; i<nu; i++){
-                P(Ph,i)=Co[i];
-                if(SB1==0){
-                    if(i<nu/2){
-                        RV1[i]=Co[i];
-                    }
-                    else{
-                        RV3[i-nu/2]=Co[i];
-                    }
-                }
-                else if(SB1==1){
-                    RV1[i]=Co[i];
-                }
-            }
-
-            y[Ph]=yi;
-            if(abortt==1){
-                //output results
-                LogFile<<"Optimisation aborted. Current best RVs:"<<endl;
-                if(ui->checkBox_3->isChecked()){
-                    for(int i = 0; i<nu;i++){
-                        LogFile<<P(Pl,i)<<endl;
-                    }
-                }
-                else if(ui->checkBox_4->isChecked()){
-                    for(int i = 0; i<nu/2;i++){
-                        LogFile<<P(Pl,i)<<"\t"<<P(Pl,i+nu/2)<<endl;
-                    }
-                }
-                LogFile<<endl;
-                for(int i=0; i<nu+1;i++){
-                    cout<<y[i]<<endl;
-                    opt1<<setprecision(12)<<y[i]<<endl;
-                    for(int j=0; j<nu; j++){
-                        opt2<<setprecision(12)<<P(i,j)<<endl;
-                    }
-                }
-                abortt=0;
-                sequence=0;
-                this->setCursor(QCursor(Qt::ArrowCursor));
-                MainWindow::enableButtons();
-                return;
-            }
-            qApp->processEvents(QEventLoop::AllEvents);
-            }
-        }//Alpha Branch end
-
-        //Beta Branch, worse than best point
-        if(yi>=yl){
-            cout<<"yi>=yl ";
-            LogFile<<"yi>=yl; ";
-            //Beta_2 Branch
-            if(yi<=ysh){
-                cout<<"ref2 ";
-                for(int i=0; i<nu; i++){
-                    P(Ph,i)=Co[i];
-                    if(SB1==0){
-                        if(i<nu/2){
-                            RV1[i]=Co[i];
-                        }
-                        else{
-                            RV3[i-nu/2]=Co[i];
-                        }
-                    }
-                    else if(SB1==1){
-                        RV1[i]=Co[i];
-                    }
-                }
-
-            y[Ph]=yi;
-            if(abortt==1){
-                //output results
-                LogFile<<"Optimisation aborted. Current best RVs:"<<endl;
-                if(ui->checkBox_3->isChecked()){
-                    for(int i = 0; i<nu;i++){
-                        LogFile<<P(Pl,i)<<endl;
-                    }
-                }
-                else if(ui->checkBox_4->isChecked()){
-                    for(int i = 0; i<nu/2;i++){
-                        LogFile<<P(Pl,i)<<"\t"<<P(Pl,i+nu/2)<<endl;
-                    }
-                }
-                LogFile<<endl;
-                for(int i=0; i<nu+1;i++){
-                    cout<<y[i]<<endl;
-                    opt1<<setprecision(12)<<y[i]<<endl;
-                    for(int j=0; j<nu; j++){
-                        opt2<<setprecision(12)<<P(i,j)<<endl;
-                    }
-                }
-                abortt=0;
-                sequence=0;
-                this->setCursor(QCursor(Qt::ArrowCursor));
-                MainWindow::enableButtons();
-                return;
-            }
-            qApp->processEvents(QEventLoop::AllEvents);
-        }//Beta_2 Branch End
-
-        //Beta_1 Branch
-        if(yi>ysh){
-            cout<<"yi>ysh ";
-            LogFile<<"yi>ysh; ";
-            if(yi<=yh){
-                cout<<"yi<=yh ref3 ";
-                LogFile<<"yi<=yh, reflection 3; ";
-                for(int i=0; i<nu; i++){
-                    P(Ph,i)=Co[i];
-                    if(SB1==0){
-                        if(i<nu/2){
-                            RV1[i]=Co[i];
-                        }
-                        else{
-                            RV3[i-nu/2]=Co[i];
-                        }
-                    }
-                    else if(SB1==1){
-                        RV1[i]=Co[i];
-                    }
-                }
-
-            y[Ph]=yi;
-            if(abortt==1){
-                //output results
-                LogFile<<"Optimisation aborted. Current best RVs:"<<endl;
-                if(ui->checkBox_3->isChecked()){
-                    for(int i = 0; i<nu;i++){
-                        LogFile<<P(Pl,i)<<endl;
-                    }
-                }
-                else if(ui->checkBox_4->isChecked()){
-                    for(int i = 0; i<nu/2;i++){
-                        LogFile<<P(Pl,i)<<"\t"<<P(Pl,i+nu/2)<<endl;
-                    }
-                }
-                LogFile<<endl;
-                for(int i=0; i<nu+1;i++){
-                    cout<<y[i]<<endl;
-                    opt1<<setprecision(12)<<y[i]<<endl;
-                    for(int j=0; j<nu; j++){
-                        opt2<<setprecision(12)<<P(i,j)<<endl;
-                    }
-                }
-                abortt=0;
-                sequence=0;
-                this->setCursor(QCursor(Qt::ArrowCursor));
-                MainWindow::enableButtons();
-                return;
-            }
-            qApp->processEvents(QEventLoop::AllEvents);
-        //yh=y[Ph];
-        }
-
-        for(int i=0; i<nu; i++){
-            So[i]=Z[i]+beta*(P(Ph,i)-Z[i]); //simple contraction
-            if(SB1==0){
-                if(i<nu/2){
-                    RV1[i]=So[i];
-                }
-                else{
-                    RV3[i-nu/2]=So[i];
-                }
-            }
-            else if(SB1==1){
-                RV1[i]=So[i];
-            }
-        }
-        eval++;
-        ui->spinBox_5->setValue(eval);
-        qApp->processEvents(QEventLoop::AllEvents);
-        MainWindow::ConstructMatrix();
-        yt=MainWindow::DivideConquer();
-        qApp->processEvents(QEventLoop::AllEvents);
-        soptd<<t<<"\t"<<eval<<"\t"<<yt<<endl;
-        if(upda==1){
-            upda=0;
-            LogFile<<endl;
-            LogFile<<"New RVs found; Residuum: "<<yt<<endl;
-            MainWindow::plot_functionvalues();
-            if(ui->checkBox_3->isChecked()){
-                for(int i = 0; i<nu;i++){
-                    LogFile<<RV1[i]<<endl;
-                }
-            }
-            else if(ui->checkBox_4->isChecked()){
-                for(int i = 0; i<nu/2;i++){
-                    LogFile<<RV1[i]<<"\t"<<RV3[i]<<endl;
-                }
-            }
-            LogFile<<endl;
-        }
-
-        if(abortt==1){
-            //output results
-            LogFile<<"Optimisation aborted. Current best RVs:"<<endl;
-            if(ui->checkBox_3->isChecked()){
-                for(int i = 0; i<nu;i++){
-                    LogFile<<P(Pl,i)<<endl;
-                }
-            }
-            else if(ui->checkBox_4->isChecked()){
-                for(int i = 0; i<nu/2;i++){
-                    LogFile<<P(Pl,i)<<"\t"<<P(Pl,i+nu/2)<<endl;
-                }
-            }
-            LogFile<<endl;
-            for(int i=0; i<nu+1;i++){
-                cout<<y[i]<<endl;
-                opt1<<setprecision(12)<<y[i]<<endl;
-                    for(int j=0; j<nu; j++){
-                        opt2<<setprecision(12)<<P(i,j)<<endl;
-                    }
-                }
-                abortt=0;
-                sequence=0;
-                this->setCursor(QCursor(Qt::ArrowCursor));
-                MainWindow::enableButtons();
-                return;
-            }
-
-        //Beta_1_1 Branch
-        if(yt>yh){
-            cout<<"yt>yh tot ";
-            LogFile<<"yt>yh, total contraction, ";
-            for (int j=0; j<nu+1; j++){
-                for (int i=0; i<nu; i++){
-
-                    P(j,i)=P(Pl,i)+btot*(P(j,i)-P(Pl,i)); //total contraction
-                    if(SB1==0){
-                        if(i<nu/2){
-                            RV1[i]=P(j,i);
-                        }
-                        else{
-                            RV3[i-nu/2]=P(j,i);
-                        }
-                    }
-                    else if(SB1==1){
-                        RV1[i]=P(j,i);
-                    }
-                }
-
-        eval++;
-        ui->spinBox_5->setValue(eval);
-        qApp->processEvents(QEventLoop::AllEvents);
-        MainWindow::ConstructMatrix();
-        y[j]=MainWindow::DivideConquer();
-        qApp->processEvents(QEventLoop::AllEvents);
-        cout<<j+1<<" of "<<nu+1<<" points contracted."<<endl;
-        soptd<<t<<"\t"<<eval<<"\t"<<y[j]<<endl;
-
-        if(upda==1){
-            upda=0;
-            LogFile<<endl;
-            LogFile<<"New RVs found; Residuum: "<<y[j]<<endl;
-            if(ui->checkBox_3->isChecked()){
-                for(int i = 0; i<nu;i++){
-                    LogFile<<RV1[i]<<endl;
-                }
-            }
-            else if(ui->checkBox_4->isChecked()){
-                for(int i = 0; i<nu/2;i++){
-                    LogFile<<RV1[i]<<"\t"<<RV3[i]<<endl;
-                }
-            }
-            LogFile<<endl;
-        }
-
-        if(abortt==1){
-            //output results
-            LogFile<<"Optimisation aborted. Current best RVs:"<<endl;
-            if(ui->checkBox_3->isChecked()){
-                for(int i = 0; i<nu;i++){
-                    LogFile<<P(Pl,i)<<endl;
-                }
-            }
-            else if(ui->checkBox_4->isChecked()){
-                for(int i = 0; i<nu/2;i++){
-                    LogFile<<P(Pl,i)<<"\t"<<P(Pl,i+nu/2)<<endl;
-                }
-            }
-            LogFile<<endl;
-            for(int i=0; i<nu+1;i++){
-                cout<<y[i]<<endl;
-                opt1<<setprecision(12)<<y[i]<<endl;
-                for(int j=0; j<nu; j++){
-                    opt2<<setprecision(12)<<P(i,j)<<endl;
-                }
-            }
-            abortt=0;
-            sequence=0;
-            this->setCursor(QCursor(Qt::ArrowCursor));
-            MainWindow::enableButtons();
-            return;
-         }
-        }
-        }//Beta_1_1 Branch End
-
-        //Beta_1_2 Branch
-        if(yt<=yh){
-            cout<<"yt<=yh, sco ";
-            LogFile<<"yt<=yh, single contraction ";
-            for(int i=0; i<nu; i++){
-                P(Ph,i)=So[i];
-                if(SB1==0){
-                    if(i<nu/2){
-                        RV1[i]=So[i];
-                    }
-                    else{
-                        RV3[i-nu/2]=So[i];
-                    }
-                }
-                else if(SB1==1){
-                    RV1[i]=So[i];
-                }
-            }
-
-        y[Ph]=yt;
-        if(abortt==1){
-            //output results
-            LogFile<<"Optimisation aborted. Current best RVs:"<<endl;
-            if(ui->checkBox_3->isChecked()){
-                for(int i = 0; i<nu;i++){
-                    LogFile<<P(Pl,i)<<endl;
-                }
-            }
-            else if(ui->checkBox_4->isChecked()){
-                for(int i = 0; i<nu/2;i++){
-                    LogFile<<P(Pl,i)<<"\t"<<P(Pl,i+nu/2)<<endl;
-                }
-            }
-            LogFile<<endl;
-            for(int i=0; i<nu+1;i++){
-                cout<<y[i]<<endl;
-                opt1<<setprecision(12)<<y[i]<<endl;
-                    for(int j=0; j<nu; j++){
-                        opt2<<setprecision(12)<<P(i,j)<<endl;
-                    }
-                }
-                abortt=0;
-                sequence=0;
-                this->setCursor(QCursor(Qt::ArrowCursor));
-                MainWindow::enableButtons();
-                return;
-            }
-            qApp->processEvents(QEventLoop::AllEvents);
-           }
-        }
-
         }
         LogFile<<endl;
         }//end main loop
 
 
-        //looking for highest value
-        yh=y[0];
-        for (int j=0; j<nu+1; j++){
-            if(y[j]>yh){
-            yh = y[j];
-            Ph = j;
-            }
-        }
+        nm::order(y, Ph, Psh, Pl);
 
-        //looking for smallest value
-        yl=yh;
-        for (int j=0; j<nu+1; j++){
-            if(y[j]<yl){
-                yl=y[j];
-                Pl = j;
-            }
-        }
+        saveSimplex();
 
-        //looking for second highest value
-        ysh=yl;
-        for (int j=0; j<nu+1; j++){
-            if((y[j]>ysh)&(y[j]<yh)){
-                ysh=y[j];
-                Psh=j;
-            }
-        }
-
-        //output results
-        for(int i=0; i<nu+1;i++){
-            cout<<y[i]<<endl;
-            opt1<<setprecision(12)<<y[i]<<endl;
-            for(int j=0; j<nu; j++){
-                opt2<<setprecision(12)<<P(i,j)<<endl;
-            }
-        }
+        // adopt best RVs (M6)
+        applyRow(P.row(Pl));
 
         LogFile<<ym<<"          "<<ys<<endl;
         LogFile<<" End Optimisation "<<endl;
-        LogFile<<" RVs after "<<zaehler<<" Iterations and "<<eval<<" Evaluations of Optimisation: "<<endl;
-        if(ui->checkBox_3->isChecked()){
-            for(int i = 0; i<nu;i++){
-                LogFile<<P(Pl,i)<<endl;
-            }
-        }
-        else if(ui->checkBox_4->isChecked()){
-            for(int i = 0; i<nu/2;i++){
-                LogFile<<P(Pl,i)<<" "<<P(Pl,i+nu/2)<<endl;
-            }
-        }
+        LogFile<<" RVs after "<<itersDone<<" Iterations and "<<eval<<" Evaluations of Optimisation: "<<endl;
+        logRVs(LogFile);
         LogFile.close();
 
-        cout<<"RV's after "<<zaehler<<" Iterations and "<<eval<<" Evaluations:"<<endl;
-        for(int i=0; i<nu/2;i++){
-            cout<<P(Pl,i)<<" "<<P(Pl,i+nu/2)<<endl;
-        }
+        cout<<"RV's after "<<itersDone<<" Iterations and "<<eval<<" Evaluations:"<<endl;
+        logRVs(cout);
     }
 
       //optimization on orbit**********************************************************
@@ -3911,7 +2527,7 @@ void MainWindow::Optimisation()
 
               QVector<int> pvf(7);
 
-              if(ui->checkBox_18->isChecked()){ // P
+              if(!ui->checkBox_18->isChecked()){ // P
                   pvf[0]=1; // fixed
                   LogFile<<"P locked ";
                   ++add;
@@ -3919,7 +2535,7 @@ void MainWindow::Optimisation()
               else{
                   pvf[0]=0; // free
               }
-              if(ui->checkBox_17->isChecked()){ // e
+              if(!ui->checkBox_17->isChecked()){ // e
                   pvf[1]=1;
                   LogFile<<"e locked ";
                   ++add;
@@ -3927,7 +2543,7 @@ void MainWindow::Optimisation()
               else{
                   pvf[1]=0;
               }
-              if(ui->checkBox_31->isChecked()){ // KA
+              if(!ui->checkBox_31->isChecked()){ // KA
                   pvf[2]=1;
                   LogFile<<"KA locked ";
                   ++add;
@@ -3935,7 +2551,7 @@ void MainWindow::Optimisation()
               else{
                   pvf[2]=0;
               }
-              if(ui->checkBox_36->isChecked()){ // KB
+              if(!ui->checkBox_36->isChecked()){ // KB
                   pvf[3]=1;
                   LogFile<<"KB locked ";
                   ++add;
@@ -3943,15 +2559,18 @@ void MainWindow::Optimisation()
               else{
                   pvf[3]=0;
               }
-              if(ui->checkBox_37->isChecked()){ // Gamma
+              if(!ui->checkBox_37->isChecked()){ // Gamma
                   pvf[4]=1;
                   LogFile<<"Gamma locked ";
                   ++add;
               }
               else{
                   pvf[4]=0;
+                  cout<<kGammaNote<<endl;
+                  LogFile<<endl<<kGammaNote<<endl;
+                  if(runow==0) ui->plainTextEdit_2->appendPlainText(kGammaNote);
               }
-              if(ui->checkBox_35->isChecked()){ // T0
+              if(!ui->checkBox_35->isChecked()){ // T0
                   pvf[5]=1;
                   LogFile<<"T0 locked ";
                   ++add;
@@ -3959,7 +2578,7 @@ void MainWindow::Optimisation()
               else{
                   pvf[5]=0;
               }
-              if(ui->checkBox_38->isChecked()){ // Omega
+              if(!ui->checkBox_38->isChecked()){ // Omega
                   pvf[6]=1;
                   LogFile<<"Omega locked ";
                   ++add;
@@ -3970,12 +2589,20 @@ void MainWindow::Optimisation()
 
               LogFile<<"Optimisation on orbital parameters."<<endl;
 
+              if(add>=7){
+                  reportError("Error 37: All orbital elements are locked.");
+                  abortt=0;
+                  this->setCursor(QCursor(Qt::ArrowCursor));
+                  MainWindow::enableButtons();
+                  return;
+              }
               nu = nu-add;
               //cout<<"add: "<<add<<endl;
 
               LogFile<<endl;
 
-              double y[nu+1], P[nu+1][nu], Z[nu], Co[nu], So[nu], Eo[nu], e[nu+1][nu];
+              std::vector<double> y(nu+1), Z(nu), Co(nu), So(nu), Eo(nu);
+              mat P(nu+1,nu), e(nu+1,nu);
               QVector<double> porbele(nu), ddorbele(nu);
               int pcount=0;
 
@@ -3991,8 +2618,26 @@ void MainWindow::Optimisation()
               }
               pcount=0;
 
+              // Continue: stored simplex or a new one around the best values; reinitiation: new one
+              qOptval = ui->lineEdit_16->text();
+              qOptmat = ui->lineEdit_17->text();
+              bool contRebuild = false;
+              if(inrein==0 && !ui->checkBox_9->isChecked() && ui->checkBox_11->isChecked()){
+                  std::vector<double> cur(nu);
+                  for(int j=0; j<nu; j++) cur[j]=porbele[j];
+                  const std::string why = continueNeedsNewSimplex(nu, cur);
+                  if(!why.empty()){
+                      contRebuild = true;
+                      const std::string m = "Continue: new simplex around the current best orbit because "+why+".";
+                      LogFile<<m<<endl;
+                      cout<<m<<endl;
+                      ui->plainTextEdit_2->appendPlainText(QString::fromStdString(m));
+                  }
+              }
+              const bool rebuild = inrein==1 || contRebuild;
+
               //create new initial data
-              if(ui->checkBox_9->isChecked()){
+              if(ui->checkBox_9->isChecked() || rebuild){
                   r1=0.0;
 
                   qInitval = ui->lineEdit_14->text();
@@ -4006,13 +2651,17 @@ void MainWindow::Optimisation()
                   std::ostringstream file2NameStream(file2init);
                   file2NameStream<<path<<"/"<<file2init;
                   std::string file2Name = file2NameStream.str();
-                  
-                  if(ui->checkBox_9->isChecked()){
+                  if(rebuild){   // new simplex around the best values: written as the optimisation files
+                      file1Name = (qPath+"/"+qOptval).toStdString();
+                      file2Name = (qPath+"/"+qOptmat).toStdString();
+                  }
+
+                  if(ui->checkBox_9->isChecked() && !rebuild){
 
                     QFile QIn(file1Name.c_str());
                     QFile QIn2(file2Name.c_str());
 
-                    if((inrein==0) & (QIn.exists() or QIn2.exists())){
+                    if((QIn.exists() or QIn2.exists())){
                         if(runow==0){
                             QMessageBox::StandardButton reply;
                             reply = QMessageBox::question(this, "Warning!", "The file already exists. \n\n Do you want to overwrite it?",
@@ -4031,7 +2680,9 @@ void MainWindow::Optimisation()
                         }
                         else{
                             cout<<"Warning: The optimisation files already exists. Do you want to overwrite it? 0 no, yes 1: "<<endl;
-                            cin >> overw;
+                            if(batchOverwrite==1) overw=1;
+                    else if(!(cin >> overw)) overw=0;
+                    if(overw==0) cerr<<"Existing optimisation files are not overwritten (use --overwrite)."<<endl;
                             if(overw==0){
                                 qDebug()<< "Initiation aborted.";
                                 this->setCursor(QCursor(Qt::ArrowCursor));
@@ -4064,9 +2715,9 @@ void MainWindow::Optimisation()
 
                   for(int i=0; i<7; i++){
                       if(pvf[i]==0){
-                          P[0][pcount]=porbele[pcount];
-                          cout<<P[0][pcount]<<" ";
-                          LogFile<<P[0][pcount]<<" ";
+                          P(0,pcount)=porbele[pcount];
+                          cout<<P(0,pcount)<<" ";
+                          LogFile<<P(0,pcount)<<" ";
                           ++pcount;
                       }
                       else{
@@ -4080,11 +2731,11 @@ void MainWindow::Optimisation()
                   for(int i=0; i<nu+1; i++){
                       for(int j=0; j<nu; j++){
                           if((i>0)&(i==j+1)){
-                              e[i][j]=ddorbele[i-1];
+                              e(i,j)=ddorbele[i-1];
                           }
-                          else e[i][j]=0;
-                          cout<<e[i][j]<<" ";
-                          LogFile<<e[i][j]<<" ";
+                          else e(i,j)=0;
+                          cout<<e(i,j)<<" ";
+                          LogFile<<e(i,j)<<" ";
                       }
                       cout<<endl;
                       LogFile<<endl;
@@ -4092,18 +2743,35 @@ void MainWindow::Optimisation()
                   cout <<endl;
                   LogFile<<endl;
 
+                  if(rebuild){
+                      // reinitiation: steps on the scale of the uncertainty (see reinitSteps)
+                      arma::vec h0(nu);
+                      for(int j=0; j<nu; j++) h0(j) = e(j+1,j);
+                      auto setOrbit = [&](const arma::rowvec &x){
+                          int pc=0;
+                          for(int k=0; k<7; k++) if(pvf[k]==0) orbele[k] = x(pc++);
+                          eval++;
+                          ui->spinBox_5->setValue(eval);
+                          qApp->processEvents(QEventLoop::AllEvents);
+                          return MainWindow::evaluateOrbit();
+                      };
+                      const arma::vec h = reinitSteps(P.row(0), h0, setOrbit, LogFile);
+                      for(int j=0; j<nu; j++) e(j+1,j) = h(j);
+                      upda = 0;
+                  }
+
                   for(int i=0; i<nu+1; i++){
                       for(int j=0; j<nu; j++){
-                          P[i][j]=P[0][j]+e[i][j];
-                          init2<<setprecision(14)<<P[i][j]<<endl;
-                          cout<<P[i][j]<<" ";
-                          LogFile<<P[i][j]<<" ";
+                          P(i,j)=P(0,j)+e(i,j);
+                          init2<<setprecision(14)<<P(i,j)<<endl;
+                          cout<<P(i,j)<<" ";
+                          LogFile<<P(i,j)<<" ";
                       }
                       LogFile<<endl;
 
                       for(int e=0; e<7; e++){
                           if(pvf[e]==0){
-                              orbele[e]=P[i][pcount];
+                              orbele[e]=P(i,pcount);
                               ++pcount;
                           }
                           else{
@@ -4115,12 +2783,9 @@ void MainWindow::Optimisation()
                       eval++;
                       ui->spinBox_5->setValue(eval);
                       qApp->processEvents(QEventLoop::AllEvents);
-                      MainWindow::VAmplitudeA();
-                      MainWindow::VAmplitudeB();
-                      MainWindow::ConstructMatrix();
-                      y[i]=MainWindow::DivideConquer();
+                      y[i]=MainWindow::evaluateOrbit();
                       qApp->processEvents(QEventLoop::AllEvents);
-                      soptd<<"0\t"<<eval<<"\t"<<y[i]<<endl;
+                      soptd<<"0\t"<<eval<<"\t"<<y[i]<<"\t"<<sigma2Now(y[i])<<endl;
 
                       if(upda==1){
                           upda=0;
@@ -4141,7 +2806,6 @@ void MainWindow::Optimisation()
 
                       if(abortt==1){
                           abortt=0;
-                          sequence=0;
                           LogFile<<"Initiation aborted."<<endl;
                           this->setCursor(QCursor(Qt::ArrowCursor));
                           MainWindow::enableButtons();
@@ -4164,7 +2828,7 @@ void MainWindow::Optimisation()
               }
 
               //continue with optimised data
-              if(ui->checkBox_11->isChecked()){
+              else if(ui->checkBox_11->isChecked()){
                   string zeile, one;
 
                   LogFile<<"Load data from previous optimisation."<<endl;
@@ -4192,7 +2856,6 @@ void MainWindow::Optimisation()
                       }
                       else{
                           cout<<"The optimisation file does not exist! When running optimisation the first time for a given set of data, the optimisation needs to be initiated first."<<endl;
-                          MainWindow::Input();
                       }
                      this->setCursor(QCursor(Qt::ArrowCursor));
                       LogFile<<"The optimisation file does not exist! When running optimisation the first time for a given set of data, the optimisation needs to be initiated first."<<endl;
@@ -4202,8 +2865,10 @@ void MainWindow::Optimisation()
 
                   int number_of_lines =0;
 
-                  while(std::getline(initiate1, zeile))
-                     ++ number_of_lines;
+                  while(std::getline(initiate1, zeile)){
+                     ++number_of_lines;
+                     dis::keepAlive();
+                 }
 
                   initiate1.clear();
                   initiate1.seekg(0, ios::beg);
@@ -4215,7 +2880,6 @@ void MainWindow::Optimisation()
                       }
                       else{
                           cout<<"The optimisation file does match to the data! When running optimisation the first time for a given set of data, the optimisation needs to be initiated first."<<endl;
-                          MainWindow::Input();
                       }
                      this->setCursor(QCursor(Qt::ArrowCursor));
                       LogFile<<"The optimisation file does not match to the data! When running optimisation the first time for a given set of data, the optimisation needs to be initiated first."<<endl;
@@ -4235,14 +2899,15 @@ void MainWindow::Optimisation()
                     }
                   }
                   initiate1.close();
+                  g_bestStateS = r1;   // best state: only real improvements on the stored simplex
 
                   int coun=0;
 
                   for (int i=0; i<number_of_lines*nu; i++){
                     initiate2 >> one;
                     istringstream ist(one);
-                    ist >> P[coun][i-coun*nu];
-                    cout<<"P["<<coun<<"]["<<i-coun*nu<<"]: "<<P[coun][i-coun*nu]<<" ";
+                    ist >> P(coun,i-coun*nu);
+                    cout<<"P("<<coun<<","<<i-coun*nu<<"): "<<P(coun,i-coun*nu)<<" ";
                     if(i==coun*nu+nu-1){
                         cout<<endl;
                         ++coun;
@@ -4254,7 +2919,7 @@ void MainWindow::Optimisation()
               }
 
               // Use initial data
-              if(ui->checkBox_12->isChecked()){
+              else if(ui->checkBox_12->isChecked()){
 
                   string zeile, one;
 
@@ -4282,7 +2947,6 @@ void MainWindow::Optimisation()
                       }
                       else{
                           cout<<"The initiation file does not exist! When running optimisation the first time for a given set of data, the optimisation needs to be initiated first."<<endl;
-                          MainWindow::Input();
                       }
                      this->setCursor(QCursor(Qt::ArrowCursor));
                       LogFile<<"The initiation file does not exist! When running optimisation the first time for a given set of data, the optimisation needs to be initiated first."<<endl;
@@ -4293,8 +2957,10 @@ void MainWindow::Optimisation()
 
                   int number_of_lines =0;
 
-                  while(std::getline(initiate1, zeile))
-                     ++ number_of_lines;
+                  while(std::getline(initiate1, zeile)){
+                     ++number_of_lines;
+                     dis::keepAlive();
+                 }
 
                   initiate1.clear();
                   initiate1.seekg(0, ios::beg);
@@ -4332,8 +2998,8 @@ void MainWindow::Optimisation()
                   for (int i=0; i<number_of_lines*nu; i++){
                     initiate2 >> one;
                     istringstream ist(one);
-                    ist >> P[coun][i-coun*nu];
-                    cout<<"P["<<coun<<"]["<<i-coun*nu<<"]: "<<P[coun][i-coun*nu]<<" ";
+                    ist >> P(coun,i-coun*nu);
+                    cout<<"P("<<coun<<","<<i-coun*nu<<"): "<<P(coun,i-coun*nu)<<" ";
                     if(i==coun*nu+nu-1){
                         cout<<endl;
                         ++coun;
@@ -4348,14 +3014,40 @@ void MainWindow::Optimisation()
               std::ostringstream file1NameStream(file1opt);
               file1NameStream<<path<<"/"<<file1opt;
               std::string file1Name = file1NameStream.str();
-              ofstream opt1(file1Name.c_str());
 
               qOptmat = ui->lineEdit_17->text();
               string file2opt = qOptmat.toUtf8().constData();
               std::ostringstream file2NameStream(file2opt);
               file2NameStream<<path<<"/"<<file2opt;
               std::string file2Name = file2NameStream.str();
-              ofstream opt2(file2Name.c_str());
+              // save simplex (bug report H12: files were emptied beforehand)
+              auto saveSimplex = [&](){
+                  ofstream o1(file1Name.c_str()), o2(file2Name.c_str());
+                  for(int i=0; i<nu+1;i++){
+                      o1<<setprecision(14)<<y[i]<<endl;
+                      for(int j=0; j<nu; j++){
+                          o2<<setprecision(14)<<P(i,j)<<endl;
+                      }
+                  }
+              };
+              auto writeBestOrbit = [&](){
+                  ofstream borbit((qPath+"/"+qOrbitFile).toStdString().c_str());
+                  int pc=0;
+                  for(int e=0; e<7; e++){
+                      if(pvf[e]==0){
+                          borbit<<setprecision(14)<<P(Pl,pc)<<endl;
+                          ++pc;
+                      }
+                      else{
+                          borbit<<setprecision(14)<<orbele[e]<<endl;
+                      }
+                  }
+              };
+        nm::Coefficients nmCoef;
+        nmCoef.alpha=alpha;
+        nmCoef.gamma=Gamma;
+        nmCoef.beta=nmBeta;
+        nmCoef.delta=btot;
 
               LogFile<<endl;
               LogFile<<"*************************"<<endl;
@@ -4369,17 +3061,25 @@ void MainWindow::Optimisation()
 
 
                   //start main loop
+                  nm::ProgressMonitor progress(ui->spinBox_11->value()>0 ? ui->spinBox_11->value() : nm::defaultWindow(nu));
+                  int itersDone = zaehler;
                   for(int t=0; t<zaehler; t++){
+                      // iteration limit applies across all restarts (Reinitiate)
+                      if(++g_itersUsed>zaehler){
+                          LogFile<<"Maximum number of iterations reached (including restarts)."<<endl;
+                          itersDone = t;
+                          break;
+                      }
                       ui->spinBox_4->setValue(t+1);
 
-                      string optback1 = "optval_vel_backup.dat";
+                      string optback1 = withSuffix(ui->lineEdit_16->text(), "_backup").toStdString();
                       std::ostringstream back1NameStream(optback1);
                       back1NameStream<<path<<"/"<<optback1;
                       std::string back1Name = back1NameStream.str();
                       ofstream back1(back1Name.c_str());
 
 
-                      string optback2 = "optmat_vel_backup.dat";
+                      string optback2 = withSuffix(ui->lineEdit_17->text(), "_backup").toStdString();
                       std::ostringstream back2NameStream(optback2);
                       back2NameStream<<path<<"/"<<optback2;
                       std::string back2Name = back2NameStream.str();
@@ -4389,7 +3089,7 @@ void MainWindow::Optimisation()
                           //cout<<y[i]<<endl;
                           back1<<setprecision(12)<<y[i]<<endl;
                           for(int j=0; j<nu; j++){
-                              back2<<setprecision(12)<<P[i][j]<<endl;
+                              back2<<setprecision(12)<<P(i,j)<<endl;
                           }
                       }
 
@@ -4411,38 +3111,7 @@ void MainWindow::Optimisation()
                           Z[i]=0;
                       }
 
-                      //looking for highest value
-                      yh=y[0];
-                      for(int i=0; i<nu+1; i++){
-                          if(y[i]>=yh){
-                              yh = y[i];
-                              Ph = i;
-                          }
-                      }
-
-                      //looking for smallest value
-                      yl = yh;
-                      for(int i=0; i<nu+1; i++){
-                          if(y[i]<yl){
-                              yl = y[i];
-                              Pl = i;
-                          }
-                      }
-
-                      //looking for second highest value
-                      ysh = yl;
-                      for(int i=0; i<nu+1; i++){
-                          if((y[i]>ysh) &(y[i]<yh) & (y[i]>yl) & (i!=Pl)){
-                              for(int i=0; i<nu+1; i++){
-                                 ysh = y[i];
-                                 Psh = i;
-                                }
-                            }
-                      }
-
-                      yh=y[Ph];
-                      yl=y[Pl];
-                      ysh=y[Psh];
+                      nm::order(y, Ph, Psh, Pl);
 
                       //computing mean and sigma
                       for(int i=0; i<nu+1; i++){
@@ -4453,109 +3122,36 @@ void MainWindow::Optimisation()
                       }
                       ys = ys/nu;
 
-                      if((ys==ys2) & (ym==ym2)){
-                          ++stagnate;
+                      // stagnation (exactly equal simplex values) only as a notice now
+                      if((ys==ys2) && (ym==ym2)) ++stagnate;
+                      else stagnate=0;
 
-                          // reinitiation
-                          if(ui->checkBox_32->isChecked()){
-
-                              //auto stop
-                              if(ui->checkBox_23->isChecked()){
-                                  if(ui->spinBox_6->value()==1){
-                                      if(ui->checkBox_27->isChecked()){ // use next sequence
-                                          LogFile<<"Finished Sequence "<<sequence<<". Setting up next sequence."<<endl;
-                                          LogFile<<"Using optimized RVs from last sequence."<<endl;
-                                          ++sequence;
-                                          MainWindow::on_pushButton_11_clicked(); // setting file names
-                                          ui->checkBox_9->setChecked(true);       // new optimisaton
-                                          ui->checkBox_11->setChecked(false);     // disable continue
-                                          ui->spinBox_3->setValue(9999);          // # iterations
-                                          MainWindow::on_pushButton_4_clicked();  // start optimisation
-                                      }
-                                      else{ // no sequence specified, stop optimization
-                                          cout<<"Optimisatin stopped; no better parameters found; stagnating."<<endl;
-                                          LogFile<<"Optimisatin stopped; no better parameters found; stagnating."<<endl;
-                                          MainWindow::enableButtons();
-                                          return;
-                                      }
-                                  }
-                                  // no auto stop applied but active
-                                  else{
-                                      cout<<"Reinitiate optimisation with current best orbit."<<endl;
-                                      ui->plainTextEdit_2->appendPlainText("Reinitiate optimisation with current best orbit.");
-                                      LogFile<<"Stagnation of DSM: "<<stagnate<<endl;
-                                      LogFile<<endl;
-                                      LogFile<<"Reinitiate optimisation with current best orbit."<<endl;
-
-                                      string filerein = "orbitelements.dat";
-                                      std::ostringstream reinNameStream(filerein);
-                                      reinNameStream<<path<<"/"<<filerein;
-                                      std::string reinName = reinNameStream.str();
-                                      ofstream borbit(reinName.c_str());
-
-                                      for(int e=0; e<7; e++){
-                                          if(pvf[e]==0){
-                                              borbit<<setprecision(14)<<P[Pl][pcount]<<endl;
-                                              ++pcount;
-                                          }
-                                          else{
-                                              borbit<<setprecision(14)<<orbele[e]<<endl;
-                                          }
-                                      }
-                                      pcount=0;
-                                      ui->checkBox_9->setChecked(true);
-                                      ui->checkBox_11->setChecked(false);
-                                      ui->checkBox_12->setChecked(false);
-
-                                      reinitiate=1;
-                                      return;
-                                  }
+                      // Auto Stop / Reinitiate based on the progress in chi^2
+                      {
+                          RunAction act = MainWindow::convergenceStep(progress, y[Pl], nu, LogFile);
+                          if(act==RunAction::Reinit){
+                              cout<<"Reinitiate optimisation with current best orbit."<<endl;
+                              ui->plainTextEdit_2->appendPlainText("Reinitiate optimisation with current best orbit.");
+                              LogFile<<endl<<"Reinitiate optimisation with current best orbit."<<endl;
+                              // strengths of the static lines again, at the next solve (best point)
+                              g_tellFitPending = ui->checkBox_8->isChecked() && ui->checkBox_tellfit->isChecked();
+                              writeBestOrbit();
+                              {   // the restart takes the best state (not the inputs); settings unchanged
+                                  int pc=0;
+                                  for(int e=0; e<7; e++) if(pvf[e]==0) orbele[e]=P(Pl,pc++);
                               }
-
-                              // no auto stop activated, reinitiate
-                              else{
-                                cout<<"Reinitiate optimisation with current best orbit."<<endl;
-                                ui->plainTextEdit_2->appendPlainText("Reinitiate optimisation with current best orbit.");
-                                LogFile<<"Stagnation of DSM: "<<stagnate<<endl;
-                                LogFile<<endl;
-                                LogFile<<"Reinitiate optimisation with current best orbit."<<endl;
-
-                                string filerein = "orbitelements.dat";
-                                std::ostringstream reinNameStream(filerein);
-                                reinNameStream<<path<<"/"<<filerein;
-                                std::string reinName = reinNameStream.str();
-                                ofstream borbit(reinName.c_str());
-
-                                for(int e=0; e<7; e++){
-                                    if(pvf[e]==0){
-                                        borbit<<setprecision(14)<<P[Pl][pcount]<<endl;
-                                        ++pcount;
-                                    }
-                                    else{
-                                        borbit<<setprecision(14)<<orbele[e]<<endl;
-                                    }
-                                }
-                                pcount=0;
-                                ui->checkBox_9->setChecked(true);
-                                ui->checkBox_11->setChecked(false);
-                                ui->checkBox_12->setChecked(false);
-
-                                reinitiate=1;
-                                return;
-                            }
-                        }
-                          // no reinitiated or auto stop active
-                          else{
-                              QString stagn = QString::number(stagnate);
-                              LogFile<<"Stagnation of DSM: "<<stagnate<<endl;
-                              cout<<"Optimisation may stagnate. No change in mean and STD of simplex points since "<<stagnate<<" iterations."<<endl;
-                              ui->plainTextEdit_2->appendPlainText("Optimisation may stagnate. No change in mean and STD of simplex points since "+stagn+" iterations.");
+                              writeBestState(false, y[Pl]);
+                              g_bestStateS = y[Pl];
+                              saveSimplex();
+                              reinitiate=1;
+                              return;
                           }
-
+                          if(act==RunAction::Done){
+                              cout<<"Optimisation stopped (Auto Stop)."<<endl;
+                              LogFile<<"Optimisation stopped (Auto Stop)."<<endl;
+                              itersDone = t;
+                              break;
                           }
-
-                      else {
-                          stagnate =0;
                       }
 
                       cout<<"Stag-Index: "<<stagnate<<endl;
@@ -4566,293 +3162,27 @@ void MainWindow::Optimisation()
                       cout<<"Simplex Mean: "<<ym<<" Simplex STD: "<<ys<<endl;
                       LogFile<<setprecision(12)<<"Mean: "<<ym<<"; STD: "<<ys<<endl;
 
-                      //compute centroid
-                      for(int j=0; j<nu; j++){
-                          for(int i=0; i<nu+1; i++){
-                              if(i!=Ph){
-                                  Z[j]+=P[i][j]/nu;
-                              }
-                          }
-                      }
-
-                      //reflect highest value at centroid
-                      for(int i=0; i<nu; i++){
-                          Co[i]=Z[i]+alpha*(Z[i]-P[Ph][i]);
-                      }
-                      for(int e=0; e<7; e++){
-                          if(pvf[e]==0){
-                              orbele[e]=Co[pcount];
-                              ++pcount;
-                          }
-                          else{
-                              //
-                          }
-                      }
-                      pcount=0;
-                      eval++;
-                      ui->spinBox_5->setValue(eval);
-                      qApp->processEvents(QEventLoop::AllEvents);
-                      MainWindow::VAmplitudeA();
-                      MainWindow::VAmplitudeB();
-                      MainWindow::ConstructMatrix();
-                      yi=MainWindow::DivideConquer();
-                      qApp->processEvents(QEventLoop::AllEvents);
-                      soptd<<t<<"\t"<<eval<<"\t"<<yi<<endl;
-
-                      if(upda==1){
-                          upda=0;
-                          LogFile<<endl;
-                          LogFile<<"New Parameters found."<<endl;
-                          LogFile<<"Residuum: "<<yi<<endl;
-                          LogFile<<setprecision(14)<<"P: "<<orbele[0]<<endl;
-                          LogFile<<setprecision(14)<<"e: "<<orbele[1]<<endl;
-                          LogFile<<setprecision(14)<<"KA: "<<orbele[2]<<endl;
-                          LogFile<<setprecision(14)<<"KB: "<<orbele[3]<<endl;
-                          LogFile<<setprecision(14)<<"Gamma: "<<orbele[4]<<endl;
-                          LogFile<<setprecision(14)<<"T0: "<<orbele[5]<<endl;
-                          LogFile<<setprecision(14)<<"Omega: "<<orbele[6]<<endl;
-                          LogFile<<endl;
-                      }
-
-                      if(abortt==1){
-                          //output results
-                          LogFile<<"Optimisation aborted. Current best Elements:"<<endl;
-                              for(int i = 0; i<nu;i++){
-                                  LogFile<<setprecision(14)<<P[Pl][i]<<endl;
-                              }
-                          LogFile<<endl;
-                          for(int i=0; i<nu+1; i++){
-                              cout<<y[i]<<endl;
-                              opt1<<setprecision(14)<<y[i]<<endl;
-                              for(int j =0; j<nu; j++){
-                                  opt2<<setprecision(14)<<P[i][j]<<endl;
-                              }
-                          }
-                          opt1.close();
-                          opt2.close();
-                          abortt=0;
-                          sequence=0;
-                          this->setCursor(QCursor(Qt::ArrowCursor));
-                          MainWindow::enableButtons();
-                          return;
-                      }
-                      cout<<"reflection 1"<<endl;
-
-                      //Alpha Branch, better than best point=So[i]=So[i]
-                      if(yi<yl){
-                          cout<<"expansion"<<endl;
-                          LogFile<<"yi<yl, expansion; ";
-                          for(int i=0; i<nu; i++){
-                              Eo[i]=Z[i]+Gamma*(Co[i]-Z[i]);
-                          }
-                          for(int e=0; e<7; e++){
-                              if(pvf[e]==0){
-                                  orbele[e]=Eo[pcount];
-                                  ++pcount;
-                              }
-                              else{
-                                  //
-                              }
-                          }
-                          pcount=0;
-                          eval++;
-                          ui->spinBox_5->setValue(eval);
-                          qApp->processEvents(QEventLoop::AllEvents);
-                          MainWindow::VAmplitudeA();
-                          MainWindow::VAmplitudeB();
-                          MainWindow::ConstructMatrix();
-                          yt=MainWindow::DivideConquer();
-                          soptd<<t<<"\t"<<eval<<"\t"<<yt<<endl;
-                          qApp->processEvents(QEventLoop::AllEvents);
-
-                          if(upda==1){
-                              upda=0;
-                              LogFile<<endl;
-                              LogFile<<"New Parameters found."<<endl;
-                              LogFile<<"Residuum: "<<yt<<endl;
-                              LogFile<<setprecision(14)<<"P: "<<orbele[0]<<endl;
-                              LogFile<<setprecision(14)<<"e: "<<orbele[1]<<endl;
-                              LogFile<<setprecision(14)<<"KA: "<<orbele[2]<<endl;
-                              LogFile<<setprecision(14)<<"KB: "<<orbele[3]<<endl;
-                              LogFile<<setprecision(14)<<"Gamma: "<<orbele[4]<<endl;
-                              LogFile<<setprecision(14)<<"T0: "<<orbele[5]<<endl;
-                              LogFile<<setprecision(14)<<"Omega: "<<orbele[6]<<endl;
-                              LogFile<<endl;
-                          }
-
-                          if(abortt==1){
-                              //output results
-                              LogFile<<"Optimisation aborted. Current best Elements:"<<endl;
-                                  for(int i = 0; i<nu;i++){
-                                      LogFile<<setprecision(14)<<P[Pl][i]<<endl;
-                                  }
-                              for(int i=0; i<nu+1; i++){
-                                  cout<<y[i]<<endl;
-                                  opt1<<setprecision(14)<<y[i]<<endl;
-                                  for(int j =0; j<nu; j++){
-                                      opt2<<setprecision(14)<<P[i][j]<<endl;
-                                  }
-                              }
-                              opt1.close();
-                              opt2.close();
-                              abortt=0;
-                              sequence=0;
-                              this->setCursor(QCursor(Qt::ArrowCursor));
-                              MainWindow::enableButtons();
-                              return;
-                          }
-                          if(yt<yl){
-                              cout<<"exp ";
-                              for(int i=0; i<nu; i++){
-                                  P[Ph][i]=Eo[i];
-                              }
-                              y[Ph]=yt;
-
-                          }
-                          if(yt>=yl){
-                              cout<<"ref1 ";
-                              for(int i=0; i<nu; i++){
-                                  P[Ph][i]=Co[i];
-                              }
+                      //Nelder-Mead step (neldermead.h)
+                      {
+                          auto fOrb = [&](const arma::rowvec &x){
+                              int pc=0;
                               for(int e=0; e<7; e++){
                                   if(pvf[e]==0){
-                                      orbele[e]=Co[pcount];
-                                      ++pcount;
-                                  }
-                                  else{
-                                      //
+                                      orbele[e]=x(pc);
+                                      ++pc;
                                   }
                               }
-                              pcount=0;
-
-                              y[Ph]=yi;//MainWindow::DivideConquer();
-                              if(abortt==1){
-                                  //output results
-                                  LogFile<<"Optimisation aborted. Current best Elements:"<<endl;
-                                      for(int i = 0; i<nu;i++){
-                                          LogFile<<setprecision(14)<<P[Pl][i]<<endl;
-                                      }
-                                  for(int i=0; i<nu+1; i++){
-                                      cout<<y[i]<<endl;
-                                      opt1<<setprecision(14)<<y[i]<<endl;
-                                      for(int j =0; j<nu; j++){
-                                          opt2<<setprecision(14)<<P[i][j]<<endl;
-                                      }
-                                  }
-                                  opt1.close();
-                                  opt2.close();
-                                  abortt=0;
-                                  sequence=0;
-                                  this->setCursor(QCursor(Qt::ArrowCursor));
-                                  MainWindow::enableButtons();
-                                  return;
-                              }
-                              qApp->processEvents(QEventLoop::AllEvents);
-                          }
-                      }
-                      //Alpha Branch End
-
-                      //Beta Brnach, worse than best point
-                      if(yi>=yl){
-                          //Beta_2 branch
-                          cout<<"yi>=yl ";
-                          LogFile<<"yi>=yl ";
-                          if(yi<=ysh){
-                              cout<<"& <=ysh, ref2 ";
-                              LogFile<<"& <=ysh, reflection2; ";
-                              for(int i=0; i<nu; i++){
-                                  P[Ph][i]=Co[i];
-                              }
-
-                              y[Ph]=yi;//MainWindow::DivideConquer();
-                              if(abortt==1){
-                                  //output results
-                                  LogFile<<"Optimisation aborted. Current best Elements:"<<endl;
-                                      for(int i = 0; i<nu;i++){
-                                          LogFile<<setprecision(14)<<P[Pl][i]<<endl;
-                                      }
-                                  for(int i=0; i<nu+1; i++){
-                                      cout<<y[i]<<endl;
-                                      opt1<<setprecision(14)<<y[i]<<endl;
-                                      for(int j =0; j<nu; j++){
-                                          opt2<<setprecision(14)<<P[i][j]<<endl;
-                                      }
-                                  }
-                                  opt1.close();
-                                  opt2.close();
-                                  abortt=0;
-                                  sequence=0;
-                                  this->setCursor(QCursor(Qt::ArrowCursor));
-                                  MainWindow::enableButtons();
-                                  return;
-                              }
-                              qApp->processEvents(QEventLoop::AllEvents);
-                          }//Beta_2 branch end
-
-                          //Beta_1 branch
-                          if(yi>ysh){
-                              cout<<"yi>ysh ";
-                              LogFile<<"yi>ysh ";
-                              if(yi<=yh){
-                                  cout<<"yi<= yh ref3 ";
-                                  LogFile<<"yi <=yh, relfection3; ";
-                                  for(int i=0; i<nu; i++){
-                                      P[Ph][i]=Co[i];
-                                  }
-
-                                  y[Ph]=yi;//MainWindow::DivideConquer();
-                                  if(abortt==1){
-                                      //output results
-                                      LogFile<<"Optimisation aborted. Current best Elements:"<<endl;
-                                          for(int i = 0; i<nu;i++){
-                                              LogFile<<setprecision(14)<<P[Pl][i]<<endl;
-                                          }
-                                      for(int i=0; i<nu+1; i++){
-                                          cout<<y[i]<<endl;
-                                          opt1<<setprecision(14)<<y[i]<<endl;
-                                          for(int j =0; j<nu; j++){
-                                              opt2<<setprecision(14)<<P[i][j]<<endl;
-                                          }
-                                      }
-                                      opt1.close();
-                                      opt2.close();
-                                      abortt=0;
-                                      sequence=0;
-                                      this->setCursor(QCursor(Qt::ArrowCursor));
-                                      MainWindow::enableButtons();
-                                      return;
-                                  }
-                                  qApp->processEvents(QEventLoop::AllEvents);
-                                  yh=y[Ph];
-                              }
-                              for(int i=0; i<nu; i++){
-                                  So[i]=Z[i]+beta*(P[Ph][i]-Z[i]);
-                              }
-                                  for(int e=0; e<7; e++){
-                                      if(pvf[e]==0){
-                                          orbele[e]=So[pcount];
-                                          ++pcount;
-                                      }
-                                      else{
-                                          //
-                                      }
-                                  }
-                                  pcount=0;
                               eval++;
                               ui->spinBox_5->setValue(eval);
                               qApp->processEvents(QEventLoop::AllEvents);
-                              MainWindow::VAmplitudeA();
-                              MainWindow::VAmplitudeB();
-                              MainWindow::ConstructMatrix();
-                              yt=MainWindow::DivideConquer();
-                              soptd<<t<<"\t"<<eval<<"\t"<<yt<<endl;
+                              double r=MainWindow::evaluateOrbit();
+                              soptd<<t<<"\t"<<eval<<"\t"<<r<<"\t"<<sigma2Now(r)<<endl;
                               qApp->processEvents(QEventLoop::AllEvents);
-
                               if(upda==1){
                                   upda=0;
                                   LogFile<<endl;
                                   LogFile<<"New Parameters found."<<endl;
-                                  LogFile<<"Residuum: "<<yt<<endl;
+                                  LogFile<<"Residuum: "<<r<<endl;
                                   LogFile<<setprecision(14)<<"P: "<<orbele[0]<<endl;
                                   LogFile<<setprecision(14)<<"e: "<<orbele[1]<<endl;
                                   LogFile<<setprecision(14)<<"KA: "<<orbele[2]<<endl;
@@ -4862,209 +3192,60 @@ void MainWindow::Optimisation()
                                   LogFile<<setprecision(14)<<"Omega: "<<orbele[6]<<endl;
                                   LogFile<<endl;
                               }
-
-                              if(abortt==1){
-                                  //output results
-                                  LogFile<<"Optimisation aborted. Current best Elements:"<<endl;
-                                      for(int i = 0; i<nu;i++){
-                                          LogFile<<setprecision(14)<<P[Pl][i]<<endl;
-                                      }
-                                  for(int i=0; i<nu+1; i++){
-                                      cout<<y[i]<<endl;
-                                      opt1<<setprecision(14)<<y[i]<<endl;
-                                      for(int j =0; j<nu; j++){
-                                          opt2<<setprecision(14)<<P[i][j]<<endl;
-                                      }
-                                  }
-                                  opt1.close();
-                                  opt2.close();
-                                  abortt=0;
-                                  sequence=0;
-                                  this->setCursor(QCursor(Qt::ArrowCursor));
-                                  MainWindow::enableButtons();
-                                  return;
+                              return r;
+                          };
+                          nm::StepResult st = nm::step(P, y, nmCoef, fOrb, [&]{ return abortt==1; });
+                          LogFile<<st.log;
+                          if(st.aborted){
+                              nm::order(y, Ph, Psh, Pl);
+                              LogFile<<"Optimisation aborted. Current best Elements:"<<endl;
+                              for(int i = 0; i<nu;i++){
+                                  LogFile<<setprecision(14)<<P(Pl,i)<<endl;
                               }
-
-                              //Beta_1_1 branch
-                              if(yt>yh){
-                                  cout<<"yt <yh tot ";
-                                  LogFile<<"yt>yh, total contraction; ";
-                                  for(int j=0; j<nu+1; j++){
-                                      for(int i =0; i<nu; i++){
-                                          P[j][i]=P[Pl][i]+btot*(P[j][i]-P[Pl][i]);
-
-                                          for(int e=0; e<7; e++){
-                                              if(pvf[e]==0){
-                                                  orbele[e]=P[j][pcount];
-                                                  ++pcount;
-                                              }
-                                              else{
-                                                  //
-                                              }
-                                          }
-                                          pcount=0;
-                                      }
-                                      eval++;
-                                      ui->spinBox_5->setValue(eval);
-                                      qApp->processEvents(QEventLoop::AllEvents);
-                                      MainWindow::VAmplitudeA();
-                                      MainWindow::VAmplitudeB();
-                                      MainWindow::ConstructMatrix();
-                                      y[j]=MainWindow::DivideConquer();
-                                      soptd<<t<<"\t"<<eval<<"\t"<<y[j]<<endl;
-                                      qApp->processEvents(QEventLoop::AllEvents);
-                                      cout<<j+1<<" of "<<nu+1<<" points contracted."<<endl;
-
-                                      if(upda==1){
-                                          upda=0;
-                                          LogFile<<endl;
-                                          LogFile<<"New Parameters found."<<endl;
-                                          LogFile<<"Residuum: "<<y[j]<<endl;
-                                          LogFile<<setprecision(14)<<"P: "<<orbele[0]<<endl;
-                                          LogFile<<setprecision(14)<<"e: "<<orbele[1]<<endl;
-                                          LogFile<<setprecision(14)<<"KA: "<<orbele[2]<<endl;
-                                          LogFile<<setprecision(14)<<"KB: "<<orbele[3]<<endl;
-                                          LogFile<<setprecision(14)<<"Gamma: "<<orbele[4]<<endl;
-                                          LogFile<<setprecision(14)<<"T0: "<<orbele[5]<<endl;
-                                          LogFile<<setprecision(14)<<"Omega: "<<orbele[6]<<endl;
-                                          LogFile<<endl;
-                                      }
-
-                                      if(abortt==1){
-                                          //output results
-                                          LogFile<<"Optimisation aborted. Current best Elements:"<<endl;
-                                              for(int i = 0; i<nu;i++){
-                                                  LogFile<<setprecision(14)<<P[Pl][i]<<endl;
-                                              }
-                                          for(int i=0; i<nu+1; i++){
-                                              cout<<y[i]<<endl;
-                                              opt1<<setprecision(14)<<y[i]<<endl;
-                                              for(int j =0; j<nu; j++){
-                                                  opt2<<setprecision(14)<<P[i][j]<<endl;
-                                              }
-                                          }
-                                          opt1.close();
-                                          opt2.close();
-                                          abortt=0;
-                                          sequence=0;
-                                          this->setCursor(QCursor(Qt::ArrowCursor));
-                                          MainWindow::enableButtons();
-                                          return;
-                                      }
-                                  }
-                              }//end beta_1_1 branch
-
-                              //Beta_1_2 branch
-                              if(yt<=yh){
-                                  cout<<"yt<=yh sco ";
-                                  LogFile<<"yt<=yh, single contraction; ";
-                                  for(int i=0; i<nu; i++){
-                                      P[Ph][i]=So[i];
-                                  }
-                                  for(int e=0; e<7; e++){
-                                      if(pvf[e]==0){
-                                          orbele[e]=So[pcount];
-                                          ++pcount;
-                                      }
-                                      else{
-                                          //
-                                      }
-                                  }
-                                  pcount=0;
-                                  y[Ph]=yt;//MainWindow::DivideConquer();
-                                  if(abortt==1){
-                                      //output results
-                                      LogFile<<"Optimisation aborted. Current best Elements:"<<endl;
-                                          for(int i = 0; i<nu;i++){
-                                              LogFile<<setprecision(14)<<P[Pl][i]<<endl;
-                                          }
-                                      for(int i=0; i<nu+1; i++){
-                                          cout<<y[i]<<endl;
-                                          opt1<<setprecision(14)<<y[i]<<endl;
-                                          for(int j =0; j<nu; j++){
-                                              opt2<<setprecision(14)<<P[i][j]<<endl;
-                                          }
-                                      }
-                                      opt1.close();
-                                      opt2.close();
-                                      abortt=0;
-                                      sequence=0;
-                                      this->setCursor(QCursor(Qt::ArrowCursor));
-                                      MainWindow::enableButtons();
-                                      return;
-                                  }
-                                  qApp->processEvents(QEventLoop::AllEvents);
-                              }//end Beta_1_2 branch
-                          }//Beta_1 branch end
-                      }//end Beta branch
-
-                      /*for(int i=0; i<num; i++){
-                          QString index= QString::number(i);
-                          QString velocity=QString::number(RV1[i]);
-                          QString sum=QString::number(RV3[i]);
-                          ui->plainTextEdit->appendPlainText(index+" "+velocity+" "+sum);
-                          //cout<<RV1[i]<<" "<<RV3[i]<<endl;
-                      }*/
+                              LogFile<<endl;
+                              saveSimplex();
+                              abortt=0;
+                              this->setCursor(QCursor(Qt::ArrowCursor));
+                              MainWindow::enableButtons();
+                              return;
+                          }
+                      }
 
                   }// end main loop
 
 
-                  //looking for highest value
-                  yh=y[0];
-                  for (int j=0; j<nu+1; j++){
-                        if(y[j]>yh){
-                            yh = y[j];
-                            Ph = j;
-                        }
-                  }
+                  nm::order(y, Ph, Psh, Pl);
 
-                  //looking for smallest value
-                  yl=yh;
-                  for (int j=0; j<nu+1; j++){
-                        if(y[j]<yl){
-                            yl=y[j];
-                            Pl = j;
-                        }
-                  }
+                  saveSimplex();
+                  // best elements to the orbital elements file (as Levenberg-Marquardt does), so
+                  // that "Read data", "Solve" and a new run continue from the result
+                  writeBestOrbit();
 
-                  //looking for second highest value
-                  ysh=yl;
-                  for (int j=0; j<nu+1; j++){
-                        if((y[j]>ysh)&(y[j]<yh)){
-                            ysh=y[j];
-                            Psh=j;
-                        }
-                  }
-
-                  //output results
-                  for(int i=0; i<nu+1;i++){
-                        cout<<y[i]<<endl;
-                        opt1<<setprecision(14)<<y[i]<<endl;
-                        for(int j=0; j<nu; j++){
-                            opt2<<setprecision(14)<<P[i][j]<<endl;
-                        }
-                  }
-
-                  for(int e=0; e<7; e++){
-                      if(pvf[e]==0){
-                          orbele[e]=P[Pl][pcount];
-                          ++pcount;
+                  {
+                      int pc=0;
+                      for(int e=0; e<7; e++){
+                          if(pvf[e]==0){
+                              orbele[e]=P(Pl,pc);
+                              ++pc;
+                          }
                       }
                   }
-                  pcount=0;
+                  // RVs for the best elements (M6)
+                  MainWindow::VAmplitudeA();
+                  MainWindow::VAmplitudeB();
 
                   cout<<endl;
                   cout<<setprecision(12)<<"Simplex Mean: "<<ym<<" Simplex STD: "<<ys<<endl;
                   cout<<endl;
-                  cout<<"Orbitelements after "<<zaehler<<" Iterations and "<<eval<<" Evaluations:"<<endl;
+                  cout<<"Orbitelements after "<<itersDone<<" Iterations and "<<eval<<" Evaluations:"<<endl;
                   cout<<"Period; Eccentricity; Amplitude A; Amplitude B; Systemic V.; T_peri; Omega A;"<<endl;
 
                   LogFile<<endl;
-                  LogFile<<"Optimisation ends after "<<zaehler<<" Iterations and "<<eval<<" Evaluations:"<<endl;;
+                  LogFile<<"Optimisation ends after "<<itersDone<<" Iterations and "<<eval<<" Evaluations:"<<endl;
                   LogFile<<"Mean: "<<ym<<" and STD "<<ys<<endl;
                   LogFile<<"Period; Eccentricity; Amplitude A; Amplitude B; Systemic V.; T_peri; Omega A;"<<endl;
 
-                      for(int i = 0; i<nu;i++){
+                      for(int i = 0; i<7;i++){
                           cout<<setprecision(14)<<orbele[i]<<";\t";
                           LogFile<<setprecision(14)<<orbele[i]<<";\t";
                       }
@@ -5074,6 +3255,7 @@ void MainWindow::Optimisation()
 
           } // end optimization on orbit
 
+    optimisationFinished=1;
 
     system_clock::time_point time2 = system_clock::now();
 
@@ -5104,7 +3286,7 @@ void MainWindow::Optimisation()
 void MainWindow::plot_functionvalues(){
 
 
-    string fvalues = "optdata.dat";
+    string fvalues = qOptdata.toStdString();
     std::ostringstream valuesNameStream(fvalues);
     valuesNameStream<<path<<"/"<<fvalues;
     std::string valuesName = valuesNameStream.str();
@@ -5118,32 +3300,102 @@ void MainWindow::plot_functionvalues(){
     else{
         ifstream fvals(valuesName.c_str());
 
-        int pointsi=0;
-        string oeins, ozwei, odrei, oline;
-
-        while(std::getline(fvals, oline))
-        ++ pointsi;
-
-        fvals.clear();
-        fvals.seekg(0, ios::beg);
-
-        QVector<double> oiter(pointsi), oeval(pointsi), ovals(pointsi);
-
-        for (int i =0; i < pointsi; i++){
-            fvals >> oeins >> ozwei >> odrei;
-            istringstream istr7(oeins);
-            istr7 >> oiter[i];
-            istringstream istr8(ozwei);
-            istr8 >> oeval[i];
-            istringstream istr9(odrei);
-            istr9 >> ovals[i];
+        // columns: iteration, evaluation, residuum[, sigma^2 frozen when written]
+        QVector<double> oiter, oeval, ovals, osig;
+        string oline;
+        while(std::getline(fvals, oline)){
+            istringstream ls(oline);
+            double a, b, c, d;
+            if(!(ls>>a>>b>>c)) continue;
+            if(!(ls>>d)) d = std::numeric_limits<double>::quiet_NaN();
+            oiter.push_back(a); oeval.push_back(b); ovals.push_back(c); osig.push_back(d);
         }
         fvals.close();
+        const int pointsi = ovals.size();
 
         ui->customPlot_4->clearGraphs();
+        // sigma^2 of the current curve: the current one, else the last one in the file
+        double sig2 = g_sigma2;
+        if(!(sig2>0) && pointsi>0 && std::isfinite(osig.back()) && osig.back()>0) sig2 = osig.back();
+        const bool chi2 = ui->checkBox_14->isChecked() && sig2>0 && pointsi>0;
+        if(!chi2){
+            // without sigma^2 (residuum "Peak" or no estimate yet): residuum on a linear scale
+            ui->customPlot_4->yAxis->setScaleType(QCPAxis::stLinear);
+            ui->customPlot_4->yAxis->setNumberFormat("g");
+            ui->customPlot_4->yAxis->setLabel("Residuum");
+            ui->customPlot_4->legend->setVisible(false);
+            ui->customPlot_4->addGraph();
+            ui->customPlot_4->graph(0)->addData(oiter, ovals);
+            ui->customPlot_4->rescaleAxes();
+            ui->customPlot_4->replot();
+            return;
+        }
+        // Delta-chi^2 relative to the best value, logarithmic: points = all evaluations,
+        // line = distance of the best solution so far from the current best
+        const double floorV = 1e-3;
+        double best = *std::min_element(ovals.begin(), ovals.end());
+        QVector<double> dAll(pointsi), bestIt, dBest;
+        double run = std::numeric_limits<double>::infinity();
+        for(int i=0; i<pointsi; i++){
+            dAll[i] = std::max(floorV, (ovals[i]*ovals[i]-best*best)/sig2);
+            run = std::min(run, ovals[i]);
+            if(i+1==pointsi || oiter[i+1]!=oiter[i]){
+                bestIt.push_back(oiter[i]);
+                dBest.push_back(std::max(floorV, (run*run-best*best)/sig2));
+            }
+        }
+        ui->customPlot_4->yAxis->setScaleType(QCPAxis::stLogarithmic);
+        ui->customPlot_4->yAxis->setScaleLogBase(10);
+        ui->customPlot_4->yAxis->setNumberFormat("eb");
+        ui->customPlot_4->yAxis->setNumberPrecision(0);
+        ui->customPlot_4->yAxis->setLabel(QString::fromUtf8("\u0394\u03c7\u00b2 to best"));
         ui->customPlot_4->addGraph();
-        ui->customPlot_4->graph(0)->addData(oiter, ovals);
+        ui->customPlot_4->graph(0)->setData(oiter, dAll);
+        ui->customPlot_4->graph(0)->setLineStyle(QCPGraph::lsNone);
+        ui->customPlot_4->graph(0)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssDisc, QColor(150,150,150), 2));
+        ui->customPlot_4->addGraph();
+        ui->customPlot_4->graph(1)->setData(bestIt, dBest);
+        ui->customPlot_4->graph(1)->setPen(QPen(QColor(31,119,180), 2));
+        // gain per iteration: decrease of the best chi^2 in this iteration, with the sigma^2
+        // frozen when the improvement was written (does not change afterwards; the curve
+        // above refers to the current best and moves up when a better solution is found)
+        QVector<double> gIt, gVal;
+        {
+            double runG = ovals[0];
+            for(int i=1; i<pointsi; i++){
+                if(ovals[i]<runG){
+                    const double s2 = (std::isfinite(osig[i]) && osig[i]>0) ? osig[i] : sig2;
+                    const double g = (runG*runG-ovals[i]*ovals[i])/s2;
+                    runG = ovals[i];
+                    if(!gIt.isEmpty() && gIt.back()==oiter[i]) gVal.back() += g;
+                    else { gIt.push_back(oiter[i]); gVal.push_back(g); }
+                }
+            }
+            for(double &g : gVal) g = std::max(floorV, g);
+        }
+        ui->customPlot_4->addGraph();
+        ui->customPlot_4->graph(2)->setData(gIt, gVal);
+        ui->customPlot_4->graph(2)->setPen(QPen(QColor(214,96,24), 1));
+        ui->customPlot_4->graph(2)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssSquare, QColor(214,96,24), 5));
+        ui->customPlot_4->graph(0)->setName(QString::fromUtf8("evaluations, \u0394\u03c7\u00b2 to current best"));
+        ui->customPlot_4->graph(1)->setName("best so far");
+        ui->customPlot_4->graph(2)->setName(QString::fromUtf8("gain per iteration (\u0394\u03c7\u00b2, fixed)"));
+        if(ui->checkBox_23->isChecked()){
+            // Auto Stop compares the gain summed over its window with this threshold
+            const double th = ui->doubleSpinBox_17->value();
+            QVector<double> tx{oiter.front(), oiter.back()}, ty{th, th};
+            ui->customPlot_4->addGraph();
+            ui->customPlot_4->graph(3)->setData(tx, ty);
+            QPen pen(QColor(214,96,24), 1, Qt::DashLine);
+            ui->customPlot_4->graph(3)->setPen(pen);
+            ui->customPlot_4->graph(3)->setName(QString::fromUtf8("Auto Stop threshold (sum over the window)"));
+        }
+        ui->customPlot_4->legend->setVisible(true);
+        ui->customPlot_4->legend->setFont(QFont(font().family(), 8));
         ui->customPlot_4->rescaleAxes();
+        double ymax = *std::max_element(dAll.begin(), dAll.end());
+        for(double g : gVal) ymax = std::max(ymax, g);
+        ui->customPlot_4->yAxis->setRange(floorV/2, std::max(1.0, ymax*20));   // room for the legend
         ui->customPlot_4->replot();
     }
 
@@ -5151,556 +3403,1675 @@ void MainWindow::plot_functionvalues(){
 }
 
 //****************************************
-// Matrix construction for DSM
+// Error message: dialog in the GUI, text output in batch mode. Sets error=1.
 //****************************************
-void MainWindow::ConstructMatrix(){
-
-    this->setCursor(QCursor(Qt::WaitCursor));
-
-    int a=0;
-
-    // matrix for SB2 system
-    if(ui->checkBox_4->isChecked()){
-
-    //looking for maximum RV absolute
-    RV1max=abs(RV1[0]);
-    RV3max=abs(RV3[0]);
-    for (int i=0; i<num; i++){
-        if (abs(RV1[i])>abs(RV1max)){
-            RV1max=RV1[i];
-        }
-        if (abs(RV3[i])>abs(RV3max)){
-            RV3max=RV3[i];
-        }
-    }
-
-    //looking for minimum and maximum RV
-    RV1min=RV1max;
-    RV3min=RV3max;
-    RV1maxi=RV1[0];
-    RV3maxi=RV3[0];
-    for(int i=0; i<num; i++){
-        if(RV1[i]<RV1min){
-            RV1min=RV1[i];
-        }
-        if(RV3[i]<RV3min){
-            RV3min=RV3[i];
-        }
-        if(RV1[i]>RV1maxi){
-            RV1maxi=RV1[i];
-        }
-        if(RV3[i]>RV3maxi){
-            RV3maxi=RV3[i];
-        }
-    }
-
-    RV1amin=RV1[0];
-
-    for(int i=0; i<num; i++){
-        if(abs(RV1[i])<RV1amin){
-            RV1amin=RV1[i];
-        }
-    }
-
-    ui->doubleSpinBox->setValue(RV1max);
-    ui->doubleSpinBox_2->setValue(RV3max);
-
-    dv=(pow(10,(W(5)-W(4)))-1)*c0;
-    difference=W(5)-W(4);
-    ui->doubleSpinBox_3->setValue(dv);
-
-    elements=0;
-
-    double RV1b[num], RV3b[num];
-    int RV1c[num], RV3c[num], RV1cmin, RV1cmax, RV2cmin, RV2cmax;
-
-    for(int j=0; j<num; j++){
-        RV1a=RV1[j]/dv;
-        RV3a=RV3[j]/dv;
-        RV1b[j]=abs(RV1[j])/dv-abs(RV1a);
-        RV3b[j]=abs(RV3[j])/dv-abs(RV3a);
-
-        if(RV1b[j]>=0.5){
-            if(RV1[j]>=0){
-                RV1c[j]=RV1[j]/dv+1;
-            }
-            else{
-                RV1c[j]=RV1[j]/dv-1;
-            }
-        }
-        else{
-            RV1c[j]=RV1[j]/dv;
-        }
-
-        if(RV3b[j]>=0.5){
-            if(RV3[j]>=0){
-                RV3c[j]=RV3[j]/dv+1;
-            }
-            else{
-                RV3c[j]=RV3[j]/dv-1;
-            }
-        }
-        else{
-             RV3c[j]=RV3[j]/dv;
-            }
-        if(j==0){
-            RV1cmin=RV1c[j];
-            RV1cmax=RV1c[j];
-            RV2cmin=RV3c[j];
-            RV2cmax=RV3c[j];
-            RV1m=abs(RV1c[j]);
-            RV3m=abs(RV3c[j]);
-        }
-        else{
-            if(RV1c[j]<RV1cmin){
-                RV1cmin=RV1c[j];
-            }
-            else if(RV1c[j]>RV1cmax){
-                RV1cmax=RV1c[j];
-            }
-            if(RV3c[j]<RV2cmin){
-                RV2cmin=RV3c[j];
-            }
-            else if(RV3c[j]>RV2cmax){
-                RV2cmax=RV3c[j];
-            }
-            if(abs(RV1c[j])>RV1m){
-                RV1m = abs(RV1c[j]);
-            }
-            if(abs(RV3c[j])>RV3m){
-                RV3m = abs(RV3c[j]);
-            }
-        }
-    }
-
-    RV1a=RV1c[0];
-    RV3a=RV3c[0];
-
-    if(RV1cmin<0){
-            if(RV1cmax<0){
-                bso1=logbin+abs(RV1cmin);
-            }
-            else{
-                bso1=logbin+abs(RV1cmin)+RV1cmax;
-            }
-        }
-        else{
-            bso1=logbin+RV1cmax;
-        }
-        if(RV2cmin<0){
-            if(RV2cmax<0){
-                bso2=logbin+abs(RV2cmin);
-            }
-            else{
-                bso2=logbin+abs(RV2cmin)+RV2cmax;
-            }
-        }
-        else{
-            bso2=logbin+RV2cmax;
-        }
-
-    cout<<endl;
-    cout<<"bso1 "<<bso1<<endl;
-    cout<<"bso2 "<<bso2<<endl;
-
-    Mn=num*logbin;
-
-    if(ui->checkBox_8->isChecked()){
-        Mm=bso1+bso2+logbin;    //telluric +logbin
-    }
-
-    else{
-        Mm=bso1+bso2;
-    }
-
-    M.resize(Mn,Mm);
-    Mt.resize(Mm,Mn);
-    X.resize(Mm);
-    cout<<Mm<<" "<<Mn<<endl;
-
-
-    //constructing initial SB2 transformation matrix with telluric lines
-    if(ui->checkBox_8->isChecked()){
-        for (int n=0; n<num*logbin; n++){//num*logbin
-            if(n==0){
-                if(RV1cmin>0){
-                    RV1a=RV1c[a];
-                }
-                else{
-                    RV1a=abs(RV1cmin)+RV1c[a];
-                }
-
-                if(RV2cmin>0){
-                    RV3a=RV3c[a];
-                }
-                else{
-                    RV3a=abs(RV2cmin)+RV3c[a];
-                }
-            }
-            if(n==logbin+a*logbin){
-                a+=1;
-                if(RV1cmin>0){
-                    RV1a=RV1c[a];
-                }
-                else{
-                    RV1a=abs(RV1cmin)+RV1c[a];
-                }
-
-                if(RV2cmin>0){
-                RV3a=RV3c[a];
-                }
-                else{
-                    RV3a=abs(RV2cmin)+RV3c[a];
-                }
-            }
-            for (int m=0; m<Mm; m++){
-                if((n-a*logbin+RV1a)==m or (n+bso1-1-a*logbin+RV3a==m) or (m==n-a*logbin+bso1+bso2)){//or n+logbin+2*abs(RV1m)-a*logbin+RV3a+abs(RV3m)==m
-                    if(bidi==1){
-                        if(m==n-a*logbin+bso1+bso2){
-                            M(n,m)=Mtel[a];
-                        }
-                        else if((n+bso1-1-a*logbin+RV3a==m) & (m>=bso1)){
-                            M(n,m)=Mval2[a];
-                        }
-                        else M(n,m)=Mval1[a];
-                        if(m<Mm-1) {
-                            if(m==n-a*logbin+bso1+bso2){
-                                M(n,m+1)=Mtel[a];
-                            }
-                        else if(n+bso1-1-a*logbin+RV3a==m){
-                            M(n,m+1)=Mval2[a];
-                        }
-                        else M(n,m+1)=Mval1[a];
-                        m=m+1;
-                        ++elements;
-                        }
-                        ++elements;
-                    }
-                    else if(bidi==0){
-                        if(m==n-a*logbin+bso1+bso2){
-                            M(n,m)=Mtel[a];
-                        }
-                        else if(n+bso1-1-a*logbin+RV3a==m){
-                            M(n,m)=Mval2[a];
-                        }
-                        else M(n,m)=Mval1[a];
-                        ++elements;
-                    }
-                }
-                else{
-                    M(n,m)=0;
-                }
-            }
-        }
-    }
-
-    else{   //without telluric lines
-        for (int n=0; n<num*logbin; n++){   //num*logbin
-
-            if(n==0){
-                if(RV1cmin>0){
-                    RV1a=RV1c[a];
-                }
-                else{
-                    RV1a=abs(RV1cmin)+RV1c[a];
-                }
-
-                if(RV2cmin>0){
-                    RV3a=RV3c[a];
-                }
-                else{
-                    RV3a=abs(RV2cmin)+RV3c[a];
-                }
-            }
-            if(n==logbin+a*logbin){
-                a+=1;
-
-                if(RV1cmin>0){
-                    RV1a=RV1c[a];
-                }
-                else{
-                        RV1a=abs(RV1cmin)+RV1c[a];
-                }
-
-                if(RV2cmin>0){
-                    RV3a=RV3c[a];
-                }
-                else{
-                    RV3a=abs(RV2cmin)+RV3c[a];
-                }
-            }
-
-            for (int m=0; m<Mm; m++){
-                if((n-a*logbin+RV1a)==m or n+bso1-1-a*logbin+RV3a==m){//or n+logbin+2*abs(RV1m)-a*logbin+RV3a+abs(RV3m)==m
-                    if(bidi==1){
-                        if(n+bso1-1-a*logbin+RV3a==m){
-                            M(n,m)=Mval2[a];
-                        }
-                        else M(n,m)=Mval1[a];
-                        if(m<Mm-1){
-                            if((n+bso1-1-a*logbin+RV3a==m) & (m>=bso1)){
-                                M(n,m+1)=Mval2[a];
-                            }
-                            else M(n,m+1)=Mval1[a];
-                            m=m+1;
-                            ++elements;
-                        }
-                        ++elements;
-                    }
-                    else if(bidi==0){
-                    if(n+bso1-1-a*logbin+RV3a==m){
-                        M(n,m)=Mval2[a];
-                    }
-                    else M(n,m)=Mval1[a];
-                    ++elements;
-                    }
-                }
-                else{
-                    M(n,m)=0;
-                }
-             }
-          }
-       }
-    }
-
-    //construct matrix for SB1 system
-    if(ui->checkBox_3->isChecked()){
-
-        //looking for maximum RV absolute
-        RV1max=abs(RV1[0]);
-
-        for (int i=0; i<num; i++){
-            if (abs(RV1[i])>abs(RV1max)){
-                RV1max=RV1[i];
-            }
-        }
-
-        //looking for minimum and maximum RV
-        RV1min=RV1max;
-
-        RV1maxi=RV1[0];
-
-        for(int i=0; i<num; i++){
-            if(RV1[i]<RV1min){
-                RV1min=RV1[i];
-            }
-
-            else if(RV1[i]>RV1maxi){
-                RV1maxi=RV1[i];
-            }
-
-        }
-
-        RV1amin=RV1[0];
-        RV1min=RV1[0];
-
-        for(int i=0; i<num; i++){
-            if(abs(RV1[i])<RV1amin){
-            RV1amin=RV1[i];
-            }
-            if(RV1[i]<RV1min){
-                RV1min=RV1[i];
-            }
-        }
-
-        ui->doubleSpinBox->setValue(RV1max);;
-
-    dv=(pow(10,(W(5)-W(4)))-1)*c0;
-    difference=W(5)-W(4);
-    ui->doubleSpinBox_3->setValue(dv);
-
-    elements=0;
-    int a=0;
-
-    double RV1b[num];
-    int RV1c[num], RV1cmin, RV1cmax;
-
-    for(int j=0; j<num; j++){
-        RV1a=RV1[j]/dv;
-        RV1b[j]=abs(RV1[j])/dv-abs(RV1a);
-
-        if(RV1b[j]>=0.5){
-            if(RV1[j]>=0){
-                RV1c[j]=RV1[j]/dv+1;
-            }
-            else{
-                RV1c[j]=RV1[j]/dv-1;
-            }
-        }
-        else{
-            RV1c[j]=RV1[j]/dv;
-        }
-        if(j==0){
-            RV1cmin = RV1c[j];
-            RV1cmax = RV1c[j];
-            RV1m=abs(RV1c[j]);
-        }
-        else{
-            if(RV1c[j]<RV1cmin){
-                RV1cmin=RV1c[j];
-            }
-            else if(RV1c[j]>RV1cmax){
-                RV1cmax=RV1c[j];
-            }
-            if(abs(RV1c[j])>RV1m){
-                RV1m = abs(RV1c[j]);
-            }
-        }
-
-    }
-
-    if(RV1cmin<0){
-       if(RV1cmax<0){
-            bso1=logbin+abs(RV1cmin);
-        }
-        else{
-            bso1=logbin+abs(RV1cmin)+RV1cmax;
-            }
-     }
-     else{
-          bso1=logbin+RV1cmax;
-     }
-
-    cout<<"bso1 "<<bso1<<endl;
-
-    Mn=num*logbin;
-
-    if(ui->checkBox_8->isChecked()){
-        Mm=bso1+logbin;    //telluric +logbin
+void MainWindow::reportError(const QString &msg)
+{
+    if(runow==0){
+        QMessageBox::information(this, "Error", msg);
     }
     else{
-        Mm=bso1;
+        cerr<<msg.toStdString()<<endl;
     }
-    M.resize(Mn,Mm);
-    Mt.resize(Mm,Mn);
-    X.resize(Mm);
-    cout<<Mm<<" "<<Mn<<endl;
+    error=1;
+    this->setCursor(QCursor(Qt::ArrowCursor));
+}
 
+//****************************************
+// Flux weights per spectrum: from edit.dat (editor) or from the flux ratio.
+// Component A: fr/(1+fr), B: 1/(1+fr), static lines: 1.
+//****************************************
+// Flux-ratio model from the Data tab (constant / Planck / table) on the common grid.
+// Constant: g_ratioShape stays empty, so the matrix is built exactly as before.
+// Flux-ratio model as set in the Data tab (table read from the work folder)
+bool MainWindow::ratioModelFromUi(fr::Model &m, std::string &err) const
+{
+    m = fr::Model();
+    m.mode = fr::Mode(ui->comboBox_ratio->currentIndex());
+    m.tA = ui->doubleSpinBox_TA->value();
+    m.tB = ui->doubleSpinBox_TB->value();
+    m.lambdaRef = ui->doubleSpinBox_lref->value();
+    if(m.mode==fr::Mode::Table)
+        return fr::loadTable((ui->lineEdit_4->text()+"/"+ui->lineEdit_ratio->text()).toStdString(), m, err);
+    return true;
+}
+
+bool MainWindow::setupRatioShape()
+{
+    g_ratioShape.clear();
+    g_ratioLref = 0.0;
+    fr::Model m;
+    std::string err;
+    if(!ratioModelFromUi(m, err)){
+        reportError("Error 44: "+QString::fromStdString(err));
+        return false;
+    }
+    if(m.mode==fr::Mode::Constant) return true;
+    std::vector<double> lam(logbin);
+    for(int i=0; i<logbin; i++) lam[i] = std::pow(10.0, W(i));
+    double lref = 0.0;
+    std::vector<double> sh;
+    if(!fr::shapeOnGrid(m, lam, sh, lref, err)){
+        reportError("Error 44: "+QString::fromStdString(err));
+        return false;
+    }
+    g_ratioShape = sh;
+    g_ratioLref = lref;
+    g_ratioModel = m;
+    const auto mm = std::minmax_element(sh.begin(), sh.end());
+    QString what = m.mode==fr::Mode::Planck
+        ? QString("Planck, T_A = %1 K, T_B = %2 K").arg(m.tA).arg(m.tB)
+        : "table "+ui->lineEdit_ratio->text();
+    QString msg = QString("Flux ratio depends on wavelength (%1): F_A/F_B = k * s(lambda), s = 1 at %2 A, "
+                          "%3 ... %4 over %5-%6 A.")
+                  .arg(what).arg(lref, 0, 'f', 1).arg(*mm.first, 0, 'g', 4).arg(*mm.second, 0, 'g', 4)
+                  .arg(lam.front(), 0, 'f', 1).arg(lam.back(), 0, 'f', 1);
+    if(m.mode==fr::Mode::Table){
+        msg += QString(" Table value at the reference wavelength: %1 (set it as flux ratio if the table "
+                       "holds the measured ratios).").arg(fr::interpLinear(m.tabLambda, m.tabRatio, lref), 0, 'g', 5);
+    }
+    cout<<msg.toStdString()<<endl;
+    ui->plainTextEdit_2->appendPlainText(msg);
+    return true;
+}
+
+// Barycentric correction per spectrum (Data tab). Spectra in the observatory frame: the RVs of
+// the orbit (barycentric) are converted to the observatory frame in buildDesignMatrix; static
+// lines stay at rest. Barycentrically corrected spectra: the static lines (observatory frame)
+// are shifted by BC. Without a file nothing is converted (as before).
+bool MainWindow::loadBaryCorr()
+{
+    g_bc.clear();
+    const QString f = ui->lineEdit_bc->text().trimmed();
+    const bool corrected = ui->comboBox_bcframe->currentIndex()==1;
+    const bool stat = ui->checkBox_8->isChecked();
+    const bool orbitMode = ui->checkBox_16->isChecked();
+    auto note = [&](const QString &m){
+        cout<<m.toStdString()<<endl;
+        if(runow==0) ui->plainTextEdit_2->appendPlainText(m);
+    };
+    if(f.isEmpty()){
+        if(stat && corrected){
+            reportError("Error 48: Static lines in barycentrically corrected spectra need the barycentric correction "
+                        "per spectrum (Data tab, Barycentric correction).");
+            return false;
+        }
+        if(stat && orbitMode)
+            note("Note: orbit mode with static lines but without barycentric correction: the RVs of the orbit are "
+                 "used as RVs in the observatory frame. Set the barycentric correction in the Data tab.");
+        return true;
+    }
+    std::vector<double> v;
+    std::string err;
+    if(!dataio::readLastColumn((qPath+"/"+f).toStdString(), v, err)){
+        reportError("Error 48: Barycentric correction: "+QString::fromStdString(err));
+        return false;
+    }
+    if(int(v.size())!=num){
+        reportError(QString("Error 48: Barycentric correction file %1 has %2 values, but there are %3 spectra.")
+                    .arg(qPath+"/"+f).arg(v.size()).arg(num));
+        return false;
+    }
+    for(double x : v){
+        if(!(std::fabs(x)<1000.0)){
+            reportError("Error 48: Barycentric correction file "+qPath+"/"+f+": value out of range ("+QString::number(x)+" km/s).");
+            return false;
+        }
+    }
+    g_bc = v;
+    const auto mm = std::minmax_element(v.begin(), v.end());
+    QString use;
+    if(corrected) use = stat ? "barycentrically corrected spectra, static lines shifted by BC"
+                             : "barycentrically corrected spectra, no static lines: not needed";
+    else use = orbitMode ? "spectra in the observatory frame, RVs of the orbit converted to the observatory frame"
+                         : "spectra in the observatory frame, fitted RVs in the observatory frame (barycentric: v + BC)";
+    note(QString("Barycentric correction (%1): %2 spectra, BC %3 to %4 km/s; %5.")
+         .arg(f).arg(num).arg(*mm.first, 0, 'f', 3).arg(*mm.second, 0, 'f', 3).arg(use));
+    return true;
+}
+
+// Ranges of the static lines (Data tab, "Static lines only in"): read, or the default list
+// written to the work folder if the file does not exist
+bool MainWindow::readStaticRangeFile(std::vector<std::pair<double, double>> &logRanges, std::vector<std::string> *labels,
+                                     QString &name)
+{
+    logRanges.clear();
+    name = ui->lineEdit_tellrange->text().trimmed();
+    if(name.isEmpty()){
+        name = "telluric_static.dat";
+        ui->lineEdit_tellrange->setText(name);
+    }
+    const QString file = qPath+"/"+name;
+    if(!QFileInfo::exists(file)){
+        if(name!="telluric_static.dat"){
+            reportError("Error 50: File of the ranges of the static lines "+file+" does not exist.");
+            return false;
+        }
+        std::ofstream out(file.toStdString().c_str());
+        out<<dataio::kStaticRanges;
+        if(!out){
+            reportError("Error 50: Cannot write the ranges of the static lines to "+file+".");
+            return false;
+        }
+        const QString m = "Ranges of the static lines: default list (telluric O2 and H2O, weak systems included) written to "+name+".";
+        cout<<m.toStdString()<<endl;
+        if(runow==0) ui->plainTextEdit_2->appendPlainText(m);
+    }
+    std::vector<std::pair<double, double>> r;
+    std::string err;
+    if(!dataio::readRanges(file.toStdString(), r, err, labels) || r.empty()){
+        reportError("Error 50: Ranges of the static lines ("+name+"): "+(err.empty() ? QString("no ranges.") : QString::fromStdString(err)));
+        return false;
+    }
+    for(const auto &x : r) logRanges.emplace_back(std::log10(x.first), std::log10(x.second));
+    {   // at least one pixel of the data in the ranges
+        const double lo = W(0), hi = W(logbin-1);
+        bool any = false;
+        for(const auto &x : logRanges) if(x.second>=lo && x.first<=hi) any = true;
+        if(!any){
+            reportError(QString("Error 50: The ranges of the static lines (%1) do not overlap with the data (%2-%3 A).")
+                        .arg(name).arg(std::pow(10.0, lo), 0, 'f', 1).arg(std::pow(10.0, hi), 0, 'f', 1));
+            logRanges.clear();
+            return false;
+        }
+    }
+    return true;
+}
+
+bool MainWindow::loadStaticRanges()
+{
+    g_tellRanges.clear();
+    g_tellRangeGroup.clear();
+    g_tellGroupNames.clear();
+    g_MtelG.clear();
+    if(!ui->checkBox_8->isChecked() || !ui->checkBox_tellrange->isChecked()) return true;
+    auto note = [&](const QString &m){
+        cout<<m.toStdString()<<endl;
+        if(runow==0) ui->plainTextEdit_2->appendPlainText(m);
+    };
+    std::vector<std::string> labels;
+    QString name;
+    std::vector<std::pair<double, double>> lr;
+    if(!readStaticRangeFile(lr, &labels, name)) return false;
+    g_tellRanges = lr;
+    const size_t nRanges = lr.size();
+    // groups by the first word after the numbers (O2, H2O, ...); without a word: "static"
+    std::vector<int> count;
+    for(const std::string &l : labels){
+        const QString g = l.empty() ? QString("static") : QString::fromStdString(l);
+        int gi = -1;
+        for(size_t i=0; i<g_tellGroupNames.size(); i++) if(g_tellGroupNames[i]==g) gi = int(i);
+        if(gi<0){ gi = int(g_tellGroupNames.size()); g_tellGroupNames.push_back(g); count.push_back(0); }
+        g_tellRangeGroup.push_back(gi);
+        count[size_t(gi)]++;
+    }
+    QString groups;
+    if(g_tellGroupNames.size()>1){
+        QStringList gl;
+        for(size_t i=0; i<g_tellGroupNames.size(); i++) gl << QString("%1 (%2)").arg(g_tellGroupNames[i]).arg(count[i]);
+        groups = "; groups with their own strength: "+gl.join(", ");
+    }
+    else{
+        g_tellRangeGroup.clear();
+        g_tellGroupNames.clear();
+    }
+    note(QString("Static lines only in %1 ranges (%2)%3.").arg(nRanges).arg(name).arg(groups));
+    return true;
+}
+
+// Rows of the ranges of the static lines (file of the Data tab) for the residuum: the ranges are
+// in the observatory frame, in corrected spectra at lambda (1 + BC/c).
+bool MainWindow::buildResidualExclusion()
+{
+    g_rowResExcl.clear();
+    if(!ui->checkBox_resstatic->isChecked() || num<1 || logbin<1 || int(W.n_elem)<num*logbin) return true;
+    std::vector<std::pair<double, double>> r = g_tellRanges;
+    QString name = ui->lineEdit_tellrange->text().trimmed();
+    if(r.empty() && !readStaticRangeFile(r, nullptr, name)) return false;
+    const bool corrected = ui->comboBox_bcframe->currentIndex()==1 && int(g_bc.size())>=num;
+    g_rowResExcl.assign(size_t(num)*size_t(logbin), 0);
+    long n = 0, nAll = 0;
+    for(int a=0; a<num; a++){
+        const double sh = corrected ? std::log10(1.0+g_bc[a]/299792.458) : 0.0;
+        for(int px=0; px<logbin; px++){
+            const arma::uword i = arma::uword(a)*logbin + px;
+            const double w = W(i) - sh;
+            for(const auto &x : r)
+                if(w>=x.first && w<=x.second){ g_rowResExcl[i] = 1; break; }
+            n += g_rowResExcl[i];
+            ++nAll;
+        }
+    }
+    if(n>=nAll){
+        reportError("Error 53: The ranges of the static lines ("+name+") cover all pixels: nothing left for the residuum.");
+        g_rowResExcl.clear();
+        return false;
+    }
+    const QString m = QString("Residuum without the ranges of the static lines (%1): %2 % of the pixels left out%3.")
+                      .arg(name).arg(100.0*n/nAll, 0, 'f', 1).arg(corrected ? ", shifted by BC" : "");
+    cout<<m.toStdString()<<endl;
+    if(runow==0) ui->plainTextEdit_2->appendPlainText(m);
+    return true;
+}
+
+bool MainWindow::loadComponentWeights()
+{
     Mval1.resize(num);
     Mval2.resize(num);
     Mtel.resize(num);
 
-    RV1a=RV1c[0];
-
-        //constructing initial transformation matrix with tellric lines
-        if(ui->checkBox_8->isChecked()){
-            for (int n=0; n<num*logbin; n++){//num*logbin
-                if(n==0){
-                    if(RV1cmin>0){
-                        RV1a=RV1c[a];
-                    }
-                    else{
-                            RV1a=abs(RV1cmin)+RV1c[a];
-                    }
-                }
-
-                if(n==logbin+a*logbin){
-                    a+=1;
-                    if(RV1cmin>0){
-                        RV1a=RV1c[a];
-                    }
-                    else{
-                        RV1a=abs(RV1cmin)+RV1c[a];
-                    }
-                }
-
-                for (int m=0; m<Mm; m++){
-                    if((n-a*logbin+RV1a)==m or m==n-a*logbin+bso1){//or n+logbin+2*abs(RV1m)-a*logbin+RV3a+abs(RV3m)==m
-                        if(bidi==1){
-                            if(m==n-a*logbin+bso1){
-                                M(n,m)=Mtel[a];
-                            }
-                            else M(n,m)=Mval1[a];
-                            if(m<Mm-1) {
-                                if(m==n-a*logbin+bso1){
-                                    M(n,m+1)=Mtel[a];
-                                }
-
-                                else M(n,m+1)=Mval1[a];
-                                m=m+1;
-                                ++elements;
-                            }
-                            ++elements;
-                        }
-                        else if(bidi==0){
-                            if(m==n-a*logbin+bso1){
-                                M(n,m)=Mtel[a];
-                            }
-                            else M(n,m)=Mval1[a];
-                            ++elements;
-                        }
-                    }
-                    else{
-                        M(n,m)=0;
-                    }
-                }
+    QString ediName = qPath+"/edit.dat";
+    if(QFileInfo::exists(ediName)){
+        ifstream edit(ediName.toStdString().c_str());
+        std::vector<double> v;
+        double x;
+        while(edit >> x){
+            v.push_back(x);
+        }
+        if(int(v.size())!=3*num){
+            reportError("Error 18: Edit file does not match to specified number of observations.");
+            return false;
+        }
+        for(int i=0; i<num; i++){
+            Mtel[i]=v[i];
+            Mval1[i]=v[num+i];
+            Mval2[i]=v[2*num+i];
+            if(!std::isfinite(v[i]) || !std::isfinite(v[num+i]) || !std::isfinite(v[2*num+i])
+                    || v[i]<0 || v[num+i]<0 || v[2*num+i]<0 || !(v[num+i]+v[2*num+i]>0)){
+                reportError(QString("Error 18: Edit file %1: the strengths of spectrum %2 must not be negative, and "
+                                    "those of A and B must not both be 0.").arg(ediName).arg(i));
+                return false;
             }
         }
+    }
+    else{
+        double fr = ui->doubleSpinBox_4->value();
+        if(!(fr>0) || !std::isfinite(fr)){
+            reportError("Error 51: The flux ratio F_A/F_B (Data tab) must be positive.");
+            return false;
+        }
+        for(int i=0; i<num; i++){
+            Mtel[i]=1.0;
+            Mval2[i]=1.0/(1.0+fr);
+            Mval1[i]=fr/(1.0+fr);
+        }
+        cout<<"Elements A:\t"<<Mval1[0]<<endl;
+        cout<<"Elements B:\t"<<Mval2[0]<<endl;
+        cout<<"Elements static:\t"<<Mtel[0]<<endl;
+    }
+    // start strengths of the static lines from a file (e.g. the airmass), mean 1
+    const QString tw = ui->lineEdit_tellw->text().trimmed();
+    if(ui->checkBox_8->isChecked() && !tw.isEmpty()){
+        std::vector<std::vector<double>> rows;
+        std::string err;
+        if(!dataio::readTable((qPath+"/"+tw).toStdString(), 1, rows, err)){
+            reportError("Error 49: Strength of the static lines: "+QString::fromStdString(err));
+            return false;
+        }
+        if(int(rows.size())!=num){
+            reportError(QString("Error 49: Strength of the static lines: %1 has %2 values, but there are %3 spectra.")
+                        .arg(qPath+"/"+tw).arg(rows.size()).arg(num));
+            return false;
+        }
+        double sum = 0.0;
+        for(const auto &r : rows){
+            if(!(r[0]>0) || !std::isfinite(r[0])){
+                reportError("Error 49: Strength of the static lines: "+qPath+"/"+tw+" contains a value <= 0.");
+                return false;
+            }
+            sum += r[0];
+        }
+        for(int i=0; i<num; i++) Mtel[i] = rows[i][0]*num/sum;
+        const auto mm = std::minmax_element(Mtel.begin(), Mtel.begin()+num);
+        const QString m = QString("Strength of the static lines from %1 (mean 1): %2 to %3.").arg(tw)
+                          .arg(*mm.first, 0, 'f', 3).arg(*mm.second, 0, 'f', 3);
+        cout<<m.toStdString()<<endl;
+        if(runow==0) ui->plainTextEdit_2->appendPlainText(m);
+    }
+    return true;
+}
 
-        //without telluric lines
+// Strengths of the static lines on a sub-problem: only the rows (pixels of all spectra) in
+// windows around the ranges of the static lines, widened by the span of the shifts of A and B
+// and the largest shift of the static lines, so that the columns of A and B seen by the rows in
+// the ranges are covered by all spectra. Alternates LSQR on the sub-problem (warm start) and
+// the scale per spectrum (and group), as fitStaticStrengths; the weights of the static columns
+// are updated in place. Sets Mtel / g_MtelG. iters, change: as in the full loop.
+bool MainWindow::fitStrengthsWindowed(int &iters, double &change, QString &note)
+{
+    const bool grouped = g_MtelG.size()>1 && g_layout.tGroup.size()==size_t(g_layout.nT);
+    const int G = grouped ? int(g_MtelG.size()) : 1;
+    // margin in pixels
+    double tShift = 0.0;
+    if(int(g_bc.size())>=num && ui->comboBox_bcframe->currentIndex()==1)
+        for(int a=0; a<num; a++) tShift = std::max(tShift, std::fabs(dis::pixelShift(g_bc[a], g_dlog)));
+    const int spanA = std::max(0, g_layout.nA-logbin), spanB = std::max(0, g_layout.nB-logbin);
+    const int margin = std::max(spanA, spanB) + int(std::ceil(tShift)) + 4;
+    std::vector<char> keepPx(logbin, 0);
+    const double w0 = W(0);
+    for(const auto &r : g_tellRanges){
+        const int lo = std::max(0, int(std::ceil((r.first-w0)/g_dlog)) - margin);
+        const int hi = std::min(logbin-1, int(std::floor((r.second-w0)/g_dlog)) + margin);
+        for(int i=lo; i<=hi; i++) keepPx[i] = 1;
+    }
+    const int nPx = int(std::count(keepPx.begin(), keepPx.end(), 1));
+    if(nPx==0) return true;
+    // sub-matrix: kept rows, columns with entries there
+    std::vector<arma::sword> newRow(M.n_rows, -1);
+    std::vector<arma::uword> oldRow;
+    for(int a=0; a<num; a++)
+        for(int i=0; i<logbin; i++)
+            if(keepPx[i]){ newRow[arma::uword(a)*logbin+i] = arma::sword(oldRow.size()); oldRow.push_back(arma::uword(a)*logbin+i); }
+    M.sync();
+    std::vector<arma::uword> ri, ci, oldCol;
+    std::vector<double> vv;
+    for(arma::uword c=0; c<M.n_cols; c++){
+        bool used = false;
+        for(arma::uword q=M.col_ptrs[c]; q<M.col_ptrs[c+1]; q++){
+            const arma::sword nr = newRow[M.row_indices[q]];
+            if(nr<0) continue;
+            if(!used){ used = true; oldCol.push_back(c); }
+            ri.push_back(arma::uword(nr));
+            ci.push_back(oldCol.size()-1);
+            vv.push_back(M.values[q]);
+        }
+    }
+    const arma::uword nr = oldRow.size(), nc = oldCol.size();
+    // static entries: index into vv with spectrum and group, for the in-place update
+    std::vector<size_t> tEnt;
+    std::vector<int> tEntSpec, tEntGroup;
+    std::vector<int> colT(nc, -1);                     // sub column -> static index k
+    for(arma::uword c=0; c<nc; c++){
+        const long k = long(oldCol[c]) - g_layout.startT();
+        if(k>=0 && k<g_layout.nT) colT[c] = int(k);
+    }
+    for(size_t e=0; e<vv.size(); e++){
+        const int k = colT[ci[e]];
+        if(k<0) continue;
+        tEnt.push_back(e);
+        tEntSpec.push_back(int(oldRow[ri[e]]/arma::uword(logbin)));
+        tEntGroup.push_back(grouped ? g_layout.tGroup[size_t(k)] : 0);
+    }
+    const bool wtd = !g_specW.empty() && int(g_specW.size())==num;
+    auto build = [&](bool weighted){
+        arma::umat loc(2, vv.size());
+        arma::vec val(vv.size());
+        for(size_t e=0; e<vv.size(); e++){
+            loc(0, e) = ri[e]; loc(1, e) = ci[e];
+            val(e) = vv[e]*(weighted ? g_specW[oldRow[ri[e]]/arma::uword(logbin)] : 1.0);
+        }
+        return arma::sp_mat(loc, val, nr, nc);
+    };
+    arma::vec Cs(nr), Csw(nr);
+    for(arma::uword r=0; r<nr; r++){
+        Cs(r) = C(oldRow[r]);
+        Csw(r) = Cs(r)*(wtd ? g_specW[oldRow[r]/arma::uword(logbin)] : 1.0);
+    }
+    const double staticDamp = ui->doubleSpinBox_tdamp->value();
+    std::vector<std::vector<double>> cur(G);
+    for(int g=0; g<G; g++){
+        const double *src = grouped ? g_MtelG[g].data() : Mtel.data();
+        cur[g].assign(src, src+num);
+    }
+    const int edge = std::max(0, g_edgeMargin);
+    arma::vec Xs, x0;
+    iters = 0;
+    change = 1.0;
+    for(; iters<kTellFitMaxIter && change>1e-4; iters++){
+        const arma::sp_mat Ms = build(false), Msw = wtd ? build(true) : Ms;
+        arma::vec damp;
+        if(staticDamp>0){
+            damp.zeros(nc);
+            for(arma::uword c=0; c<nc; c++){
+                if(colT[c]<0) continue;
+                double n2 = 0.0;
+                for(auto it=Msw.begin_col(c); it!=Msw.end_col(c); ++it) n2 += (*it)*(*it);
+                damp(c) = std::sqrt(staticDamp*n2);
+            }
+        }
+        const dis::SolveResult r = dis::solveLsqr(Msw, Csw, Xs, 1e-12, 0, x0.n_elem==nc ? &x0 : nullptr,
+                                                  damp.n_elem ? &damp : nullptr);
+        if(!r.ok){
+            cerr<<"Solving the windows failed: "<<r.message<<endl;
+            return false;
+        }
+        x0 = Xs;
+        cout<<"LSQR (static windows): "<<r.iterations<<" iterations ("<<nr<<" rows)"<<endl;
+        // static spectrum without its continuum level
+        std::vector<arma::uword> tc;
+        for(arma::uword c=0; c<nc; c++) if(colT[c]>=0) tc.push_back(c);
+        arma::vec Tv(tc.size());
+        for(size_t q=0; q<tc.size(); q++) Tv(q) = Xs(tc[q]);
+        const double lev = dis::continuumLevel(Tv);
+        const arma::vec model = Ms*Xs;
+        std::vector<std::vector<double>> w(G, std::vector<double>(num, 0.0));
+        change = 0.0;
+        for(int g=0; g<G; g++){
+            arma::vec XT(nc, arma::fill::zeros);
+            for(size_t q=0; q<tc.size(); q++){
+                const int k = colT[tc[q]];
+                if(!grouped || g_layout.tGroup[size_t(k)]==g) XT(tc[q]) = Tv(q)-lev;
+            }
+            const arma::vec t = Ms*XT;
+            std::vector<double> tt(num, 0.0), td(num, 0.0);
+            for(arma::uword rr=0; rr<nr; rr++){
+                const arma::uword i = oldRow[rr];
+                const int a = int(i/arma::uword(logbin)), px = int(i%arma::uword(logbin));
+                if(px<edge || px>=logbin-edge || rowUncounted(i)) continue;
+                tt[a] += t(rr)*t(rr);
+                td[a] += t(rr)*(Cs(rr)-model(rr)+t(rr));
+            }
+            double sum = 0.0;
+            for(int a=0; a<num; a++){
+                w[g][a] = tt[a]>0 ? std::max(kMinStrength, cur[g][a]*td[a]/tt[a]) : std::max(kMinStrength, cur[g][a]);
+                sum += w[g][a];
+            }
+            if(!(sum>0)) return true;
+            for(int a=0; a<num; a++){ w[g][a] *= num/sum; change = std::max(change, std::fabs(w[g][a]-cur[g][a])); }
+        }
+        // static weights in place: value *= new / old
+        for(size_t q=0; q<tEnt.size(); q++){
+            const double o = cur[tEntGroup[q]][tEntSpec[q]];
+            vv[tEnt[q]] *= o>0 ? w[tEntGroup[q]][tEntSpec[q]]/o : 0.0;
+        }
+        cur = w;
+    }
+    for(int g=0; g<G; g++){
+        double *dst = grouped ? g_MtelG[g].data() : Mtel.data();
+        for(int a=0; a<num; a++) dst[a] = cur[g][a];
+    }
+    note = QString(", in windows: %1 of %2 pixels per spectrum").arg(nPx).arg(logbin);
+    return true;
+}
+
+// Strength of the static lines per spectrum (least squares) for the current solution X:
+// with t = contribution of the static lines (continuum level removed) to spectrum j and
+// d = data - model + t, the factor is <t, d> / <t, t>; counted pixels only. With groups (O2,
+// H2O, ...) one factor per group and spectrum, t from the columns of the group only. Each group
+// scaled to a mean of 1 (the amplitude of the static spectrum takes the rest).
+// w[g][a]; false if there are no static lines in the fit.
+bool MainWindow::fitStaticStrengths(std::vector<std::vector<double>> &w)
+{
+    if(g_layout.nT<=0 || X.n_elem!=arma::uword(g_layout.cols()) || int(Mtel.size())<num) return false;
+    const bool grouped = g_MtelG.size()>1 && g_layout.tGroup.size()==size_t(g_layout.nT);
+    const int G = grouped ? int(g_MtelG.size()) : 1;
+    // the static spectrum without its continuum level: with equal strengths a constant in T is
+    // a null direction (taken up by A and B), and it would dominate the regression
+    arma::vec T = X.subvec(g_layout.startT(), g_layout.startT()+g_layout.nT-1);
+    T -= dis::continuumLevel(T);
+    const arma::vec model = M*X;
+    const int edge = std::max(0, g_edgeMargin);
+    w.assign(G, std::vector<double>(num, 0.0));
+    for(int g=0; g<G; g++){
+        arma::vec XT(X.n_elem, arma::fill::zeros);
+        for(int k=0; k<g_layout.nT; k++)
+            if(!grouped || g_layout.tGroup[size_t(k)]==g) XT(g_layout.startT()+k) = T(k);
+        const arma::vec t = M*XT;
+        double sum = 0.0;
+        for(int a=0; a<num; a++){
+            const double cur = grouped ? g_MtelG[size_t(g)][a] : Mtel[a];
+            double tt = 0.0, td = 0.0;
+            for(int px=edge; px<logbin-edge; px++){
+                const arma::uword i = arma::uword(a)*logbin + px;
+                if(rowUncounted(i)) continue;
+                tt += t(i)*t(i);
+                td += t(i)*(C(i)-model(i)+t(i));
+            }
+            // (lower bound > 0: the update is multiplicative, a strength of exactly 0 would
+            // remove the static columns of the spectrum and could never recover)
+            w[g][a] = tt>0 ? std::max(kMinStrength, cur*td/tt) : std::max(kMinStrength, cur);
+            sum += w[g][a];
+        }
+        if(!(sum>0)) return false;
+        for(double &v : w[g]) v *= num/sum;
+    }
+    return true;
+}
+
+//****************************************
+// Weighted residual vector over the counted pixels (same selection and weights as
+// computeResiduum with "Mean": |r|^2 = residuum^2).
+//****************************************
+arma::vec MainWindow::residualVector(const arma::vec &res)
+{
+    const bool range = ui->checkBox_33->isChecked();
+    const double lo = range ? log10(ui->doubleSpinBox_14->value()) : 0.0;
+    const double hi = range ? log10(ui->doubleSpinBox_15->value()) : 0.0;
+    const int edge = std::max(0, g_edgeMargin);
+    std::vector<double> r;
+    r.reserve(res.n_elem);
+    for(arma::uword i=0; i<res.n_elem; i++){
+        if(range && !((W(i)>lo) && (W(i)<hi))) continue;
+        if(rowUncounted(i) || rowResExcluded(i)) continue;
+        if(edge>0 && logbin>0){
+            int px = int(i % arma::uword(logbin));
+            if(px<edge || px>=logbin-edge) continue;
+        }
+        double d = res(i)-C(i);
+        if(!g_specW.empty() && logbin>0) d *= g_specW[i/arma::uword(logbin)];
+        r.push_back(d);
+    }
+    return arma::vec(r);
+}
+
+//****************************************
+// Optimisation with Levenberg-Marquardt (levmar.h) on the individual RVs or on the free
+// orbital elements, starting from the current values (RV file / orbit, orbitelements).
+// The component spectra are solved for at every evaluation (variable projection); the
+// Jacobian of the residual vector comes from forward differences (steps 1e-3 pixel for
+// RVs, 1e-4 of the initial Nelder-Mead step for elements), each a warm-started LSQR solve.
+// Afterwards a simplex around the best point (vertices one standard error away) is written
+// to the optimisation files, so that Error Estimation and a Nelder-Mead "Continue" work.
+//****************************************
+bool MainWindow::optimiseLM(std::ofstream &LogFile, std::ofstream &soptd)
+{
+    if(!ui->checkBox_14->isChecked()){
+        reportError("Error 41: Levenberg-Marquardt needs the residuum mode 'Mean' (sum of squares).");
+        return false;
+    }
+    const bool rvMode = ui->checkBox->isChecked() || ui->checkBox_2->isChecked();
+    const bool sb1 = ui->checkBox_3->isChecked();
+    const char *elName[7] = {"P", "e", "K_A", "K_B", "gamma", "T_peri", "omega"};
+    int pvf[7] = {!ui->checkBox_18->isChecked(), !ui->checkBox_17->isChecked(), !ui->checkBox_31->isChecked(),
+                  !ui->checkBox_36->isChecked(), !ui->checkBox_37->isChecked(), !ui->checkBox_35->isChecked(),
+                  !ui->checkBox_38->isChecked()};
+    std::vector<std::string> names;
+    std::vector<int> elIdx;
+    arma::vec x0, h;
+    if(rvMode){
+        const int n = sb1 ? num : 2*num;
+        x0.set_size(n);
+        h.set_size(n);
+        for(int j=0; j<num; j++){
+            x0(j) = RV1[j];
+            names.push_back("RV_A_"+std::to_string(j));
+            if(!sb1){
+                x0(num+j) = RV3[j];
+            }
+        }
+        if(!sb1) for(int j=0; j<num; j++) names.push_back("RV_B_"+std::to_string(j));
+        h.fill(1e-3*dv);      // 1e-3 pixel
+        LogFile<<"Levenberg-Marquardt on individual RVs ("<<n<<" parameters)."<<endl;
+    }
+    else{
+        for(int e=0; e<7; e++){
+            if(pvf[e]) LogFile<<elName[e]<<" locked ";
+            else elIdx.push_back(e);
+        }
+        if(elIdx.empty()){
+            reportError("Error 37: All orbital elements are locked.");
+            return false;
+        }
+        x0.set_size(elIdx.size());
+        h.set_size(elIdx.size());
+        for(size_t i=0; i<elIdx.size(); i++){
+            x0(i) = orbele[elIdx[i]];
+            h(i) = 1e-4*dorbele[elIdx[i]];
+            if(!(std::fabs(h(i))>0)) h(i) = 1e-8*std::max(1.0, std::fabs(x0(i)));
+            names.push_back(elName[elIdx[i]]);
+        }
+        LogFile<<endl<<"Levenberg-Marquardt on orbital parameters ("<<elIdx.size()<<" free)."<<endl;
+        if(!pvf[4]){
+            cout<<kGammaNote<<endl;
+            LogFile<<kGammaNote<<endl;
+            if(runow==0) ui->plainTextEdit_2->appendPlainText(kGammaNote);
+        }
+    }
+    const int n = int(x0.n_elem);
+    // RV mode: a common shift of all RVs of a component only shifts its reconstructed spectrum
+    // (the zero point is not determined by disentangling, also not with static lines, which
+    // are an independent unknown spectrum). Along this
+    // direction S changes only through the interpolation smoothing, and the optimisation
+    // drifts slowly without physical meaning. The mean RV of each component is therefore kept
+    // at its start value: x = x0 + Q y with Q an orthonormal basis of the complement.
+    // Fixed RVs (Optimisation tab) are constraints as well: x = x0 + Q y with Q an orthonormal
+    // basis of the directions that keep fixed RVs and, where needed, the mean RVs. A component
+    // with at least one fixed RV has its zero point determined by it.
+    arma::mat Q;
+    std::vector<int> freeIdx;
+    if(rvMode){
+        QString ferr;
+        if(!MainWindow::freeRVIndices(sb1, freeIdx, ferr)){
+            reportError("Error 45: "+ferr);
+            return false;
+        }
+    }
+    std::vector<arma::vec> cons;
+    bool meanFixed = false;
+    if(rvMode){
+        std::vector<char> isFree(n, 0);
+        for(int k : freeIdx) isFree[k] = 1;
+        for(int k=0; k<n; k++){
+            if(isFree[k]) continue;
+            arma::vec c(n, arma::fill::zeros);
+            c(k) = 1.0;
+            cons.push_back(c);
+        }
+        if(num>1){
+            for(int comp=0; comp<(sb1 ? 1 : 2); comp++){
+                bool anyFixed = false;
+                for(int j=0; j<num; j++) if(!isFree[comp*num+j]) anyFixed = true;
+                if(anyFixed) continue;
+                arma::vec c(n, arma::fill::zeros);
+                c.subvec(comp*num, comp*num+num-1).ones();
+                cons.push_back(c);
+                meanFixed = true;
+            }
+        }
+        if(int(freeIdx.size())<n) LogFile<<"Fixed RVs: "<<(n-int(freeIdx.size()))<<" of "<<n<<"."<<endl;
+    }
+    const bool fixMeans = !cons.empty();   // constrained parametrisation
+    if(fixMeans){
+        const int nc = int(cons.size());
+        arma::mat Bm(n, nc);
+        for(int c=0; c<nc; c++) Bm.col(c) = cons[c];
+        arma::mat Qf, R;
+        arma::qr(Qf, R, Bm);
+        Q = Qf.cols(nc, n-1);
+        if(meanFixed) LogFile<<"Mean RV of a component without fixed RVs kept at its start value (zero point not determined by disentangling)."<<endl;
+    }
+    // Continue without a best state (e.g. a simplex of an older version): start from the best
+    // vertex of the stored simplex if it matches the free parameters
+    if(ui->checkBox_11->isChecked() && !g_contFromBest && inrein==0){
+        qOptval = ui->lineEdit_16->text();
+        qOptmat = ui->lineEdit_17->text();
+        std::vector<int> axes;
+        if(rvMode) axes = freeIdx;
+        else for(int i=0; i<n; i++) axes.push_back(i);
+        const int na = int(axes.size());
+        std::vector<double> sy, sP;
+        if(readStoredSimplex(na, sy, sP)){
+            const int b = int(std::min_element(sy.begin(), sy.end())-sy.begin());
+            for(int a=0; a<na; a++) x0(axes[a]) = sP[b*na+a];
+            LogFile<<"Continue: start from the best vertex of the stored simplex."<<endl;
+        }
+        else LogFile<<"Continue: no stored best values for these parameters; start values from the inputs."<<endl;
+    }
+    const int ny = fixMeans ? int(Q.n_cols) : n;
+    auto toX = [&](const arma::vec &y){ return fixMeans ? arma::vec(x0 + Q*y) : y; };
+    LogFile<<"Interpolation: "<<(ui->comboBox_interp->currentIndex()==1 ? "cubic" : "linear")<<endl;
+
+    auto setParams = [&](const arma::vec &x){
+        if(rvMode){
+            for(int j=0; j<num; j++){
+                RV1[j] = x(j);
+                if(!sb1) RV3[j] = x(num+j);
+            }
+            return true;
+        }
+        for(size_t i=0; i<elIdx.size(); i++) orbele[elIdx[i]] = x(i);
+        if(!orbit::elementsValid(orbele[0], orbele[1])) return false;
+        RVCalcCheck = 0;
+        MainWindow::VAmplitudeA();
+        MainWindow::VAmplitudeB();
+        return RVCalcCheck==0;
+    };
+    int lmIt = 0;
+    bool wroteStart = false;
+    auto resid = [&](const arma::vec &y, arma::vec &r, bool trial){
+        if(!setParams(toX(y))) return false;
+        eval++;
+        ui->spinBox_5->setValue(eval);
+        qApp->processEvents(QEventLoop::AllEvents);
+        if(trial){
+            MainWindow::ConstructMatrix();
+            const double s = MainWindow::DivideConquer();
+            if(!(s<orbit::kInvalidPenalty)) return false;
+            if(!wroteStart){   // start value; afterwards one line per accepted step
+                soptd<<lmIt<<"\t"<<eval<<"\t"<<s<<"\t"<<sigma2Now(s)<<endl;
+                wroteStart = true;
+            }
+            upda = 0;
+        }
         else{
-            for (int n=0; n<num*logbin; n++){//num*logbin
-                if(n==0){
-                    if(RV1cmin>0){
-                        RV1a=RV1c[a];
-                    }
-                    else{
-                            RV1a=abs(RV1cmin)+RV1c[a];
-                    }
+            if(!MainWindow::buildDesignMatrix(false)) return false;
+            if(!MainWindow::solveSystem(MainWindow::currentSolver())) return false;
+        }
+        r = MainWindow::residualVector(M*X);
+        return r.is_finite();
+    };
+
+    lm::Options opt;
+    opt.h = fixMeans ? arma::vec(ny, arma::fill::value(h(0))) : h;   // Q orthonormal: same step length
+    opt.maxIter = std::max(1, zaehler);
+    // converged when the model predicts less than 0.002 in chi^2 still to gain (the model
+    // curvature can be several times too large, the true remainder is then still < ~0.01;
+    // MC tests: 0.002-0.009 above the Nelder-Mead minimum); sigma^2 from S/N or S/bins
+    const double known = knownSigma2();
+    double tolSigma2 = known;
+    if(!(tolSigma2>0)){
+        arma::vec r0;
+        if(resid(fixMeans ? arma::vec(ny, arma::fill::zeros) : x0, r0, false) && r0.n_elem>0)
+            tolSigma2 = arma::dot(r0, r0)/double(r0.n_elem);
+    }
+    opt.tolS = 0.002*tolSigma2;
+    opt.relTolS = 1e-12;
+    r1 = 0.0;      // DivideConquer: every improvement is written
+    LogFile<<setprecision(15);
+    // Reinitiate: after convergence a new run from the best point (new damping, new Jacobian,
+    // new secant updates). Ends when a run brings no improvement, i.e. less than the
+    // convergence tolerance tolS in S (a restart from a converged point always finds a
+    // negligible remainder), or at the iteration limit across all runs.
+    const bool reinitLM = ui->checkBox_32->isChecked();
+    const int maxIterAll = std::max(1, zaehler);
+    int itOffset = 0;            // iterations of the previous runs (plot, counter)
+    lm::Result res;
+    double prevS = std::numeric_limits<double>::quiet_NaN();
+    for(int run=0;; run++){
+        const arma::vec y0 = fixMeans ? arma::vec(ny, arma::fill::zeros) : x0;
+        opt.maxIter = std::max(1, maxIterAll-itOffset);
+        res = lm::minimize(y0, resid, opt, [&]{ return abortt==1; },
+            [&](int it, const arma::vec &, double S){
+                lmIt = itOffset+it;
+                ui->spinBox_4->setValue(lmIt);
+                // convergence plot: accepted steps only (trial steps of the line search and
+                // rejected steps would appear as spikes)
+                soptd<<lmIt<<"\t"<<eval<<"\t"<<setprecision(15)<<std::sqrt(S)<<"\t"<<sigma2Now(std::sqrt(S))<<endl;
+                LogFile<<"Iteration "<<lmIt<<": Residuum "<<std::sqrt(S)<<endl;
+                cout<<"LM iteration "<<lmIt<<": residuum "<<std::sqrt(S)<<endl;
+                MainWindow::plot_functionvalues();
+                qApp->processEvents(QEventLoop::AllEvents);
+            });
+        itOffset += res.iterations;
+        LogFile<<res.log;
+        if(!res.message.empty()){
+            LogFile<<res.message<<endl;
+            cerr<<res.message<<endl;
+            ui->plainTextEdit_2->appendPlainText(QString::fromStdString(res.message));
+        }
+        if(res.aborted) abortt = 0;
+        if(!res.ok){
+            reportError("Error 42: "+QString::fromStdString(res.message));
+            return false;
+        }
+        if(!reinitLM || res.aborted || !res.converged) break;
+        std::ostringstream m;
+        m<<setprecision(6);
+        if(run>0){
+            const double gain = prevS-res.S;
+            const bool improved = gain > opt.tolS;
+            m<<"Levenberg-Marquardt run "<<run+1<<": gain against the previous run "<<gain/tolSigma2
+             <<" in chi^2"<<(improved ? " (improved: restart from the new best)." : " (no improvement: stop).");
+            LogFile<<m.str()<<endl;
+            cout<<m.str()<<endl;
+            ui->plainTextEdit_2->appendPlainText(QString::fromStdString(m.str()));
+            if(!improved) break;
+            m.str("");
+        }
+        if(itOffset>=maxIterAll){
+            LogFile<<"Maximum number of iterations reached (all runs)."<<endl;
+            break;
+        }
+        prevS = res.S;
+        x0 = toX(res.x);         // new start: the best point (constraints keep their values)
+        if(ui->checkBox_8->isChecked() && ui->checkBox_tellfit->isChecked()){
+            // strengths of the static lines again for the best point (fitted at the start)
+            setParams(x0);
+            MainWindow::ConstructMatrix();
+            g_tellFitPending = true;
+            MainWindow::DivideConquer();     // the next run gains what the new strengths bring
+        }
+        m<<"Reinitiate optimisation with current best "<<(rvMode ? "RVs" : "orbit")<<" (Levenberg-Marquardt).";
+        LogFile<<endl<<m.str()<<endl;
+        cout<<m.str()<<endl;
+        ui->plainTextEdit_2->appendPlainText(QString::fromStdString(m.str()));
+    }
+    res.iterations = itOffset;
+
+    // back to the parameters (RVs / elements)
+    const arma::vec xbest = toX(res.x);
+    // best point: state (RVs, X, residuum bins) and files belong to it
+    setParams(xbest);
+    MainWindow::ConstructMatrix();
+    const double rbest = MainWindow::DivideConquer();
+    // Standard errors are not taken from the curvature model: J^T J of the residual vector
+    // overestimates the true curvature of S by a factor 1.5-3.5 at S/N ~ 65 (the component
+    // spectra absorb part of the noise), and the secant correction is only approximate.
+    // The simplex written below lets "Error Estimation" measure the real curvature.
+    arma::vec err(n, arma::fill::zeros);
+    {
+        const double s2 = known>0 ? known : res.S/std::max(1, g_lastResBins - g_lastResCols - ny);
+        arma::mat cov = lm::covariance(res.JtJ, s2);                       // in y (= x without fixed means)
+        if(fixMeans && cov.n_rows==arma::uword(ny)) cov = Q*cov*Q.t();
+        if(cov.n_rows==arma::uword(n)) err = arma::sqrt(arma::abs(cov.diag()));
+    }
+    LogFile<<endl<<"Levenberg-Marquardt result after "<<res.iterations<<" steps ("<<res.jacobians
+           <<" Jacobians, "<<res.evaluations<<" evaluations): residuum "<<rbest
+           <<(res.converged ? ", converged" : "")<<endl;
+    for(int i=0; i<n; i++) LogFile<<names[i]<<"\t"<<xbest(i)<<endl;
+    LogFile<<"Standard errors: run Error Estimation (the simplex around this point has been saved)."<<endl;
+    cout<<"Levenberg-Marquardt: residuum "<<rbest<<" after "<<res.iterations<<" steps, "
+        <<res.evaluations<<" evaluations"<<(res.converged ? " (converged)" : "")<<endl;
+    for(int i=0; i<n; i++) cout<<names[i]<<"\t"<<setprecision(14)<<xbest(i)<<endl;
+
+    // simplex around the best point for Error Estimation / Nelder-Mead Continue:
+    // vertex 0 = best, vertex i = best + error from the curvature model along axis i
+    // (initial steps for the error estimation; S of the vertices from the model)
+    {
+        std::ofstream o1((qPath+"/"+ui->lineEdit_16->text()).toStdString().c_str());
+        std::ofstream o2((qPath+"/"+ui->lineEdit_17->text()).toStdString().c_str());
+        o1<<setprecision(14);
+        o2<<setprecision(14);
+        // curvature along axis i of x: (J^T J)_x = Q (J^T J)_y Q^T with the means fixed
+        arma::mat Hx = res.JtJ;
+        if(fixMeans && Hx.n_rows==arma::uword(ny)) Hx = Q*Hx*Q.t();
+        // simplex over the free parameters (RV mode: without the fixed RVs, as Nelder-Mead)
+        std::vector<int> axes;
+        if(rvMode) axes = freeIdx;
+        else for(int i=0; i<n; i++) axes.push_back(i);
+        const int na = int(axes.size());
+        for(int v=0; v<=na; v++){
+            arma::vec x = xbest;
+            double S = res.S;
+            if(v>0){
+                const int i = axes[v-1];
+                const double d = err(i)>0 ? err(i) : 10.0*h(i);
+                x(i) += d;
+                if(Hx.n_rows==arma::uword(n)) S += d*d*Hx(i,i);
+            }
+            o1<<std::sqrt(S)<<endl;
+            for(int a=0; a<na; a++) o2<<x(axes[a])<<endl;
+        }
+    }
+    // restore the best point (the simplex vertices were not evaluated)
+    setParams(xbest);
+    // orbit mode: best elements to the orbital elements file, as in the Nelder-Mead branch, so that
+    // "Read data" and "Solve" continue from the result
+    if(!rvMode){
+        std::ofstream borbit((qPath+"/"+qOrbitFile).toStdString().c_str());
+        borbit<<setprecision(14);
+        for(int e=0; e<7; e++) borbit<<orbele[e]<<(e<6 ? "\n" : "");
+    }
+    ui->spinBox_4->setValue(res.iterations);
+    return true;
+}
+
+//****************************************
+// Transformation matrix from the current RVs (RV1, RV3) and weights.
+// Sets M, g_layout, bso1, bso2, Mn, Mm, dv and sets X to 0.
+// interactive=false: no dialogs (called from the optimisation).
+//****************************************
+bool MainWindow::buildDesignMatrix(bool interactive)
+{
+    g_matrixValid = false;
+    auto fail = [&](const QString &msg){
+        if(interactive) reportError(msg);
+        else cerr<<msg.toStdString()<<endl;
+        return false;
+    };
+
+    if(ui->checkBox_34->isChecked()){
+        return fail("Error 25: SB3 systems are not supported.");
+    }
+    bool sb2 = ui->checkBox_4->isChecked();
+    if(!sb2 && !ui->checkBox_3->isChecked()){
+        return fail("Error 26: Please choose SB1 or SB2.");
+    }
+    if(num<1 || logbin<2 || !(g_dlog>0) || RV1.size()<num || (sb2 && RV3.size()<num)
+            || Mval1.size()<num || Mval2.size()<num || Mtel.size()<num){
+        return fail("Error 27: Data not read or inconsistent; please read data first.");
+    }
+
+    dis::MatrixSpec spec;
+    spec.num = num;
+    spec.logbin = logbin;
+    spec.dlog = g_dlog;
+    spec.sb2 = sb2;
+    spec.telluric = ui->checkBox_8->isChecked();
+    const bool cubic = ui->comboBox_interp->currentIndex()==1;
+    spec.interp = cubic ? dis::Interpolation::Cubic : dis::Interpolation::Linear;
+    spec.rvA.assign(RV1.begin(), RV1.begin()+num);
+    if(sb2) spec.rvB.assign(RV3.begin(), RV3.begin()+num);
+    spec.wA.assign(Mval1.begin(), Mval1.begin()+num);
+    spec.wB.assign(Mval2.begin(), Mval2.begin()+num);
+    spec.wT.assign(Mtel.begin(), Mtel.begin()+num);
+    // barycentric correction (loadBaryCorr): orbit RVs to the observatory frame, or the static
+    // lines shifted by BC in corrected spectra
+    if(int(g_bc.size())>=num){
+        const bool corrected = ui->comboBox_bcframe->currentIndex()==1;
+        if(!corrected && ui->checkBox_16->isChecked()){
+            for(int j=0; j<num; j++){
+                spec.rvA[j] = toObservatory(RV1[j], g_bc[j]);
+                if(sb2) spec.rvB[j] = toObservatory(RV3[j], g_bc[j]);
+            }
+        }
+        if(corrected && spec.telluric) spec.rvT.assign(g_bc.begin(), g_bc.begin()+num);
+    }
+    if(spec.telluric && !g_tellRanges.empty()){
+        spec.tRanges = g_tellRanges;
+        spec.w0 = W(0);
+        if(g_MtelG.size()>1 && g_tellRangeGroup.size()==g_tellRanges.size()){
+            spec.tRangeGroup = g_tellRangeGroup;
+            spec.wTgroup = g_MtelG;
+        }
+    }
+    g_colScale.reset();
+    if(!g_ratioShape.empty()){
+        // F_A/F_B = k_j s(lambda), k_j = wA_j / wB_j (field, Editor or flux-ratio optimisation),
+        // sum wA_j + wB_j kept per spectrum. The unknowns are the diluted spectra
+        // y_A = rho_A x_A, y_B = rho_B x_B with the light fractions rho of a reference ratio
+        // k_ref s(lambda) (k_ref: median of the k_j). The rows then carry h = w / rho, which is
+        // exactly 1 for every spectrum with k_j = k_ref: the matrix has the exact null space of
+        // the constant-ratio case (offsets of y_A and y_B), instead of directions that are
+        // nearly null only, which LSQR would fill with amplified noise. The error of using
+        // rho at the observed instead of the rest wavelength is (d ln rho/d ln lambda) v/c,
+        // ~1e-4 relative. The output x = y / rho (componentSpectra).
+        if(int(g_ratioShape.size())!=logbin){
+            return fail("Error 27: Data not read or inconsistent; please read data first.");
+        }
+        std::vector<double> ks;
+        for(int a=0; a<num; a++) if(Mval2[a]>0 && Mval1[a]>=0) ks.push_back(Mval1[a]/Mval2[a]);
+        double kref = 1.0;
+        if(!ks.empty()){
+            std::nth_element(ks.begin(), ks.begin()+ks.size()/2, ks.end());
+            kref = ks[ks.size()/2];
+        }
+        g_ratioKref = kref;
+        spec.wArow.resize(size_t(num)*logbin);
+        spec.wBrow.resize(size_t(num)*logbin);
+        for(int i=0; i<logbin; i++){
+            double rhoA, rhoB;
+            fr::weights(kref, g_ratioShape[i], 1.0, rhoA, rhoB);
+            for(int a=0; a<num; a++){
+                double wa = Mval1[a], wb = Mval2[a];
+                if(Mval2[a]>0 && Mval1[a]>=0) fr::weights(Mval1[a]/Mval2[a], g_ratioShape[i], Mval1[a]+Mval2[a], wa, wb);
+                spec.wArow[size_t(a)*logbin+i] = wa/rhoA;
+                spec.wBrow[size_t(a)*logbin+i] = wb/rhoB;
+            }
+        }
+    }
+
+    for(int j=0; j<num; j++){
+        double sA = dis::pixelShift(spec.rvA[j], g_dlog);
+        double sB = sb2 ? dis::pixelShift(spec.rvB[j], g_dlog) : 0.0;
+        double sT = spec.rvT.empty() ? 0.0 : dis::pixelShift(spec.rvT[j], g_dlog);
+        if(!std::isfinite(sA) || !std::isfinite(sB) || std::fabs(sA)>=logbin || std::fabs(sB)>=logbin
+                || !std::isfinite(sT) || std::fabs(sT)>=logbin){
+            return fail("Error 28: Radial velocity out of range for spectrum "+QString::number(j)+".");
+        }
+    }
+
+    g_layout = dis::buildMatrix(spec, M);
+    if(!g_rowMasked.empty()){
+        if(g_rowMasked.size()==size_t(M.n_rows)){                 // excluded ranges: rows removed
+            M.sync();
+            g_colCountFull.assign(M.n_cols, 0);
+            g_colCountReal.assign(M.n_cols, 0);
+            for(arma::uword c=0; c<M.n_cols; c++){
+                g_colCountFull[c] = M.col_ptrs[c+1]-M.col_ptrs[c];
+                for(arma::uword k=M.col_ptrs[c]; k<M.col_ptrs[c+1]; k++)
+                    if(!g_rowMasked[M.row_indices[k]]) g_colCountReal[c]++;
+            }
+            dis::dropRows(M, g_rowMasked);
+        }
+        else g_rowMasked.clear();
+    }
+    if(!g_ratioShape.empty()){
+        // x = y / rho at the rest wavelength of each column (static lines: unchanged)
+        g_colScale.ones(g_layout.cols());
+        const double w0 = W(0);
+        auto rho = [&](char comp, int k){
+            const double lam = std::pow(10.0, dis::columnLog10Lambda(g_layout, comp, k, w0, g_dlog));
+            double rA, rB;
+            fr::weights(g_ratioKref, fr::shape(g_ratioModel, lam, g_ratioLref), 1.0, rA, rB);
+            return comp=='A' ? rA : rB;
+        };
+        for(int k=0; k<g_layout.nA; k++) g_colScale(k) = 1.0/rho('A', k);
+        for(int k=0; k<g_layout.nB; k++) g_colScale(g_layout.startB()+k) = 1.0/rho('B', k);
+    }
+
+    if(g_edgeMargin<0){
+        g_edgeMargin = 0;
+        if(ui->checkBox_40->isChecked()){
+            // Rows at a distance >= span+1 (cubic: span+2) from the edge only see columns
+            // covered by all spectra. 20 % and 2 pixels of margin for the change of the RVs
+            // during the optimisation.
+            double span = 0;
+            auto spanOf = [&](const std::vector<double> &rv){
+                double lo=1e300, hi=-1e300;
+                for(double v : rv){ double s=dis::pixelShift(v, g_dlog); lo=std::min(lo,s); hi=std::max(hi,s); }
+                return rv.empty() ? 0.0 : hi-lo;
+            };
+            span = std::max(std::max(spanOf(spec.rvA), spanOf(spec.rvB)), spanOf(spec.rvT));
+            int m = int(std::ceil(1.2*span)) + (cubic ? 3 : 2);   // cubic stencil: 1 pixel wider
+            if(logbin-2*m < 10){
+                cerr<<"Exclude edges: spectra too short for an edge of "<<m<<" pixels; full residuum used."<<endl;
+                m = 0;
+            }
+            g_edgeMargin = m;
+            cout<<"Residuum without "<<m<<" edge pixels per spectrum (RV range "<<span<<" px)."<<endl;
+        }
+    }
+    if(!g_rowMasked.empty() && g_rowNearMask.size()!=g_rowMasked.size()){
+        g_rowNearMask.assign(g_rowMasked.size(), 0);
+        const int m = std::max(0, g_edgeMargin);
+        if(m>0){
+            for(int j=0; j<num; j++){
+                const size_t o = size_t(j)*size_t(logbin);
+                int last = -1000000;                       // last excluded pixel to the left
+                for(int i=0; i<logbin; i++){
+                    if(g_rowMasked[o+i]){ last = i; continue; }
+                    if(i-last<=m) g_rowNearMask[o+i] = 1;
                 }
-                else if(n==logbin+a*logbin){
-                    a+=1;
-                    if(RV1cmin>0){
-                        RV1a=RV1c[a];
-                    }
-                    else{
-                            RV1a=abs(RV1cmin)+RV1c[a];
-                    }
-                }
-                for (int m=0; m<Mm; m++){
-                    if((n-a*logbin+RV1a)==m){//or n+logbin+2*abs(RV1m)-a*logbin+RV3a+abs(RV3m)==m
-                        if(bidi==1){
-                            M(n,m)=Mval1[a];
-                            if(m<Mm-1) {
-                                M(n,m+1)=Mval1[a];
-                                m=m+1;
-                                ++elements;
-                            }
-                            ++elements;
-                        }
-                        else if(bidi==0){
-                            M(n,m)=Mval1[a];
-                            ++elements;
-                            }
-                        }
-                        else{
-                            M(n,m)=0;
-                        }
-                    }
+                last = 1000000;                            // ... to the right
+                for(int i=logbin-1; i>=0; i--){
+                    if(g_rowMasked[o+i]){ last = i; continue; }
+                    if(last-i<=m) g_rowNearMask[o+i] = 1;
                 }
             }
         }
-
-    a=0;
-
-    loc.resize(2,elements);
-    val.resize(elements);
-    int elcount=0;
-
-    for(int i=0; i<elements; i++){
-        val(i)=Mval1[a];
     }
+    bso1 = g_layout.nA;
+    bso2 = g_layout.nB;
+    Mn = g_layout.rows();
+    Mm = g_layout.cols();
+    X.zeros(Mm);
 
-    for(int n=0; n<Mn;n++){
-        for(int m=0; m<Mm;m++){
-            if(M(n,m)>0){
-                loc(0,elcount)=n;
-                loc(1,elcount)=m;
-                ++elcount;
+    // key figures for display
+    RV1max = RV1[0];
+    RV1min = RV1maxi = RV1[0];
+    for(int i=0; i<num; i++){
+        if(std::fabs(RV1[i])>std::fabs(RV1max)) RV1max=RV1[i];
+        RV1min = std::min(RV1min, RV1[i]);
+        RV1maxi = std::max(RV1maxi, RV1[i]);
+    }
+    if(sb2){
+        RV3max = RV3[0];
+        RV3min = RV3maxi = RV3[0];
+        for(int i=0; i<num; i++){
+            if(std::fabs(RV3[i])>std::fabs(RV3max)) RV3max=RV3[i];
+            RV3min = std::min(RV3min, RV3[i]);
+            RV3maxi = std::max(RV3maxi, RV3[i]);
+        }
+    }
+    ui->doubleSpinBox->setValue(std::fabs(RV1max));
+    if(sb2) ui->doubleSpinBox_2->setValue(std::fabs(RV3max));
+
+    dv = (pow(10, g_dlog)-1)*c0;
+    difference = g_dlog;
+    ldiff = pow(10, W(1))-pow(10, W(0));
+    ui->doubleSpinBox_3->setValue(dv);
+
+    g_matrixValid = true;
+    return true;
+}
+
+//****************************************
+// Solves M X = C (least squares, minimum norm) with LSQR or SVD (DaC).
+//****************************************
+bool MainWindow::solveSystem(dis::Solver solver)
+{
+    if(!g_matrixValid){
+        return false;
+    }
+    if(g_autoWeightsPending){
+        // S/N per spectrum "auto": solve, estimate S/N from the residuals, weight; three
+        // iterations reach the fixed point (tests: within the statistical scatter)
+        g_autoWeightsPending = false;
+        g_specW.clear();
+        g_sigmaBar2 = 0.0;
+        for(int it=0; it<3; it++){
+            if(!solveSystem(solver)) return false;
+            std::vector<double> est = estimateSnr(M*X);
+            if(est.empty() || !setWeightsFromSnr(est)){
+                g_specW.clear();
+                g_sigmaBar2 = 0.0;
+                cerr<<"S/N estimate failed; unweighted."<<endl;
+                break;
             }
-         }
-      }
+        }
+        g_autoSpecW = g_specW;
+        g_autoSigmaBar2 = g_sigmaBar2;
+        if(!g_specW.empty()){
+            std::ofstream out((qPath+"/snr_estimated.dat").toStdString().c_str());
+            out<<setprecision(6);
+            for(double w : g_specW) out<<w/std::sqrt(g_sigmaBar2)<<"\n";
+            cout<<"S/N per spectrum estimated (auto) and written to snr_estimated.dat; mean noise sigma = "
+                <<std::sqrt(g_sigmaBar2)<<endl;
+        }
     }
+    if(g_tellFitPending){
+        // strength of the static lines per spectrum: alternate solving and the scale per
+        // spectrum (each step lowers the sum of squares) until the strengths change by less
+        // than 1e-4; kept afterwards (optimisation)
+        g_tellFitPending = false;
+        int it = 0;
+        double change = 1.0;
+        const bool grouped = g_MtelG.size()>1;
+        QString windowNote;
+        if(solver==dis::Solver::Lsqr && !g_tellRanges.empty() && g_layout.nT>0){
+            // only in windows around the ranges of the static lines (sub-problem), then one
+            // full solve with the final strengths (below)
+            if(!fitStrengthsWindowed(it, change, windowNote)) return false;
+            if(!buildDesignMatrix(false)) return false;
+        }
+        else for(; it<kTellFitMaxIter && change>1e-4; it++){
+            if(!solveSystem(solver)) return false;
+            std::vector<std::vector<double>> w;
+            if(!fitStaticStrengths(w)) break;
+            change = 0.0;
+            for(size_t g=0; g<w.size(); g++){
+                double *cur = grouped ? g_MtelG[g].data() : Mtel.data();
+                for(int a=0; a<num; a++){ change = std::max(change, std::fabs(w[g][a]-cur[a])); cur[a] = w[g][a]; }
+            }
+            if(!buildDesignMatrix(false)) return false;
+        }
+        const QString name = withSuffix(ui->lineEdit_10->text().trimmed().isEmpty() ? QString("static.txt")
+                                                                                   : ui->lineEdit_10->text().trimmed(), "_strength");
+        QStringList spans;
+        {
+            std::ofstream out((qPath+"/"+name).toStdString().c_str());
+            out<<"# strength of the static lines per spectrum (fitted, mean 1)";
+            if(grouped){
+                out<<"; columns:";
+                for(const QString &g : g_tellGroupNames) out<<" "<<g.toStdString();
+            }
+            out<<"\n"<<setprecision(8);
+            for(int a=0; a<num; a++){
+                if(grouped){ for(size_t g=0; g<g_MtelG.size(); g++) out<<(g ? "\t" : "")<<g_MtelG[g][a]; }
+                else out<<Mtel[a];
+                out<<"\n";
+            }
+            for(size_t g=0; g<(grouped ? g_MtelG.size() : 1); g++){
+                const double *v = grouped ? g_MtelG[g].data() : Mtel.data();
+                const auto mm = std::minmax_element(v, v+num);
+                spans << QString("%1%2 to %3").arg(grouped ? g_tellGroupNames[g]+" " : QString())
+                                              .arg(*mm.first, 0, 'f', 3).arg(*mm.second, 0, 'f', 3);
+            }
+        }
+        const QString m = QString("Strength of the static lines fitted per spectrum (%1 iterations%2%5): %3, written to %4.")
+                          .arg(it).arg(change>1e-4 ? ", not converged" : "").arg(spans.join("; ")).arg(name).arg(windowNote);
+        cout<<m.toStdString()<<endl;
+        if(runow==0) ui->plainTextEdit_2->appendPlainText(m);
+        // spectra whose static lines do not fit (strength near 0): usually a wrong barycentric
+        // correction, time or wavelength scale of the spectrum, which shifts its telluric lines
+        QStringList weak;
+        for(int a=0; a<num; a++){
+            QStringList gs;
+            for(size_t g=0; g<(grouped ? g_MtelG.size() : 1); g++){
+                const double v = grouped ? g_MtelG[g][a] : Mtel[a];
+                if(v<kWeakStrength) gs << (grouped ? g_tellGroupNames[g]+" " : QString())+QString::number(v, 'f', 3);
+            }
+            if(!gs.isEmpty()) weak << QString("%1 (%2)").arg(ui->spinBox->value()+a).arg(gs.join(", "));
+        }
+        if(!weak.isEmpty()){
+            const QString wm = QString("Warning: the static lines do not fit spectrum %1 (strength below %2). Check the "
+                                       "barycentric correction, the time and the wavelength scale of these spectra "
+                                       "(Tools -> Barycentric correction -> Check telluric lines).")
+                               .arg(weak.join(", ")).arg(kWeakStrength);
+            cout<<wm.toStdString()<<endl;
+            if(runow==0) ui->plainTextEdit_2->appendPlainText(wm);
+        }
+    }
+    // warm start (LSQR only): previous solution on the current column layout
+    static const bool coldOnly = [](){ const char *e = std::getenv("SPECTANGULAR_COLD_START");
+                                       return e && *e && std::string(e)!="0"; }();
+    arma::vec x0;
+    const bool warm = solver==dis::Solver::Lsqr && g_warmValid && !coldOnly
+                      && g_warmLayout.num==g_layout.num && g_warmLayout.logbin==g_layout.logbin
+                      && g_warmLayout.nT==g_layout.nT && (g_warmLayout.nB>0)==(g_layout.nB>0);
+    if(warm) x0 = dis::transferSolution(g_warmLayout, g_warmX, g_layout);
+    const arma::vec *px0 = warm ? &x0 : nullptr;
+    g_warmValid = false;
+
+    // static lines: their broad structure is nearly undetermined (only the relative motion of
+    // the stars separates it from A and B), and LSQR spends most iterations on these directions
+    // (ι Tri A, 47 x 70 000 pixels: 11 720 instead of 1 325 iterations). A weak damping of the
+    // static columns, d_k^2 = damp * |column k|^2 (Model tab, default 1e-3), fixes them (the
+    // lines shrink by this fraction; broad structure stays in A and B).
+    arma::vec damp;
+    const double staticDamp = ui->doubleSpinBox_tdamp->value();   // Model tab, default 1e-3
+    if(solver==dis::Solver::Lsqr && g_layout.nT>0 && staticDamp>0){
+        damp.zeros(M.n_cols);
+        M.sync();
+        const bool wtd = !g_specW.empty() && int(g_specW.size())==num;
+        for(int k=0; k<g_layout.nT; k++){
+            const arma::uword c = arma::uword(g_layout.startT()+k);
+            double n2 = 0.0;
+            for(arma::uword q=M.col_ptrs[c]; q<M.col_ptrs[c+1]; q++){
+                const double w = wtd ? g_specW[M.row_indices[q]/arma::uword(logbin)] : 1.0;
+                n2 += w*w*M.values[q]*M.values[q];
+            }
+            damp(c) = std::sqrt(staticDamp*n2);
+        }
+    }
+    const arma::vec *pd = damp.n_elem ? &damp : nullptr;
+    dis::SolveResult r;
+    if(g_specW.empty() || int(g_specW.size())!=num){
+        r = dis::solve(M, C, X, solver, px0, pd);
+    }
+    else{
+        // weighted least squares: rows of spectrum j (matrix and data) times w_j
+        arma::sp_mat Mw = M;
+        Mw.sync();
+        double *val = arma::access::rwp(Mw.values);
+        for(arma::uword k=0; k<Mw.n_nonzero; k++){
+            val[k] *= g_specW[Mw.row_indices[k]/arma::uword(logbin)];
+        }
+        arma::vec Cw = C;
+        for(arma::uword i=0; i<Cw.n_elem; i++) Cw(i) *= g_specW[i/arma::uword(logbin)];
+        r = dis::solve(Mw, Cw, X, solver, px0, pd);
+    }
+    if(!r.ok){
+        cerr<<"Solving failed: "<<r.message<<endl;
+        return false;
+    }
+    if(!g_rowMasked.empty()){
+        // columns only in excluded ranges are undetermined: 0 (a warm start would keep its
+        // start value there)
+        const std::vector<char> empty = dis::emptyColumns(M);
+        for(arma::uword c=0; c<X.n_elem && c<empty.size(); c++) if(empty[c]) X(c) = 0.0;
+    }
+    if(solver==dis::Solver::Lsqr){
+        // the null space does not depend on the row weights: unweighted M suffices
+        if(warm) dis::removeOffsetNullspace(g_layout, M, X);
+        g_warmX = X;
+        g_warmLayout = g_layout;
+        g_warmValid = X.is_finite();
+        g_lsqrIterations += r.iterations;
+        g_lsqrSolves++;
+        cout<<"LSQR: "<<r.iterations<<" iterations"<<(warm ? " (warm start)" : "")
+            <<", "<<r.threads<<" thread"<<(r.threads==1 ? "" : "s")<<" ("<<M.n_rows<<" rows)"<<endl;
+        if(g_lsqrThreadsLast!=r.threads){
+            g_lsqrThreadsLast = r.threads;
+            updateRunInfo();
+        }
+    }
+    else{
+        cout<<"SVD (DaC): tsh "<<r.threshold<<"; # singular values: "<<r.rank<<endl;
+    }
+    if(!r.message.empty()){
+        cerr<<r.message<<endl;
+        ui->plainTextEdit_2->appendPlainText(QString::fromStdString(r.message));
+    }
+    return true;
+}
+
+//****************************************
+// S/N per spectrum from the residuals of the counted pixels, written to snr_estimated.dat
+// (one value per spectrum, usable as S/N file for "Weight by S/N").
+// sigma_j^2 = sum r^2 / sum (1 - h_i) over the pixels of spectrum j, with the leverage
+// h_i of each pixel approximated as sum_c w_i^2 M_ic^2 / sum_k w_k^2 M_kc^2 (exact for
+// non-overlapping columns): a spectrum with a high weight determines the component
+// spectra strongly and therefore has small residuals. Assumes continuum-normalised
+// spectra (sigma = 1/(S/N)). With very different S/N, an estimate from an unweighted
+// solution is biased (noise of poor spectra enters the components); iterate: solve,
+// use the estimate as weights, solve again.
+//****************************************
+std::vector<double> MainWindow::estimateSnr(const arma::vec &res)
+{
+    std::vector<double> est;
+    if(num<1 || logbin<1 || M.n_rows!=res.n_elem) return est;
+    const bool weighted = !g_specW.empty() && int(g_specW.size())==num;
+    auto w2 = [&](arma::uword row){
+        const double w = weighted ? g_specW[row/arma::uword(logbin)] : 1.0;
+        return w*w;
+    };
+    // weighted column norms and leverage per row
+    arma::vec colNorm(M.n_cols, arma::fill::zeros), lev(M.n_rows, arma::fill::zeros);
+    for(arma::uword c=0; c<M.n_cols; c++)
+        for(auto it=M.begin_col(c); it!=M.end_col(c); ++it)
+            colNorm(c) += w2(it.row())*(*it)*(*it);
+    for(arma::uword c=0; c<M.n_cols; c++){
+        if(!(colNorm(c)>0)) continue;
+        for(auto it=M.begin_col(c); it!=M.end_col(c); ++it)
+            lev(it.row()) += w2(it.row())*(*it)*(*it)/colNorm(c);
+    }
+    const int edge = std::max(0, g_edgeMargin);
+    const bool range = ui->checkBox_33->isChecked();
+    const double lo = range ? log10(ui->doubleSpinBox_14->value()) : 0.0;
+    const double hi = range ? log10(ui->doubleSpinBox_15->value()) : 0.0;
+    for(int a=0; a<num; a++){
+        double s = 0.0, d = 0.0;
+        for(int px=edge; px<logbin-edge; px++){
+            const arma::uword i = arma::uword(a)*logbin + px;
+            if(range && !((W(i)>lo) && (W(i)<hi))) continue;
+            if(rowUncounted(i) || rowResExcluded(i)) continue;
+            s += (res(i)-C(i))*(res(i)-C(i));
+            d += std::max(0.0, 1.0-lev(i));
+        }
+        const double snr = (d>0 && s>0) ? 1.0/std::sqrt(s/d) : 0.0;
+        est.push_back(snr);
+    }
+    return est;
+}
+
+void MainWindow::writeSnrEstimate(const arma::vec &res, int bins)
+{
+    if(bins<1) return;
+    std::vector<double> est = estimateSnr(res);
+    if(est.empty()) return;
+    std::ofstream out((qPath+"/snr_estimated.dat").toStdString().c_str());
+    out<<setprecision(6);
+    for(double v : est) out<<v<<"\n";
+    std::vector<double> sorted = est;
+    std::sort(sorted.begin(), sorted.end());
+    ui->plainTextEdit_2->appendPlainText("S/N per spectrum estimated from the residuals (median "
+                                         +QString::number(sorted[sorted.size()/2], 'g', 4)
+                                         +"), written to snr_estimated.dat");
+}
+
+//****************************************
+// Residuum from res = M*X.
+// Mean (checkBox_14): sqrt(sum of squares); Peak: largest square < 1.
+// Optionally only within the wavelength range (checkBox_33).
+//****************************************
+double MainWindow::computeResiduum(const arma::vec &res, int *nbins)
+{
+    bool range = ui->checkBox_33->isChecked();
+    bool mean = ui->checkBox_14->isChecked();
+    double lo = range ? log10(ui->doubleSpinBox_14->value()) : 0.0;
+    double hi = range ? log10(ui->doubleSpinBox_15->value()) : 0.0;
+    double r = 0.0;
+    int n = 0;
+    const int edge = std::max(0, g_edgeMargin);
+    std::vector<char> used(res.n_elem, 0);
+    for(arma::uword i=0; i<res.n_elem; i++){
+        if(range && !((W(i)>lo) && (W(i)<hi))) continue;
+        if(rowUncounted(i) || rowResExcluded(i)) continue;
+        if(edge>0 && logbin>0){
+            int px = int(i % arma::uword(logbin));
+            if(px<edge || px>=logbin-edge) continue;
+        }
+        used[i] = 1;
+        double d2 = pow(res(i)-C(i), 2);
+        if(!g_specW.empty() && logbin>0){
+            const double w = g_specW[i/arma::uword(logbin)];
+            d2 *= w*w;   // weighted residuum (chi^2 = residuum^2 / sigma_bar^2)
+        }
+        ++n;
+        if(mean){
+            r += d2;
+        }
+        else if((d2>r) && (d2<1)){
+            r = d2;
+        }
+    }
+    if(mean) r = sqrt(r);
+    if(nbins) *nbins = n;
+    // unknowns occurring in the counted bins (for the degrees of freedom)
+    int cols = 0;
+    if(M.n_rows==res.n_elem){
+        for(arma::uword c=0; c<M.n_cols; c++){
+            for(auto it=M.begin_col(c); it!=M.end_col(c); ++it){
+                if(used[it.row()]){ ++cols; break; }
+            }
+        }
+    }
+    g_lastResCols = cols;
+    return r;
+}
+
+//****************************************
+// Writes components (A, B, static), differences, mean difference per pixel
+// and optionally the solution vector. File names relative to the work folder;
+// empty name = do not write. Wavelengths in the rest frame of the component.
+//****************************************
+// Component spectra from the solution X. Constant flux ratio: X itself. Wavelength-dependent
+// ratio: X holds the diluted spectra y = rho x (see buildDesignMatrix); x = y / rho, and from x
+// the offsets along the null directions are removed (minimum norm in x, as for a constant
+// ratio; for s = 1 this gives exactly the constant-ratio result).
+// Then the continuum levels of A and B are made equal along the exact offset null direction
+// (dis::levelComponents; the model M X and the fit do not change). The minimum-norm choice
+// alone puts the two continua at different levels if the flux ratio is not 1, and it is
+// dominated by the poorly determined edge pixels (Mizar, RV mode: A at 0.8, B at 1.2, and
+// further apart during long optimisations).
+arma::vec MainWindow::componentSpectra() const
+{
+    const bool scaled = g_colScale.n_elem>0 && g_colScale.n_elem==X.n_elem;
+    if(M.n_cols!=X.n_elem) return scaled ? arma::vec(g_colScale % X) : X;
+    arma::vec x = scaled ? arma::vec(g_colScale % X) : X;
+    arma::mat N = dis::offsetNullspace(g_layout, M);
+    if(N.n_cols>0){
+        if(scaled) N.each_col() %= g_colScale;     // null directions in x: dx = dy / rho
+        dis::levelComponents(g_layout, M, N, x);
+    }
+    return x;
+}
+
+// Name of the continuum-normalised component file: "<base>_norm.<ext>" (Output tab option)
+static QString normName(const QString &name)
+{
+    const int slash = std::max(name.lastIndexOf('/'), name.lastIndexOf('\\'));
+    const int dot = name.lastIndexOf('.');
+    if(dot>slash+1) return name.left(dot)+"_norm"+name.mid(dot);
+    return name+"_norm";
+}
+
+// Continuum-normalised copies of A and B (Output tab option): spline continuum per piece
+// between excluded ranges through the upper points (module continuum)
+static void writeNormalised(const QString &file, const std::vector<double> &w, const std::vector<double> &f,
+                            double knotA, double low)
+{
+    cont::Options o;
+    o.knotA = knotA;
+    o.low = low;
+    std::vector<double> c;
+    std::string err;
+    if(!cont::fit(w, f, o, c, err)){
+        cerr<<"Continuum normalisation of "<<file.toStdString()<<" failed: "<<err<<endl;
+        return;
+    }
+    std::ofstream out(file.toStdString().c_str());
+    if(!out){ cerr<<"Cannot write "<<file.toStdString()<<endl; return; }
+    out<<setprecision(14);
+    // a continuum near zero (component without continuum, e.g. badly separated) would blow up
+    // the quotient: such points are left out
+    std::vector<double> ac(c.size());
+    for(size_t i=0; i<c.size(); i++) ac[i] = std::fabs(c[i]);
+    std::nth_element(ac.begin(), ac.begin()+ac.size()/2, ac.end());
+    const double floorC = 0.05*ac[ac.size()/2];
+    size_t skipped = 0;
+    for(size_t i=0; i<w.size(); i++){
+        if(!(c[i]>floorC)){ ++skipped; continue; }
+        out<<w[i]<<"\t"<<f[i]/c[i]<<"\n";
+    }
+    if(skipped>0)
+        cerr<<"Continuum normalisation of "<<file.toStdString()<<": "<<skipped
+            <<" points with a continuum near or below zero left out."<<endl;
+}
+
+// Continuum-normalised A and B that leave the fit unchanged (Output tab option; idea of the
+// user): A' = A - e, B' = B + r e with r = w_A / w_B, so that w_A A' + w_B B' = w_A A + w_B B at
+// every wavelength. e(lambda) is smooth (from the continuum fits), so the model of the observed
+// spectra hardly changes (shifts of e between the components only); the residuum with A', B'
+// is computed and reported. e minimises g_A (c_A - e - 1)^2 + g_B (c_B + r e - 1)^2: the
+// continua c_A, c_B (spline per piece through the upper points) are brought as close to 1 as
+// possible, weighted by g = 1 / scatter^2 of their continuum points (a line-rich component,
+// whose continuum is uncertain, follows the other). Without an offset null direction (light
+// ratio varying between the spectra) A and B are divided by their continua instead.
+void MainWindow::writeRenormalised(const arma::vec &res, const arma::vec &Xc, const std::vector<double> wc[2],
+                                   const std::vector<double> vc[2], const std::vector<int> cc[2],
+                                   const QString &fileA, const QString &fileB, double knotA, double lowSigma)
+{
+    cont::Options o;
+    o.knotA = knotA;
+    o.low = lowSigma;
+    std::vector<double> c[2];
+    double g[2];
+    for(int p=0; p<2; p++){
+        std::string err;
+        if(!cont::fit(wc[p], vc[p], o, c[p], err)){
+            cerr<<"Continuum fit failed: "<<err<<endl;
+            return;
+        }
+        double s2 = 0.0;
+        size_t n = 0;
+        for(size_t i=0; i<c[p].size(); i++){
+            if(!(c[p][i]>0)) continue;
+            const double r = vc[p][i]/c[p][i]-1.0;
+            if(r>0){ s2 += r*r; ++n; }
+        }
+        const double sig = n>0 ? std::sqrt(s2/n) : 1.0;
+        g[p] = 1.0/std::max(1e-12, sig*sig);
+    }
+    // light ratio r = w_A / w_B from the constant offset null direction (b/a = -w_A/w_B)
+    const bool scaled = g_colScale.n_elem>0 && g_colScale.n_elem==X.n_elem;
+    arma::mat N = dis::offsetNullspace(g_layout, M);
+    if(scaled && N.n_cols>0) N.each_col() %= g_colScale;
+    double ratio = std::numeric_limits<double>::quiet_NaN();
+    for(arma::uword j=0; j<N.n_cols && !std::isfinite(ratio); j++){
+        double a = 0.0, b = 0.0;
+        int na = 0, nb = 0;
+        for(int k : cc[0]) if(N(k, j)!=0.0){ a += N(k, j); ++na; }
+        for(int k : cc[1]) if(N(k, j)!=0.0){ b += N(k, j); ++nb; }
+        if(na>0 && nb>0 && a!=0.0){
+            const double r = -(b/nb)/(a/na);
+            if(r>0 && std::isfinite(r)) ratio = r;
+        }
+    }
+    auto interp = [](const std::vector<double> &x, const std::vector<double> &y, double t){
+        if(t<=x.front()) return y.front();
+        if(t>=x.back()) return y.back();
+        const size_t k = size_t(std::upper_bound(x.begin(), x.end(), t)-x.begin());
+        const double u = (t-x[k-1])/(x[k]-x[k-1]);
+        return y[k-1]+u*(y[k]-y[k-1]);
+    };
+    std::vector<double> out[2] = {vc[0], vc[1]};
+    const bool conserving = std::isfinite(ratio);
+    if(conserving){
+        std::vector<double> e(wc[0].size());
+        for(size_t i=0; i<wc[0].size(); i++){
+            const double cB = interp(wc[1], c[1], wc[0][i]);
+            e[i] = (g[0]*(c[0][i]-1.0) - g[1]*ratio*(cB-1.0))/(g[0]+g[1]*ratio*ratio);
+            out[0][i] -= e[i];
+        }
+        for(size_t i=0; i<wc[1].size(); i++) out[1][i] += ratio*interp(wc[0], e, wc[1][i]);
+    }
+    else{
+        for(int p=0; p<2; p++)
+            for(size_t i=0; i<out[p].size(); i++) out[p][i] = c[p][i]>0 ? vc[p][i]/c[p][i] : vc[p][i];
+    }
+    // residuum with the renormalised components (the condition of the renormalisation)
+    arma::vec x = Xc;
+    for(int p=0; p<2; p++) for(size_t i=0; i<out[p].size(); i++) x(cc[p][i]) = out[p][i];
+    if(scaled) x /= g_colScale;
+    const double r0 = computeResiduum(res), r1 = computeResiduum(arma::vec(M*x));
+    for(int p=0; p<2; p++){
+        std::ofstream f((p==0 ? fileA : fileB).toStdString().c_str());
+        if(!f){ cerr<<"Cannot write "<<(p==0 ? fileA : fileB).toStdString()<<endl; continue; }
+        f<<setprecision(14);
+        for(size_t i=0; i<out[p].size(); i++) f<<wc[p][i]<<"\t"<<out[p][i]<<"\n";
+    }
+    std::ostringstream m;
+    m<<setprecision(5);
+    if(conserving)
+        m<<"Renormalised A and B (A - e, B + "<<ratio<<" e: composite unchanged): residuum "<<r0<<" -> "<<r1
+         <<" (x "<<setprecision(4)<<r1/r0<<").";
+    else
+        m<<"Renormalised A and B by their continua (light ratio varies between the spectra, no conserving "
+           "renormalisation): residuum "<<r0<<" -> "<<r1<<" (x "<<setprecision(4)<<r1/r0<<").";
+    cout<<m.str()<<endl;
+    if(runow==0) ui->plainTextEdit_2->appendPlainText(QString::fromStdString(m.str()));
+}
+
+void MainWindow::writeSolution(const arma::vec &res, const QString &fA, const QString &fB,
+                               const QString &fT, const QString &fDiff, const QString &fErr,
+                               const QString &fCompl)
+{
+    QStringList unwritable;
+    auto openOut = [&](const QString &name, std::ofstream &f){
+        if(name.isEmpty()) return false;
+        f.open((qPath+"/"+name).toStdString().c_str());
+        if(!f){
+            cerr<<"Cannot write "<<(qPath+"/"+name).toStdString()<<endl;
+            unwritable << name;
+            return false;
+        }
+        f<<setprecision(14);
+        return true;
+    };
+    const double w0 = W(0);
+    const arma::vec Xc = componentSpectra();
+    // excluded ranges: undetermined component pixels and excluded data pixels are not written
+    // (gaps in the files)
+    std::vector<char> emptyCol;
+    if(!g_rowMasked.empty() && g_colCountFull.size()==M.n_cols && g_colCountReal.size()==M.n_cols){
+        emptyCol.assign(M.n_cols, 0);
+        for(arma::uword c=0; c<M.n_cols; c++)
+            emptyCol[c] = 2*g_colCountReal[c] < g_colCountFull[c];   // lost more than half
+    }
+    auto skipCol = [&](int c){ return !emptyCol.empty() && c<int(emptyCol.size()) && emptyCol[c]; };
+    dis::keepAlive();
+    const bool norm = ui->checkBox_norm->isChecked();
+    const double knotA = ui->doubleSpinBox_normKnot->value();
+    const double lowSigma = ui->doubleSpinBox_normLow->value();
+    std::vector<double> wc[2], vc[2];          // written points of A and B
+    std::vector<int> cc[2];                     // their matrix columns
+    for(int part=0; part<2; part++){
+        const QString &name = part==0 ? fA : fB;
+        const int n = part==0 ? g_layout.nA : g_layout.nB;
+        const int start = part==0 ? 0 : g_layout.startB();
+        for(int k=0; k<n; k++){
+            if(skipCol(start+k)) continue;
+            wc[part].push_back(pow(10, dis::columnLog10Lambda(g_layout, part==0 ? 'A' : 'B', k, w0, g_dlog)));
+            vc[part].push_back(Xc(start+k));
+            cc[part].push_back(start+k);
+        }
+        std::ofstream f;
+        if(openOut(name, f)){
+            for(size_t i=0; i<wc[part].size(); i++) f<<wc[part][i]<<"\t"<<vc[part][i]<<"\n";
+        }
+        dis::keepAlive();
+    }
+    if(norm && !fA.isEmpty() && !fB.isEmpty() && wc[0].size()>=3 && wc[1].size()>=3)
+        writeRenormalised(res, Xc, wc, vc, cc, qPath+"/"+normName(fA), qPath+"/"+normName(fB), knotA, lowSigma);
+    else if(norm && !fA.isEmpty() && wc[0].size()>=3)          // SB1: A alone
+        writeNormalised(qPath+"/"+normName(fA), wc[0], vc[0], knotA, lowSigma);
+    {
+        std::ofstream f;
+        if(openOut(fT, f)){
+            for(int k=0; k<g_layout.nT; k++)
+                if(skipCol(g_layout.startT()+k)) continue; else
+                f<<pow(10, dis::columnLog10Lambda(g_layout, 'T', k, w0, g_dlog))<<"\t"<<Xc(g_layout.startT()+k)<<"\n";
+        }
+    }
+    {
+        std::ofstream f;
+        if(openOut(fDiff, f)){
+            for(arma::uword i=0; i<res.n_elem; i++){
+                if(!rowMasked(i)) f<<pow(10, W(i))<<" "<<(res(i)-C(i))<<"\n";
+                if((i&4095)==0) dis::keepAlive();
+            }
+        }
+    }
+    dis::keepAlive();
+    {
+        std::ofstream f;
+        if(openOut(fErr, f)){
+            for(int i=0; i<logbin; i++){
+                double m = 0.0;
+                int cnt = 0;
+                for(int n=0; n<num; n++){
+                    if(rowMasked(arma::uword(i+n*logbin))) continue;
+                    m += res(i+n*logbin)-C(i+n*logbin);
+                    ++cnt;
+                }
+                if(cnt>0) f<<pow(10, W(i))<<"\t"<<m/cnt<<"\n";
+            }
+        }
+    }
+    {
+        std::ofstream f;
+        if(openOut(fCompl, f)){
+            // RVs the solution belongs to (for Subtract)
+            for(int j=0; j<num; j++)
+                f<<"# rv "<<j<<" "<<RV1[j]<<" "<<(bso2>0 ? RV3[j] : 0.0)<<"\n";
+            for(arma::uword n=0; n<X.n_elem; n++)
+                f<<n<<" "<<X(n)<<"\n";
+        }
+    }
+    if(!unwritable.isEmpty())
+        reportError("Error 52: Cannot write "+unwritable.join(", ")+" in "+qPath
+                    +" (folder missing or not writable, or the name is a folder; Output tab).");
+}
+
+//****************************************
+// Matrix construction for DSM
+//****************************************
+void MainWindow::ConstructMatrix(){
+    MainWindow::buildDesignMatrix(false);
+}
 
 //*******************************************
 //ECON for optimization
@@ -5709,128 +5080,48 @@ double MainWindow::DivideConquer(){
 
     residu=0;
 
-    mat U, V;
-    vec w;
-
-    if(Mm>Mn){
-        Mm=Mn;
+    if(!MainWindow::solveSystem(MainWindow::currentSolver())){
+        residu = orbit::kInvalidPenalty;
+        return residu;
     }
+    vec res = M*X;
 
-    vec res(Mm);
+    int resbins=0;
+    residu = MainWindow::computeResiduum(res, &resbins);
+    g_lastResBins = resbins;
 
-    if(ui->checkBox_5->isChecked()){
-        svd_econ(U,w,V,M, "both", "std");
-    }
-    else{
-        svd_econ(U,w,V,M, "both", "dc");
-    }
+    cout<<setprecision(15)<<"Residuum: "<<residu<<endl;
+    cout<<"  # Bins: "<<resbins<<endl;
+    if(resbins>0) cout<<"  r/Bins: "<<residu/resbins<<endl;
 
+    trackBest(residu);
 
+    // better value found, write data to files.
+    if(((residu<r1) or (r1==0.0)) and (optfratios==0)){
 
-    int i,j,jj;
-        double s;
-        double thresh =-1;
-        double eps = numeric_limits<double>::epsilon();
-        vec tmp(Mm);
-        double tsh = (thresh >= 0. ? thresh : 0.5*sqrt(Mm+Mn+1.)*w(0)*eps);
-        cout <<"tsh "<<tsh<<endl;
-        for (j=0;j<Mm;j++) {
-            s=0.0;
-            if (w(j) > tsh) {
-                for (i=0;i<Mn;i++) s += U(i,j)*C(i);
-                s /= w(j);
+        r1=residu;
+        upda=1;
+
+        for(int i=0; i<num; i++){
+            QString index= QString::number(i);
+            if(ui->checkBox_3->isChecked()){
+                QString velocity=QString::number(RV1[i]);
+                ui->plainTextEdit->appendPlainText(index+" "+velocity);
             }
-            tmp(j)=s;
-        }
-
-        int index1=0;
-        int index2=0;
-        int index3=0;
-
-        for (j=0;j<Mm;j++) {
-            s=0.0;
-            if(w(j)>tsh){
-                for (jj=0;jj<Mm;jj++) s += V(j,jj)*tmp(jj);
-                X(j)=s;
-                }
-            }
-        
-        res=M*X;
-
-        int resbins=0;
-
-        for(int i=0; i<Mn; i++){
-
-            if(res(i)>10*tsh){
-
-                if(ui->checkBox_33->isChecked()){
-                    if(ui->checkBox_14->isChecked()){
-                        if((W(i)>log10(ui->doubleSpinBox_14->value())) & (W(i)<log10(ui->doubleSpinBox_15->value()))){
-                            ++resbins;
-                            residu+=pow((res(i)-C(i)),2);
-                        }
-                    }
-
-                        else{
-                            if((pow((res(i)-C(i)),2)>residu) & (pow((res(i)-C(i)),2)<1) & (W(i)>log10(ui->doubleSpinBox_14->value())) & (W(i)<log10(ui->doubleSpinBox_15->value()))){
-                                residu=pow((res(i)-C(i)),2);
-                            }
-                        }
-                }
-
-                else{
-                    if(ui->checkBox_14->isChecked()){
-                        ++resbins;
-                        residu+=pow((res(i)-C(i)),2);
-                    }
-
-                    else{
-                        if((pow((res(i)-C(i)),2)>residu) & (pow((res(i)-C(i)),2)<1)){
-                            residu=pow((res(i)-C(i)),2);
-                        }
-                    }
-                }
+            else if(ui->checkBox_4->isChecked()){
+                QString velocity=QString::number(RV1[i]);
+                QString sum=QString::number(RV3[i]);
+                ui->plainTextEdit->appendPlainText(index+" "+velocity+" "+sum);
             }
         }
 
-        if(ui->checkBox_14->isChecked()){
-            residu=sqrt(residu);
-        }
-
-        cout<<"Residuum: "<<residu<<endl;
-        cout<<"  # Bins: "<<resbins<<endl;
-        cout<<"  r/Bins: "<<residu/resbins<<endl;
-
-        // better value found, write data to files.
-        if(((residu<r1) or (r1==0.0)) and (optfratios==0)){
-
-            r1=residu;
-            upda=1;
-
-            for(int i=0; i<num; i++){
-                QString index= QString::number(i);
-                if(ui->checkBox_3->isChecked()){
-                    QString velocity=QString::number(RV1[i]);
-                    ui->plainTextEdit->appendPlainText(index+" "+velocity);
-                }
-                else if(ui->checkBox_4->isChecked()){
-                    QString velocity=QString::number(RV1[i]);
-                    QString sum=QString::number(RV3[i]);
-                    ui->plainTextEdit->appendPlainText(index+" "+velocity+" "+sum);
-                }
-             }
-
-            if(ui->checkBox_16->isChecked()){
+        if(ui->checkBox_16->isChecked()){
             cout<<"New Parameters found:"<<endl;
-            //Logfile<<"New Parameters found:"<<endl;
             cout<<"Period; Eccentricity; Amplitude A; Amplitude B; Systemic V.; T_peri; Omega A;"<<endl;
-            //Logfile<<"Period; Eccentricity; Amplitude A; Amplitude B; Systemic V.; T_peri; Omega A;"<<endl;
-                for(int i=0; i<7;i++){
-                    cout<<setprecision(14)<<orbele[i]<<" ";
-                    //Logfile<<setprecision(14)<<orbele[i]<<" ";
-                }
-                cout<<endl;
-                //Logfile<<endl;
+            for(int i=0; i<7;i++){
+                cout<<setprecision(14)<<orbele[i]<<" ";
+            }
+            cout<<endl;
 
             ui->plainTextEdit_2->appendPlainText("New Parameters found:\nPeriod; Eccentricity; Amplitude A; Amplitude B; Systemic V; T_peri; Omega A;");
             QString Peri = QString::number(orbele[0]);
@@ -5841,173 +5132,25 @@ double MainWindow::DivideConquer(){
             QString Tper = QString::number(orbele[5]);
             QString wper = QString::number(orbele[6]);
             ui->plainTextEdit_2->appendPlainText(Peri+" "+Ecce+" "+AA+" "+AB+" "+SV+" "+Tper+" "+wper);
-            }
-            else{
-                cout<<"Found better RVs."<<endl;
-                //Logfile<<"Found better RVs."<<endl;
-                cout<<"Residuum: "<<r1<<endl;
-                //Logfile<<"Residuum: "<<r1<<endl;
-            }
-
-            ui->spinBox_6->setValue(eval);
-
-            QString residual=QString::number(residu);
-            ui->lineEdit_7->setText(residual);
-
-            QString output=ui->lineEdit_5->text();
-            string out = output.toUtf8().constData();
-            std::ostringstream file1NameStream(out);
-            file1NameStream<<path<<"/"<<out;
-            std::string file1Name = file1NameStream.str();
-            ofstream file1(file1Name.c_str());
-
-            QString output2=ui->lineEdit_8->text();
-            string out2 = output2.toUtf8().constData();
-            std::ostringstream file2NameStream(out2);
-            file2NameStream<<path<<"/"<<out2;
-            std::string file2Name = file2NameStream.str();
-            ofstream file2(file2Name.c_str());
-
-            QString tel=ui->lineEdit_10->text();
-            string telout = tel.toUtf8().constData();
-            std::ostringstream telNameStream(telout);
-            telNameStream<<path<<"/"<<telout;
-            std::string telName = telNameStream.str();
-            ofstream tell(telName.c_str());
-
-            QString output3=ui->lineEdit_13->text();
-            string out3 = output3.toUtf8().constData();
-            std::ostringstream file3NameStream(out3);
-            file3NameStream<<path<<"/"<<out3;
-            std::string file3Name = file3NameStream.str();
-            ofstream file5(file3Name.c_str());
-
-            std::ostringstream file5NameStream("compl.txt");
-            file5NameStream<<path<<"/compl.txt";
-            std::string file5Name = file5NameStream.str();
-            ofstream file7(file5Name.c_str());
-
-            QString QError=ui->lineEdit_20->text();
-            string errout = QError.toUtf8().constData();
-            std::ostringstream file6NameStream(errout);
-            file6NameStream<<path<<"/"<<errout;
-            std::string file6Name = file6NameStream.str();
-            ofstream file8(file6Name.c_str());
-
-            QVector<double> err(logbin), errmean(logbin);
-
-            for(int i =0; i<logbin;i++){
-                errmean[i]=0;
-                for(int n = 0; n<num; n++){
-                    errmean[i]+=(res(i+n*logbin)-C(i+n*logbin))/num;
-
-                }
-                file8<<pow(10,W(i))<<"\t"<<errmean[i]<<endl;
-            }
-
-
-            for (j=0;j<Mm;j++) {
-                 if(abs(X(j))>10*tsh){
-                    if(j<bso1){
-                        //if(ui->checkBox_4->isChecked()){
-                        //    X(j)=X(j)+(fluxratio/(fluxratio+1)-0.5);
-                        //}
-
-                        file1<<setprecision(14)<<pow(10,(W(0)+(index1-(RV3maxi+orbele[4])/dv)*difference))<<"\t"<<X(j)<<endl;
-                        ++index1;
-                    }
-                    else if((j>=bso1)&(j<bso1+bso2)){
-                        //if(ui->checkBox_4->isChecked()){
-                        //    X(j)=X(j)+(1.0/(fluxratio+1)-0.5);
-                        //}
-                        file2<<setprecision(14)<<pow(10,(W(0)+(index2-(RV1maxi+orbele[4])/dv)*difference))<<"\t"<<X(j)<<endl;
-                        ++index2;
-                    }
-                    else if(j>=bso1+bso2){
-                        tell<<setprecision(14)<<pow(10,(W(0)+index3*difference))<<"\t"<<X(j)<<endl;
-                        ++index3;
-                    }
-                }
-            }
-
-            int XSize=X.size();
-        for(int n=0; n<XSize; n++){
-            file7<<n<<" "<<X(n)<<endl;
         }
-        index1=0;
-        index2=0;
-        index3=0;
-
-        int ressize=res.size();
-        for(int i=0; i<ressize; i++){
-                file5<<setprecision(14)<<pow(10,W(i))<<" "<<(res(i)-C(i))<<endl;
+        else{
+            cout<<"Found better RVs."<<endl;
+            cout<<"Residuum: "<<r1<<endl;
         }
+
+        ui->spinBox_6->setValue(eval);
+
+        QString residual=QString::number(residu);
+        ui->lineEdit_7->setText(residual);
+
+        MainWindow::writeSolution(res, ui->lineEdit_5->text(), ui->lineEdit_8->text(), ui->lineEdit_10->text(),
+                                  ui->lineEdit_13->text(), ui->lineEdit_20->text(), "compl.txt");
 
         // Save all Updates
         if(ui->checkBox_19->isChecked()){
-
-            string erro = "error_";
-            std::ostringstream upd1NameStream(erro);
-            upd1NameStream<<path<<"/"<<erro<<updac<<".dat";
-            std::string upd1Name = upd1NameStream.str();
-            ofstream upda1(upd1Name.c_str());
-
-            string sCA = "compa_";
-            std::ostringstream upd2NameStream(sCA);
-            upd2NameStream<<path<<"/"<<sCA<<updac<<".dat";
-            std::string upd2Name = upd2NameStream.str();
-            ofstream upda2(upd2Name.c_str());
-
-            string sCB = "compb_";
-            std::ostringstream upd3NameStream(sCB);
-            upd3NameStream<<path<<"/"<<sCB<<updac<<".dat";
-            std::string upd3Name = upd3NameStream.str();
-            ofstream upda3(upd3Name.c_str());
-
-            string sTel = "tellur_";
-            std::ostringstream upd5NameStream(sTel);
-            upd5NameStream<<path<<"/"<<sTel<<updac<<".dat";
-            std::string upd5Name = upd5NameStream.str();
-            ofstream upda5(upd5Name.c_str());
-
-            string sDif = "differences_";
-            std::ostringstream upd4NameStream(sDif);
-            upd4NameStream<<path<<"/"<<sDif<<updac<<".dat";
-            std::string upd4Name = upd4NameStream.str();
-            ofstream upda4(upd4Name.c_str());
-
-            for(int i =0; i<logbin-1;i++){
-                upda1<<pow(10,W(i))<<"\t"<<errmean[i]<<endl;
-                errmean[i]=0;
-            }
-
-            for (j=0;j<Mm;j++) {
-                 if(abs(X(j))>10*tsh){
-                    if(j<bso1){
-
-                        upda2<<setprecision(14)<<pow(10,(W(0)+(index1-(RV3maxi+orbele[4])/dv)*difference))<<"\t"<<X(j)<<endl;
-                        ++index1;
-                    }
-                    else if((j>=bso1)&(j<bso1+bso2)){
-                        upda3<<setprecision(14)<<pow(10,(W(0)+(index2-(RV1maxi+orbele[4])/dv)*difference))<<"\t"<<X(j)<<endl;
-                        ++index2;
-                    }
-                    else if(j>=bso1+bso2){
-                        upda5<<setprecision(14)<<pow(10,(W(0)+index3*difference))<<"\t"<<X(j)<<endl;
-                        ++index3;
-                    }
-                }
-            }
-
-            index1=0;
-            index2=0;
-            index3=0;
-
-            ressize=res.size();
-            for(int i=0; i<ressize; i++){
-                    upda4<<pow(10,W(i))<<" "<<(res(i)-C(i))<<endl;
-            }
-
+            QString n = QString::number(updac);
+            MainWindow::writeSolution(res, "compa_"+n+".dat", "compb_"+n+".dat", "tellur_"+n+".dat",
+                                      "differences_"+n+".dat", "error_"+n+".dat", "");
         }
 
         if(ui->checkBox_10->isChecked()){
@@ -6015,160 +5158,229 @@ double MainWindow::DivideConquer(){
         }
 
         if(ui->checkBox_19->isChecked()){
-
             QString qEval = QString::number(updac);
-                QString sav1="Sol_"+qEval;
-                QString save1=qPath+"/"+sav1+".png";
-                ui->customPlot->savePng(save1);
-
-                QString sav2="Diff_"+qEval;
-                QString save2=qPath+"/"+sav2+".png";
-                ui->customPlot_3->savePng(save2);
+            ui->customPlot->savePng(qPath+"/Sol_"+qEval+".png");
+            ui->customPlot_3->savePng(qPath+"/Diff_"+qEval+".png");
         }
 
-                    ++updac;
-
-        if(ui->checkBox_7->isChecked()){
-            std::ostringstream file1NameStream("rcomp1.txt");
-            file1NameStream<<path<<"/rcomp1.txt";
-            std::string file1Name = file1NameStream.str();
-            ofstream file3(file1Name.c_str());
-
-            std::ostringstream file2NameStream("rcomp2.txt");
-            file2NameStream<<path<<"/rcomp2.txt";
-            std::string file2Name = file2NameStream.str();
-            ofstream file4(file2Name.c_str());
-
-            QVector<double> Xr(Mm);
-
-            for(int i=0; i<Mm-1; i++){
-                Xr[index3]=(X(i)+X(i+1))/2;
-                if(i<bso1){
-                    file3<<setprecision(14)<<pow(10,(W(0)+(2*index1-(RV3maxi+orbele[4])/dv)*difference))<<"\t"<<Xr[index3]<<endl;
-                    ++index1;
-                }
-                else if((i>=bso1) & (i<bso1+bso2)){
-                    file4<<setprecision(14)<<pow(10,(W(0)+(2*index2-(RV1maxi+orbele[4])/dv)*difference))<<"\t"<<Xr[index3]<<endl;
-                    ++index2;
-                }
-                ++i;
-                ++index3;
-                }
-            }
-        }
-        else{
-            // write to files to determine inclinations
-            if(optfratios==1){
-
-                QVector<double> err(logbin), errmean(logbin);
-
-                string erro = "frerror.dat";
-                std::ostringstream upd1NameStream(erro);
-                upd1NameStream<<path<<"/"<<erro;
-                std::string upd1Name = upd1NameStream.str();
-                ofstream upda1(upd1Name.c_str());
-
-                string sCA = "frcompa.dat";
-                std::ostringstream upd2NameStream(sCA);
-                upd2NameStream<<path<<"/"<<sCA;
-                std::string upd2Name = upd2NameStream.str();
-                ofstream upda2(upd2Name.c_str());
-
-                string sCB = "frcompb.dat";
-                std::ostringstream upd3NameStream(sCB);
-                upd3NameStream<<path<<"/"<<sCB;
-                std::string upd3Name = upd3NameStream.str();
-                ofstream upda3(upd3Name.c_str());
-
-                string sTel = "frtellur.dat";
-                std::ostringstream upd5NameStream(sTel);
-                upd5NameStream<<path<<"/"<<sTel;
-                std::string upd5Name = upd5NameStream.str();
-                ofstream upda5(upd5Name.c_str());
-
-                string sDif = "frdifferences.dat";
-                std::ostringstream upd4NameStream(sDif);
-                upd4NameStream<<path<<"/"<<sDif;
-                std::string upd4Name = upd4NameStream.str();
-                ofstream upda4(upd4Name.c_str());
-
-                for(int i =0; i<logbin;i++){
-                    errmean[i]=0;
-                    for(int n = 0; n<num; n++){
-                        errmean[i]+=(res(i+n*logbin)-C(i+n*logbin))/num;
-
-                    }
-                    upda1<<pow(10,W(i))<<"\t"<<errmean[i]<<endl;
-                    errmean[i]=0;
-                }
-
-                for (j=0;j<Mm;j++) {
-                     if(abs(X(j))>10*tsh){
-                        if(j<bso1){
-
-                            upda2<<setprecision(14)<<pow(10,(W(0)+(index1-(RV3maxi+orbele[4])/dv)*difference))<<"\t"<<X(j)<<endl;
-                            ++index1;
-                        }
-                        else if((j>=bso1)&(j<bso1+bso2)){
-                            upda3<<setprecision(14)<<pow(10,(W(0)+(index2-(RV1maxi+orbele[4])/dv)*difference))<<"\t"<<X(j)<<endl;
-                            ++index2;
-                        }
-                        else if(j>=bso1+bso2){
-                            upda5<<setprecision(14)<<pow(10,(W(0)+index3*difference))<<"\t"<<X(j)<<endl;
-                            ++index3;
-                        }
-                    }
-                }
-                index1=0;
-                index2=0;
-                index3=0;
-
-                int ressize=res.size();
-                for(int i=0; i<ressize; i++){
-                        upda4<<pow(10,W(i))<<" "<<(res(i)-C(i))<<endl;
-                }
-
-                // use function slope to optimise
-                if(ui->checkBox_30->isChecked()){
-                    residu=MainWindow::inclinations();
-                }
-                // use residu, calculated above, to optimise
-                else{
-                    //
-                }
-
-                if(residu<r1){
-                    r1=residu;
-                    upda=1;
-                    cout<<"Better flux ratios found."<<endl;
-                    for(int i=0; i<num; i++){
-                        cout<<Mval1[i]<<"\t"<<Mval2[i]<<endl;
-                    }
-                    ui->spinBox_6->setValue(eval);
-
-                    QString residual=QString::number(residu);
-                    ui->lineEdit_7->setText(residual);
-                }
-                if(r1==0.0){
-                    r1=residu;
-                    upda=1;
-                }
-
-            }
-            else{
-
-            }
-        }
-        qApp->processEvents(QEventLoop::AllEvents);
-
-        return residu;
+        ++updac;
     }
+    // write to files to determine inclinations
+    else if(optfratios==1){
+
+        MainWindow::writeSolution(res, "frcompa.dat", "frcompb.dat", "frtellur.dat",
+                                  "frdifferences.dat", "frerror.dat", "");
+
+        // use function slope to optimise
+        if(ui->checkBox_30->isChecked()){
+            residu=MainWindow::inclinations();
+        }
+
+        if(residu<r1){
+            r1=residu;
+            upda=1;
+            cout<<"Better flux ratios found."<<endl;
+            for(int i=0; i<num; i++){
+                cout<<Mval1[i]<<"\t"<<Mval2[i]<<endl;
+            }
+            ui->spinBox_6->setValue(eval);
+
+            QString residual=QString::number(residu);
+            ui->lineEdit_7->setText(residual);
+        }
+        if(r1==0.0){
+            r1=residu;
+            upda=1;
+        }
+    }
+    qApp->processEvents(QEventLoop::AllEvents);
+
+    return residu;
+}
 
 //*******************************************************
 //plot results in main window
 //*******************************************************
+namespace {
+// y range of plotted data without the outermost pixels of each segment (a new segment begins
+// where x decreases: the differences hold one segment per spectrum). The edge columns of the
+// component spectra are determined by single spectra only and can be strong outliers that
+// would squeeze the plot; they stay in the data, only the range ignores them.
+void innerYRange(const QVector<double> &x, const QVector<double> &y, int trim, double &lo, double &hi)
+{
+    int start = 0;
+    const int n = std::min(x.size(), y.size());
+    for(int i=1; i<=n; i++){
+        if(i==n || x[i]<x[i-1]){
+            const int len = i-start, t = std::min(trim, len/4);
+            for(int k=start+t; k<i-t; k++){
+                if(std::isfinite(y[k])){ lo = std::min(lo, y[k]); hi = std::max(hi, y[k]); }
+            }
+            start = i;
+        }
+    }
+}
+
+// pixels left out per segment end: at least 3 and 3 %, and the "Exclude edges" margin
+int plotTrim(int n, int edgeMargin)
+{
+    return std::max({3, int(std::ceil(0.03*n)), edgeMargin});
+}
+
+// differences: one graph per spectrum (a new spectrum begins where x decreases). In one
+// graph the spectra share the keys, and the adaptive sampling of QCustomPlot then drops the
+// points of the middle spectra for long spectra (gaps of hundreds of Angstrom at 86 000 pixels).
+void plotSegments(QCustomPlot *p, const QVector<double> &x, const QVector<double> &y)
+{
+    const int n = std::min(x.size(), y.size());
+    int start = 0;
+    for(int i=1; i<=n; i++){
+        if(i==n || x[i]<x[i-1]){
+            QCPGraph *g = p->addGraph();
+            g->setData(x.mid(start, i-start), y.mid(start, i-start));
+            g->setPen(QPen(Qt::red));
+            g->setLineStyle(QCPGraph::lsNone);
+            g->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, 2));
+            start = i;
+        }
+    }
+}
+
+void setYRange(QCustomPlot *p, double lo, double hi)
+{
+    if(!(lo<=hi)) return;           // no data: keep the axis
+    double pad = 0.05*(hi-lo);
+    if(!(pad>0)) pad = 0.05*std::max(1e-3, std::fabs(hi));
+    p->yAxis->setRange(lo-pad, hi+pad);
+}
+}
+
+// Residual statistics per spectrum: observation - model, from the current solution, in the
+// wavelength range of the Convergence & residuals tab (auto: whole spectrum) without the edge
+// pixels. Written to diffstatistic.dat and plotted against the orbital phase (orbit mode),
+// the time of observation (times file present) or the spectrum number. Shows variability of
+// lines from spectrum to spectrum, which the disentangled (mean) spectra do not contain.
+void MainWindow::plotResidualStatistics()
+{
+    if(!g_matrixValid || num<1 || logbin<1 || int(C.n_elem)!=num*logbin || M.n_rows!=C.n_elem
+            || X.n_elem!=M.n_cols){
+        return;
+    }
+    const arma::vec model = M*X;
+    // window: the values given here; "auto" takes the residuum range of the Model tab
+    // ("Only from ... to"), if it is switched on, otherwise the whole spectrum
+    double l1 = ui->doubleSpinBox_st1->value(), l2 = ui->doubleSpinBox_st2->value();
+    const bool modelRange = ui->checkBox_33->isChecked();
+    if(!(l1>0)) l1 = (modelRange && ui->doubleSpinBox_14->value()>0) ? ui->doubleSpinBox_14->value() : 0.0;
+    if(!(l2>0)) l2 = (modelRange && ui->doubleSpinBox_15->value()>0) ? ui->doubleSpinBox_15->value()
+                                                                      : std::numeric_limits<double>::infinity();
+    const int edge = std::max(0, g_edgeMargin);
+
+    // abscissa
+    std::vector<double> x(num);
+    QString xlabel = "Spectrum";
+    std::vector<double> t;
+    if(int(otimes.size())>=num && ui->checkBox_16->isChecked()){
+        t.assign(otimes.begin(), otimes.begin()+num);
+    }
+    else{
+        std::vector<std::vector<double>> rows;
+        std::string err;
+        if(dataio::readTable((qPath+"/"+ui->lineEdit_18->text()).toStdString(), 1, rows, err) && int(rows.size())==num){
+            for(const auto &r : rows) t.push_back(r[0]);
+        }
+    }
+    const bool phase = ui->checkBox_16->isChecked() && int(t.size())==num && orbele.size()>=6 && orbele[0]>0;
+    for(int j=0; j<num; j++){
+        if(phase){
+            double ph = std::fmod((t[j]-orbele[5])/orbele[0], 1.0);
+            x[j] = ph<0 ? ph+1.0 : ph;
+        }
+        else x[j] = int(t.size())==num ? t[j] : double(j+mini);
+    }
+    if(phase) xlabel = "Orbital Phase";
+    else if(int(t.size())==num) xlabel = "Time";
+
+    QVector<double> qx(num), qmean(num), qrms(num);
+    double allS2 = 0.0;
+    long allN = 0;
+    std::ofstream f((qPath+"/"+qDiffStat).toStdString().c_str());
+    f<<"# Residuals per spectrum, observation - model";
+    if(std::isfinite(l2) || l1>0) f<<", "<<l1<<" - "<<l2<<" A";
+    f<<", without "<<edge<<" edge pixels\n";
+    f<<"# spectrum\t"<<(phase ? "phase" : (int(t.size())==num ? "time" : "spectrum"))
+     <<"\tpixels\tmean\trms\tstd\n";
+    f<<setprecision(10);
+    for(int j=0; j<num; j++){
+        double s1 = 0.0, s2 = 0.0;
+        int n = 0;
+        for(int i=edge; i<logbin-edge; i++){
+            const double lam = std::pow(10.0, W(j*logbin+i));
+            if(lam<l1 || lam>l2) continue;
+            if(rowUncounted(arma::uword(j*logbin+i)) || rowResExcluded(arma::uword(j*logbin+i))) continue;
+            const double d = C(j*logbin+i) - model(j*logbin+i);
+            s1 += d;
+            s2 += d*d;
+            ++n;
+        }
+        allS2 += s2;
+        allN += n;
+        const double mean = n>0 ? s1/n : 0.0;
+        const double rms = n>0 ? std::sqrt(s2/n) : 0.0;
+        const double sd = n>1 ? std::sqrt(std::max(0.0, (s2 - n*mean*mean)/(n-1))) : 0.0;
+        f<<(j+mini)<<"\t"<<x[j]<<"\t"<<n<<"\t"<<mean<<"\t"<<rms<<"\t"<<sd<<"\n";
+        qx[j] = x[j]; qmean[j] = mean; qrms[j] = rms;
+    }
+    f.close();
+
+    if(runow!=0) return;     // batch mode: file only
+    QCustomPlot *p = ui->customPlot_5;
+    p->clearGraphs();
+    p->addGraph();
+    p->graph(0)->setData(qx, qrms);
+    p->graph(0)->setLineStyle(QCPGraph::lsNone);
+    p->graph(0)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssDisc, QColor(31,119,180), 6));
+    p->graph(0)->setName("RMS");
+    p->addGraph();
+    p->graph(1)->setData(qx, qmean);
+    p->graph(1)->setLineStyle(QCPGraph::lsNone);
+    p->graph(1)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, QColor(214,39,40), 6));
+    p->graph(1)->setName("mean");
+    double ylo = 0.0, yhi = 0.0;
+    for(int j=0; j<num; j++){ ylo = std::min({ylo, qmean[j], qrms[j]}); yhi = std::max({yhi, qmean[j], qrms[j]}); }
+    double xlo = *std::min_element(qx.begin(), qx.end()), xhi = *std::max_element(qx.begin(), qx.end());
+    if(phase){ xlo = 0.0; xhi = 1.0; }
+    auto hline = [&](double y, Qt::PenStyle st, const QString &name){
+        p->addGraph();
+        p->graph(p->graphCount()-1)->setData(QVector<double>{xlo, xhi}, QVector<double>{y, y});
+        p->graph(p->graphCount()-1)->setPen(QPen(Qt::gray, 1, st));
+        p->graph(p->graphCount()-1)->setName(name);
+        yhi = std::max(yhi, y);
+    };
+    if(allN>0) hline(std::sqrt(allS2/allN), Qt::DotLine, "RMS of all spectra");
+    const double sig2 = knownSigma2();
+    if(sig2>0) hline(std::sqrt(sig2), Qt::DashLine, "noise 1/(S/N)");
+    p->xAxis->setLabel(xlabel);
+    p->yAxis->setLabel("O-M");
+    p->legend->setVisible(true);
+    p->rescaleAxes();
+    if(phase) p->xAxis->setRange(0.0, 1.0);
+    else{
+        const double xr = p->xAxis->range().size();
+        p->xAxis->setRange(p->xAxis->range().lower - 0.03*xr - 0.5*(xr==0), p->xAxis->range().upper + 0.03*xr + 0.5*(xr==0));
+    }
+    setYRange(p, ylo, yhi + 0.8*(yhi-ylo));   // room for the legend above the points
+    p->replot();
+}
+
+void MainWindow::on_pushButton_stat_clicked()
+{
+    MainWindow::plotResidualStatistics();
+}
+
 void MainWindow::on_pushButton_6_clicked()
 {
+    MainWindow::plotResidualStatistics();
     if((runow==0) & (optfratios==0)){       //plot only of in GUI-mode
         ui->customPlot->clearGraphs();
         ui->customPlot_2->clearGraphs();
@@ -6176,7 +5388,17 @@ void MainWindow::on_pushButton_6_clicked()
 
         double xs1, xs2, ys1, ys2;
         string zeile, one, two;
-        QString plot1=ui->lineEdit_5->text();
+        // with "continuum-normalised" (Output tab) the normalised files are plotted
+        auto plotFile = [&](const QString &name){
+            if(ui->checkBox_norm->isChecked() && !name.trimmed().isEmpty()
+               && QFile::exists(qPath+"/"+normName(name))) return normName(name);
+            return name;
+        };
+        QString plot1=plotFile(ui->lineEdit_5->text());
+        if(plot1.trimmed().isEmpty() || (!ui->checkBox_3->isChecked() && ui->lineEdit_8->text().trimmed().isEmpty())){
+            QMessageBox::information(this, "Error", "No output file name for the components (Output tab).");
+            return;
+        }
         string plot11 = plot1.toUtf8().constData();
         std::ostringstream datNameStream(plot11);
         datNameStream<<path<<"/"<<plot11;
@@ -6196,7 +5418,7 @@ void MainWindow::on_pushButton_6_clicked()
             QMessageBox::information(this, "Error", "File "+qPath+"/"+plot1+" is empty.");
             return;
         }
-        QString plot2=ui->lineEdit_8->text();
+        QString plot2=plotFile(ui->lineEdit_8->text());
         string plot12 = plot2.toUtf8().constData();
         std::ostringstream dat2NameStream(plot12);
         dat2NameStream<<path<<"/"<<plot12;
@@ -6217,12 +5439,6 @@ void MainWindow::on_pushButton_6_clicked()
         dat4NameStream<<path<<"/"<<errorf;
         std::string dat4Name = dat4NameStream.str();  
 
-        QString qDiff="diffstatistic.dat";
-        string sdiff=qDiff.toUtf8().constData();
-        std::ostringstream dat5NameStream(sdiff);
-        dat5NameStream<<path<<"/"<<sdiff;
-        std::string dat5Name = dat5NameStream.str();
-        ofstream diffs(dat5Name.c_str());
 
         QFile checkfile4(dat4Name.c_str());
 
@@ -6235,8 +5451,10 @@ void MainWindow::on_pushButton_6_clicked()
 
         int number_of_lines=0;
 
-        while(std::getline(toplot1, zeile))
-            ++ number_of_lines;
+        while(std::getline(toplot1, zeile)){
+            ++number_of_lines;
+            dis::keepAlive();
+        }
 
         toplot1.clear();
         toplot1.seekg(0, ios::beg);
@@ -6244,6 +5462,7 @@ void MainWindow::on_pushButton_6_clicked()
         QVector<double> a(number_of_lines), b(number_of_lines);
 
         for (int i=0; i<number_of_lines; i++){
+            dis::keepAlive();
             toplot1 >> one >>two;
             istringstream ist(one);
             ist >> a[i];
@@ -6283,8 +5502,10 @@ void MainWindow::on_pushButton_6_clicked()
 
         number_of_lines=0;
 
-        while(std::getline(toplot2, zeile))
-            ++ number_of_lines;
+        while(std::getline(toplot2, zeile)){
+            ++number_of_lines;
+            dis::keepAlive();
+        }
 
         toplot2.clear();
         toplot2.seekg(0, ios::beg);
@@ -6292,6 +5513,7 @@ void MainWindow::on_pushButton_6_clicked()
         QVector<double> c(number_of_lines), d(number_of_lines);
 
         for (int i=0; i<number_of_lines; i++){
+            dis::keepAlive();
             toplot2 >> one >>two;
             istringstream ist(one);
             ist >> c[i];
@@ -6325,8 +5547,10 @@ void MainWindow::on_pushButton_6_clicked()
 
         number_of_lines=0;
 
-        while(std::getline(errors, zeile))
+        while(std::getline(errors, zeile)){
             ++number_of_lines;
+            dis::keepAlive();
+        }
 
         errors.clear();
         errors.seekg(0, ios::beg);
@@ -6334,6 +5558,7 @@ void MainWindow::on_pushButton_6_clicked()
         QVector<double> e(number_of_lines), f(number_of_lines);
 
         for (int i=0; i<number_of_lines; i++){
+            dis::keepAlive();
             errors >> one >>two;
             istringstream ist(one);
             ist >> e[i];
@@ -6352,8 +5577,14 @@ void MainWindow::on_pushButton_6_clicked()
         ui->customPlot->graph(1)->setPen(QPen(Qt::red));
         ui->customPlot->addGraph();
         ui->customPlot->graph(2)->setData(e, f);
-        ui->customPlot->yAxis->rescale(true);
         ui->customPlot->graph(2)->setPen(QPen(Qt::black));
+        {
+            double lo = 1e300, hi = -1e300;
+            innerYRange(a, b, plotTrim(a.size(), g_edgeMargin), lo, hi);
+            innerYRange(c, d, plotTrim(c.size(), g_edgeMargin), lo, hi);
+            innerYRange(e, f, plotTrim(e.size(), g_edgeMargin), lo, hi);
+            setYRange(ui->customPlot, lo, hi);
+        }
         ui->customPlot->replot();
 
         //Differences
@@ -6375,137 +5606,42 @@ void MainWindow::on_pushButton_6_clicked()
 
         number_of_lines=0;
 
-        while(std::getline(toplot3, zeile))
+        while(std::getline(toplot3, zeile)){
         ++number_of_lines;
+        dis::keepAlive();
+    }
         cout<<number_of_lines<<endl;
 
         toplot3.clear();
         toplot3.seekg(0, ios::beg);
 
         double offset = ui->doubleSpinBox_5->value();
-        int index = 0, count=0;
-        double sres=0.0, sres2=0.0, reasm=0.0;
-
+        // differences offset per spectrum; the statistics per spectrum are computed from the
+        // solution in memory (plotResidualStatistics, file diffstatistic.dat)
+        int index = 0;
         a.resize(number_of_lines);
         b.resize(number_of_lines);
-
         for (int i=0; i<number_of_lines; i++){
+            dis::keepAlive();
             toplot3 >> one >>two;
             istringstream ist(one);
             ist >> a[i];
             istringstream ist2(two);
             ist2 >> b[i];
-            if(i>0){
-                if((sres!=0) & (a[i]<a[i-1])){
-                    diffs<<sres<<"\t"<<sres2<<"\t"<<reasm<<"\t"<<count<<endl;
-                }
-                else{
-                    //
-                }
-                reasm=sres/count;
-                sres = 0;
-                sres2 = 0;
-                count=0;
-                ++index;
-            }
-            else{
-                //
-            }
-            if(ui->checkBox_33->isChecked()){
-                if((a[i]>ui->doubleSpinBox_14->value()) & (a[i]<ui->doubleSpinBox_15->value())){
-                    sres+=b[i];
-                    sres2+=pow(b[i],2);
-                    ++count;
-                }
-                else{
-                    // do nothing...
-                }
-            }
-            else{
-                sres+=b[i];
-                sres2+=pow(b[i],2);
-                ++count;
-            }
-            //b[i]=b[i]+index*offset;
-        }
-        if(sres!=0){
-            diffs<<sres<<"\t"<<sres2<<"\t"<<reasm<<"\t"<<count<<endl;
-        }
-        else{
-            //
-        }
-        cout<<"end"<<endl;
-
-        diffs.close();
-        toplot3.close();
-
-        ifstream indiffs(dat5Name.c_str());
-
-        string three, four;
-        QVector<double> vreasm(index), vsres(index), vsres2(index), vcount(index);
-
-        for (int i=0; i<index; i++){
-            indiffs >> one >>two>>three>>four;
-            istringstream ist(one);
-            ist >> vsres[i];
-            istringstream ist2(two);
-            ist2 >> vsres2[i];
-            istringstream ist3(three);
-            ist3 >> vreasm[i];
-            istringstream ist4(four);
-            ist4 >> vcount[i];
-        }
-        indiffs.close();
-        sres=0.0;
-        sres2=0.0;
-        count=0;
-        index=0;
-        ofstream diffs2(dat5Name.c_str());
-
-        for(int i=0; i<number_of_lines; i++){
-            if(i>0){
-                if(a[i]<a[i-1]){
-                reasm=sres/count;
-                diffs2<<sres<<"\t"<<vsres[index]<<"\t"<<sres2<<"\t"<<vsres2[index]<<"\t"<<reasm<<"\t"<<count<<endl;
-                sres = 0.0;
-                sres2 = 0.0;
-                count=0;
-                ++index;
-                }
-                else {
-                    // do nothing
-                }
-            }
-            else  {
-                // do nothing
-            }
-            if(ui->checkBox_33->isChecked()){
-                if((a[i]>ui->doubleSpinBox_14->value()) & (a[i]<ui->doubleSpinBox_15->value())){
-                    sres+=vreasm[index]-b[i];
-                    sres2+=pow((vreasm[index]-b[i]),2);
-                    ++count;
-                }
-                else{
-                    // do nothing...
-                }
-            }
-            else{
-                sres+=b[i];
-                sres2+=pow(b[i],2);
-                ++count;
-            }
+            if((i>0) && (a[i]<a[i-1])) ++index;   // a new spectrum begins
             b[i]=b[i]+index*offset;
         }
-         diffs2<<sres<<"\t"<<vsres[index]<<"\t"<<sres2<<"\t"<<vsres2[index]<<"\t"<<reasm<<"\t"<<count<<endl;
-         diffs2.close();
+        if(number_of_lines>0) ++index;
+        toplot3.close();
 
-        ui->customPlot_3->addGraph();
-        ui->customPlot_3->graph(0)->setData(a, b);
-        ui->customPlot_3->graph(0)->setPen(QPen(Qt::red));
-        ui->customPlot_3->graph(0)->setLineStyle(QCPGraph::lsNone);
-        ui->customPlot_3->graph(0)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, 2));
+        plotSegments(ui->customPlot_3, a, b);
         ui->customPlot_3->xAxis->setRange(xs1, xs2);
-        ui->customPlot_3->yAxis->rescale(true);
+        {
+            // per spectrum without its edge pixels
+            double lo = 1e300, hi = -1e300;
+            innerYRange(a, b, plotTrim(logbin>0 ? logbin : a.size()/std::max(1, index), g_edgeMargin), lo, hi);
+            setYRange(ui->customPlot_3, lo, hi);
+        }
         ui->customPlot_3->replot();
 
         //telluric lines
@@ -6528,8 +5664,10 @@ void MainWindow::on_pushButton_6_clicked()
 
           number_of_lines=0;
 
-          while(std::getline(toplot5, zeile))
-             ++ number_of_lines;
+          while(std::getline(toplot5, zeile)){
+             ++number_of_lines;
+             dis::keepAlive();
+         }
 
           toplot5.clear();
           toplot5.seekg(0, ios::beg);
@@ -6538,6 +5676,7 @@ void MainWindow::on_pushButton_6_clicked()
           b.resize(number_of_lines);
 
           for (int i=0; i<number_of_lines; i++){
+            dis::keepAlive();
             toplot5 >> one >>two;
             istringstream ist(one);
             ist >> a[i];
@@ -6551,7 +5690,11 @@ void MainWindow::on_pushButton_6_clicked()
           ui->customPlot_2->graph(0)->setPen(QPen(Qt::red));
           ui->customPlot_2->addGraph();
           ui->customPlot_2->xAxis->setRange(xs1, xs2);
-          ui->customPlot_2->yAxis->rescale(true);
+          {
+              double lo = 1e300, hi = -1e300;
+              innerYRange(a, b, plotTrim(a.size(), g_edgeMargin), lo, hi);
+              setYRange(ui->customPlot_2, lo, hi);
+          }
           ui->customPlot_2->replot();
 
       }
@@ -6613,8 +5756,10 @@ void MainWindow::on_pushButton_6_clicked()
 
             int number_of_lines=0;
 
-            while(std::getline(toplot1, zeile))
+            while(std::getline(toplot1, zeile)){
                 ++number_of_lines;
+                dis::keepAlive();
+            }
 
             toplot1.clear();
             toplot1.seekg(0, ios::beg);
@@ -6622,6 +5767,7 @@ void MainWindow::on_pushButton_6_clicked()
             QVector<double> a(number_of_lines), b(number_of_lines);
 
             for (int i=0; i<number_of_lines; i++){
+                dis::keepAlive();
                 toplot1 >> one >>two;
                 istringstream ist(one);
                 ist >> a[i];
@@ -6661,8 +5807,10 @@ void MainWindow::on_pushButton_6_clicked()
 
             number_of_lines=0;
 
-            while(std::getline(toplot2, zeile))
+            while(std::getline(toplot2, zeile)){
                 ++number_of_lines;
+                dis::keepAlive();
+            }
 
             toplot2.clear();
             toplot2.seekg(0, ios::beg);
@@ -6670,6 +5818,7 @@ void MainWindow::on_pushButton_6_clicked()
             QVector<double> c(number_of_lines), d(number_of_lines);
 
             for (int i=0; i<number_of_lines; i++){
+                dis::keepAlive();
                 toplot2 >> one >>two;
                 istringstream ist(one);
                 ist >> c[i];
@@ -6703,8 +5852,10 @@ void MainWindow::on_pushButton_6_clicked()
 
             number_of_lines=0;
 
-            while(std::getline(errors, zeile))
-           ++ number_of_lines;
+            while(std::getline(errors, zeile)){
+           ++number_of_lines;
+           dis::keepAlive();
+       }
 
             errors.clear();
             errors.seekg(0, ios::beg);
@@ -6712,6 +5863,7 @@ void MainWindow::on_pushButton_6_clicked()
             QVector<double> e(number_of_lines), f(number_of_lines);
 
             for (int i=0; i<number_of_lines; i++){
+                dis::keepAlive();
                 errors >> one >>two;
                 istringstream ist(one);
                 ist >> e[i];
@@ -6730,18 +5882,18 @@ void MainWindow::on_pushButton_6_clicked()
             ui->customPlot->graph(1)->setPen(QPen(Qt::red));
             ui->customPlot->addGraph();
             ui->customPlot->graph(2)->setData(e, f);
-            ui->customPlot->yAxis->rescale(true);
             ui->customPlot->graph(2)->setPen(QPen(Qt::black));
+            {
+                double lo = 1e300, hi = -1e300;
+                innerYRange(a, b, plotTrim(a.size(), g_edgeMargin), lo, hi);
+                innerYRange(c, d, plotTrim(c.size(), g_edgeMargin), lo, hi);
+                innerYRange(e, f, plotTrim(e.size(), g_edgeMargin), lo, hi);
+                setYRange(ui->customPlot, lo, hi);
+            }
             ui->customPlot->replot();
 
             // differences
 
-            QString qDiff="frdiffstatistic.dat";
-            string sdiff=qDiff.toUtf8().constData();
-            std::ostringstream dat5NameStream(sdiff);
-            dat5NameStream<<path<<"/"<<sdiff;
-            std::string dat5Name = dat5NameStream.str();
-            ofstream diffs(dat5Name.c_str());
 
             QString plot3="frdifferences.dat";
             string plot13 = plot3.toUtf8().constData();
@@ -6761,134 +5913,34 @@ void MainWindow::on_pushButton_6_clicked()
 
             number_of_lines=0;
 
-            while(std::getline(toplot3, zeile))
+            while(std::getline(toplot3, zeile)){
             ++number_of_lines;
+            dis::keepAlive();
+        }
 
             toplot3.clear();
             toplot3.seekg(0, ios::beg);
 
             double offset = ui->doubleSpinBox_5->value();
-            int index = 0, count=0;
-            double sres=0.0, sres2=0.0, reasm=0.0;
-
+            // differences offset per spectrum; the statistics per spectrum are computed from the
+            // solution in memory (plotResidualStatistics, file diffstatistic.dat)
+            int index = 0;
             a.resize(number_of_lines);
             b.resize(number_of_lines);
-
             for (int i=0; i<number_of_lines; i++){
+                dis::keepAlive();
                 toplot3 >> one >>two;
                 istringstream ist(one);
                 ist >> a[i];
                 istringstream ist2(two);
                 ist2 >> b[i];
-                if((i>0)){
-                    reasm=sres/count;
-                    if((sres!=0) & (a[i]<a[i-1])){
-                        reasm=sres/count;
-                        diffs<<sres<<"\t"<<sres2<<"\t"<<reasm<<"\t"<<count<<endl;
-                        sres = 0;
-                        sres2 = 0;
-                        count=0;
-                        ++index;
-                    }
-                    else{
-                        //
-                    }
-                }
-                else{
-                    // do nothing
-                }
-                if(ui->checkBox_33->isChecked()){
-                    if((a[i]>ui->doubleSpinBox_14->value()) & (a[i]<ui->doubleSpinBox_15->value())){
-                        sres+=b[i];
-                        sres2+=pow(b[i],2);
-                        ++count;
-                    }
-                    else{
-                        // do nothing...
-                    }
-                }
-                else{
-                    sres+=b[i];
-                    sres2+=pow(b[i],2);
-                    ++count;
-                }
-                //b[i]=b[i]+index*offset;
-            }
-            if(sres!=0){
-                diffs<<sres<<"\t"<<sres2<<"\t"<<reasm<<"\t"<<count<<endl;
-            }
-            else{
-                //
-            }
-
-            diffs.close();
-            toplot3.close();
-
-            ifstream indiffs(dat5Name.c_str());
-
-            string three, four;
-            QVector<double> vreasm(index), vsres(index), vsres2(index), vcount(index);
-
-            for (int i=0; i<index; i++){
-                indiffs >> one >>two>>three>>four;
-                istringstream ist(one);
-                ist >> vsres[i];
-                istringstream ist2(two);
-                ist2 >> vsres2[i];
-                istringstream ist3(three);
-                ist3 >> vreasm[i];
-                istringstream ist4(four);
-                ist4 >> vcount[i];
-            }
-            indiffs.close();
-            sres=0.0;
-            sres2=0.0;
-            count=0;
-            index=0;
-            ofstream diffs2(dat5Name.c_str());
-
-            for(int i=0; i<number_of_lines; i++){
-                if((i>0)){
-                    if((sres!=0) & (a[i]<a[i-1])){
-                        reasm=sres/count;
-                        diffs2<<sres<<"\t"<<vsres[index]<<"\t"<<sres2<<"\t"<<vsres2[index]<<"\t"<<reasm<<"\t"<<count<<endl;
-                        sres = 0.0;
-                        sres2 = 0.0;
-                        count=0;
-                        ++index;
-                    }
-                    else{
-                        // do nothing
-                    }
-                }
-                else{
-                    //do noting
-                }
-                if(ui->checkBox_33->isChecked()){
-                    if((a[i]>ui->doubleSpinBox_14->value()) & (a[i]<ui->doubleSpinBox_15->value())){
-                        sres+=vreasm[index]-b[i];
-                        sres2+=pow((vreasm[index]-b[i]),2);
-                        ++count;
-                    }
-                    else{
-                        // do nothing...
-                    }
-                }
-                else{
-                    sres+=b[i];
-                    sres2+=pow(b[i],2);
-                    ++count;
-                }
+                if((i>0) && (a[i]<a[i-1])) ++index;   // a new spectrum begins
                 b[i]=b[i]+index*offset;
             }
-             diffs2<<sres<<"\t"<<vsres[index]<<"\t"<<sres2<<"\t"<<vsres2[index]<<"\t"<<reasm<<"\t"<<count<<endl;
-             diffs2.close();
+            if(number_of_lines>0) ++index;
+            toplot3.close();
 
-            ui->customPlot_3->addGraph();
-            ui->customPlot_3->graph(0)->setData(a, b);
-            ui->customPlot_3->graph(0)->setPen(QPen(Qt::red));
-            ui->customPlot_3->graph(0)->setLineStyle(QCPGraph::lsNone);
-            ui->customPlot_3->graph(0)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, 2));
+            plotSegments(ui->customPlot_3, a, b);
             ui->customPlot_3->xAxis->setRange(xs1, xs2);
             ui->customPlot_3->yAxis->setRange(-0.5, 0.5+index*offset);
             ui->customPlot_3->replot();
@@ -6937,7 +5989,6 @@ void MainWindow::on_doubleSpinBox_4_valueChanged()
 void MainWindow::on_pushButton_7_clicked()
 {
     abortt=1;
-    sequence=0;
 }
 
 void MainWindow::on_checkBox_12_clicked()
@@ -6981,6 +6032,7 @@ void MainWindow::on_actionEditor_triggered()
     int hgh = ui->spinBox_2->value() - ui->spinBox->value() + 1;
     qEdit =new Edit(this);
     qEdit->seData(ui->lineEdit_4->text(), hgh, ui->doubleSpinBox_4->value());
+    qEdit->setOrbitFile(qOrbitFile);
     qEdit->show();
 }
 
@@ -6991,73 +6043,138 @@ void MainWindow::on_checkBox_16_clicked()
     ui->checkBox_2->setChecked(false);
 }
 
-double Ofunction (double XX[], double RVt, double RVT0, double RVP, double RVe){
-    double func;
-
-    func= abs(RVe*sin(XX[0])+2*M_PI*(RVt-RVT0)/RVP-XX[0]);
-
-    return func;
-
-    }
-
 //***********************************
 // RVs for A
 //**********************************
 void MainWindow::VAmplitudeA()
 {
-    double E;
-
     RVT0 = orbele[5];
     RVP = orbele[0];
     RVe = orbele[1];
 
-
     for(int m=0; m<num; m++){
-        if(orbele[1]!=0){
-
-            RVt = otimes[m];
-            MainWindow::findroot();
-            E=RVE;
-            theta=2*(atan(tan(E/2)*sqrt((1+orbele[1])/(1-orbele[1]))));
-        }
-        else{
-            E = 2*M_PI*(otimes[m]-orbele[5])/orbele[0];
-            RVE=E;
-            theta=E;
-        }
-
-        RV1[m] = orbele[4] + orbele[2]*(cos(theta+orbele[6])+orbele[1]*cos(orbele[6]));
-
+        bool ok = true;
+        RV1[m] = orbit::radialVelocity(otimes[m], orbele[0], orbele[1], orbele[2], orbele[4],
+                                       orbele[5], orbele[6], &ok);
+        if(!ok) RVCalcCheck=1;
     }
 }
 
 //**********************************
-// RVs for B
+// Auto Stop and Reinitiate based on the progress in chi^2.
+// sigma = 1/(S/N) from the GUI, otherwise sigma^2 = residuum^2 / degrees of freedom.
+// A run has converged when chi^2 = S^2/sigma^2 has dropped by less than Delta-chi^2
+// over the window. Then:
+//   Reinitiate on:  restart; with Auto Stop, stop if the run gained less than
+//                   Delta-chi^2 over the previous run (restart n vs. n-1)
+//   Reinitiate off: with Auto Stop, stop; otherwise continue up to the iteration limit
+// Only for the residuum "Mean" (sum of squares); "Peak" has no chi^2.
+//**********************************
+// sigma^2 for the convergence data (4th column of optdata.dat), frozen when the line is
+// written: the known one (S/N), else the current estimate, else residuum^2 / degrees of freedom
+double MainWindow::sigma2Now(double residuum) const
+{
+    const double known = knownSigma2();
+    if(known>0) return known;
+    if(std::isfinite(g_sigma2) && g_sigma2>0) return g_sigma2;
+    return residuum*residuum/std::max(1, g_lastResBins - g_lastResCols);
+}
+
+double MainWindow::knownSigma2() const
+{
+    if(!g_specW.empty() && g_sigmaBar2>0) return g_sigmaBar2;   // from the S/N file
+    const double snr = ui->doubleSpinBox_16->value();
+    return snr>0 ? 1.0/(snr*snr) : 0.0;                          // 0: estimate from the residuum
+}
+
+void MainWindow::resetRunState()
+{
+    g_autoSpecW.clear();      // S/N "auto": estimate anew for this optimisation
+    g_autoSigmaBar2 = 0.0;
+    g_prevRunBestS = std::numeric_limits<double>::quiet_NaN();
+    g_itersUsed = 0;
+}
+
+RunAction MainWindow::convergenceStep(nm::ProgressMonitor &mon, double bestS, int nParams, std::ofstream &log,
+                                      bool allowReinit)
+{
+    if(!ui->checkBox_14->isChecked() || !std::isfinite(bestS) || bestS>=orbit::kInvalidPenalty){
+        return RunAction::Continue;
+    }
+    const double known = knownSigma2();
+    const int dof = g_lastResBins - g_lastResCols - nParams;
+    const double s2 = known>0 ? known : (dof>0 ? bestS*bestS/dof : 0.0);
+    if(!(s2>0)) return RunAction::Continue;
+    g_sigma2 = s2;
+    mon.add(bestS*bestS);
+    const double dchi = ui->doubleSpinBox_17->value();
+    if(!mon.converged(dchi*s2)) return RunAction::Continue;
+
+    std::ostringstream m;
+    m<<setprecision(4)<<"Converged: chi^2 improved by "<<mon.gain()/s2<<" < "<<dchi<<" over the last "
+     <<mon.window()<<" iterations (sigma = "<<std::sqrt(s2)<<(known>0 ? ", from S/N" : ", estimated")<<").";
+
+    if(allowReinit && ui->checkBox_32->isChecked()){      // Reinitiate
+        // Each restart starts from the best point of the previous run. The optimisation ends
+        // when a run converges without having improved on that point (as in version 1.11:
+        // best value still that of the first evaluation); any improvement starts another run.
+        if(ui->checkBox_23->isChecked() && std::isfinite(g_prevRunBestS)){
+            const double runGain = (g_prevRunBestS*g_prevRunBestS - bestS*bestS)/s2;
+            const bool improved = bestS < g_prevRunBestS*(1.0-1e-12);
+            m<<" Gain of this run against the previous one: "<<runGain
+             <<(improved ? " (improved: restart from the new best)." : " (no improvement: stop).");
+            if(!improved){
+                log<<m.str()<<endl;
+                cout<<m.str()<<endl;
+                ui->plainTextEdit_2->appendPlainText(QString::fromStdString(m.str()));
+                return RunAction::Done;
+            }
+        }
+        g_prevRunBestS = bestS;
+        log<<m.str()<<endl;
+        cout<<m.str()<<endl;
+        ui->plainTextEdit_2->appendPlainText(QString::fromStdString(m.str()));
+        return RunAction::Reinit;
+    }
+    if(ui->checkBox_23->isChecked()){      // Auto Stop without Reinitiate
+        log<<m.str()<<endl;
+        cout<<m.str()<<endl;
+        ui->plainTextEdit_2->appendPlainText(QString::fromStdString(m.str()));
+        return RunAction::Done;
+    }
+    return RunAction::Continue;            // without Auto Stop up to the iteration limit
+}
+
+//**********************************
+// RVs for B (argument of periastron omega + pi)
 //**********************************
 void MainWindow::VAmplitudeB()
 {
-    double E;
-
     RVT0 = orbele[5];
     RVP = orbele[0];
     RVe = orbele[1];
 
     for(int m=0; m<num; m++){
-
-        if(orbele[1]!=0){
-            RVt = otimes[m];
-            MainWindow::findroot();
-            E=RVE;
-            theta=2*(atan(tan(E/2)*sqrt((1+orbele[1])/(1-orbele[1]))));
-        }
-        else{
-            E = 2*M_PI*(otimes[m]-orbele[5])/orbele[0];
-            theta=E;
-        }
-
-    RV3[m] = orbele[4] + orbele[3]*(cos(theta+(orbele[6]+M_PI))+orbele[1]*cos(orbele[6]+M_PI));
-
+        bool ok = true;
+        RV3[m] = orbit::radialVelocity(otimes[m], orbele[0], orbele[1], orbele[3], orbele[4],
+                                       orbele[5], orbele[6]+M_PI, &ok);
+        if(!ok) RVCalcCheck=1;
     }
+}
+
+//**********************************
+// Residuum for orbital elements: invalid elements (P<=0, e outside [0,1))
+// get a penalty residuum instead of NaN.
+//**********************************
+double MainWindow::evaluateOrbit()
+{
+    if(!orbit::elementsValid(orbele[0], orbele[1])){
+        return orbit::kInvalidPenalty;
+    }
+    MainWindow::VAmplitudeA();
+    MainWindow::VAmplitudeB();
+    MainWindow::ConstructMatrix();
+    return MainWindow::DivideConquer();
 }
 
 void MainWindow::on_actionArithmetic_triggered()
@@ -7069,7 +6186,15 @@ void MainWindow::on_actionArithmetic_triggered()
 
 void MainWindow::on_actionManual_triggered()
 {
-    QDesktopServices::openUrl(QUrl("Manual.pdf"));
+    QString manual = findResource("Spectangular_Manual.pdf");
+    if(manual.isEmpty()) manual = findResource("Spectangular_Manual_2020.pdf");
+    if(manual.isEmpty()) manual = findResource("Manual.pdf");
+    if(manual.isEmpty()){
+        reportError("Manual not found. Searched: "+resourceSearchPath());
+        error=0;
+        return;
+    }
+    QDesktopServices::openUrl(QUrl::fromLocalFile(manual));
 }
 
 //*******************************************************
@@ -7077,492 +6202,347 @@ void MainWindow::on_actionManual_triggered()
 //*******************************************************
 void MainWindow::ErrorEstimation()
 {
-
-    int epara;
-    double bestr;
-    string zeile, one;
-
-    QString qOptval = ui->lineEdit_16->text();
-    string file1opt = qOptval.toUtf8().constData();
-    std::ostringstream file1NameStream(file1opt);
-    file1NameStream<<path<<"/"<<file1opt;
-    std::string file1Name = file1NameStream.str();
-    ifstream initiate1(file1Name.c_str());
-
-    QFile checkfile5(file1Name.c_str());
-
-    if(!checkfile5.exists()){
-        qDebug()<<"The file "<<checkfile5.fileName()<<" does not exist.";
-        if(runow==0){
-            QMessageBox::information(this, "Error", "File "+qPath+"/"+qOptval+" does not exist!");
-        }
-        else{
-            cout<<"Error: File "<<path<<"/"<<file1opt<<" does not exist!"<<endl;
-        }
-       return;
+    // Error estimate for the orbital elements from the final simplex
+    // (errorestimate.h; Nelder & Mead 1965, appendix).
+    if(!ui->checkBox_16->isChecked()){
+        reportError("Error 34: Error estimation is available for the optimisation of orbital elements only.");
+        error=0;
+        return;
     }
-    else{
-        epara=0;
+    if(!ui->checkBox_14->isChecked()){
+        reportError("Error 35: Error estimation needs the residuum mode 'Mean' (sum of squares).");
+        error=0;
+        return;
     }
 
-    while(std::getline(initiate1, zeile))
-       ++ epara;
-
-    initiate1.clear();
-    initiate1.seekg(0, ios::beg);
-
-    QVector<double> bestrB(epara), VariP(7);
-
-    for (int i=0; i<epara; i++){
-        initiate1 >> one;
-        istringstream ist(one);
-        ist >> bestrB[i];
-    }
-    initiate1.close();
-
-
-    bestr = bestrB[0];
-
-    for(int i =0; i<epara; i++){
-        if(bestrB[i]<bestr){
-            bestr = bestrB[i];
-        }
+    const char *names[7] = {"P", "e", "K_A", "K_B", "gamma", "T_peri", "omega"};
+    int pvf[7] = {!ui->checkBox_18->isChecked(), !ui->checkBox_17->isChecked(), !ui->checkBox_31->isChecked(),
+                  !ui->checkBox_36->isChecked(), !ui->checkBox_37->isChecked(), !ui->checkBox_35->isChecked(),
+                  !ui->checkBox_38->isChecked()};
+    int n=0;
+    for(int e=0; e<7; e++) if(pvf[e]==0) ++n;
+    if(n<1){
+        reportError("Error 37: All orbital elements are locked.");
+        error=0;
+        return;
     }
 
-    cout<<"Best Value: "<<bestr<<endl;
-
-    ifstream initorbit("orbitelements.dat");
-
-    for(int i=0; i<7; i++){
-        initorbit >> eins;
-        istringstream istr1(eins);
-        istr1 >> orbele[i];
+    std::vector<std::vector<double>> yv, pv;
+    std::string ioErr;
+    QString fVal = qPath+"/"+ui->lineEdit_16->text(), fMat = qPath+"/"+ui->lineEdit_17->text();
+    if(!dataio::readTable(fVal.toStdString(), 1, yv, ioErr) || !dataio::readTable(fMat.toStdString(), 1, pv, ioErr)){
+        reportError("Error 36: "+QString::fromStdString(ioErr));
+        error=0;
+        return;
     }
-    initorbit.close();
+    if(int(yv.size())!=n+1 || int(pv.size())!=n*(n+1)){
+        reportError("Error 37: The optimisation data "+fVal+" / "+fMat
+                    +" does not match the orbital elements selected in the main window.");
+        error=0;
+        return;
+    }
 
-    MainWindow::read_data();
-
+    MainWindow::read_data();   // spectra, times and fixed elements
     if(error==1){
         this->setCursor(QCursor(Qt::ArrowCursor));
         error=0;
         return;
     }
-    else{
-        //
+
+    arma::mat P(n+1, n);
+    std::vector<double> S(n+1);
+    for(int i=0; i<n+1; i++){
+        S[i] = yv[i][0]*yv[i][0];
+        for(int j=0; j<n; j++) P(i,j) = pv[i*n+j][0];
+    }
+    auto setElements = [&](const arma::rowvec &x){
+        int pc=0;
+        for(int e=0; e<7; e++){
+            if(pvf[e]==0){
+                orbele[e]=x(pc);
+                ++pc;
+            }
+        }
+    };
+    auto f = [&](const arma::rowvec &x){
+        setElements(x);
+        double r = MainWindow::evaluateOrbit();
+        qApp->processEvents(QEventLoop::AllEvents);
+        return r*r;
+    };
+
+    int best = int(std::min_element(S.begin(), S.end()) - S.begin());
+    const arma::rowvec x0 = P.row(best);
+    r1 = sqrt(S[best]);   // output only on a real improvement
+    auto restoreBest = [&](){
+        setElements(x0);
+        MainWindow::VAmplitudeA();
+        MainWindow::VAmplitudeB();
+    };
+    auto aborted = [&](){
+        abortt=0;
+        restoreBest();
+        if(runow==0) QMessageBox::information(this, "Abort", "Error estimation aborted.");
+    };
+
+    // sigma^2 from the residuum: degrees of freedom = bins - unknowns of the spectra - elements
+    setElements(x0);
+    double rb = MainWindow::evaluateOrbit();
+    int dof = g_lastResBins - g_lastResCols - n;
+    // sigma^2: from the given S/N (sigma = 1/(S/N)), otherwise from the residuum
+    const double known = knownSigma2();
+    double sigma2 = known>0 ? known : (dof>0 ? rb*rb/dof : std::numeric_limits<double>::quiet_NaN());
+    if(!(sigma2>0)){
+        restoreBest();
+        reportError("Error 38: Not enough data for an error estimation (degrees of freedom: "+QString::number(dof)+").");
+        error=0;
+        return;
     }
 
-
-        QFile checkfile1(file1Name.c_str());
-
-        if(!checkfile1.exists()){
-            qDebug()<<"The optimisation file "<<checkfile1.fileName()<<" does not exist.";
-            if(runow==0){
-                QMessageBox::information(this, "Error", "The optimisation data "+qPath+"/"+qOptval+" does not exist.");
+    // Monte Carlo (parametric bootstrap): noise with the scatter of the residuals of each
+    // spectrum is added to the best model, and the free elements are refitted with
+    // Levenberg-Marquardt from the best point for every realisation. The errors are the
+    // scatter of the fits; they include the second-order effects that the curvature misses
+    // at moderate S/N.
+    if(ui->comboBox_err->currentIndex()==1){
+        const int nReal = ui->spinBox_mc->value();
+        setElements(x0);
+        rb = MainWindow::evaluateOrbit();
+        const arma::vec model = M*X;
+        const arma::vec C0 = C;
+        // noise per spectrum: from the S/N (file or field) or from the residuals of the
+        // spectrum, corrected for the degrees of freedom of the fit
+        std::vector<double> sig(num, 0.0);
+        const int edge = std::max(0, g_edgeMargin);
+        const double dofFac = (g_lastResBins>g_lastResCols+n) ? double(g_lastResBins)/double(g_lastResBins-g_lastResCols-n) : 1.0;
+        for(int j=0; j<num; j++){
+            if(known>0){
+                const double sb = std::sqrt(known);
+                sig[j] = g_specW.empty() ? sb : sb/g_specW[j];
+                continue;
             }
-            else{
-                cout<<"Error: The optimisation data "<<path<<"/"<<file1opt<<" does not exist!"<<endl;
+            double q = 0.0;
+            int cnt = 0;
+            for(int i=edge; i<logbin-edge; i++){
+                const double d = C0(j*logbin+i) - model(j*logbin+i);
+                q += d*d;
+                ++cnt;
             }
-           this->setCursor(QCursor(Qt::ArrowCursor));
-            return;
+            sig[j] = cnt>0 ? std::sqrt(q/cnt*dofFac) : 0.0;
         }
-        else{
-            //
+        std::vector<int> elIdx;
+        for(int e=0; e<7; e++) if(pvf[e]==0) elIdx.push_back(e);
+        // finite-difference steps as in the Levenberg-Marquardt optimisation (1e-4 of the
+        // default initial simplex steps)
+        arma::vec h(n);
+        for(int k=0; k<n; k++){
+            const int e = elIdx[k];
+            const double P0 = orbele[0];
+            const double d[7] = {P0/10, std::max(orbele[1]/10, 0.005), 3*dv, 3*dv, 3*dv, P0/10, M_PI/20};
+            h(k) = 1e-4*d[e];
         }
-
-        QString qOptm = ui->lineEdit_17->text();
-        string file2opt = qOptm.toUtf8().constData();
-        std::ostringstream file2NameStream(file2opt);
-        file2NameStream<<path<<"/"<<file2opt;
-        std::string file2Name = file2NameStream.str();
-        ifstream initiate2(file2Name.c_str());
-
-        QFile checkfile(file2Name.c_str());
-
-        if(!checkfile.exists()){
-            qDebug()<<"The optimisation file "<<checkfile.fileName()<<" does not exist.";
-            if(runow==0){
-                QMessageBox::information(this, "Error", "The optimisation data "+qPath+"/"+qOptm+" does not exist.");
-            }
-            else{
-                cout<<"Error: The optimisation data "<<path<<"/"<<file2opt<<" does not exist!"<<endl;
-            }
-           this->setCursor(QCursor(Qt::ArrowCursor));
-            return;
-        }
-
-        int number_of_lines =0;
-
-        int NVar1=0, Plock=0, elock=0, T0lock=0;
-        int Bin;
-        bool xyz;
-        double rv;
-
-        int nu=7;
-        int add=0;
-
-        QVector<int> pvf(7);
-
-        if(ui->checkBox_18->isChecked()){ // P
-            pvf[0]=1; // fixed
-            ++add;
-        }
-        else{
-            pvf[0]=0; // free
-        }
-        if(ui->checkBox_17->isChecked()){ // e
-            pvf[1]=1;
-            ++add;
-        }
-        else{
-            pvf[1]=0;
-        }
-        if(ui->checkBox_31->isChecked()){ // KA
-            pvf[2]=1;
-            ++add;
-        }
-        else{
-            pvf[2]=0;
-        }
-        if(ui->checkBox_36->isChecked()){ // KB
-            pvf[3]=1;
-            ++add;
-        }
-        else{
-            pvf[3]=0;
-        }
-        if(ui->checkBox_37->isChecked()){ // Gamma
-            pvf[4]=1;
-            ++add;
-        }
-        else{
-            pvf[4]=0;
-        }
-        if(ui->checkBox_35->isChecked()){ // T0
-            pvf[5]=1;
-            ++add;
-        }
-        else{
-            pvf[5]=0;
-        }
-        if(ui->checkBox_38->isChecked()){ // Omega
-            pvf[6]=1;
-            ++add;
-        }
-        else{
-            pvf[6]=0;
-        }
-
-        nu = nu-add;
-        mat Errors(nu,nu);
-        QVector<double> STDError(nu);
-
-        NVar1=7-add;
-        cout<<add<<endl;
-        cout<<NVar1<<endl;
-        cout<<epara<<endl;
-
-        if(epara!=NVar1+1){
-            qDebug()<<"Wrong optimisation file.";
-            if(runow==0){
-                QMessageBox::information(this, "Error", "The optimisation data "+qPath+"/"+qOptval+" does not match to specifications in main window.");
-            }
-            else{
-                cout<<"Error: The optimisation data "<<path<<"/"<<file1opt<<" does not match to the specification in main window."<<endl;
-            }
-           this->setCursor(QCursor(Qt::ArrowCursor));
-            return;
-        }
-
-        double Bres;
-        int NVar = (NVar1+1)*(NVar1+2)/2-(NVar1+1);
-        QVector<double> Res(epara);
-        double h(NVar);
-        mat Bi(nu,nu), Gam(nu,nu), Qt(nu,nu);
-
-        for (int i=0; i<epara; i++){
-            initiate1 >> one;
-            istringstream ist(one);
-            ist >> Res[i];
-            if(i==0){
-                Bin = i;
-                Bres = Res[0];
-            }
-            else if(Res[i]<Bres){
-                Bres=Res[i];
-                Bin = i;
-            }
-        }
-        initiate1.close();
-
-        number_of_lines=0;
-
-        while(std::getline(initiate2, zeile))
-           ++ number_of_lines;
-
-        initiate2.clear();
-        initiate2.seekg(0, ios::beg);
-
-        if(number_of_lines!=NVar1*(NVar1+1)){
-            qDebug()<<"Wrong optimisation file.";
-            if(runow==0){
-                QMessageBox::information(this, "Error", "The optimisation data "+qPath+"/"+qOptm+" does not match to specifications in main window.");
-            }
-            else{
-                cout<<"Error: The optimisation data "<<path<<"/"<<file2opt<<" does not match to the specification in main window."<<endl;
-            }
-           this->setCursor(QCursor(Qt::ArrowCursor));
-            return;
-        }
-
-        double V[NVar][NVar1];
-
-        for (int i=0; i<NVar1+1; i++){
-            for(int e =0; e<NVar1; e++){
-                initiate2 >> one;
-                istringstream ist(one);
-                ist >> V[i][e];
-            }
-
-        }
-        initiate2.close();
-
-        int indicat=0;
-
-        for(int e =0; e<NVar1; e++){
-            for(int i=0; i<NVar1; i++){
-                if(V[i][e]==V[i+1][e]){
-                    ++indicat;
-                }
-            }
-        }
-
-        int laufa=0, laufb=0, laufc=0;
-        QVector<double> Theta0j(NVar1);
-
-        QVector<double> Chi0i(NVar1);
-        mat Chi(NVar1,NVar1);
-        QString qChi;
-
-        for(int i = 0; i<NVar1; i++){
-            for(int j = 0; j<NVar1; j++){
-                Chi(i,j)=0;
-            }
-        }
-
-        for(int i =0; i<NVar1; i++){
-
-            laufc=0;
-
-            for(int n=i; n<NVar1+1; n++){
-                if((n!=i) & (n>i)){
-                    for(int j =0; j<NVar1; j++){
-                        V[laufa+NVar1+1][j]=(V[i][j]+V[n][j])/2;
-                        if(add==0){
-                            orbele[j]=V[laufa+NVar1+1][j];
-                        }
-                        if(add==1){
-                            if(Plock==1){
-                                orbele[j+1]=V[laufa+NVar1+1][j];
-                            }
-                            if(elock==1){
-                                if(j==0){
-                                orbele[0]=V[laufa+NVar1+1][j];
-                                }
-                                if(j>0){
-                                    orbele[j+1]=V[laufa+NVar1+1][j];
-                                }
-                            }
-                            if(T0lock==1){
-                                if(j==5){
-                                    orbele[6]=V[laufa+NVar1+1][j];
-                                }
-                                else orbele[j]=V[laufa+NVar1+1][j];
-                            }
-                        }
-                        if(add==2){
-                            if((Plock==1) & (elock==1)){
-                                orbele[j+2]=V[laufa+NVar1+1][j];
-                            }
-                            if((Plock==1) & (T0lock==1)){
-                                if(j==4){
-                                    orbele[6]=V[laufa+NVar1+1][j];
-                                }
-                                else{
-                                    orbele[j+1]=V[laufa+NVar1+1][j];
-                                }
-                            }
-                            if((elock==1) & (T0lock==1)){
-                                if(j==0) orbele[0]=V[laufa+NVar1+1][j];
-                                if(j==1) orbele[2]=V[laufa+NVar1+1][j];
-                                if(j==2) orbele[3]=V[laufa+NVar1+1][j];
-                                if(j==3) orbele[4]=V[laufa+NVar1+1][j];
-                                if(j==4) orbele[6]=V[laufa+NVar1+1][j];
-                            }
-                        }
-                        if(add==3){
-                            if(j==0) orbele[2]=V[laufa+NVar1+1][j];
-                            if(j==1) orbele[3]=V[laufa+NVar1+1][j];
-                            if(j==2) orbele[4]=V[laufa+NVar1+1][j];
-                            if(j==3) orbele[6]=V[laufa+NVar1+1][j];
-                        }
-                }
-
-                MainWindow::VAmplitudeA();
-                MainWindow::VAmplitudeB();
-                MainWindow::ConstructMatrix();
-                Res[laufa+NVar1+1]=MainWindow::DivideConquer();
-                qApp->processEvents(QEventLoop::AllEvents);
-                if(abortt==1){
-                    abortt=0;
-                    sequence=0;
-                    if(runow==0){
-                        QMessageBox::information(this, "Abort", "Error estimation aborted.");
-                    }
-                    return;
-                }
-
-                if(i==Bin){
-                    cout<<"Chi0i["<<laufb<<"]: ";
-                    Chi0i[laufb] = Res[laufa+NVar1+1];
-                    cout<<Chi0i[laufb]<<endl;
-                    QString qlau = QString::number(laufb);
-                    qChi = QString::number(Chi0i[laufb]);
-                    ui->plainTextEdit_2->appendPlainText("Chi0i["+qlau+"]: "+qChi);
-                    ++laufb;
-                }
-                cout<<"Chi["<<i<<"]["<<laufc<<"]: ";
-                Chi(i,laufc)=Res[laufa+NVar1+1];
-                cout<<Chi(i,laufc)<<endl;
-                QString qlau = QString::number(laufc);
-                QString qi = QString::number(i);
-                qChi = QString::number(Chi(i,laufc));
-                ui->plainTextEdit_2->appendPlainText("Chi["+qi+"]["+qlau+"]: "+qChi);
-                ++laufc;
-                ++laufa;
-                }
-
-            }
-        }
-
-        cout<<endl;
-        cout<<Chi<<endl;
-        cout<<endl;
-        cout<<"Vector a:"<<endl;
-
-        mat Q(NVar1,NVar1);
-        QVector<double> a(NVar1);
-        mat B(NVar1,NVar1);
-
-        laufa=0;
-        laufb=0;
-
-        for(int i =0; i<NVar1+1; i++){
-            if(i!=Bin){
-            a[laufb] = 4*pow(Chi0i[laufb],2)-pow(Res[i],2)-3*pow(Res[Bin],2);
-            cout<<a[laufb]<<endl;
-            ++laufb;
-
-            }
-        }
-
-        for(int i =0; i<NVar1+1; i++){
-            if(i!=Bin){
-
-            for(int j = 0; j<NVar1; j++){
-
-                Q(laufa,j)=V[i][j]-V[Bin][j];
-                }
-            ++laufa;
-            }
-        }
-
-        cout<<endl;
-        cout<<"Matrix Q:"<<endl;
-        cout<<Q<<endl;
-        cout<<endl;
-
-        laufa=0;
-
-        for(int i =0; i<NVar1; i++){
-            for(int j =0; j<NVar1-1;j++){
-                if(Q(j,i)==Q(j+1,i)){
-                    ++laufa;
-                }
-            }
-            if(laufa==NVar1-1){
-                if(runow==0){
-                    QMessageBox::information(this, "Error", "Inversion of Matrix Q appears to be singular.");
-                }
-                ui->plainTextEdit_2->appendPlainText("Inversion of Matrix Q appears to be singular.");
+        auto resid = [&](const arma::vec &x, arma::vec &r, bool){
+            for(int k=0; k<n; k++) orbele[elIdx[k]] = x(k);
+            if(!orbit::elementsValid(orbele[0], orbele[1])) return false;
+            RVCalcCheck = 0;
+            MainWindow::VAmplitudeA();
+            MainWindow::VAmplitudeB();
+            if(RVCalcCheck!=0) return false;
+            if(!MainWindow::buildDesignMatrix(false)) return false;
+            if(!MainWindow::solveSystem(MainWindow::currentSolver())) return false;
+            r = MainWindow::residualVector(M*X);
+            eval++;
+            ui->spinBox_5->setValue(eval);
+            qApp->processEvents(QEventLoop::AllEvents);
+            return r.is_finite();
+        };
+        lm::Options opt;
+        opt.h = h;
+        opt.maxIter = 50;
+        opt.tolS = 0.002*sigma2;
+        opt.relTolS = 1e-12;
+        arma::vec xs = x0.t();
+        arma::mat fits(0, n);
+        ui->plainTextEdit_2->appendPlainText(QString("Monte Carlo error estimation: %1 realisations").arg(nReal));
+        std::mt19937_64 gen(20261101);
+        std::normal_distribution<double> norm(0.0, 1.0);
+        int failed = 0;
+        for(int k=0; k<nReal; k++){
+            for(int j=0; j<num; j++)
+                for(int i=0; i<logbin; i++)
+                    C(j*logbin+i) = model(j*logbin+i) + sig[j]*norm(gen);
+            lm::Result rk = lm::minimize(xs, resid, opt, [&]{ return abortt==1; });
+            if(rk.aborted || abortt==1){
+                C = C0;
+                aborted();
                 return;
             }
-            laufa=0;
+            if(rk.ok && rk.converged) fits.insert_rows(fits.n_rows, rk.x.t());
+            else ++failed;
+            ui->spinBox_4->setValue(k+1);
+            qApp->processEvents(QEventLoop::AllEvents);
         }
-
-        laufa=0;
-        laufb=0;
-
-        mat q = inv(Q);
-        mat qt = q.t();
-
-        for(int i = 0; i<NVar1+1; i++){
-            if(i!=Bin){
-                for(int n = 0; n<NVar1; n++){
-                    if(n==laufa){
-                    B(laufa,n)=2*(pow(Chi(laufa,n),2)+pow(Res[Bin],2)-2*pow(Chi0i[laufa],2));
-
-                    }
-                    else{
-                        B(laufa,n) = 2*(pow(Chi(laufa,n),2)+pow(Res[Bin],2)-pow(Chi0i[laufa],2)-pow(Chi(Bin,n),2));
-                    }
-                }
-                ++laufa;
+        C = C0;
+        restoreBest();
+        MainWindow::evaluateOrbit();
+        if(fits.n_rows<3){
+            reportError("Error 38: Monte Carlo: fewer than three realisations converged.");
+            error=0;
+            return;
+        }
+        const arma::rowvec mean = arma::mean(fits, 0);
+        const arma::mat cov = arma::cov(fits);
+        const arma::vec err = arma::sqrt(cov.diag());
+        arma::mat corr = cov;
+        for(arma::uword a=0; a<corr.n_rows; a++)
+            for(arma::uword b=0; b<corr.n_cols; b++)
+                corr(a,b) = cov(a,b)/(err(a)*err(b));
+        QString qErr = ui->lineEdit_24->text();
+        ofstream Err((qPath+"/"+qErr).toStdString().c_str());
+        Err<<setprecision(10);
+        Err<<"# Error estimation by Monte Carlo: "<<fits.n_rows<<" of "<<nReal<<" realisations converged"
+           <<(failed>0 ? " ("+std::to_string(failed)+" not)" : std::string())<<endl;
+        if(pvf[4]==0) Err<<"# "<<kGammaNote<<endl;
+        Err<<"# noise per spectrum "<<(known>0 ? "from the S/N" : "from the residuals")<<": sigma ";
+        for(int j=0; j<num; j++) Err<<sig[j]<<(j+1<num ? " " : "\n");
+        Err<<"# Element\tbest value\tstandard error\tmean of the realisations"<<endl;
+        int pc=0;
+        for(int e=0; e<7; e++){
+            if(pvf[e]==0){
+                Err<<names[e]<<"\t"<<x0(pc)<<"\t"<<err(pc)<<"\t"<<mean(pc)<<endl;
+                ui->plainTextEdit_2->appendPlainText(QString(names[e])+" = "+QString::number(x0(pc), 'g', 10)
+                                                     +" +/- "+QString::number(err(pc), 'g', 3)+" (Monte Carlo)");
+                ++pc;
+            }
+            else{
+                Err<<names[e]<<"\t"<<orbele[e]<<"\tfixed"<<endl;
             }
         }
-
-        mat Cov;
-
-        Cov = B*q;
-        Cov = qt*Cov/2;
-
-        mat Gamma = inv(Cov);
-
-        cout<<q<<endl;
-        cout<<endl;
-        cout<<qt<<endl;
-        cout<<endl;
-        cout<<B<<endl;
-        cout<<endl;
-        cout<<Cov<<endl;
-        cout<<endl;
-        cout<<Gamma<<endl;
-
-        QString qErr = ui->lineEdit_24->text();
-        string fileErr = qErr.toUtf8().constData();
-        std::ostringstream fileErrStream(fileErr);
-        fileErrStream<<path<<"/"<<fileErr;
-        std::string file2Err = fileErrStream.str();
-        ofstream Err(file2Err.c_str());
-
-        Err<<"Matrix Q:"<<endl;
-        Err<<Q<<endl;
-        Err<<endl;
-        Err<<"Inversion of Q:"<<endl;
-        Err<<q<<endl;
-        Err<<endl;
-        Err<<"Matrix qt:"<<endl;
-        Err<<qt<<endl;
-        Err<<endl;
-        Err<<"Matrix B:"<<endl;
-        Err<<B<<endl;
-        Err<<endl;
-        Err<<"Matrix Cov:"<<endl;
-        Err<<Cov<<endl;
-        Err<<endl;
-        Err<<"Matrix Gamma:"<<endl;
-        Err<<Gamma<<endl;
-
+        Err<<endl<<"Covariance:"<<endl<<cov<<endl;
+        Err<<"Correlation:"<<endl<<corr<<endl;
+        Err<<"Realisations (free elements):"<<endl<<fits<<endl;
+        Err.close();
         ui->plainTextEdit_2->appendPlainText("Data written to file "+qErr);
+        return;
+    }
+
+    // After full convergence the final simplex is degenerate. Therefore a new simplex is
+    // spanned around the best point whose vertices increase S by about sigma^2
+    // (Nelder & Mead 1965, appendix). Initial steps: extent of the final simplex.
+    arma::vec h0 = (arma::max(P, 0) - arma::min(P, 0)).t();
+    errest::ProbeResult probe = errest::probeSimplex(x0, rb*rb, h0, sigma2, f, [&]{ return abortt==1; },
+                                                     0.5*orbit::kInvalidPenalty*orbit::kInvalidPenalty);
+    if(probe.aborted){
+        aborted();
+        return;
+    }
+    if(!probe.ok){
+        restoreBest();
+        QString undetermined;
+        if(!probe.undetermined.empty()){
+            int pc=0;
+            for(int e=0; e<7; e++){
+                if(pvf[e]==0){
+                    if(std::find(probe.undetermined.begin(), probe.undetermined.end(), pc)!=probe.undetermined.end())
+                        undetermined += QString(" ")+names[e];
+                    ++pc;
+                }
+            }
+            reportError("Error 38: The residuum does not depend measurably on"+undetermined
+                        +". Lock these elements for the error estimation.");
+        }
+        else{
+            reportError("Error 38: "+QString::fromStdString(probe.message));
+        }
+        error=0;
+        return;
+    }
+
+    errest::Result res1 = errest::quadraticFit(probe.P, probe.S, f, [&]{ return abortt==1; });
+    if(res1.aborted){
+        aborted();
+        return;
+    }
+    if(res1.B.n_rows!=arma::uword(n)){
+        restoreBest();
+        reportError("Error 38: "+QString::fromStdString(res1.message));
+        error=0;
+        return;
+    }
+    // Second pass along the principal axes of the first model: measures the curvature
+    // also along strongly correlated valleys on the scale of one standard deviation.
+    errest::ProbeResult probe2 = errest::probePrincipal(x0, rb*rb, res1, sigma2, f, [&]{ return abortt==1; },
+                                                        0.5*orbit::kInvalidPenalty*orbit::kInvalidPenalty);
+    if(probe2.aborted){
+        aborted();
+        return;
+    }
+    errest::Result res;
+    QString passNote;
+    if(probe2.ok){
+        res = errest::quadraticFit(probe2.P, probe2.S, f, [&]{ return abortt==1; });
+        if(res.aborted){
+            aborted();
+            return;
+        }
+    }
+    if(!res.ok){
+        if(!res1.ok){
+            restoreBest();
+            reportError("Error 38: "+QString::fromStdString(res.message.empty() ? res1.message : res.message));
+            error=0;
+            return;
+        }
+        passNote = "second pass failed ("+QString::fromStdString(probe2.message+res.message)
+                   +"); result of the axis-parallel pass";
+        res = res1;   // principal-axes pass failed: result of the first pass
+        ui->plainTextEdit_2->appendPlainText("Error estimation: "+passNote);
+    }
+
+    arma::mat cov = sigma2*res.covUnit;
+    arma::vec err = arma::sqrt(arma::abs(cov.diag()));
+    arma::mat corr = cov / (err*err.t());
+
+    QString qErr = ui->lineEdit_24->text();
+    ofstream Err((qPath+"/"+qErr).toStdString().c_str());
+    Err<<setprecision(10);
+    Err<<"# Error estimation of the orbital elements (Nelder & Mead 1965, appendix)"<<endl;
+    if(pvf[4]==0) Err<<"# "<<kGammaNote<<endl;
+    if(known>0){
+        Err<<"# sigma^2 from S/N"<<(g_specW.empty() ? "" : " (per spectrum, weighted)")<<" = "<<sigma2
+           <<" (from the residuum it would be "<<rb*rb<<" / "<<dof<<" = "<<(dof>0 ? rb*rb/dof : 0.0)<<")"<<endl;
+    }
+    else{
+        Err<<"# sigma^2 = residuum^2 / degrees of freedom = "<<rb*rb<<" / "<<dof<<" = "<<sigma2<<endl;
+    }
+    Err<<"# new simplex around the best point, steps:";
+    for(arma::uword k=0; k<probe.steps.n_elem; k++) Err<<" "<<probe.steps(k);
+    Err<<endl<<"# second pass along the principal axes, multiples of the model direction:";
+    for(arma::uword k=0; k<probe2.steps.n_elem; k++) Err<<" "<<probe2.steps(k);
+    Err<<" ("<<probe.evaluations+res1.evaluations+probe2.evaluations+(passNote.isEmpty() ? res.evaluations : 0)
+       <<" evaluations)"<<endl;
+    if(!passNote.isEmpty()) Err<<"# Note: "<<passNote.toStdString()<<endl;
+    Err<<"# Element\tbest value\tstandard error\tminimum of the quadratic model"<<endl;
+    int pc=0;
+    for(int e=0; e<7; e++){
+        if(pvf[e]==0){
+            Err<<names[e]<<"\t"<<x0(pc)<<"\t"<<err(pc)<<"\t"<<res.minimum(pc)<<endl;
+            ui->plainTextEdit_2->appendPlainText(QString(names[e])+" = "+QString::number(x0(pc), 'g', 10)
+                                                 +" +/- "+QString::number(err(pc), 'g', 3));
+            ++pc;
+        }
+        else{
+            Err<<names[e]<<"\t"<<orbele[e]<<"\tfixed"<<endl;
+        }
+    }
+    Err<<endl<<"Covariance:"<<endl<<cov<<endl;
+    Err<<"Correlation:"<<endl<<corr<<endl;
+    Err<<"Matrix Q:"<<endl<<res.Q<<endl;
+    Err<<"Matrix B:"<<endl<<res.B<<endl;
+    Err.close();
+
+    restoreBest();
+    ui->plainTextEdit_2->appendPlainText("Data written to file "+qErr);
 }
 
 
@@ -7572,56 +6552,16 @@ void MainWindow::on_pushButton_8_clicked()
     this->setCursor(QCursor(Qt::WaitCursor));
 
     ui->plainTextEdit_2->appendPlainText("Error Estimation");
+    ui->tabPlots->setCurrentWidget(ui->tabMessages);   // results appear there
 
+    abortt=0;
+    g_abortableRun = true;
+    MainWindow::disableButtons();
     MainWindow::ErrorEstimation();
+    g_abortableRun = false;
+    MainWindow::enableButtons();
 
     this->setCursor(QCursor(Qt::ArrowCursor));
-}
-
-void MainWindow::ComputeDifferences()
-{
-    double DiffA, DiffB;
-
-    //Systemic velocity
-    if(CDI==0){
-
-        DiffA = dv - orbele[4];
-    }
-
-    //Amplitude A
-    if(CDI==0){
-
-    }
-
-    //Amplitude B
-    if(CDI==0){
-
-    }
-
-    //Periode
-    if(CDI==0){
-
-    }
-
-    //Eccentricity
-    if(CDI==0){
-
-    }
-
-    //Periastron time
-    if(CDI==0){
-
-    }
-
-    //length of periastron
-    if(CDI==0){
-
-    }
-
-    if(DiffA>DiffB){
-        Diff = DiffA;
-    }
-    else Diff = DiffB;
 }
 
 
@@ -7630,14 +6570,24 @@ void MainWindow::ComputeDifferences()
 //*************************************
 void MainWindow::on_pushButton_4_clicked()
 {
+    abortt=0;
+    g_abortableRun = true;
     MainWindow::disableButtons();
-    MainWindow::Optimisation();
-
-    if(reinitiate==1){
-        reinitiate=0;
-        inrein=1;
-        MainWindow::on_pushButton_4_clicked();
+    MainWindow::resetRunState();
+    // Restarts (reinitialisation) in a loop instead of
+    // recursively from within the running optimisation (bug report K5).
+    for(;;){
+        MainWindow::Optimisation();
+        if(reinitiate==1){
+            reinitiate=0;
+            inrein=1;
+            continue;
+        }
+        break;
     }
+    inrein=0;
+    g_trackBest=0;
+    g_abortableRun = false;
     MainWindow::enableButtons();
 
     this->setCursor(QCursor(Qt::ArrowCursor));
@@ -7655,869 +6605,287 @@ void MainWindow::on_checkBox_34_clicked()
 //************************************************
 // Save settings
 //************************************************
-void MainWindow::on_pushButton_9_clicked()
+
+//****************************************
+// Settings (.sps)
+//
+// Lines 1-58: old position-based format (kSettingsLegacy), one line per
+// value; older program versions read exactly these lines.
+// After that: "# Spectangular settings v2" and further settings as name=value.
+// Read line by line so that paths with spaces and empty fields
+// are preserved (bug report H5).
+//****************************************
+namespace {
+
+const char *const kSettingsLegacy[] = {
+    "spinBox", "spinBox_2", "spinBox_3", "spinBox_4", "spinBox_5", "spinBox_6",
+    "doubleSpinBox", "doubleSpinBox_2", "doubleSpinBox_3", "doubleSpinBox_4", "doubleSpinBox_5",
+    "doubleSpinBox_14", "doubleSpinBox_15",
+    "comboBox",
+    "lineEdit", "lineEdit_2", "lineEdit_3", "lineEdit_4", "lineEdit_5", "lineEdit_6", "lineEdit_7",
+    "lineEdit_8", "lineEdit_9", "lineEdit_10", "lineEdit_11", "lineEdit_12", "lineEdit_13",
+    "lineEdit_14", "lineEdit_15", "lineEdit_16", "lineEdit_17", "lineEdit_18", "lineEdit_19",
+    "lineEdit_20", "lineEdit_21", "lineEdit_24",
+    "checkBox", "checkBox_2", "checkBox_3", "checkBox_4", "checkBox_5", "checkBox_6", "checkBox_7",
+    "checkBox_8", "checkBox_9", "checkBox_10", "checkBox_11", "checkBox_12", "checkBox_13",
+    "checkBox_14", "checkBox_15", "checkBox_16", "checkBox_17", "checkBox_18",
+    "checkBox_32", "checkBox_33", "checkBox_34", "checkBox_35"};
+
+// Previously not saved. Not included: spinBox_7/8 (cores, machine-dependent).
+const char *const kSettingsExtra[] = {
+    "spinBox_11", "doubleSpinBox_16", "doubleSpinBox_17", "checkBox_41", "lineEdit_29",
+    "checkBox_19", "checkBox_20", "checkBox_21", "checkBox_22", "checkBox_23", "checkBox_24",
+    "checkBox_25", "checkBox_26", "checkBox_28", "checkBox_29", "checkBox_30",
+    "checkBox_31", "checkBox_36", "checkBox_37", "checkBox_38", "checkBox_40",
+    "lineEdit_25", "lineEdit_26", "lineEdit_27", "lineEdit_28", "comboBox_interp", "comboBox_method",
+    "checkBox_42", "doubleSpinBox_18", "comboBox_ratio", "doubleSpinBox_lref", "doubleSpinBox_TA",
+    "doubleSpinBox_TB", "lineEdit_ratio", "doubleSpinBox_st1", "doubleSpinBox_st2", "lineEdit_fixA", "lineEdit_fixB",
+    "comboBox_err", "spinBox_mc", "checkBox_mask", "lineEdit_mask", "checkBox_norm", "doubleSpinBox_normKnot", "doubleSpinBox_normLow",
+    "checkBox_align", "doubleSpinBox_alignWidth",
+    "lineEdit_best", "lineEdit_optdata", "lineEdit_stat", "lineEdit_orbit", "lineEdit_bc", "comboBox_bcframe",
+    "lineEdit_tellw", "checkBox_tellfit", "doubleSpinBox_tdamp", "checkBox_tellrange", "lineEdit_tellrange",
+    "doubleSpinBox_telldet", "checkBox_resstatic"};
+
+const char *const kSettingsHeaderV2 = "# Spectangular settings v2";
+
+} // namespace
+
+namespace {
+// Orbital element checkboxes show "free"; configuration files keep storing "locked".
+bool isLockKey(const QString &key)
 {
-    QFile SPS(qPath+"/"+ui->lineEdit_22->text()+".sps");
-    QString qSPS = ui->lineEdit_22->text();
-    string sps = qSPS.toUtf8().constData();
-    std::ostringstream datANameStream(sps);
-    datANameStream<<path<<"/"<<sps<<".sps";
-    std::string datAName = datANameStream.str();
+    static const QStringList keys = {"checkBox_17", "checkBox_18", "checkBox_31", "checkBox_35",
+                                     "checkBox_36", "checkBox_37", "checkBox_38"};
+    return keys.contains(key);
+}
+}
 
-    if(SPS.exists()){
-        QMessageBox::StandardButton reply;
-        reply = QMessageBox::question(this, "Warning!", "The file already exists. \n\n Do you want to overwrite it?",
-                                      QMessageBox::Yes|QMessageBox::No);
-        if (reply == QMessageBox::Yes) {
-          qDebug() << "Yes was clicked";
+QString MainWindow::settingValue(const QString &key) const
+{
+    QObject *w = findChild<QObject*>(key);
+    if(isLockKey(key)){
+        if(auto *c = qobject_cast<QCheckBox*>(w)) return c->isChecked() ? "0" : "1";
+    }
+    if(auto *s = qobject_cast<QSpinBox*>(w)) return QString::number(s->value());
+    if(auto *d = qobject_cast<QDoubleSpinBox*>(w)) return QString::number(d->value(), 'g', 17);
+    if(auto *c = qobject_cast<QCheckBox*>(w)) return c->isChecked() ? "1" : "0";
+    if(auto *b = qobject_cast<QComboBox*>(w)) return QString::number(b->currentIndex());
+    if(auto *l = qobject_cast<QLineEdit*>(w)) return l->text();
+    return QString();
+}
 
-          ofstream outSPS(datAName.c_str());
-
-          outSPS<<ui->spinBox->value()<<endl;       // first spectrum
-          outSPS<<ui->spinBox_2->value()<<endl;     // last spectrum
-          outSPS<<ui->spinBox_3->value()<<endl;     // number of iterations
-          outSPS<<ui->spinBox_4->value()<<endl;     // iterations
-          outSPS<<ui->spinBox_5->value()<<endl;     // evaluations
-          outSPS<<ui->spinBox_6->value()<<endl;     // last update
-
-          outSPS<<ui->doubleSpinBox->value()<<endl;     // max. RV comp 1
-          outSPS<<ui->doubleSpinBox_2->value()<<endl;   // max RV comp 2
-          outSPS<<ui->doubleSpinBox_3->value()<<endl;   // velocity step size
-          outSPS<<ui->doubleSpinBox_4->value()<<endl;   // flux ratio
-          outSPS<<ui->doubleSpinBox_5->value()<<endl;   // off-set difference
-          outSPS<<ui->doubleSpinBox_14->value()<<endl;  // lower wavelength for residuum calculation
-          outSPS<<ui->doubleSpinBox_15->value()<<endl;  // upper wavelength for residuum calculation
-
-          int cBox = ui->comboBox->currentIndex();
-          outSPS<<cBox<<endl;
-
-          QString qstring;
-          string outs;
-          qstring = ui->lineEdit->text();
-          outs = qstring.toUtf8().constData();
-          outSPS<<outs<<endl;       // RV data CroCo
-
-          qstring = ui->lineEdit_2->text();
-          outs = qstring.toUtf8().constData();
-          outSPS<<outs<<endl;     // velocity file
-
-          qstring = ui->lineEdit_3->text();
-          outs = qstring.toUtf8().constData();
-          outSPS<<outs<<endl;   // common name rebined spectra
-
-          qstring = ui->lineEdit_4->text();
-          outs = qstring.toUtf8().constData();
-          outSPS<<outs<<endl;   // work path
-
-          qstring = ui->lineEdit_5->text();
-          outs = qstring.toUtf8().constData();
-          outSPS<<outs<<endl;   // output component spectra 1
-
-          qstring = ui->lineEdit_6->text();
-          outs = qstring.toUtf8().constData();
-          outSPS<<outs<<endl;   // time
-
-          qstring = ui->lineEdit_7->text();
-          outs = qstring.toUtf8().constData();
-          outSPS<<outs<<endl;   // min. residuum
-
-          qstring = ui->lineEdit_8->text();
-          outs = qstring.toUtf8().constData();
-          outSPS<<outs<<endl;   // output component spectra 2
-
-          qstring = ui->lineEdit_9->text();
-          outs = qstring.toUtf8().constData();
-          outSPS<<outs<<endl;   // extension of fits table
-
-          qstring = ui->lineEdit_10->text();
-          outs = qstring.toUtf8().constData();
-          outSPS<<outs<<endl;   // output of static component
-
-          qstring = ui->lineEdit_11->text();
-          outs = qstring.toUtf8().constData();
-          outSPS<<outs<<endl;   // name of wavelength column in fits table
-
-          qstring = ui->lineEdit_12->text();
-          outs = qstring.toUtf8().constData();
-          outSPS<<outs<<endl;   // name of intensity column in fits table
-
-          qstring = ui->lineEdit_13->text();
-          outs = qstring.toUtf8().constData();
-          outSPS<<outs<<endl;   // output differences
-
-          qstring = ui->lineEdit_14->text();
-          outs = qstring.toUtf8().constData();
-          outSPS<<outs<<endl;   // initial residua
-
-          qstring = ui->lineEdit_15->text();
-          outs = qstring.toUtf8().constData();
-          outSPS<<outs<<endl;   // initial variables
-
-          qstring = ui->lineEdit_16->text();
-          outs = qstring.toUtf8().constData();
-          outSPS<<outs<<endl;   // optimised reidua
-
-          qstring = ui->lineEdit_17->text();
-          outs = qstring.toUtf8().constData();
-          outSPS<<outs<<endl;   // optimised variables
-
-          qstring = ui->lineEdit_18->text();
-          outs = qstring.toUtf8().constData();
-          outSPS<<outs<<endl;   // file with obs. times for optimisation on orbital parameters
-
-          qstring = ui->lineEdit_19->text();
-          outs = qstring.toUtf8().constData();
-          outSPS<<outs<<endl;   // extension rebined spectra
-
-          qstring = ui->lineEdit_20->text();
-          outs = qstring.toUtf8().constData();
-          outSPS<<outs<<endl;   // output error
-
-          qstring = ui->lineEdit_21->text();
-          outs = qstring.toUtf8().constData();
-          outSPS<<outs<<endl;   // lofgile
-
-          qstring = ui->lineEdit_24->text();
-          outs = qstring.toUtf8().constData();
-          outSPS<<outs<<endl;   // parameter error file
-
-          if(ui->checkBox->isChecked()){
-              outSPS<<"1"<<endl;
-          }
-          else{
-              outSPS<<"0"<<endl;
-          }
-
-          if(ui->checkBox_2->isChecked()){
-              outSPS<<"1"<<endl;
-          }
-          else{
-              outSPS<<"0"<<endl;
-          }
-
-          if(ui->checkBox_3->isChecked()){
-              outSPS<<"1"<<endl;
-          }
-          else{
-              outSPS<<"0"<<endl;
-          }
-
-          if(ui->checkBox_4->isChecked()){
-              outSPS<<"1"<<endl;
-          }
-          else{
-              outSPS<<"0"<<endl;
-          }
-
-          if(ui->checkBox_5->isChecked()){
-              outSPS<<"1"<<endl;
-          }
-          else{
-              outSPS<<"0"<<endl;
-          }
-
-          if(ui->checkBox_6->isChecked()){
-              outSPS<<"1"<<endl;
-          }
-          else{
-              outSPS<<"0"<<endl;
-          }
-
-          if(ui->checkBox_7->isChecked()){
-              outSPS<<"1"<<endl;
-          }
-          else{
-              outSPS<<"0"<<endl;
-          }
-
-          if(ui->checkBox_8->isChecked()){
-              outSPS<<"1"<<endl;
-          }
-          else{
-              outSPS<<"0"<<endl;
-          }
-
-          if(ui->checkBox_9->isChecked()){
-              outSPS<<"1"<<endl;
-          }
-          else{
-              outSPS<<"0"<<endl;
-          }
-
-          if(ui->checkBox_10->isChecked()){
-              outSPS<<"1"<<endl;
-          }
-          else{
-              outSPS<<"0"<<endl;
-          }
-
-          if(ui->checkBox_11->isChecked()){
-              outSPS<<"1"<<endl;
-          }
-          else{
-              outSPS<<"0"<<endl;
-          }
-
-          if(ui->checkBox_12->isChecked()){
-              outSPS<<"1"<<endl;
-          }
-          else{
-              outSPS<<"0"<<endl;
-          }
-
-          if(ui->checkBox_13->isChecked()){
-              outSPS<<"1"<<endl;
-          }
-          else{
-              outSPS<<"0"<<endl;
-          }
-
-          if(ui->checkBox_14->isChecked()){
-              outSPS<<"1"<<endl;
-          }
-          else{
-              outSPS<<"0"<<endl;
-          }
-
-          if(ui->checkBox_15->isChecked()){
-              outSPS<<"1"<<endl;
-          }
-          else{
-              outSPS<<"0"<<endl;
-          }
-
-          if(ui->checkBox_16->isChecked()){
-              outSPS<<"1"<<endl;
-          }
-          else{
-              outSPS<<"0"<<endl;
-          }
-
-          if(ui->checkBox_17->isChecked()){
-              outSPS<<"1"<<endl;
-          }
-          else{
-              outSPS<<"0"<<endl;
-          }
-
-          if(ui->checkBox_18->isChecked()){
-              outSPS<<"1"<<endl;
-          }
-          else{
-              outSPS<<"0"<<endl;
-          }
-
-          if(ui->checkBox_32->isChecked()){
-              outSPS<<"1"<<endl;
-          }
-          else{
-              outSPS<<"0"<<endl;
-          }
-
-          if(ui->checkBox_33->isChecked()){
-              outSPS<<"1"<<endl;
-          }
-          else{
-              outSPS<<"0"<<endl;
-          }
-
-          if(ui->checkBox_34->isChecked()){
-              outSPS<<"1"<<endl;
-          }
-          else{
-              outSPS<<"0"<<endl;
-          }
-
-          if(ui->checkBox_35->isChecked()){
-              outSPS<<"1"<<endl;
-          }
-          else{
-              outSPS<<"0"<<endl;
-          }
-
-
-        } else {
-          qDebug() << "Yes was *not* clicked";
-          return;
+bool MainWindow::setSettingValue(const QString &key, const QString &value)
+{
+    QObject *w = findChild<QObject*>(key);
+    bool ok = true;
+    if(isLockKey(key)){
+        if(auto *c = qobject_cast<QCheckBox*>(w)){
+            c->setChecked(value.trimmed().toInt(&ok) == 0);
+            return ok;
         }
     }
+    if(auto *s = qobject_cast<QSpinBox*>(w)) s->setValue(int(std::lround(value.toDouble(&ok))));
+    else if(auto *d = qobject_cast<QDoubleSpinBox*>(w)) d->setValue(value.toDouble(&ok));
+    else if(auto *c = qobject_cast<QCheckBox*>(w)) c->setChecked(value.trimmed().toInt(&ok) != 0);
+    else if(auto *b = qobject_cast<QComboBox*>(w)) b->setCurrentIndex(value.toInt(&ok));
+    else if(auto *l = qobject_cast<QLineEdit*>(w)) l->setText(value);
+    else return false;
+    return ok;
+}
 
-    else{
-
-        ofstream outSPS(datAName.c_str());
-
-        outSPS<<ui->spinBox->value()<<endl;       // first spectrum
-        outSPS<<ui->spinBox_2->value()<<endl;     // last spectrum
-        outSPS<<ui->spinBox_3->value()<<endl;     // number of iterations
-        outSPS<<ui->spinBox_4->value()<<endl;     // iterations
-        outSPS<<ui->spinBox_5->value()<<endl;     // evaluations
-        outSPS<<ui->spinBox_6->value()<<endl;     // last update
-
-        outSPS<<ui->doubleSpinBox->value()<<endl;     // max. RV comp 1
-        outSPS<<ui->doubleSpinBox_2->value()<<endl;   // max RV comp 2
-        outSPS<<ui->doubleSpinBox_3->value()<<endl;   // velocity step size
-        outSPS<<ui->doubleSpinBox_4->value()<<endl;   // flux ratio
-        outSPS<<ui->doubleSpinBox_5->value()<<endl;   // off-set difference
-        outSPS<<ui->doubleSpinBox_14->value()<<endl;  // lower wavelength for residuum calculation
-        outSPS<<ui->doubleSpinBox_15->value()<<endl;  // upper wavelength for residuum calculation
-
-        int cBox = ui->comboBox->currentIndex();
-        outSPS<<cBox<<endl;
-
-        QString qstring;
-        string outs;
-        qstring = ui->lineEdit->text();
-        outs = qstring.toUtf8().constData();
-        outSPS<<outs<<endl;       // RV data CroCo
-
-        qstring = ui->lineEdit_2->text();
-        outs = qstring.toUtf8().constData();
-        outSPS<<outs<<endl;     // velocity file
-
-        qstring = ui->lineEdit_3->text();
-        outs = qstring.toUtf8().constData();
-        outSPS<<outs<<endl;   // common name rebined spectra
-
-        qstring = ui->lineEdit_4->text();
-        outs = qstring.toUtf8().constData();
-        outSPS<<outs<<endl;   // work path
-
-        qstring = ui->lineEdit_5->text();
-        outs = qstring.toUtf8().constData();
-        outSPS<<outs<<endl;   // output component spectra 1
-
-        qstring = ui->lineEdit_6->text();
-        outs = qstring.toUtf8().constData();
-        outSPS<<outs<<endl;   // time
-
-        qstring = ui->lineEdit_7->text();
-        outs = qstring.toUtf8().constData();
-        outSPS<<outs<<endl;   // min. residuum
-
-        qstring = ui->lineEdit_8->text();
-        outs = qstring.toUtf8().constData();
-        outSPS<<outs<<endl;   // output component spectra 2
-
-        qstring = ui->lineEdit_9->text();
-        outs = qstring.toUtf8().constData();
-        outSPS<<outs<<endl;   // extension of fits table
-
-        qstring = ui->lineEdit_10->text();
-        outs = qstring.toUtf8().constData();
-        outSPS<<outs<<endl;   // output of static component
-
-        qstring = ui->lineEdit_11->text();
-        outs = qstring.toUtf8().constData();
-        outSPS<<outs<<endl;   // name of wavelength column in fits table
-
-        qstring = ui->lineEdit_12->text();
-        outs = qstring.toUtf8().constData();
-        outSPS<<outs<<endl;   // name of intensity column in fits table
-
-        qstring = ui->lineEdit_13->text();
-        outs = qstring.toUtf8().constData();
-        outSPS<<outs<<endl;   // output differences
-
-        qstring = ui->lineEdit_14->text();
-        outs = qstring.toUtf8().constData();
-        outSPS<<outs<<endl;   // initial residua
-
-        qstring = ui->lineEdit_15->text();
-        outs = qstring.toUtf8().constData();
-        outSPS<<outs<<endl;   // initial variables
-
-        qstring = ui->lineEdit_16->text();
-        outs = qstring.toUtf8().constData();
-        outSPS<<outs<<endl;   // optimised reidua
-
-        qstring = ui->lineEdit_17->text();
-        outs = qstring.toUtf8().constData();
-        outSPS<<outs<<endl;   // optimised variables
-
-        qstring = ui->lineEdit_18->text();
-        outs = qstring.toUtf8().constData();
-        outSPS<<outs<<endl;   // file with obs. times for optimisation on orbital parameters
-
-        qstring = ui->lineEdit_19->text();
-        outs = qstring.toUtf8().constData();
-        outSPS<<outs<<endl;   // extension rebined spectra
-
-        qstring = ui->lineEdit_20->text();
-        outs = qstring.toUtf8().constData();
-        outSPS<<outs<<endl;   // output error
-
-        qstring = ui->lineEdit_21->text();
-        outs = qstring.toUtf8().constData();
-        outSPS<<outs<<endl;   // lofgile
-
-        qstring = ui->lineEdit_24->text();
-        outs = qstring.toUtf8().constData();
-        outSPS<<outs<<endl;   // parameter error file
-
-        if(ui->checkBox->isChecked()){
-            outSPS<<"1"<<endl;
-        }
-        else{
-            outSPS<<"0"<<endl;
-        }
-
-        if(ui->checkBox_2->isChecked()){
-            outSPS<<"1"<<endl;
-        }
-        else{
-            outSPS<<"0"<<endl;
-        }
-
-        if(ui->checkBox_3->isChecked()){
-            outSPS<<"1"<<endl;
-        }
-        else{
-            outSPS<<"0"<<endl;
-        }
-
-        if(ui->checkBox_4->isChecked()){
-            outSPS<<"1"<<endl;
-        }
-        else{
-            outSPS<<"0"<<endl;
-        }
-
-        if(ui->checkBox_5->isChecked()){
-            outSPS<<"1"<<endl;
-        }
-        else{
-            outSPS<<"0"<<endl;
-        }
-
-        if(ui->checkBox_6->isChecked()){
-            outSPS<<"1"<<endl;
-        }
-        else{
-            outSPS<<"0"<<endl;
-        }
-
-        if(ui->checkBox_7->isChecked()){
-            outSPS<<"1"<<endl;
-        }
-        else{
-            outSPS<<"0"<<endl;
-        }
-
-        if(ui->checkBox_8->isChecked()){
-            outSPS<<"1"<<endl;
-        }
-        else{
-            outSPS<<"0"<<endl;
-        }
-
-        if(ui->checkBox_9->isChecked()){
-            outSPS<<"1"<<endl;
-        }
-        else{
-            outSPS<<"0"<<endl;
-        }
-
-        if(ui->checkBox_10->isChecked()){
-            outSPS<<"1"<<endl;
-        }
-        else{
-            outSPS<<"0"<<endl;
-        }
-
-        if(ui->checkBox_11->isChecked()){
-            outSPS<<"1"<<endl;
-        }
-        else{
-            outSPS<<"0"<<endl;
-        }
-
-        if(ui->checkBox_12->isChecked()){
-            outSPS<<"1"<<endl;
-        }
-        else{
-            outSPS<<"0"<<endl;
-        }
-
-        if(ui->checkBox_13->isChecked()){
-            outSPS<<"1"<<endl;
-        }
-        else{
-            outSPS<<"0"<<endl;
-        }
-
-        if(ui->checkBox_14->isChecked()){
-            outSPS<<"1"<<endl;
-        }
-        else{
-            outSPS<<"0"<<endl;
-        }
-
-        if(ui->checkBox_15->isChecked()){
-            outSPS<<"1"<<endl;
-        }
-        else{
-            outSPS<<"0"<<endl;
-        }
-
-        if(ui->checkBox_16->isChecked()){
-            outSPS<<"1"<<endl;
-        }
-        else{
-            outSPS<<"0"<<endl;
-        }
-
-        if(ui->checkBox_17->isChecked()){
-            outSPS<<"1"<<endl;
-        }
-        else{
-            outSPS<<"0"<<endl;
-        }
-
-        if(ui->checkBox_18->isChecked()){
-            outSPS<<"1"<<endl;
-        }
-        else{
-            outSPS<<"0"<<endl;
-        }
-
-        if(ui->checkBox_32->isChecked()){
-            outSPS<<"1"<<endl;
-        }
-        else{
-            outSPS<<"0"<<endl;
-        }
-
-        if(ui->checkBox_33->isChecked()){
-            outSPS<<"1"<<endl;
-        }
-        else{
-            outSPS<<"0"<<endl;
-        }
-
-        if(ui->checkBox_34->isChecked()){
-            outSPS<<"1"<<endl;
-        }
-        else{
-            outSPS<<"0"<<endl;
-        }
-
-        if(ui->checkBox_35->isChecked()){
-            outSPS<<"1"<<endl;
-        }
-        else{
-            outSPS<<"0"<<endl;
-        }
+bool MainWindow::writeSettings(const QString &fileName)
+{
+    QFile f(fileName);
+    if(!f.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text)){
+        return false;
     }
+    QTextStream out(&f);
+    out.setCodec("UTF-8");
+    for(const char *key : kSettingsLegacy){
+        out << settingValue(key) << "\n";
+    }
+    out << kSettingsHeaderV2 << "\n";
+    for(const char *key : kSettingsExtra){
+        out << key << "=" << settingValue(key) << "\n";
+    }
+    out << "solver=" << (currentSolver()==dis::Solver::SvdDc ? "svd_dc" : "lsqr") << "\n";
+    return f.error() == QFile::NoError;
+}
+
+QString MainWindow::readSettings(const QString &fileName)
+{
+    QFile f(fileName);
+    if(!f.open(QIODevice::ReadOnly | QIODevice::Text)){
+        return "File " + fileName + " cannot be opened.";
+    }
+    QTextStream in(&f);
+    in.setCodec("UTF-8");
+    QStringList lines;
+    while(!in.atEnd()){
+        QString l = in.readLine();
+        if(l.endsWith('\r')) l.chop(1);
+        lines << l;
+    }
+    const int nLegacy = int(sizeof(kSettingsLegacy)/sizeof(kSettingsLegacy[0]));
+    if(lines.size() < nLegacy){
+        return QString("File %1 has %2 lines, expected at least %3.").arg(fileName).arg(lines.size()).arg(nLegacy);
+    }
+    QStringList bad, unknown;
+    // file names added later: defaults for configurations without them (not the names of the
+    // configuration loaded before)
+    ui->lineEdit_best->setText("beststate.dat");
+    ui->lineEdit_optdata->setText("optdata.dat");
+    ui->lineEdit_stat->setText("diffstatistic.dat");
+    ui->lineEdit_orbit->setText("orbitelements.dat");
+    ui->lineEdit_bc->setText("");
+    ui->comboBox_bcframe->setCurrentIndex(0);
+    ui->lineEdit_tellw->setText("");
+    ui->checkBox_tellfit->setChecked(false);
+    ui->doubleSpinBox_tdamp->setValue(1e-3);
+    ui->checkBox_tellrange->setChecked(false);
+    ui->lineEdit_tellrange->setText("telluric_static.dat");
+    ui->doubleSpinBox_telldet->setValue(5.0);
+    ui->checkBox_resstatic->setChecked(false);
+    for(int i=0; i<nLegacy; i++){
+        if(!setSettingValue(kSettingsLegacy[i], lines[i])) bad << kSettingsLegacy[i];
+    }
+    // Solver: in old files checkBox_5/6 meant "Standard"/"DaC" (both SVD);
+    // without the key "solver" the default LSQR applies.
+    QString solver = "lsqr";
+    for(int i=nLegacy; i<lines.size(); i++){
+        const QString &l = lines[i];
+        int eq = l.indexOf('=');
+        if(l.startsWith('#') || eq <= 0) continue;
+        QString key = l.left(eq).trimmed();
+        if(key=="solver"){
+            solver = l.mid(eq+1).trimmed();
+            continue;
+        }
+        if(key=="checkBox_39") continue;   // Trunc. SVD dropped
+        if(key=="checkBox_27" || key=="spinBox_9" || key=="spinBox_10") continue;   // sequence mode dropped
+        if(!findChild<QObject*>(key)){ unknown << key; continue; }   // e.g. from a newer version
+        if(!setSettingValue(key, l.mid(eq+1))) bad << key;
+    }
+    if(solver!="lsqr" && solver!="svd_dc") bad << "solver";
+    ui->checkBox_6->setChecked(solver=="svd_dc");
+    ui->checkBox_5->setChecked(solver!="svd_dc");
+
+    // side effects otherwise triggered only by the click handlers
+    qPath = ui->lineEdit_4->text();
+    path = qPath.toUtf8().constData();
+    ui->checkBox_7->setChecked(false);   // replaced by interpolation
+    bidi = 0;
+    ui->checkBox_8->setEnabled(!ui->checkBox_34->isChecked());
+    ui->customPlot_2->setVisible(ui->checkBox_22->isChecked());
+
+    QStringList msg;
+    if(!bad.isEmpty()) msg << "Invalid values in " + fileName + ": " + bad.join(", ") + ".";
+    if(!unknown.isEmpty()) msg << "Unknown settings (ignored) in " + fileName + ": " + unknown.join(", ") + ".";
+    return msg.join(" ");
 }
 
 //****************************************
-// load
+// Load/save configuration (File menu, batch mode, tests).
+// On loading, the folder of the configuration file becomes the work folder (Work Path),
+// regardless of the path stored in the file.
 //****************************************
-void MainWindow::on_pushButton_10_clicked()
+QString MainWindow::loadConfiguration(const QString &file)
 {
-    QString qSPS = qPath+"/"+ ui->lineEdit_23->text() +".sps";
-    QFile SPS(qSPS);
-
-    string sps = qSPS.toUtf8().constData();
-    std::ostringstream datANameStream(sps);
-    datANameStream<<sps;
-    std::string datAName = datANameStream.str();
-
-    if(!SPS.exists()){
-        if(runow==0){
-            QMessageBox::information(this, "Error", "File "+ qSPS +" does not exist.");
-            return;
-        }
-        else{
-            cout<<"File "<<datAName<<" does not exist."<<endl;
-            MainWindow::Input();
-        }
+    if(!QFile::exists(file)){
+        return "File "+file+" does not exist.";
     }
-    else{
-        int SetP = 58, SetN=14, SetH=22, SetB=22;
-        QVector<double> SetV(SetN);
-        QVector<string> SetC(SetH);
-        QVector<int> SetCB(SetB);
-
-        ifstream inSPS(datAName.c_str());
-        string eins, cstring;
-
-        for(int g=0; g<SetP; g++){
-            inSPS >> eins;
-            istringstream ist(eins);
-            if((g>SetN-1) & (g<SetN+SetH)){
-                ist >> SetC[g-SetN];
-            }
-             else if(g<SetN){
-                ist >> SetV[g];
-            }
-            else{
-                ist >> SetCB[g-SetN-SetH];
-            }
-        }
-        inSPS.close();
-
-        ui->spinBox->setValue(SetV[0]);
-        ui->spinBox_2->setValue(SetV[1]);
-        ui->spinBox_3->setValue(SetV[2]);
-        ui->spinBox_4->setValue(SetV[3]);
-        ui->spinBox_5->setValue(SetV[4]);
-        ui->spinBox_6->setValue(SetV[5]);
-
-        ui->doubleSpinBox->setValue(SetV[6]);
-        ui->doubleSpinBox_2->setValue(SetV[7]);
-        ui->doubleSpinBox_3->setValue(SetV[8]);
-        ui->doubleSpinBox_4->setValue(SetV[9]);
-        ui->doubleSpinBox_5->setValue(SetV[10]);
-        ui->doubleSpinBox_14->setValue(SetV[11]);
-        ui->doubleSpinBox_15->setValue(SetV[12]);
-
-        ui->comboBox->setCurrentIndex(SetV[13]);
-
-        QString qSet = QString::fromStdString(SetC[0]);
-        ui->lineEdit->setText(qSet);
-
-        qSet = QString::fromStdString(SetC[1]);
-        ui->lineEdit_2->setText(qSet);
-
-        qSet = QString::fromStdString(SetC[2]);
-        ui->lineEdit_3->setText(qSet);
-
-        qSet = QString::fromStdString(SetC[3]);
-        ui->lineEdit_4->setText(qSet);
-
-        qSet = QString::fromStdString(SetC[4]);
-        ui->lineEdit_5->setText(qSet);
-
-        qSet = QString::fromStdString(SetC[5]);
-        ui->lineEdit_6->setText(qSet);
-
-        qSet = QString::fromStdString(SetC[6]);
-        ui->lineEdit_7->setText(qSet);
-
-        qSet = QString::fromStdString(SetC[7]);
-        ui->lineEdit_8->setText(qSet);
-
-        qSet = QString::fromStdString(SetC[8]);
-        ui->lineEdit_9->setText(qSet);
-
-        qSet = QString::fromStdString(SetC[9]);
-        ui->lineEdit_10->setText(qSet);
-
-        qSet = QString::fromStdString(SetC[10]);
-        ui->lineEdit_11->setText(qSet);
-
-        qSet = QString::fromStdString(SetC[11]);
-        ui->lineEdit_12->setText(qSet);
-
-        qSet = QString::fromStdString(SetC[12]);
-        ui->lineEdit_13->setText(qSet);
-
-        qSet = QString::fromStdString(SetC[13]);
-        ui->lineEdit_14->setText(qSet);
-
-        qSet = QString::fromStdString(SetC[14]);
-        ui->lineEdit_15->setText(qSet);
-
-        qSet = QString::fromStdString(SetC[15]);
-        ui->lineEdit_16->setText(qSet);
-
-        qSet = QString::fromStdString(SetC[16]);
-        ui->lineEdit_17->setText(qSet);
-
-        qSet = QString::fromStdString(SetC[17]);
-        ui->lineEdit_18->setText(qSet);
-
-        qSet = QString::fromStdString(SetC[18]);
-        ui->lineEdit_19->setText(qSet);
-
-        qSet = QString::fromStdString(SetC[19]);
-        ui->lineEdit_20->setText(qSet);
-
-        qSet = QString::fromStdString(SetC[20]);
-        ui->lineEdit_21->setText(qSet);
-
-        qSet = QString::fromStdString(SetC[21]);
-        ui->lineEdit_24->setText(qSet);
-
-        if(SetCB[0]==0){
-            ui->checkBox->setChecked(false);
-        }
-        else{
-            ui->checkBox->setChecked(true);
-        }
-
-        if(SetCB[1]==0){
-            ui->checkBox_2->setChecked(false);
-        }
-        else{
-            ui->checkBox_2->setChecked(true);
-        }
-
-        if(SetCB[2]==0){
-            ui->checkBox_3->setChecked(false);
-        }
-        else{
-            ui->checkBox_3->setChecked(true);
-        }
-
-        if(SetCB[3]==0){
-            ui->checkBox_4->setChecked(false);
-        }
-        else{
-            ui->checkBox_4->setChecked(true);
-        }
-
-        if(SetCB[4]==0){
-            ui->checkBox_5->setChecked(false);
-        }
-        else{
-            ui->checkBox_5->setChecked(true);
-        }
-
-        if(SetCB[5]==0){
-            ui->checkBox_6->setChecked(false);
-        }
-        else{
-            ui->checkBox_6->setChecked(true);
-        }
-
-        if(SetCB[6]==0){
-            ui->checkBox_7->setChecked(false);
-        }
-        else{
-            ui->checkBox_7->setChecked(true);
-        }
-
-        if(SetCB[7]==0){
-            ui->checkBox_8->setChecked(false);
-        }
-        else{
-            ui->checkBox_8->setChecked(true);
-        }
-
-        if(SetCB[8]==0){
-            ui->checkBox_9->setChecked(false);
-        }
-        else{
-            ui->checkBox_9->setChecked(true);
-        }
-
-        if(SetCB[9]==0){
-            ui->checkBox_10->setChecked(false);
-        }
-        else{
-            ui->checkBox_10->setChecked(true);
-        }
-
-        if(SetCB[10]==0){
-            ui->checkBox_11->setChecked(false);
-        }
-        else{
-            ui->checkBox_11->setChecked(true);
-        }
-
-        if(SetCB[11]==0){
-            ui->checkBox_12->setChecked(false);
-        }
-        else{
-            ui->checkBox_12->setChecked(true);
-        }
-
-        if(SetCB[12]==0){
-            ui->checkBox_13->setChecked(false);
-        }
-        else{
-            ui->checkBox_13->setChecked(true);
-        }
-
-        if(SetCB[13]==0){
-            ui->checkBox_14->setChecked(false);
-        }
-        else{
-            ui->checkBox_14->setChecked(true);
-        }
-
-        if(SetCB[14]==0){
-            ui->checkBox_15->setChecked(false);
-        }
-        else{
-            ui->checkBox_15->setChecked(true);
-        }
-
-        if(SetCB[15]==0){
-            ui->checkBox_16->setChecked(false);
-        }
-        else{
-            ui->checkBox_16->setChecked(true);
-        }
-
-        if(SetCB[16]==0){
-            ui->checkBox_17->setChecked(false);
-        }
-        else{
-            ui->checkBox_17->setChecked(true);
-        }
-
-        if(SetCB[17]==0){
-            ui->checkBox_18->setChecked(false);
-        }
-        else{
-            ui->checkBox_18->setChecked(true);
-        }
-
-        if(SetCB[18]==0){
-            ui->checkBox_32->setChecked(false);
-        }
-        else{
-            ui->checkBox_32->setChecked(true);
-        }
-
-        if(SetCB[19]==0){
-            ui->checkBox_33->setChecked(false);
-        }
-        else{
-            ui->checkBox_33->setChecked(true);
-        }
-
-        if(SetCB[20]==0){
-            ui->checkBox_34->setChecked(false);
-        }
-        else{
-            ui->checkBox_34->setChecked(true);
-        }
-
-        if(SetCB[21]==0){
-            ui->checkBox_35->setChecked(false);
-        }
-        else{
-            ui->checkBox_35->setChecked(true);
-        }
-
+    QString err = readSettings(file);
+    if(!err.isEmpty()){
+        return err;
     }
+    const QFileInfo fi(file);
+    ui->lineEdit_4->setText(fi.absolutePath());
+    qPath = fi.absolutePath();
+    path = qPath.toStdString();
+    g_configFile = fi.absoluteFilePath();
+    g_configName = fi.completeBaseName();
+    this->setWindowTitle("Spectangular - "+fi.fileName());
+    return QString();
+}
+
+bool MainWindow::saveConfiguration(const QString &file)
+{
+    if(!writeSettings(file)){
+        return false;
+    }
+    const QFileInfo fi(file);
+    g_configFile = fi.absoluteFilePath();
+    g_configName = fi.completeBaseName();
+    this->setWindowTitle("Spectangular - "+fi.fileName());
+    return true;
+}
+
+//****************************************
+// File menu: load/save configuration via file dialog.
+//****************************************
+
+// File dialog for the File menu; replaceable for tests (without a display).
+QString (*g_pickConfigFile)(QWidget *parent, bool save, const QString &start) =
+    [](QWidget *parent, bool save, const QString &start) -> QString {
+        const QString filter = "Spectangular configuration (*.sps);;All files (*)";
+        return save ? QFileDialog::getSaveFileName(parent, "Save Configuration As", start, filter)
+                    : QFileDialog::getOpenFileName(parent, "Open Configuration", start, filter);
+    };
+
+void MainWindow::on_actionOpen_Configuration_triggered()
+{
+    QString dir = g_configFile.isEmpty() ? ui->lineEdit_4->text() : QFileInfo(g_configFile).absolutePath();
+    QString file = g_pickConfigFile(this, false, dir);
+    if(file.isEmpty()) return;
+    QString err = loadConfiguration(file);
+    if(!err.isEmpty()){
+        reportError(err);
+        error=0;
+        return;
+    }
+    ui->plainTextEdit_2->appendPlainText("Configuration loaded: "+file+"; work path: "+qPath);
+}
+
+void MainWindow::on_actionSave_Configuration_triggered()
+{
+    if(g_configFile.isEmpty()){
+        MainWindow::on_actionSave_Configuration_As_triggered();
+        return;
+    }
+    if(!saveConfiguration(g_configFile)){
+        reportError("File "+g_configFile+" could not be written.");
+        error=0;
+        return;
+    }
+    ui->plainTextEdit_2->appendPlainText("Configuration saved: "+g_configFile);
+}
+
+void MainWindow::on_actionSave_Configuration_As_triggered()
+{
+    QString dir = g_configFile.isEmpty() ? ui->lineEdit_4->text()+"/"+g_configName+".sps" : g_configFile;
+    QString file = g_pickConfigFile(this, true, dir);
+    if(file.isEmpty()) return;
+    if(!file.endsWith(".sps")) file += ".sps";   // the dialog asks before overwriting
+    if(!saveConfiguration(file)){
+        reportError("File "+file+" could not be written.");
+        error=0;
+        return;
+    }
+    ui->plainTextEdit_2->appendPlainText("Configuration saved: "+file);
+}
+
+void MainWindow::on_actionQuit_triggered()
+{
+    close();
 }
 
 //**************************************
 // root finding
 //**************************************
 void MainWindow::findroot(){
-
-    double Estart=2*M_PI*(RVt-RVT0)/RVP-M_PI/2;
-    double RE=2*M_PI*(RVt-RVT0)/RVP+RVe*sin(Estart);
-    double diff=abs(Estart-RE);
-    int fcount=0;
-
-    while(diff>10e-12){
-        Estart=(Estart+RE)/2;
-        RE=2*M_PI*(RVt-RVT0)/RVP+RVe*sin(Estart);
-        diff=abs(Estart-RE);
-        ++fcount;
-        if(fcount>200){
-            diff=0.0;
-            RVCalcCheck=1;
-        }
-    }
-    RVE=Estart;
+    bool ok = true;
+    RVE = orbit::eccentricAnomaly(2*M_PI*(RVt-RVT0)/RVP, RVe, &ok);
+    if(!ok) RVCalcCheck=1;
 }
 
 //*************************
@@ -8527,38 +6895,17 @@ void MainWindow::on_pushButton_11_clicked()
 {
     QString cName = ui->lineEdit_25->text();
     QString cExt = ui->lineEdit_26->text();
-    QString qSeq = QString::number(sequence);
-
-    if(ui->checkBox_27->isChecked()){
-        ui->lineEdit_5->setText(cName+"_"+qSeq+"_1."+cExt);
-        ui->lineEdit_8->setText(cName+"_"+qSeq+"_2."+cExt);
-        ui->lineEdit_10->setText(cName+"_"+qSeq+"_tell."+cExt);
-        ui->lineEdit_13->setText(cName+"_"+qSeq+"_diff."+cExt);
-
-        ui->lineEdit_14->setText("initval_"+qSeq+"_"+cName+"."+cExt);
-        ui->lineEdit_15->setText("initmat_"+qSeq+"_"+cName+"."+cExt);
-        ui->lineEdit_16->setText("optval_"+qSeq+"_"+cName+"."+cExt);
-        ui->lineEdit_17->setText("optmat_"+qSeq+"_"+cName+"."+cExt);
-        ui->lineEdit_20->setText(cName+"_"+qSeq+"_error."+cExt);
-        ui->lineEdit_21->setText(cName+"_"+qSeq+"_log."+cExt);
-        ui->lineEdit_22->setText(cName+"_"+qSeq+"_conf");
-        ui->lineEdit_23->setText(cName+"_"+qSeq+"_conf");
-    }
-
-    else{
-        ui->lineEdit_5->setText(cName+"_1."+cExt);
-        ui->lineEdit_8->setText(cName+"_2."+cExt);
-        ui->lineEdit_10->setText(cName+"_tell."+cExt);
-        ui->lineEdit_13->setText(cName+"_diff."+cExt);
-        ui->lineEdit_14->setText("initval_"+cName+"."+cExt);
-        ui->lineEdit_15->setText("initmat_"+cName+"."+cExt);
-        ui->lineEdit_16->setText("optval_"+cName+"."+cExt);
-        ui->lineEdit_17->setText("optmat_"+cName+"."+cExt);
-        ui->lineEdit_20->setText(cName+"_error."+cExt);
-        ui->lineEdit_21->setText(cName+"_log."+cExt);
-        ui->lineEdit_22->setText(cName+"_conf");
-        ui->lineEdit_23->setText(cName+"_conf");
-    }
+    ui->lineEdit_5->setText(cName+"_1."+cExt);
+    ui->lineEdit_8->setText(cName+"_2."+cExt);
+    ui->lineEdit_10->setText(cName+"_tell."+cExt);
+    ui->lineEdit_13->setText(cName+"_diff."+cExt);
+    ui->lineEdit_14->setText("initval_"+cName+"."+cExt);
+    ui->lineEdit_15->setText("initmat_"+cName+"."+cExt);
+    ui->lineEdit_16->setText("optval_"+cName+"."+cExt);
+    ui->lineEdit_17->setText("optmat_"+cName+"."+cExt);
+    ui->lineEdit_20->setText(cName+"_error."+cExt);
+    ui->lineEdit_21->setText(cName+"_log."+cExt);
+    g_configName = cName+"_conf";
 }
 
 //*******************************************
@@ -8566,178 +6913,133 @@ void MainWindow::on_pushButton_11_clicked()
 //*******************************************
 void MainWindow::on_pushButton_12_clicked()
 {
+    // Subtract: subtract the contribution of one component (from compl.txt) from the
+    // observations and write the residual spectra. checkBox_20: subtract A,
+    // otherwise subtract B. Optionally wavelengths in the rest frame (checkBox_24/25)
+    // and addition/multiplication of a value (checkBox_26/28).
     this->setCursor(QCursor(Qt::WaitCursor));
 
-     MainWindow::read_data();
+    MainWindow::read_data();
+    if(error==1){
+        error=0;
+        this->setCursor(QCursor(Qt::ArrowCursor));
+        return;
+    }
 
-     this->setCursor(QCursor(Qt::WaitCursor));
+    double ofs=0.0;
+    if((ui->checkBox_26->isChecked()) or (ui->checkBox_28->isChecked())){
+        bool ok=false;
+        ofs = ui->lineEdit_28->text().toDouble(&ok);
+        if(!ok){
+            reportError("No valid value set to add or multiply.");
+            error=0;
+            return;
+        }
+    }
 
-     int smin= ui->spinBox->value();
-     int smax = ui->spinBox_2->value();
-     int mlo = (smax-smin+1)*logbin, zlin=0;
-     string liner, ein1, zwei2;
-
-     vec sol1(mlo), wav(bso1+bso2), sol2(bso1+bso2), diff(mlo);
-
-     QString fext=ui->lineEdit_19->text();
-     string sfext = fext.toUtf8().constData();
-
-     double ofs=0.0;
-
-     if((ui->checkBox_26->isChecked()) or (ui->checkBox_28->isChecked())){
-         if(ui->lineEdit_28->text().isEmpty()){
-             QMessageBox::information(this, "Error", "No value set to add.");
-             return;
-         }
-         else{
-            ofs = ui->lineEdit_28->text().toDouble();
-         }
-     }
-     else{
-         //
-     }
-
-     // use matrix
-
-     if(ui->checkBox_20->isChecked()){
-
-         QString input=ui->lineEdit_5->text();
-         string in = input.toUtf8().constData();
-         std::ostringstream inNameStream(in);
-         inNameStream<<path<<"/compl.txt";//<<in;
-         std::string inName = inNameStream.str();
-
-         QFile checkfile1(inName.c_str());
-
-         if(!checkfile1.exists()){
-             qDebug()<<"The file "<<checkfile1.fileName()<<" does not exist.";
-             QMessageBox::information(this, "Error", "Error 1: File"+qPath+"/"+input+" does not exist!");
-             this->setCursor(QCursor(Qt::ArrowCursor));
-             return;
-         }
-         ifstream file1(inName.c_str());
-
-         while(std::getline(file1, liner))
-            ++zlin;
-
-         file1.clear();
-         file1.seekg(0, ios::beg);
-
-         for(int i =0;i <bso1+bso2; i++){
-             file1 >> ein1 >>zwei2;
-             istringstream ist(ein1);
-             istringstream ist2(zwei2);
-
-             if(i<bso1){
-                ist >> wav[i];
-                ist2 >> sol2[i];
-             }
-             else{
-                 wav[i]=0;
-                 sol2[i]=0;
-             }
-         }
-     }
-
-     else{
-            QString input=ui->lineEdit_8->text();
-            string in = input.toUtf8().constData();
-            std::ostringstream inNameStream(in);
-            inNameStream<<path<<"/compl.txt";//<<in;
-            std::string inName = inNameStream.str();
-
-            QFile checkfile1(inName.c_str());
-
-            if(!checkfile1.exists()){
-                qDebug()<<"The file "<<checkfile1.fileName()<<" does not exist.";
-                QMessageBox::information(this, "Error", "Error 1: File"+qPath+"/"+input+" does not exist!");
-                this->setCursor(QCursor(Qt::ArrowCursor));
-                return;
-            }
-            ifstream file1(inName.c_str());
-
-            while(std::getline(file1, liner))
-                ++zlin;
-
-            file1.clear();
-            file1.seekg(0, ios::beg);
-
-            for(int i =0;i <bso1+bso2; i++){
-                file1 >> ein1 >>zwei2;
-                istringstream ist(ein1);
-                istringstream ist2(zwei2);
-
-                if(i>=bso1){
-                    ist >> wav[i];
-                    ist2 >> sol2[i];
-                }
-                else{
-                    wav[i]=0;
-                    sol2[i]=0;
-                }
+    // build the matrix with the RVs that compl.txt belongs to
+    {
+        ifstream cf((qPath+"/compl.txt").toStdString().c_str());
+        std::string line;
+        int nrv=0;
+        while(std::getline(cf, line)){
+            std::istringstream ls(line);
+            std::string hash, key;
+            int j;
+            double v1, v3;
+            if((ls>>hash>>key>>j>>v1>>v3) && hash=="#" && key=="rv" && j>=0 && j<num){
+                RV1[j]=v1;
+                if(bso2>0) RV3[j]=v3;
+                ++nrv;
             }
         }
+        if(nrv==num){
+            if(!MainWindow::buildDesignMatrix(true)){
+                error=0;
+                return;
+            }
+        }
+        else if(nrv>0){
+            reportError("Error 39: "+qPath+"/compl.txt belongs to a different number of spectra.");
+            error=0;
+            return;
+        }
+    }
 
-     sol1 = M*sol2;
-     diff=C-sol1;
+    std::vector<std::vector<double>> rows;
+    std::string ioErr;
+    if(!dataio::readTable((qPath+"/compl.txt").toStdString(), 2, rows, ioErr)){
+        reportError("Error 39: "+QString::fromStdString(ioErr)+" Run Solve or the optimisation first.");
+        error=0;
+        return;
+    }
+    if(int(rows.size())!=Mm){
+        reportError("Error 39: "+qPath+"/compl.txt does not match the current data ("
+                    +QString::number(rows.size())+" instead of "+QString::number(Mm)
+                    +" entries). Run Solve or the optimisation first.");
+        error=0;
+        return;
+    }
 
-     for(int e = 0; e<smax-smin+1; e++){
-        QString output=ui->lineEdit_27->text();
-        string out = output.toUtf8().constData();
-        std::ostringstream file1NameStream(out);
-        file1NameStream<<path<<"/"<<out<<"_"<<e+smin<<sfext;
-        std::string file1Name = file1NameStream.str();
-        ofstream file2(file1Name.c_str());
+    const bool subtractA = ui->checkBox_20->isChecked();
+    vec sol2(Mm, fill::zeros);
+    for(int k=0; k<Mm; k++){
+        bool inA = k<bso1;
+        bool inB = (k>=bso1) && (k<bso1+bso2);
+        if((subtractA && inA) || (!subtractA && inB)){
+            sol2(k) = rows[k][1];
+        }
+    }
+    vec diff = C - M*sol2;
 
+    QString fext=ui->lineEdit_19->text();
+    int smin= ui->spinBox->value();
+    for(int e = 0; e<num; e++){
+        QString name = qPath+"/"+ui->lineEdit_27->text()+"_"+QString::number(e+smin)+fext;
+        ofstream file2(name.toStdString().c_str());
+        if(!file2){
+            reportError("Cannot write "+name);
+            error=0;
+            return;
+        }
         for(int i=e*logbin; i< (e+1)*logbin; i++){
             if(ui->checkBox_26->isChecked()){
                 diff[i]=diff[i]+ofs;
             }
-            else{
-                if(ui->checkBox_28->isChecked()){
-                    diff[i]=diff[i]*ofs;
-                }
-                else{
-                    //
-                }
+            else if(ui->checkBox_28->isChecked()){
+                diff[i]=diff[i]*ofs;
             }
-            if(pow(10,W[i])>1){
-                if(ui->checkBox_24->isChecked()){
-                   file2<<setprecision(14)<<pow(10,(W[i]))*(1-RV3[e]/c0)<<"\t"<<diff[i]<<endl;
-                }
-                else{
-                    if(ui->checkBox_25->isChecked()){
-                        file2<<setprecision(14)<<pow(10,(W[i]))*(1-RV1[e]/c0)<<"\t"<<diff[i]<<endl;
-
-                    }
-                    else{
-                       file2<<setprecision(14)<<pow(10,(W[i]))<<"\t"<<diff[i]<<endl;
-                    }
-                }
+            double lambda = pow(10,(W[i]));
+            if(ui->checkBox_24->isChecked() && bso2>0){
+                lambda /= 1+RV3[e]/c0;     // rest frame of B
             }
+            else if(ui->checkBox_25->isChecked()){
+                lambda /= 1+RV1[e]/c0;     // rest frame of A
+            }
+            file2<<setprecision(14)<<lambda<<"\t"<<diff[i]<<endl;
         }
-     }
-
-
-     this->setCursor(QCursor(Qt::ArrowCursor));
-}
-
-void MainWindow::on_spinBox_8_valueChanged()
-{
-
-/*
-    cores = ui->spinBox_8->value();
-
-    if(cores>ui->spinBox_7->value()){
-        QString qcores = QString::number(ui->spinBox_7->value());
-        QMessageBox::information(this, "Error", "Set number of cores <= "+qcores+".");
-        return;
     }
 
-    omp_set_num_threads(cores);
-    */
+    this->setCursor(QCursor(Qt::ArrowCursor));
+}
 
-
+void MainWindow::on_spinBox_8_valueChanged(int)
+{
+    // number of cores for LSQR (OpenMP) and the SVD (BLAS library, if OpenBLAS/BLIS/MKL)
+    const unsigned before = cores;
+    cores = unsigned(ui->spinBox_8->value());
+    dis::setThreads(ui->spinBox_8->value());
+    // Note when the user (field has the focus: not set by the program, a configuration or
+    // --threads) goes above 2 cores; once per crossing, not for every further step
+    if(runow==0 && cores>kDefaultCores && before<=kDefaultCores && ui->spinBox_8->hasFocus()){
+        QMessageBox::information(this, "Number of cores",
+            QString("With more than %1 cores the computation will probably take longer, not less.\n\n"
+                    "Only the matrix-vector products of the LSQR solver run in parallel, and they are "
+                    "limited by the memory bandwidth; matrix construction, residuum and the optimiser "
+                    "run on one core. In a scaling test on long spectra %1 cores were fastest.\n\n"
+                    "To check on your data: compare the time of a Solve with %1 and with %2 cores.")
+                .arg(kDefaultCores).arg(cores));
+    }
 }
 
 void MainWindow::on_checkBox_22_clicked()
@@ -8790,26 +7092,6 @@ void MainWindow::on_checkBox_25_clicked()
     }
 }
 
-void MainWindow::on_checkBox_27_clicked()
-{
-    if(ui->checkBox_27->isChecked()){
-        ui->spinBox_10->setEnabled(true);
-        ui->spinBox_9->setEnabled(true);
-        ui->checkBox_23->setChecked(true);
-        ui->checkBox_23->setEnabled(false);
-        ui->checkBox_32->setChecked(true);
-        ui->checkBox_32->setEnabled(false);
-        ui->spinBox_3->setValue(9999);
-    }
-    else{
-        ui->spinBox_9->setEnabled(false);
-        ui->spinBox_10->setEnabled(false);
-        ui->checkBox_23->setEnabled(true);
-        ui->checkBox_32->setEnabled(true);
-
-    }
-}
-
 void MainWindow::on_checkBox_26_clicked()
 {
     if(ui->checkBox_26->isChecked()){
@@ -8829,14 +7111,10 @@ void MainWindow::on_checkBox_28_clicked()
 
 void MainWindow::disableButtons()
 {
-   ui->pushButton->setEnabled(false);
    ui->pushButton_2->setEnabled(false);
    ui->pushButton_3->setEnabled(false);
    ui->pushButton_4->setEnabled(false);
-   ui->pushButton_5->setEnabled(false);
    ui->pushButton_8->setEnabled(false);
-   ui->pushButton_9->setEnabled(false);
-   ui->pushButton_10->setEnabled(false);
    ui->pushButton_11->setEnabled(false);
    ui->pushButton_12->setEnabled(false);
    ui->pushButton_13->setEnabled(false);
@@ -8844,14 +7122,10 @@ void MainWindow::disableButtons()
 
 void MainWindow::enableButtons()
 {
-   ui->pushButton->setEnabled(true);
    ui->pushButton_2->setEnabled(true);
    ui->pushButton_3->setEnabled(true);
    ui->pushButton_4->setEnabled(true);
-   ui->pushButton_5->setEnabled(true);
    ui->pushButton_8->setEnabled(true);
-   ui->pushButton_9->setEnabled(true);
-   ui->pushButton_10->setEnabled(true);
    ui->pushButton_11->setEnabled(true);
    ui->pushButton_12->setEnabled(true);
    ui->pushButton_13->setEnabled(true);
@@ -8863,6 +7137,11 @@ void MainWindow::enableButtons()
 //*******************************************
 void MainWindow::on_pushButton_13_clicked()
 {
+    abortt=0;
+    if(!(ui->doubleSpinBox_4->value()>0)){
+        reportError("Error 51: The flux ratio F_A/F_B (Data tab) must be positive.");
+        return;
+    }
     qPath=ui->lineEdit_4->text();
     path = qPath.toUtf8().constData();
 
@@ -8934,16 +7213,13 @@ void MainWindow::on_pushButton_13_clicked()
 
     qApp->processEvents(QEventLoop::AllEvents);
 
-    int Ph=0, Pl=0, Psh=0, SB1=0;
+    int Ph=0, Pl=0, Psh=0;
 
     eval=0;
 
-    if(ui->checkBox_3->isChecked()){
-            SB1=1;
-    }
 
     zaehler=ui->spinBox_3->value();
-    double yh, ysh, yl, ym, yi, ys, yt;
+    double ym=0, ys=0;
 
     int nu=num;
     QVector<double> fratios(num);
@@ -9015,7 +7291,6 @@ void MainWindow::on_pushButton_13_clicked()
                     }
                     else{
                         cout<<"Error 22: Edit file does not match to specified number of observations."<<endl;
-                        MainWindow::Input();
                     }
                     error=1;
                     optfratios=0;
@@ -9035,8 +7310,8 @@ void MainWindow::on_pushButton_13_clicked()
                     }
                     if((i>=num) & (i<2*num)){
                         istr7>>Mval1[i-num];
-                        fratios[i-num]=1/Mval1[i-num]-1;
-                        Mval2[i-num]=fratios[i-num]/(1+fratios[i-num]);
+                        fratios[i-num]=Mval1[i-num]/(1-Mval1[i-num]);   // F_A/F_B
+                        Mval2[i-num]=1/(1+fratios[i-num]);
                     }
                     if(i>=2*num){
                         //istr7>>Mval2[i-2*num];
@@ -9050,8 +7325,8 @@ void MainWindow::on_pushButton_13_clicked()
 
                 for(int i=0; i<num; i++){
                     Mtel[i]=1.0;
-                    Mval1[i]=1/(1+ui->doubleSpinBox_4->value());
-                    Mval2[i]=ui->doubleSpinBox_4->value()/(1+ui->doubleSpinBox_4->value());
+                    Mval1[i]=ui->doubleSpinBox_4->value()/(1+ui->doubleSpinBox_4->value());
+                    Mval2[i]=1/(1+ui->doubleSpinBox_4->value());
                     fratios[i]=ui->doubleSpinBox_4->value();
                 }
             }
@@ -9079,7 +7354,7 @@ void MainWindow::on_pushButton_13_clicked()
             istr8 >> optv[i];
         }
         alpha=optv[0];
-        beta=optv[1];
+        nmBeta=optv[1];
         btot=optv[2];
         Gamma=optv[3];
 
@@ -9090,7 +7365,7 @@ void MainWindow::on_pushButton_13_clicked()
 
         Gamma=2.0;
         alpha=1.0;
-        beta=0.5;
+        nmBeta=0.5;
         btot=0.5;
     }
 
@@ -9130,7 +7405,7 @@ void MainWindow::on_pushButton_13_clicked()
 
         step=0.1;
         dP = orbele[0]/10;
-        de = orbele[1]/10;
+        de = (orbele[1]>0.05 ? orbele[1]/10 : 0.005);   // otherwise degenerate simplex at e=0
         dKA = 3*dv;
         dKB = 3*dv;
         dGamma = 3*dv;
@@ -9138,11 +7413,11 @@ void MainWindow::on_pushButton_13_clicked()
         dOmega = M_PI/20;
     }
 
-    LogFile<<"Alpha: "<<alpha<<"; Beta: "<<beta<<"; Beta_tot: "<<btot<<"; Gamma: "<<Gamma<<"; Step: "<<step<<endl;
+    LogFile<<"Alpha: "<<alpha<<"; Beta: "<<nmBeta<<"; Beta_tot: "<<btot<<"; Gamma: "<<Gamma<<"; Step: "<<step<<endl;
 
     LogFile<<endl;
 
-    double y[nu+1], Z[nu], Co[nu], So[nu], Eo[nu];
+    std::vector<double> y(nu+1), Z(nu), Co(nu), So(nu), Eo(nu);
     mat P(nu+1,nu), e(nu+1,nu);
 
     r1=0.0;
@@ -9183,7 +7458,9 @@ void MainWindow::on_pushButton_13_clicked()
             }
             else{
                 cout<<"Warning: The optimisation files already exists. Do you want to overwrite it? 0 no, yes 1: "<<endl;
-                cin >> overw;
+                if(batchOverwrite==1) overw=1;
+                    else if(!(cin >> overw)) overw=0;
+                    if(overw==0) cerr<<"Existing optimisation files are not overwritten (use --overwrite)."<<endl;
                 if(overw==0){
                     this->setCursor(QCursor(Qt::ArrowCursor));
                     MainWindow::enableButtons();
@@ -9231,8 +7508,8 @@ void MainWindow::on_pushButton_13_clicked()
             init2<<setprecision(14)<<P(i,j)<<endl;
             //cout<<P(i,j)<<" ";
 
-            Mval1[j]=1/(1+P(i,j));
-            Mval2[j]=P(i,j)/(1+P(i,j));
+            Mval1[j]=P(i,j)/(1+P(i,j));
+            Mval2[j]=1/(1+P(i,j));
         }
 
         eval++;
@@ -9258,7 +7535,6 @@ void MainWindow::on_pushButton_13_clicked()
         if(abortt==1){
             LogFile<<"Initiation was aborted."<<endl;
             abortt=0;
-            sequence=0;
             optfratios=0;
             this->setCursor(QCursor(Qt::ArrowCursor));
             MainWindow::enableButtons();
@@ -9285,15 +7561,32 @@ void MainWindow::on_pushButton_13_clicked()
     std::ostringstream file3NameStream(file1opt);
     file3NameStream<<path<<"/"<<file1opt;
     std::string file3Name = file3NameStream.str();
-    ofstream opt1(file3Name.c_str());
 
     qOptmat = "optmat_flux.dat";
     string file2opt = qOptmat.toUtf8().constData();
     std::ostringstream file4NameStream(file2opt);
     file4NameStream<<path<<"/"<<file2opt;
     std::string file4Name = file4NameStream.str();
-    ofstream opt2(file4Name.c_str());
+    // save simplex (bug report H12: files were emptied beforehand)
+    auto saveSimplex = [&](){
+        ofstream o1(file3Name.c_str()), o2(file4Name.c_str());
+        for(int i=0; i<nu+1;i++){
+            o1<<setprecision(14)<<y[i]<<endl;
+            for(int j=0; j<nu; j++){
+                o2<<setprecision(14)<<P(i,j)<<endl;
+            }
+        }
+    };
+        nm::Coefficients nmCoef;
+        nmCoef.alpha=alpha;
+        nmCoef.gamma=Gamma;
+        nmCoef.beta=nmBeta;
+        nmCoef.delta=btot;
 
+    // Auto Stop as for RVs and orbit (chi^2 progress over a window); only with the
+    // residuum criterion, the slope criterion has no chi^2. No restarts here.
+    nm::ProgressMonitor progress(ui->spinBox_11->value()>0 ? ui->spinBox_11->value() : nm::defaultWindow(nu));
+    int itersDone = zaehler;
     for (int t=0; t<zaehler; t++){
         ui->spinBox_4->setValue(t+1);
 
@@ -9334,37 +7627,7 @@ void MainWindow::on_pushButton_13_clicked()
             Z[i]=0;
         }
 
-        //looking for highest value
-        yh=y[0];
-        Ph = 0;
-        for (int j=0; j<nu+1; j++){
-            if(y[j]>yh){
-                yh = y[j];
-                Ph = j;
-            }
-        }
-
-        //looking for smallest value
-        yl=yh;
-        for (int j=0; j<nu+1; j++){
-            if(y[j]<yl){
-                yl=y[j];
-                Pl = j;
-            }
-        }
-
-        //looking for second highest value
-        ysh=yl;
-        for (int j=0; j<nu+1; j++){
-            if((y[j]>ysh) & (y[j]<yh) & (y[j]>yl) & (j !=Pl)){
-                ysh=y[j];
-                Psh=j;
-            }
-        }
-
-        yh=y[Ph];
-        yl=y[Pl];
-        ysh=y[Psh];
+        nm::order(y, Ph, Psh, Pl);
 
         //computing mean and sigma
         for (int i=0; i<nu+1; i++){
@@ -9375,9 +7638,9 @@ void MainWindow::on_pushButton_13_clicked()
         }
         ys=ys/(nu);
 
-        if((ys==ys2) & (ym==ym2)){
+        if((ys==ys2) && (ym==ym2)){
             ++stagnate;
-            cout<<"stagnating."<<endl;
+            cout<<"stagnating ("<<stagnate<<" iterations)."<<endl;
         }
         else{
             //
@@ -9385,462 +7648,90 @@ void MainWindow::on_pushButton_13_clicked()
         ys2=ys;
         ym2=ym;
 
+        if(ui->checkBox_29->isChecked()
+                && MainWindow::convergenceStep(progress, y[Pl], nu, LogFile, false)==RunAction::Done){
+            cout<<"Optimisation stopped (Auto Stop)."<<endl;
+            LogFile<<"Optimisation stopped (Auto Stop)."<<endl;
+            itersDone = t;
+            break;
+        }
+
         cout<<"Simplex Mean: "<<ym<<"; Simplex STD: "<<ys<<endl;
 
         LogFile<<setprecision(12)<<"Mean: "<<ym<<"\tSTD: "<<ys<<endl;
 
-        //compute centroid
-        for (int j=0; j<nu; j++){
-            for (int i=0; i<nu+1; i++){
-                if (i!=Ph){
-                    Z[j]+=P(i,j)/nu;
+        //Nelder-Mead step (neldermead.h)
+        {
+            auto fRatio = [&](const arma::rowvec &x){
+                for(int i=0; i<nu; i++){
+                    if(!(x(i)>0)) return orbit::kInvalidPenalty;   // ratios must be positive
                 }
-            }
-        }
-
-        //reflect highest value at centroid
-        cout<<"reflection at centroid..."<<endl;
-        for (int i=0; i<nu; i++){
-            Co[i]=Z[i]+alpha*(Z[i]-P(Ph,i));
-            Mval1[i]=1/(1+Co[i]);
-            Mval2[i]=Co[i]/(1+Co[i]);
-        }
-        eval++;
-        ui->spinBox_5->setValue(eval);
-        qApp->processEvents(QEventLoop::AllEvents);
-        MainWindow::ConstructMatrix();
-        yi=MainWindow::DivideConquer();
-        //soptd<<t<<"\t"<<eval<<"\t"<<yi<<endl;
-        qApp->processEvents(QEventLoop::AllEvents);
-
-        if(upda==1){
-            upda=0;
-            LogFile<<endl;
-            LogFile<<"New ratios found; Residuum: "<<yi<<endl;
-                for(int i = 0; i<nu;i++){
-                    LogFile<<Co[i]<<endl;
+                for(int i=0; i<nu; i++){
+                    Mval1[i]=x(i)/(1+x(i));   // x = F_A/F_B as in "Flux Ratio A/B"
+                    Mval2[i]=1/(1+x(i));
                 }
-            LogFile<<endl;
-            MainWindow::on_pushButton_6_clicked();
-            qApp->processEvents(QEventLoop::AllEvents);
-        }
-
-        if(abortt==1){
-            //output results
-            LogFile<<"Optimisation aborted. Current best ratios:"<<endl;
-
-                for(int i = 0; i<nu;i++){
-                    LogFile<<P(Pl,i)<<endl;
-                }
-
-            LogFile<<endl;
-            for(int i=0; i<nu+1;i++){
-                cout<<y[i]<<endl;
-                opt1<<setprecision(12)<<y[i]<<endl;
-                for(int j=0; j<nu; j++){
-                    opt2<<setprecision(12)<<P(i,j)<<endl;
-                }
-            }
-                abortt=0;
-                sequence=0;
-                optfratios=0;
-                this->setCursor(QCursor(Qt::ArrowCursor));
-                MainWindow::enableButtons();
-                return;
-        }
-
-        //Alpha Branch, better than best point
-        if(yi<yl){
-           cout<<"expansion 1 ";
-            LogFile<<"yi<yl; ";
-            for (int i=0; i<nu; i++){
-                Eo[i]=Z[i]+Gamma*(Z[i]-P(Ph,i));  //Expansion over worst point
-                Mval1[i]=1/(1+Eo[i]);
-                Mval2[i]=Eo[i]/(1+Eo[i]);
-            }
-            eval++;
-            ui->spinBox_5->setValue(eval);
-            qApp->processEvents(QEventLoop::AllEvents);
-            MainWindow::ConstructMatrix();
-            yt=MainWindow::DivideConquer();
-            //soptd<<t<<"\t"<<eval<<"\t"<<yt<<endl;
-            qApp->processEvents(QEventLoop::AllEvents);
-
-            if(upda==1){
-                upda=0;
-                LogFile<<endl;
-                LogFile<<"New ratios found; Residuum: "<<yt<<endl;
-                    for(int i = 0; i<nu;i++){
-                        LogFile<<Eo[i]<<endl;
-                    }
-                LogFile<<endl;
-                MainWindow::on_pushButton_6_clicked();
+                eval++;
+                ui->spinBox_5->setValue(eval);
                 qApp->processEvents(QEventLoop::AllEvents);
-            }
-
-            if(abortt==1){
-                //output results
-                LogFile<<"Optimisation aborted. Current best ratios:"<<endl;
+                MainWindow::ConstructMatrix();
+                double r=MainWindow::DivideConquer();
+                qApp->processEvents(QEventLoop::AllEvents);
+                if(upda==1){
+                    upda=0;
+                    LogFile<<endl;
+                    LogFile<<"New ratios found; Residuum: "<<r<<endl;
                     for(int i = 0; i<nu;i++){
-                        LogFile<<P(Pl,i)<<endl;
+                        LogFile<<x(i)<<endl;
                     }
-
-                LogFile<<endl;
-                for(int i=0; i<nu+1;i++){
-                    cout<<y[i]<<endl;
-                    opt1<<setprecision(12)<<y[i]<<endl;
-                    for(int j=0; j<nu; j++){
-                        opt2<<setprecision(12)<<P(i,j)<<endl;
-                    }
+                    LogFile<<endl;
+                    MainWindow::on_pushButton_6_clicked();
+                    qApp->processEvents(QEventLoop::AllEvents);
                 }
-                abortt=0;
-                sequence=0;
-                optfratios=0;
-                this->setCursor(QCursor(Qt::ArrowCursor));
-                MainWindow::enableButtons();
-                return;
-            }
-            if(yt<yl){
-                cout<<"expansion";
-                for (int i=0; i<nu; i++){
-                    P(Ph,i)=Eo[i];
-                }
-
-            y[Ph]=yt;//MainWindow::DivideConquer();
-            if(abortt==1){
-                //output results
+                return r;
+            };
+            nm::StepResult st = nm::step(P, y, nmCoef, fRatio, [&]{ return abortt==1; });
+            LogFile<<st.log;
+            if(st.aborted){
+                nm::order(y, Ph, Psh, Pl);
                 LogFile<<"Optimisation aborted. Current best ratios:"<<endl;
-                    for(int i = 0; i<nu;i++){
-                        LogFile<<P(Pl,i)<<endl;
-                    }
-
-                LogFile<<endl;
-                for(int i=0; i<nu+1;i++){
-                    cout<<y[i]<<endl;
-                    opt1<<setprecision(12)<<y[i]<<endl;
-                    for(int j=0; j<nu; j++){
-                        opt2<<setprecision(12)<<P(i,j)<<endl;
-                    }
-                }
-                abortt=0;
-                sequence=0;
-                optfratios=0;
-                this->setCursor(QCursor(Qt::ArrowCursor));
-                MainWindow::enableButtons();
-                return;
-            }
-            qApp->processEvents(QEventLoop::AllEvents);
-
-        }
-        if (yt>=yl){
-            cout<<"ref1 ";
-            LogFile<<"yt<=yl, reflection; ";
-            for (int i=0; i<nu; i++){
-                P(Ph,i)=Co[i];
-                Mval1[i]=1/(1+Co[i]);
-                Mval2[i]=Co[i]/(1+Co[i]);
-            }
-
-            y[Ph]=yi;//MainWindow::DivideConquer();
-            if(abortt==1){
-                //output results
-                LogFile<<"Optimisation aborted. Current best ratios:"<<endl;
-                    for(int i = 0; i<nu;i++){
-                        LogFile<<P(Pl,i)<<endl;
-                    }
-
-                LogFile<<endl;
-                for(int i=0; i<nu+1;i++){
-                    cout<<y[i]<<endl;
-                    opt1<<setprecision(12)<<y[i]<<endl;
-                    for(int j=0; j<nu; j++){
-                        opt2<<setprecision(12)<<P(i,j)<<endl;
-                    }
-                }
-                abortt=0;
-                sequence=0;
-                optfratios=0;
-                this->setCursor(QCursor(Qt::ArrowCursor));
-                MainWindow::enableButtons();
-                return;
-            }
-            qApp->processEvents(QEventLoop::AllEvents);
-            }
-        }//Alpha Branch end
-
-        //Beta Branch, worse than best point
-        if(yi>=yl){
-            cout<<"yi>=yl ";
-            LogFile<<"yi>=yl; ";
-            //Beta_2 Branch
-            if(yi<=ysh){
-                cout<<"ref2 ";
-                for(int i=0; i<nu; i++){
-                    P(Ph,i)=Co[i];
-                    Mval1[i]=1/(1+Co[i]);
-                    Mval2[i]=Co[i]/(1+Co[i]);
-                }
-
-            y[Ph]=yi;//MainWindow::DivideConquer();
-            if(abortt==1){
-                //output results
-                LogFile<<"Optimisation aborted. Current best ratios:"<<endl;
-                    for(int i = 0; i<nu;i++){
-                        LogFile<<P(Pl,i)<<endl;
-                    }
-
-                LogFile<<endl;
-                for(int i=0; i<nu+1;i++){
-                    cout<<y[i]<<endl;
-                    opt1<<setprecision(12)<<y[i]<<endl;
-                    for(int j=0; j<nu; j++){
-                        opt2<<setprecision(12)<<P(i,j)<<endl;
-                    }
-                }
-                abortt=0;
-                sequence=0;
-                optfratios=0;
-                this->setCursor(QCursor(Qt::ArrowCursor));
-                MainWindow::enableButtons();
-                return;
-            }
-            qApp->processEvents(QEventLoop::AllEvents);
-        }//Beta_2 Branch End
-
-        //Beta_1 Branch
-        if(yi>ysh){
-            cout<<"yi>ysh ";
-            LogFile<<"yi>ysh; ";
-            if(yi<=yh){
-                cout<<"yi<=yh ref3 ";
-                LogFile<<"yi<=yh, reflection 3; ";
-                for(int i=0; i<nu; i++){
-                    P(Ph,i)=Co[i];
-                    Mval1[i]=1/(1+Co[i]);
-                    Mval2[i]=Co[i]/(1+Co[i]);
-                }
-
-            y[Ph]=yi;//MainWindow::DivideConquer();
-            if(abortt==1){
-                //output results
-                LogFile<<"Optimisation aborted. Current best ratios:"<<endl;
-                    for(int i = 0; i<nu;i++){
-                        LogFile<<P(Pl,i)<<endl;
-                    }
-
-                LogFile<<endl;
-                for(int i=0; i<nu+1;i++){
-                    cout<<y[i]<<endl;
-                    opt1<<setprecision(12)<<y[i]<<endl;
-                    for(int j=0; j<nu; j++){
-                        opt2<<setprecision(12)<<P(i,j)<<endl;
-                    }
-                }
-                abortt=0;
-                sequence=0;
-                optfratios=0;
-                this->setCursor(QCursor(Qt::ArrowCursor));
-                MainWindow::enableButtons();
-                return;
-            }
-            qApp->processEvents(QEventLoop::AllEvents);
-        //yh=y[Ph];
-        }
-
-        for(int i=0; i<nu; i++){
-            So[i]=Z[i]+beta*(P(Ph,i)-Z[i]); //simple contraction
-            Mval1[i]=1/(1+So[i]);
-            Mval2[i]=So[i]/(1+So[i]);
-        }
-        eval++;
-        ui->spinBox_5->setValue(eval);
-        qApp->processEvents(QEventLoop::AllEvents);
-        MainWindow::ConstructMatrix();
-        yt=MainWindow::DivideConquer();
-        qApp->processEvents(QEventLoop::AllEvents);
-        //soptd<<t<<"\t"<<eval<<"\t"<<yt<<endl;
-        if(upda==1){
-            upda=0;
-            LogFile<<endl;
-            LogFile<<"New ratios found; Residuum: "<<yt<<endl;
-            //MainWindow::plot_functionvalues();
-                for(int i = 0; i<nu;i++){
-                    LogFile<<So[i]<<endl;
-                }
-
-            LogFile<<endl;
-            MainWindow::on_pushButton_6_clicked();
-            qApp->processEvents(QEventLoop::AllEvents);
-        }
-
-        if(abortt==1){
-            //output results
-            LogFile<<"Optimisation aborted. Current best ratios:"<<endl;
                 for(int i = 0; i<nu;i++){
                     LogFile<<P(Pl,i)<<endl;
                 }
-
-            LogFile<<endl;
-            for(int i=0; i<nu+1;i++){
-                cout<<y[i]<<endl;
-                opt1<<setprecision(12)<<y[i]<<endl;
-                    for(int j=0; j<nu; j++){
-                        opt2<<setprecision(12)<<P(i,j)<<endl;
-                    }
-                }
+                LogFile<<endl;
+                saveSimplex();
                 abortt=0;
-                sequence=0;
                 optfratios=0;
                 this->setCursor(QCursor(Qt::ArrowCursor));
                 MainWindow::enableButtons();
                 return;
             }
-
-        //Beta_1_1 Branch
-        if(yt>yh){
-            cout<<"yt>yh tot ";
-            LogFile<<"yt>yh, total contraction, ";
-            for (int j=0; j<nu+1; j++){
-                for (int i=0; i<nu; i++){
-                    P(j,i)=P(Pl,i)+btot*(P(j,i)-P(Pl,i)); //total contraction
-                    Mval1[i]=1/(1+P(j,i));
-                    Mval2[i]=P(j,i)/(1+P(j,i));
-                }
-
-        eval++;
-        ui->spinBox_5->setValue(eval);
-        qApp->processEvents(QEventLoop::AllEvents);
-        MainWindow::ConstructMatrix();
-        y[j]=MainWindow::DivideConquer();
-        qApp->processEvents(QEventLoop::AllEvents);
-        cout<<j+1<<" of "<<nu+1<<" points contracted."<<endl;
-        //soptd<<t<<"\t"<<eval<<"\t"<<y[j]<<endl;
-
-        if(upda==1){
-            upda=0;
-            LogFile<<endl;
-            LogFile<<"New ratios found; Residuum: "<<y[j]<<endl;
-                for(int i = 0; i<nu;i++){
-                    LogFile<<P(j,i)<<endl;
-                }
-            LogFile<<endl;
-            MainWindow::on_pushButton_6_clicked();
-            qApp->processEvents(QEventLoop::AllEvents);
-        }
-
-        if(abortt==1){
-            //output results
-            LogFile<<"Optimisation aborted. Current best ratios:"<<endl;
-                for(int i = 0; i<nu;i++){
-                    LogFile<<P(Pl,i)<<endl;
-                }
-
-            LogFile<<endl;
-            for(int i=0; i<nu+1;i++){
-                cout<<y[i]<<endl;
-                opt1<<setprecision(12)<<y[i]<<endl;
-                for(int j=0; j<nu; j++){
-                    opt2<<setprecision(12)<<P(i,j)<<endl;
-                }
-            }
-            abortt=0;
-            sequence=0;
-            optfratios=0;
-            this->setCursor(QCursor(Qt::ArrowCursor));
-            MainWindow::enableButtons();
-            return;
-         }
-        }
-        }//Beta_1_1 Branch End
-
-        //Beta_1_2 Branch
-        if(yt<=yh){
-            cout<<"yt<=yh, sco ";
-            LogFile<<"yt<=yh, single contraction ";
-            for(int i=0; i<nu; i++){
-                P(Ph,i)=So[i];
-                Mval1[i]=1/(1+So[i]);
-                Mval2[i]=So[i]/(1+So[i]);
-            }
-
-        y[Ph]=yt;//MainWindow::DivideConquer();
-        if(abortt==1){
-            //output results
-            LogFile<<"Optimisation aborted. Current best ratios:"<<endl;
-                for(int i = 0; i<nu;i++){
-                    LogFile<<P(Pl,i)<<endl;
-                }
-
-            LogFile<<endl;
-            for(int i=0; i<nu+1;i++){
-                cout<<y[i]<<endl;
-                opt1<<setprecision(12)<<y[i]<<endl;
-                    for(int j=0; j<nu; j++){
-                        opt2<<setprecision(12)<<P(i,j)<<endl;
-                    }
-                }
-                abortt=0;
-                sequence=0;
-                optfratios=0;
-                this->setCursor(QCursor(Qt::ArrowCursor));
-                MainWindow::enableButtons();
-                return;
-            }
-            qApp->processEvents(QEventLoop::AllEvents);
-           }
-        }
-
         }
         LogFile<<endl;
         }//end main loop
 
 
-        //looking for highest value
-        yh=y[0];
-        for (int j=0; j<nu+1; j++){
-            if(y[j]>yh){
-            yh = y[j];
-            Ph = j;
-            }
-        }
+        nm::order(y, Ph, Psh, Pl);
 
-        //looking for smallest value
-        yl=yh;
-        for (int j=0; j<nu+1; j++){
-            if(y[j]<yl){
-                yl=y[j];
-                Pl = j;
-            }
-        }
+        saveSimplex();
 
-        //looking for second highest value
-        ysh=yl;
-        for (int j=0; j<nu+1; j++){
-            if((y[j]>ysh)&(y[j]<yh)){
-                ysh=y[j];
-                Psh=j;
-            }
+        // adopt best ratios and write the output with them (M6)
+        for(int i=0; i<nu; i++){
+            Mval1[i]=P(Pl,i)/(1+P(Pl,i));
+            Mval2[i]=1/(1+P(Pl,i));
         }
-
-        //output results
-        for(int i=0; i<nu+1;i++){
-            cout<<y[i]<<endl;
-            opt1<<setprecision(12)<<y[i]<<endl;
-            for(int j=0; j<nu; j++){
-                opt2<<setprecision(12)<<P(i,j)<<endl;
-            }
-        }
+        MainWindow::ConstructMatrix();
+        MainWindow::DivideConquer();
 
         LogFile<<ym<<"          "<<ys<<endl;
         LogFile<<" End Optimisation "<<endl;
-        LogFile<<" ratios after "<<zaehler<<" Iterations and "<<eval<<" Evaluations of Optimisation: "<<endl;
+        LogFile<<" ratios after "<<itersDone<<" Iterations and "<<eval<<" Evaluations of Optimisation: "<<endl;
             for(int i = 0; i<nu;i++){
                 LogFile<<P(Pl,i)<<endl;
             }
 
         LogFile.close();
 
-        cout<<"Ratios after "<<zaehler<<" Iterations and "<<eval<<" Evaluations:"<<endl;
+        cout<<"Ratios after "<<itersDone<<" Iterations and "<<eval<<" Evaluations:"<<endl;
         for(int i=0; i<nu;i++){
             cout<<P(Pl,i)<<endl;
         }
@@ -9872,49 +7763,6 @@ void MainWindow::on_checkBox_30_clicked()
     }
 }
 
-//******************************
-// sparse matrix solver
-//******************************
-void MainWindow::separation()
-{
-    this->setCursor(QCursor(Qt::WaitCursor));
-    if(ui->spinBox_2->value()-ui->spinBox->value()<1){
-        if(runow==0){
-            QMessageBox::information(this, "Error", "Error 19: At least two observations at (hopefully) different phases are necessary.");
-        }
-        else{
-            cout<<"Error 19: At least two observations at (hopefully) different phases are necessary."<<endl;
-            MainWindow::Input();
-        }
-        this->setCursor(QCursor(Qt::ArrowCursor));
-        return;
-    }
-
-    MainWindow::disableButtons();
-    MainWindow::read_data();
-
-    if(error==1){
-        this->setCursor(QCursor(Qt::ArrowCursor));
-        error=0;
-        MainWindow::enableButtons();
-        return;
-    }
-    this->setCursor(QCursor(Qt::WaitCursor));
-
-
-        std::ostringstream file5NameStream("compl.txt");
-        file5NameStream<<path<<"/compl.txt";
-        std::string file5Name = file5NameStream.str();
-        ofstream file7(file5Name.c_str());
-
-        for(int i =0; i<Mm; i++){
-            file7<<i<<"\t"<<X(i)<<endl;
-        }
-
-    MainWindow::enableButtons();
-    this->setCursor(QCursor(Qt::ArrowCursor));
-}
-
 void MainWindow::on_pushButton_15_clicked()
 {
 
@@ -9943,7 +7791,6 @@ void MainWindow::on_pushButton_15_clicked()
         }
         else{
             cout<<"Error 4: File "<<path<<"/"<<times<<" does not exist!"<<endl;
-            MainWindow::Input();
         }
         this->setCursor(QCursor(Qt::ArrowCursor));
         error=1;
@@ -9967,7 +7814,6 @@ void MainWindow::on_pushButton_15_clicked()
             }
             else{
                 cout<<"Error 5: File "<<path<<"/"<<times<<" does not match to the number of observations."<<endl;
-                MainWindow::Input();
             }
             error=1;
             this->setCursor(QCursor(Qt::ArrowCursor));
@@ -9983,7 +7829,7 @@ void MainWindow::on_pushButton_15_clicked()
         dat.close();
     }
 
-    string orbit = "orbitelements.dat";
+    string orbit = qOrbitFile.toStdString();
     std::ostringstream orbNameStream(orbit);
     orbNameStream<<path<<"/"<<orbit;
     std::string orbName = orbNameStream.str();
@@ -9997,7 +7843,6 @@ void MainWindow::on_pushButton_15_clicked()
         }
         else{
             cout<<"Error 6: File "<<path<<"/"<<orbit<<" does not exist! Set the orbital elements via the Editor."<<endl;
-            MainWindow::Input();
         }
         this->setCursor(QCursor(Qt::ArrowCursor));
         error=1;
@@ -10093,4 +7938,69 @@ for(int i=0; i<num; i++){
     }
 }
 
+}
+
+//****************************************
+// Data tab, "Detect": ranges of the static lines from the static spectrum of the last Solve.
+// High-pass (minus a running median over 5 A), noise from the median absolute deviation,
+// pixels beyond the threshold (absorption and emission), widened by 0.5 A, gaps below 1 A
+// closed. Written to <file>_detected.<ext> and set in the Data tab.
+//****************************************
+void MainWindow::on_pushButton_telldetect_clicked()
+{
+    if(!g_matrixValid || g_layout.nT<3 || X.n_elem!=arma::uword(g_layout.cols()) || W.n_elem<2){
+        reportError("Error 50: Detect needs a Solve with static lines first.");
+        return;
+    }
+    const arma::vec Xc = componentSpectra();
+    const double w0 = W(0);
+    const int n = g_layout.nT;
+    std::vector<double> lam(n), t(n);
+    for(int k=0; k<n; k++){
+        lam[k] = std::pow(10.0, dis::columnLog10Lambda(g_layout, 'T', k, w0, g_dlog));
+        t[k] = Xc(g_layout.startT()+k);
+    }
+    // running median over 5 A
+    const double pxA = lam[n/2]*(std::pow(10.0, g_dlog)-1.0);
+    const int h = std::max(2, int(std::ceil(2.5/pxA)));
+    std::vector<double> hp(n), buf;
+    for(int k=0; k<n; k++){
+        const int a = std::max(0, k-h), b = std::min(n, k+h+1);
+        buf.assign(t.begin()+a, t.begin()+b);
+        std::nth_element(buf.begin(), buf.begin()+buf.size()/2, buf.end());
+        hp[k] = t[k]-buf[buf.size()/2];
+    }
+    std::vector<double> ab(n);
+    for(int k=0; k<n; k++) ab[k] = std::fabs(hp[k]);
+    std::nth_element(ab.begin(), ab.begin()+n/2, ab.end());
+    const double sigma = 1.4826*ab[n/2];
+    const double thr = ui->doubleSpinBox_telldet->value()*sigma;
+    std::vector<std::pair<double, double>> r;
+    for(int k=0; k<n; k++){
+        if(!(std::fabs(hp[k])>thr)) continue;
+        const double lo = lam[k]-0.5, hi = lam[k]+0.5;
+        if(!r.empty() && lo<=r.back().second+1.0) r.back().second = std::max(r.back().second, hi);
+        else r.emplace_back(lo, hi);
+    }
+    QString name = ui->lineEdit_tellrange->text().trimmed();
+    if(name.isEmpty()) name = "telluric_static.dat";
+    const QString out = withSuffix(name.endsWith("_detected.dat") ? name.left(name.size()-13)+".dat" : name, "_detected");
+    std::ofstream f((qPath+"/"+out).toStdString().c_str());
+    f<<"# Ranges of the static lines detected in the static spectrum of the last Solve (Spectangular):\n"
+     <<"# |static - running median (5 A)| > "<<ui->doubleSpinBox_telldet->value()<<" sigma, sigma = "<<sigma
+     <<" (MAD), widened by 0.5 A, gaps < 1 A closed. Observatory frame, air.\n";
+    f<<setprecision(8);
+    double cover = 0.0;
+    for(const auto &x : r){ f<<x.first<<"  "<<x.second<<"\n"; cover += x.second-x.first; }
+    if(!f){
+        reportError("Error 50: Cannot write "+qPath+"/"+out+".");
+        return;
+    }
+    ui->lineEdit_tellrange->setText(out);
+    const QString m = QString("Static lines detected: %1 ranges, %2 A of %3 A (threshold %4 sigma, sigma %5), written to %6 "
+                              "and set in the Data tab; tick \"Static lines only in\" and Read data to use them.")
+                      .arg(r.size()).arg(cover, 0, 'f', 1).arg(lam[n-1]-lam[0], 0, 'f', 1)
+                      .arg(ui->doubleSpinBox_telldet->value()).arg(sigma, 0, 'g', 3).arg(out);
+    cout<<m.toStdString()<<endl;
+    ui->plainTextEdit_2->appendPlainText(m);
 }

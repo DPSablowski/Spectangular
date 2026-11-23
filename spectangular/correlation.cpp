@@ -1,4 +1,6 @@
 #include "correlation.h"
+#include <limits>
+#include <algorithm>
 #include "ui_correlation.h"
 #include <string>
 #include <sstream>
@@ -13,7 +15,8 @@ using namespace std;
 string pathCor;
 QString qPathCor;
 double samplingCor;
-int CorShift, shift, corer=0;
+double CorShift=0;   // shift in pixels, may be fractional (M7)
+int shift, corer=0;
 
 correlation::correlation(QWidget *parent) :
     QDialog(parent),
@@ -146,13 +149,6 @@ void correlation::Do_correlation()
     }
     */
 
-    int numpix;
-    if(numpix1<numpix2){
-        numpix=numpix1;
-    }
-    else{
-        numpix=numpix2;
-    }
 
     QVector<double> a(numpix1), b(numpix1), c(numpix2), d(numpix2);
 
@@ -186,23 +182,29 @@ void correlation::Do_correlation()
      }
 
      if(ui->checkBox->isChecked()){
+         // average pairs of adjacent pixels (previously step 3 and no shortening, M6)
          for(int g=0; g<numpix2/2; g++){
-             c[g]=(c[g]+c[g+1])/2;
-             d[g]=(d[g]+d[g+1])/2;
-             g=g+2;
-
+             c[g]=(c[2*g]+c[2*g+1])/2;
+             d[g]=(d[2*g]+d[2*g+1])/2;
          }
+         numpix2=numpix2/2;
      }
 
-     ofstream file2("cropeds.txt");
-     ofstream file3("cropedt.txt");
+     ofstream file2((pathCor+"/cropeds.txt").c_str());
+     ofstream file3((pathCor+"/cropedt.txt").c_str());
 
      int counter=0;
 
-     samplingCor=a[5]-a[4];
+     if(numpix1<2 || numpix2<2){
+         QMessageBox::information(this, "Error", "Spectrum or template too short.");
+         this->setCursor(QCursor(Qt::ArrowCursor));
+         return;
+     }
+     samplingCor=(a[numpix1-1]-a[0])/(numpix1-1);
 
+     // establish a common start; the shortened length is kept (H5)
      if(a[0]<c[0]){
-     for(int i=0; i<numpix; i++){
+         for(int i=0; i<numpix1; i++){
              if(a[i]>=c[0]){
                  a[counter]=a[i];
                  b[counter]=b[i];
@@ -210,23 +212,27 @@ void correlation::Do_correlation()
                  ++counter;
              }
          }
-
+         numpix1=counter;
+     }
+     else if(a[0]>c[0]){
+         for(int i=0; i<numpix2; i++){
+             if(c[i]>=a[0]){
+                 c[counter]=c[i];
+                 d[counter]=d[i];
+                 file3<<c[counter]<<" "<<d[counter]<<endl;
+                 ++counter;
+             }
+         }
+         numpix2=counter;
+     }
+     const int n = std::min(numpix1, numpix2);
+     if(n<2){
+         QMessageBox::information(this, "Error", "Spectrum and template do not overlap.");
+         this->setCursor(QCursor(Qt::ArrowCursor));
+         return;
      }
 
-     if(counter==0){
-         if(a[0]>c[0]){
-            for(int i=0; i<numpix; i++){
-                if(c[i]>=a[0]){
-                    c[counter]=c[i];
-                    d[counter]=d[i];
-                    file3<<c[counter]<<" "<<d[counter]<<endl;
-                    ++counter;
-                }
-            }
-        }
-     }
-
-     QVector<double> ccf(2*shift);
+     QVector<double> ccf(2*shift+1);
 
      string file = "correlation.txt";
      std::ostringstream fileNameStream(file);
@@ -236,40 +242,37 @@ void correlation::Do_correlation()
 
      double meant=0;
      double means=0;
-     for(int i=0; i<numpix; i++){
-        means+=b[i]/numpix;
-     }
-
-     for(int i=0; i<numpix; i++){
-        meant+=d[i]/numpix;
+     for(int i=0; i<n; i++){
+        means+=b[i]/n;
+        meant+=d[i]/n;
      }
 
      double sigmas=0;
      double sigmat=0;
-     for(int i=0; i<numpix; i++){
+     for(int i=0; i<n; i++){
         sigmas+=pow((b[i]-means),2);
-     }
-
-     for(int i=0; i<numpix; i++){
         sigmat+=pow((d[i]-meant),2);
      }
 
-     sigmat=sqrt(sigmat/(numpix-1));
-     sigmas=sqrt(sigmas/(numpix-1));
+     sigmat=sqrt(sigmat/(n-1));
+     sigmas=sqrt(sigmas/(n-1));
 
-     double ccfmax=0;
+     // shifts -shift ... +shift; normalization to the respective overlap (M5);
+     // start value -infinity, so that a negative CCF also has a maximum (H6)
+     double ccfmax=-std::numeric_limits<double>::infinity();
+     CorShift=shift;
 
-     for(int i=0; i<2*shift; i++){
+     for(int i=0; i<=2*shift; i++){
          ccf[i]=0;
-
-         for(int g=0; g<numpix; g++){
-             if(g-i+shift>0 & g-i+shift<numpix){
-                 ccf[i]+=(b[g]-means)*(d[g-(i-shift)]-meant)/numpix/sigmat/sigmas;
-             }
-             else{
-                ccf[i]+=0;
+         int overlap=0;
+         for(int g=0; g<n; g++){
+             int k = g-(i-shift);
+             if((k>=0) && (k<n)){
+                 ccf[i]+=(b[g]-means)*(d[k]-meant);
+                 ++overlap;
              }
          }
+         if(overlap>0) ccf[i]/=overlap*sigmat*sigmas;
          file1<<i-shift<<" "<<ccf[i]<<endl;
          if(ccf[i]>ccfmax){
              ccfmax=ccf[i];
@@ -334,8 +337,11 @@ void correlation::on_pushButton_4_clicked()
         ist2 >> b[g];
     }
 
-    samplingCor=a[5]-a[4];
-    cout<<a[5]<<"\t"<<samplingCor<<"\t";
+    if(numpix1<2){
+        QMessageBox::information(this, "Error", "Spectrum too short.");
+        return;
+    }
+    samplingCor=(a[numpix1-1]-a[0])/(numpix1-1);   // as in Do_correlation
 
     QString output=ui->lineEdit_3->text();
     string file1 = output.toUtf8().constData();

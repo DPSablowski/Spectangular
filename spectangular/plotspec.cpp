@@ -1,4 +1,6 @@
 #include "plotspec.h"
+#include <algorithm>
+#include <limits>
 #include "ui_plotspec.h"
 #include <iostream>
 #include <cmath>
@@ -15,7 +17,15 @@
 #include <QFile>
 #include <QtDebug>
 #include <QCheckBox>
+// spline.h (third-party code) defines functions that are not all used here
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
+#endif
 #include "spline.h"
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 
 using namespace std;
 
@@ -43,8 +53,9 @@ PlotSpec::PlotSpec(QWidget *parent) :
     ui->checkBox->setChecked(true);
     ui->checkBox_17->setChecked(true);
 
-    ui->checkBox_14->setChecked(true);
-    ui->doubleSpinBox_19->setValue(1);
+    ui->checkBox_rmodel->setChecked(true);   // continuum correction with the flux-ratio model
+    ui->checkBox_17->setEnabled(false);      // "Both": set by the mode (flux-ratio model: both files)
+    ui->checkBox_17->setToolTip("Set automatically: the flux-ratio model corrects both files, \"Divide\" only File 1.");
     ui->checkBox_18->setChecked(true);
     ui->checkBox_21->setChecked(true);
 
@@ -399,18 +410,21 @@ void PlotSpec::on_pushButton_3_clicked()
     ui->doubleSpinBox->setValue(xs1);
     ui->doubleSpinBox_2->setValue(xs2);
 
-    ys1=b[0];
-    ys2=b[number_of_lines-1];
-    for(int i=0; i<number_of_lines; i++){
-        if(b[i]<ys1){
-            ys1=b[i];
-        }
+    // y range without the outermost pixels: the edge pixels of disentangled spectra are
+    // determined by single spectra and can be far off (same rule as in the main window)
+    int trim = std::max(3, int(std::ceil(0.03*number_of_lines)));
+    if(number_of_lines < 4*trim) trim = number_of_lines/4;
+    ys1 = std::numeric_limits<double>::infinity();
+    ys2 = -std::numeric_limits<double>::infinity();
+    for(int i=trim; i<number_of_lines-trim; i++){
+        if(!std::isfinite(b[i])) continue;
+        ys1 = std::min(ys1, b[i]);
+        ys2 = std::max(ys2, b[i]);
     }
-    for(int i=0; i<number_of_lines; i++){
-        if(b[i]>ys2){
-            ys2=b[i];
-        }
-    }
+    if(!(ys2>=ys1)){ ys1 = 0; ys2 = 1; }
+    const double pad = 0.05*std::max(ys2-ys1, 1e-12);
+    ys1 -= pad;
+    ys2 += pad;
 
 
     ui->doubleSpinBox_3->setValue(ys1);
@@ -556,11 +570,12 @@ void PlotSpec::on_pushButton_5_clicked()
     }
 
     for(int i=0; i<cps.size(); i++){
+        // spectrum 2 with its own line fps (previously eps of spectrum 1)
         if(ui->checkBox_20->isChecked()){
-            d2ps[i]=dps[i]-(eps[i]-1);
+            d2ps[i]=dps[i]-(fps[i]-1);
         }
         else{
-            d2ps[i]=dps[i]+(eps[i]-1);
+            d2ps[i]=dps[i]+(fps[i]-1);
         }
         toplot2<<cps[i]<<"\t"<<d2ps[i]<<endl;
     }
@@ -609,7 +624,8 @@ void PlotSpec::SNR(){
     QVector<double> a(number_of_lines), b(number_of_lines);
 
     double loww=ui->doubleSpinBox_17->value();
-    double hiw=ui->doubleSpinBox_18->value(), mean=0, signr=0, wleft, wright, ileft, iright, steig, ab;
+    double hiw=ui->doubleSpinBox_18->value(), mean=0, signr=0, wleft=0, wright=0, ileft=0, iright=0, steig, ab;
+    bool haveLeft=false, haveRight=false;
     int points=0;
 
     for (int i=0; i<number_of_lines; i++){
@@ -621,40 +637,50 @@ void PlotSpec::SNR(){
     }
     toplot1.close();
 
-    for(int i =0; i<number_of_lines; i++){
-        if(a[i]<=loww & a[i+1]>loww){
+    for(int i =0; i+1<number_of_lines; i++){
+        if((a[i]<=loww) && (a[i+1]>loww)){
             wleft=a[i];
             ileft=b[i];
+            haveLeft=true;
         }
-        if(a[i]<=hiw & a[i+1]>hiw){
+        if((a[i]<=hiw) && (a[i+1]>hiw)){
             wright=a[i];
             iright=b[i];
+            haveRight=true;
         }
+    }
+    if(!haveLeft || !haveRight || !(wright>wleft)){
+        QMessageBox::information(this, "Error", "The range for the S/N computation must lie within the spectrum.");
+        return;
     }
 
     steig=(iright-ileft)/(wright-wleft);
     ab = ileft-steig*wleft;
 
     for(int i=0; i<number_of_lines; i++){
-        if(a[i]>=loww & a[i]<=hiw){
+        if(a[i]>=loww && a[i]<=hiw){
             b[i]=b[i]+(ileft-(steig*a[i]+ab));
             mean +=b[i];
             ++points;
         }
     }
 
+    if(points<2){
+        QMessageBox::information(this, "Error", "At least two pixels are needed for the S/N computation.");
+        return;
+    }
     mean = mean/points;
 
     cout<<"mean: "<<mean<<endl;
 
     for(int i=0; i<number_of_lines; i++){
-        if(a[i]>=loww & a[i]<=hiw){
+        if(a[i]>=loww && a[i]<=hiw){
             signr+=pow((b[i]-mean),2);
         }
     }
 
     signr = sqrt(signr/(points-1));
-    cout<<"stabw: "<<signr<<endl;
+    cout<<"std. dev.: "<<signr<<endl;
 
     signr = mean/signr;
 
@@ -696,7 +722,6 @@ void PlotSpec::EW(){
 
     double loww=ui->doubleSpinBox_17->value();
     double hiw=ui->doubleSpinBox_18->value(), Wtot=0, Wline=0, Wew=0, Ilow=0, Ihigh=0, EW=0;
-    int points=0;
 
     for (int i=0; i<number_of_lines; i++){
     toplot1 >> one >>two;
@@ -708,19 +733,13 @@ void PlotSpec::EW(){
     toplot1.close();
 
     for(int i =1; i<number_of_lines; i++){
-        if(a[i-1]<=loww & a[i]>=loww){
+        if(a[i-1]<=loww && a[i]>=loww){
             Ilow=b[i];
         }
-        else{
-            Ilow=Ilow;
-        }
-        if(a[i-1]<=hiw & a[i]>=hiw){
+        if(a[i-1]<=hiw && a[i]>=hiw){
             Ihigh = b[i];
         }
-        else{
-            Ihigh=Ihigh;
-        }
-        if(a[i-1]>loww & a[i-1]<hiw){
+        if(a[i-1]>loww && a[i-1]<hiw){
             Wline+=(a[i]-a[i-1])*(b[i]+b[i-1])/2;
         }
     }
@@ -786,8 +805,9 @@ void PlotSpec::on_pushButton_6_clicked()
         istringstream ist(eins);
         ist >> XC[i];
         Xc[i]=XC[i];
-        if((i>0) & (XC[i]<XC[i-1])){
-            QMessageBox::information(this, "Error", "Spline data not ordered in increasing wavelength at position "+i);
+        if((i>0) && (XC[i]<=XC[i-1])){
+            QMessageBox::information(this, "Error", "Spline data not strictly increasing in wavelength at position "
+                                     +QString::number(i)+".");
             return;
         }
         istringstream ist2(zwei);
@@ -846,9 +866,6 @@ void PlotSpec::on_pushButton_6_clicked()
         if(ui->checkBox_13->isChecked()){
             bsc[i]=bsc[i]/s(x);
         }
-        if(ui->checkBox_14->isChecked()){
-            bsc[i]=bsc[i]+(1/(ui->doubleSpinBox_19->value()+1)-s(x));
-        }
     }
     toplot1.close();
 
@@ -895,14 +912,24 @@ void PlotSpec::on_pushButton_6_clicked()
             sline2<<x<<" "<<s(x)<<endl;
             istringstream ist2(two);
             ist2 >> dsc[i];
-            if(ui->checkBox_13->isChecked()){
-                dsc[i]=dsc[i]/(2-s(x));
-            }
-            if(ui->checkBox_14->isChecked()){
-                dsc[i]=dsc[i]+(s(x)-1/(ui->doubleSpinBox_19->value()+1));
-            }
         }
         toplot1.close();
+    }
+
+    // continuum correction with the flux-ratio model: A + (1 - s), B - r(lambda) (1 - s)
+    if(ui->checkBox_rmodel->isChecked()){
+        if(!ui->checkBox_17->isChecked() || csc.size()==0){
+            QMessageBox::information(this, "Error", "The flux-ratio model corrects both files: tick \"Both\" and give File 2.");
+            return;
+        }
+        std::vector<double> la(asc.begin(), asc.end()), A(bsc.begin(), bsc.end()), cA(la.size());
+        std::vector<double> lb(csc.begin(), csc.end()), B(dsc.begin(), dsc.end()), rb(lb.size());
+        for(size_t i=0; i<la.size(); i++) cA[i] = s(la[i]);
+        const double lref = ratioModel.lambdaRef>0 ? ratioModel.lambdaRef : std::sqrt(la.front()*la.back());
+        for(size_t i=0; i<lb.size(); i++) rb[i] = ratioK*fr::shape(ratioModel, lb[i], lref);
+        fr::normaliseToContinuum(la, A, cA, lb, B, rb);
+        for(size_t i=0; i<la.size(); i++) bsc[int(i)] = A[i];
+        for(size_t i=0; i<lb.size(); i++) dsc[int(i)] = B[i];
     }
 
     ui->customPlot->addGraph();
@@ -1022,8 +1049,10 @@ void PlotSpec::on_pushButton_9_clicked()
                     out<<asc[i]<<" "<<bsc[i]<<endl;
                 }
 
-                for(int i=0; i<asc.size(); i++){
-                    out2<<csc[i]<<" "<<dsc[i]<<endl;
+                if(ui->checkBox_17->isChecked()){
+                    for(int i=0; i<csc.size() && i<dsc.size(); i++){
+                        out2<<csc[i]<<" "<<dsc[i]<<endl;
+                    }
                 }
                 out.close();
                 out2.close();
@@ -1044,8 +1073,10 @@ void PlotSpec::on_pushButton_9_clicked()
             out<<asc[i]<<" "<<bsc[i]<<endl;
         }
 
-        for(int i=0; i<asc.size(); i++){
-            out2<<csc[i]<<" "<<dsc[i]<<endl;
+        if(ui->checkBox_17->isChecked()){
+            for(int i=0; i<csc.size() && i<dsc.size(); i++){
+                out2<<csc[i]<<" "<<dsc[i]<<endl;
+            }
         }
         out.close();
         out2.close();
@@ -1069,7 +1100,7 @@ void PlotSpec::on_pushButton_10_clicked()
 
     if(!checkfile.exists()){
         qDebug()<<"The file "<<checkfile.fileName()<<" does not exist.";
-        QMessageBox::information(this, "Error", "File "+qSpPath+"/"+checkfile.fileName()+" does not exist!");
+        QMessageBox::information(this, "Error", "File "+checkfile.fileName()+" does not exist!");
         return;
     }
 
@@ -1159,7 +1190,7 @@ void PlotSpec::on_pushButton_11_clicked()
 
     if(!checkfile.exists()){
         qDebug()<<"The file "<<checkfile.fileName()<<" does not exist.";
-        QMessageBox::information(this, "Error", "File "+qSpPath+"/"+checkfile.fileName()+" does not exist!");
+        QMessageBox::information(this, "Error", "File "+checkfile.fileName()+" does not exist!");
         return;
     }
 
@@ -1210,24 +1241,29 @@ void PlotSpec::on_pushButton_13_clicked()
     PlotSpec::EW();
 }
 
-void PlotSpec::on_checkBox_14_clicked()
+void PlotSpec::setRatioModel(const fr::Model &m, double k)
 {
-    if(ui->checkBox_14->isChecked()){
+    ratioModel = m;
+    ratioK = k;
+}
+
+// Flux-ratio model: replaces "Divide" and "Correct to Ratio" and needs both files
+void PlotSpec::on_checkBox_rmodel_clicked()
+{
+    if(ui->checkBox_rmodel->isChecked()){
         ui->checkBox_13->setChecked(false);
     }
-    else{
-        ui->checkBox_13->setChecked(true);
-    }
+    ui->checkBox_17->setChecked(ui->checkBox_rmodel->isChecked());
 }
 
 void PlotSpec::on_checkBox_13_clicked()
 {
+    // "Divide" (normalisation of File 1 by the spline) and the flux-ratio model exclude each
+    // other; "Both" (File 2 as well) belongs to the flux-ratio model only
     if(ui->checkBox_13->isChecked()){
-        ui->checkBox_14->setChecked(false);
+        ui->checkBox_rmodel->setChecked(false);
     }
-    else{
-        ui->checkBox_14->setChecked(true);
-    }
+    ui->checkBox_17->setChecked(ui->checkBox_rmodel->isChecked());
 }
 
 void PlotSpec::on_checkBox_18_clicked()

@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'arithmetic.ui'
 **
-** Created by: Qt User Interface Compiler version 5.15.0
+** Created by: Qt User Interface Compiler version 6.11.1
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
 ********************************************************************************/
@@ -79,40 +79,40 @@ public:
     void setupUi(QDialog *Arithmetic)
     {
         if (Arithmetic->objectName().isEmpty())
-            Arithmetic->setObjectName(QString::fromUtf8("Arithmetic"));
+            Arithmetic->setObjectName("Arithmetic");
         Arithmetic->resize(717, 245);
         gridLayout_3 = new QGridLayout(Arithmetic);
-        gridLayout_3->setObjectName(QString::fromUtf8("gridLayout_3"));
+        gridLayout_3->setObjectName("gridLayout_3");
         scrollArea = new QScrollArea(Arithmetic);
-        scrollArea->setObjectName(QString::fromUtf8("scrollArea"));
+        scrollArea->setObjectName("scrollArea");
         scrollArea->setWidgetResizable(true);
         scrollAreaWidgetContents = new QWidget();
-        scrollAreaWidgetContents->setObjectName(QString::fromUtf8("scrollAreaWidgetContents"));
+        scrollAreaWidgetContents->setObjectName("scrollAreaWidgetContents");
         scrollAreaWidgetContents->setGeometry(QRect(0, 0, 697, 225));
         gridLayout_4 = new QGridLayout(scrollAreaWidgetContents);
-        gridLayout_4->setObjectName(QString::fromUtf8("gridLayout_4"));
-        verticalSpacer = new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding);
+        gridLayout_4->setObjectName("gridLayout_4");
+        verticalSpacer = new QSpacerItem(20, 40, QSizePolicy::Policy::Minimum, QSizePolicy::Policy::Expanding);
 
         gridLayout_4->addItem(verticalSpacer, 1, 0, 1, 1);
 
         verticalLayout = new QVBoxLayout();
-        verticalLayout->setObjectName(QString::fromUtf8("verticalLayout"));
+        verticalLayout->setObjectName("verticalLayout");
         horizontalLayout_5 = new QHBoxLayout();
-        horizontalLayout_5->setObjectName(QString::fromUtf8("horizontalLayout_5"));
+        horizontalLayout_5->setObjectName("horizontalLayout_5");
         groupBox = new QGroupBox(scrollAreaWidgetContents);
-        groupBox->setObjectName(QString::fromUtf8("groupBox"));
+        groupBox->setObjectName("groupBox");
         gridLayout = new QGridLayout(groupBox);
-        gridLayout->setObjectName(QString::fromUtf8("gridLayout"));
+        gridLayout->setObjectName("gridLayout");
         horizontalLayout_2 = new QHBoxLayout();
-        horizontalLayout_2->setObjectName(QString::fromUtf8("horizontalLayout_2"));
+        horizontalLayout_2->setObjectName("horizontalLayout_2");
         label_2 = new QLabel(groupBox);
-        label_2->setObjectName(QString::fromUtf8("label_2"));
+        label_2->setObjectName("label_2");
 
         horizontalLayout_2->addWidget(label_2);
 
         lineEdit_2 = new QLineEdit(groupBox);
-        lineEdit_2->setObjectName(QString::fromUtf8("lineEdit_2"));
-        QSizePolicy sizePolicy(QSizePolicy::Maximum, QSizePolicy::Fixed);
+        lineEdit_2->setObjectName("lineEdit_2");
+        QSizePolicy sizePolicy(QSizePolicy::Policy::Maximum, QSizePolicy::Policy::Fixed);
         sizePolicy.setHorizontalStretch(0);
         sizePolicy.setVerticalStretch(0);
         sizePolicy.setHeightForWidth(lineEdit_2->sizePolicy().hasHeightForWidth());
@@ -123,23 +123,23 @@ public:
         horizontalLayout_2->addWidget(lineEdit_2);
 
         checkBox_5 = new QCheckBox(groupBox);
-        checkBox_5->setObjectName(QString::fromUtf8("checkBox_5"));
+        checkBox_5->setObjectName("checkBox_5");
 
         horizontalLayout_2->addWidget(checkBox_5);
 
         checkBox_6 = new QCheckBox(groupBox);
-        checkBox_6->setObjectName(QString::fromUtf8("checkBox_6"));
+        checkBox_6->setObjectName("checkBox_6");
 
         horizontalLayout_2->addWidget(checkBox_6);
 
         lineEdit_5 = new QLineEdit(groupBox);
-        lineEdit_5->setObjectName(QString::fromUtf8("lineEdit_5"));
+        lineEdit_5->setObjectName("lineEdit_5");
         lineEdit_5->setMinimumSize(QSize(100, 0));
         lineEdit_5->setMaximumSize(QSize(150, 16777215));
 
         horizontalLayout_2->addWidget(lineEdit_5);
 
-        horizontalSpacer_3 = new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
+        horizontalSpacer_3 = new QSpacerItem(40, 20, QSizePolicy::Policy::Expanding, QSizePolicy::Policy::Minimum);
 
         horizontalLayout_2->addItem(horizontalSpacer_3);
 
@@ -147,14 +147,14 @@ public:
         gridLayout->addLayout(horizontalLayout_2, 1, 0, 1, 1);
 
         horizontalLayout = new QHBoxLayout();
-        horizontalLayout->setObjectName(QString::fromUtf8("horizontalLayout"));
+        horizontalLayout->setObjectName("horizontalLayout");
         label = new QLabel(groupBox);
-        label->setObjectName(QString::fromUtf8("label"));
+        label->setObjectName("label");
 
         horizontalLayout->addWidget(label);
 
         lineEdit = new QLineEdit(groupBox);
-        lineEdit->setObjectName(QString::fromUtf8("lineEdit"));
+        lineEdit->setObjectName("lineEdit");
         sizePolicy.setHeightForWidth(lineEdit->sizePolicy().hasHeightForWidth());
         lineEdit->setSizePolicy(sizePolicy);
         lineEdit->setMinimumSize(QSize(100, 0));
@@ -163,26 +163,26 @@ public:
         horizontalLayout->addWidget(lineEdit);
 
         checkBox = new QCheckBox(groupBox);
-        checkBox->setObjectName(QString::fromUtf8("checkBox"));
+        checkBox->setObjectName("checkBox");
 
         horizontalLayout->addWidget(checkBox);
 
         checkBox_2 = new QCheckBox(groupBox);
-        checkBox_2->setObjectName(QString::fromUtf8("checkBox_2"));
+        checkBox_2->setObjectName("checkBox_2");
 
         horizontalLayout->addWidget(checkBox_2);
 
         checkBox_3 = new QCheckBox(groupBox);
-        checkBox_3->setObjectName(QString::fromUtf8("checkBox_3"));
+        checkBox_3->setObjectName("checkBox_3");
 
         horizontalLayout->addWidget(checkBox_3);
 
         checkBox_4 = new QCheckBox(groupBox);
-        checkBox_4->setObjectName(QString::fromUtf8("checkBox_4"));
+        checkBox_4->setObjectName("checkBox_4");
 
         horizontalLayout->addWidget(checkBox_4);
 
-        horizontalSpacer_2 = new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
+        horizontalSpacer_2 = new QSpacerItem(40, 20, QSizePolicy::Policy::Expanding, QSizePolicy::Policy::Minimum);
 
         horizontalLayout->addItem(horizontalSpacer_2);
 
@@ -190,27 +190,27 @@ public:
         gridLayout->addLayout(horizontalLayout, 0, 0, 1, 1);
 
         horizontalLayout_3 = new QHBoxLayout();
-        horizontalLayout_3->setObjectName(QString::fromUtf8("horizontalLayout_3"));
+        horizontalLayout_3->setObjectName("horizontalLayout_3");
         label_3 = new QLabel(groupBox);
-        label_3->setObjectName(QString::fromUtf8("label_3"));
+        label_3->setObjectName("label_3");
 
         horizontalLayout_3->addWidget(label_3);
 
         lineEdit_3 = new QLineEdit(groupBox);
-        lineEdit_3->setObjectName(QString::fromUtf8("lineEdit_3"));
+        lineEdit_3->setObjectName("lineEdit_3");
         sizePolicy.setHeightForWidth(lineEdit_3->sizePolicy().hasHeightForWidth());
         lineEdit_3->setSizePolicy(sizePolicy);
 
         horizontalLayout_3->addWidget(lineEdit_3);
 
         pushButton_2 = new QPushButton(groupBox);
-        pushButton_2->setObjectName(QString::fromUtf8("pushButton_2"));
+        pushButton_2->setObjectName("pushButton_2");
         sizePolicy.setHeightForWidth(pushButton_2->sizePolicy().hasHeightForWidth());
         pushButton_2->setSizePolicy(sizePolicy);
 
         horizontalLayout_3->addWidget(pushButton_2);
 
-        horizontalSpacer_4 = new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
+        horizontalSpacer_4 = new QSpacerItem(40, 20, QSizePolicy::Policy::Expanding, QSizePolicy::Policy::Minimum);
 
         horizontalLayout_3->addItem(horizontalSpacer_4);
 
@@ -221,25 +221,25 @@ public:
         horizontalLayout_5->addWidget(groupBox);
 
         groupBox_2 = new QGroupBox(scrollAreaWidgetContents);
-        groupBox_2->setObjectName(QString::fromUtf8("groupBox_2"));
+        groupBox_2->setObjectName("groupBox_2");
         gridLayout_2 = new QGridLayout(groupBox_2);
-        gridLayout_2->setObjectName(QString::fromUtf8("gridLayout_2"));
+        gridLayout_2->setObjectName("gridLayout_2");
         horizontalLayout_6 = new QHBoxLayout();
-        horizontalLayout_6->setObjectName(QString::fromUtf8("horizontalLayout_6"));
+        horizontalLayout_6->setObjectName("horizontalLayout_6");
         label_5 = new QLabel(groupBox_2);
-        label_5->setObjectName(QString::fromUtf8("label_5"));
+        label_5->setObjectName("label_5");
 
         horizontalLayout_6->addWidget(label_5);
 
         lineEdit_6 = new QLineEdit(groupBox_2);
-        lineEdit_6->setObjectName(QString::fromUtf8("lineEdit_6"));
+        lineEdit_6->setObjectName("lineEdit_6");
         lineEdit_6->setMinimumSize(QSize(100, 0));
         lineEdit_6->setMaximumSize(QSize(150, 16777215));
 
         horizontalLayout_6->addWidget(lineEdit_6);
 
         pushButton_3 = new QPushButton(groupBox_2);
-        pushButton_3->setObjectName(QString::fromUtf8("pushButton_3"));
+        pushButton_3->setObjectName("pushButton_3");
         sizePolicy.setHeightForWidth(pushButton_3->sizePolicy().hasHeightForWidth());
         pushButton_3->setSizePolicy(sizePolicy);
         pushButton_3->setMinimumSize(QSize(50, 0));
@@ -251,24 +251,24 @@ public:
         gridLayout_2->addLayout(horizontalLayout_6, 0, 0, 1, 1);
 
         horizontalLayout_7 = new QHBoxLayout();
-        horizontalLayout_7->setObjectName(QString::fromUtf8("horizontalLayout_7"));
+        horizontalLayout_7->setObjectName("horizontalLayout_7");
         label_6 = new QLabel(groupBox_2);
-        label_6->setObjectName(QString::fromUtf8("label_6"));
+        label_6->setObjectName("label_6");
 
         horizontalLayout_7->addWidget(label_6);
 
         lineEdit_7 = new QLineEdit(groupBox_2);
-        lineEdit_7->setObjectName(QString::fromUtf8("lineEdit_7"));
+        lineEdit_7->setObjectName("lineEdit_7");
 
         horizontalLayout_7->addWidget(lineEdit_7);
 
         label_7 = new QLabel(groupBox_2);
-        label_7->setObjectName(QString::fromUtf8("label_7"));
+        label_7->setObjectName("label_7");
 
         horizontalLayout_7->addWidget(label_7);
 
         lineEdit_8 = new QLineEdit(groupBox_2);
-        lineEdit_8->setObjectName(QString::fromUtf8("lineEdit_8"));
+        lineEdit_8->setObjectName("lineEdit_8");
         lineEdit_8->setMinimumSize(QSize(50, 0));
         lineEdit_8->setMaximumSize(QSize(50, 16777215));
 
@@ -284,26 +284,26 @@ public:
         verticalLayout->addLayout(horizontalLayout_5);
 
         horizontalLayout_4 = new QHBoxLayout();
-        horizontalLayout_4->setObjectName(QString::fromUtf8("horizontalLayout_4"));
+        horizontalLayout_4->setObjectName("horizontalLayout_4");
         label_4 = new QLabel(scrollAreaWidgetContents);
-        label_4->setObjectName(QString::fromUtf8("label_4"));
+        label_4->setObjectName("label_4");
 
         horizontalLayout_4->addWidget(label_4);
 
         lineEdit_4 = new QLineEdit(scrollAreaWidgetContents);
-        lineEdit_4->setObjectName(QString::fromUtf8("lineEdit_4"));
+        lineEdit_4->setObjectName("lineEdit_4");
         sizePolicy.setHeightForWidth(lineEdit_4->sizePolicy().hasHeightForWidth());
         lineEdit_4->setSizePolicy(sizePolicy);
         lineEdit_4->setMaximumSize(QSize(150, 16777215));
 
         horizontalLayout_4->addWidget(lineEdit_4);
 
-        horizontalSpacer = new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
+        horizontalSpacer = new QSpacerItem(40, 20, QSizePolicy::Policy::Expanding, QSizePolicy::Policy::Minimum);
 
         horizontalLayout_4->addItem(horizontalSpacer);
 
         pushButton = new QPushButton(scrollAreaWidgetContents);
-        pushButton->setObjectName(QString::fromUtf8("pushButton"));
+        pushButton->setObjectName("pushButton");
         sizePolicy.setHeightForWidth(pushButton->sizePolicy().hasHeightForWidth());
         pushButton->setSizePolicy(sizePolicy);
 
@@ -315,7 +315,7 @@ public:
 
         gridLayout_4->addLayout(verticalLayout, 0, 0, 1, 1);
 
-        horizontalSpacer_5 = new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
+        horizontalSpacer_5 = new QSpacerItem(40, 20, QSizePolicy::Policy::Expanding, QSizePolicy::Policy::Minimum);
 
         gridLayout_4->addItem(horizontalSpacer_5, 0, 1, 1, 1);
 
@@ -325,7 +325,7 @@ public:
 
 
         retranslateUi(Arithmetic);
-        QObject::connect(pushButton, SIGNAL(clicked()), Arithmetic, SLOT(close()));
+        QObject::connect(pushButton, &QPushButton::clicked, Arithmetic, qOverload<>(&QDialog::close));
 
         QMetaObject::connectSlotsByName(Arithmetic);
     } // setupUi

@@ -1,4 +1,5 @@
 #include "edit.h"
+#include "resources.h"
 #include "ui_edit.h"
 #include <string>
 #include <sstream>
@@ -46,14 +47,18 @@ Edit::Edit(QWidget *parent) :
     // step sizes
     ui->doubleSpinBox_5->setValue(3);
 
-    string sbin = "BinaryData.dat";
+    // Orbital elements database: current directory, ~/.local/share/spectangular, program
+    // or installation directory (resources.h)
+    QString qBinName = findResource("BinaryData.dat");
+    string sbin = qBinName.toStdString();
     ifstream binaries(sbin.c_str());
 
-    QFile qBin(sbin.c_str());
+    QFile qBin(qBinName);
 
-    if(!qBin.exists()){
+    if(qBinName.isEmpty() || !qBin.exists()){
         qDebug()<<"No data base file for orbits of binaries present.";
-        QMessageBox::information(this, "Error", "Data base of orbital elements not present.");
+        QMessageBox::information(this, "Error", "Data base of orbital elements (BinaryData.dat) not present. Searched: "
+                                 +resourceSearchPath());
 
         ui->doubleSpinBox_13->setValue(1.0);
         ui->doubleSpinBox_14->setValue(1.0);
@@ -142,6 +147,29 @@ void Edit::seData(QString str, int g, double k)
 }
 
 //**************************************************
+// orbital elements file of the main window; its elements are shown if it exists
+//**************************************************
+void Edit::setOrbitFile(const QString &f)
+{
+    orbitFile = f.isEmpty() ? QString("orbitelements.dat") : f;
+    std::ifstream in((qEPath + "/" + orbitFile).toStdString().c_str());
+    double v[7];
+    for(int i=0; i<7; i++){
+        if(!(in>>v[i]) || !std::isfinite(v[i]))
+            return;                       // missing or incomplete: keep the defaults
+    }
+    if(v[0]<=0 || v[1]<0 || v[1]>=1)
+        return;
+    ui->doubleSpinBox_6->setValue(v[0]);
+    ui->doubleSpinBox_7->setValue(v[1]);
+    ui->doubleSpinBox_8->setValue(v[2]);
+    ui->doubleSpinBox_9->setValue(v[3]);
+    ui->doubleSpinBox_10->setValue(v[4]);
+    ui->doubleSpinBox_11->setValue(v[5]);
+    ui->doubleSpinBox_12->setValue(std::fmod(v[6]*180.0/M_PI, 360.0));
+}
+
+//**************************************************
 //set rows in tables
 //**************************************************
 void Edit::on_spinBox_valueChanged()
@@ -196,19 +224,26 @@ void Edit::on_pushButton_2_clicked()
 
     obser=ui->spinBox->value();
 
-    QTableWidgetItem *item;
-
     for(int i=0; i<3*obser; i++){
+        QTableWidgetItem *item = nullptr;
         if(i<obser){
-        item=ui->tableWidget->item(i,0);
+            item=ui->tableWidget->item(i,0);
         }
-        if(i>=obser & i<2*obser){
-        item=ui->tableWidget_2->item(i-obser,0);
+        else if(i<2*obser){
+            item=ui->tableWidget_2->item(i-obser,0);
         }
-        if(i>=2*obser){
-        item=ui->tableWidget_3->item(i-2*obser,0);
+        else{
+            item=ui->tableWidget_3->item(i-2*obser,0);
         }
-                edit<<item->text().toDouble()<<endl;
+        // empty cell: previously a crash (null pointer)
+        if(item==nullptr || item->text().trimmed().isEmpty()){
+            edit.close();
+            QFile::remove(QString::fromStdString(dat1Name));
+            QMessageBox::information(this, "Error", "Please fill in all rows of the three tables (row "
+                                     +QString::number(i%obser+1)+" is empty).");
+            return;
+        }
+        edit<<item->text().toDouble()<<endl;
     }
 }
 
@@ -272,7 +307,7 @@ void Edit::on_pushButton_8_clicked()
     qEPath=ui->lineEdit_3->text();
     ePath = qEPath.toUtf8().constData();
 
-    string sedit = "orbitelements.dat";
+    string sedit = orbitFile.toStdString();
     std::ostringstream dat1NameStream(sedit);
     dat1NameStream<<ePath<<"/"<<sedit;
     std::string dat1Name = dat1NameStream.str();
@@ -297,7 +332,7 @@ void Edit::on_pushButton_9_clicked()
     qEPath=ui->lineEdit_3->text();
     ePath = qEPath.toUtf8().constData();
 
-    string sedit = "orbitelements.dat";
+    string sedit = orbitFile.toStdString();
     std::ostringstream dat1NameStream(sedit);
     dat1NameStream<<ePath<<"/"<<sedit;
     std::string dat1Name = dat1NameStream.str();
@@ -461,7 +496,9 @@ void Edit::on_pushButton_11_clicked()
     init<<setprecision(10)<<ui->doubleSpinBox_16->value()<<endl;
     init<<setprecision(10)<<ui->doubleSpinBox_17->value()<<endl;
     init<<setprecision(10)<<ui->doubleSpinBox_18->value()<<endl;
-    init<<setprecision(10)<<ui->doubleSpinBox_19->value()<<endl;
+    // omega: in degrees in the editor (like omega itself), in radians in the file,
+    // like orbitelements.dat (bug report H6)
+    init<<setprecision(10)<<ui->doubleSpinBox_19->value()/180*M_PI<<endl;
 }
 
 //****************************************
@@ -639,7 +676,6 @@ void Edit::on_pushButton_15_clicked()
     }
     ui->spinBox->setValue(obser);
 
-    QTableWidgetItem *wratio;
     QString qratio;
     double FA, FB;
 

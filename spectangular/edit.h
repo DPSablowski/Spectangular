@@ -17,6 +17,10 @@ public:
 
 public slots:
     void seData(QString str, int g, double k);
+    // name of the orbital elements file (Data tab of the main window)
+    // (the fields show its elements if it exists, so that "Apply Orbit" does not overwrite
+    // them with the defaults)
+    void setOrbitFile(const QString &f);
 
 private slots:
     void on_spinBox_valueChanged();
@@ -60,6 +64,7 @@ private slots:
     void on_pushButton_19_clicked();
 
 private:
+    QString orbitFile = "orbitelements.dat";
     Ui::Edit *ui;
 };
 

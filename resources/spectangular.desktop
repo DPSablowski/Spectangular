@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Spectangular
+GenericName=Spectral disentangling
+Comment=Spectral disentangling of double-lined binary spectra and orbit fitting
+Exec=Spectangular
+Icon=spectangular
+Terminal=false
+Categories=Science;Astronomy;Education;

@@ -67,8 +67,12 @@ void Arithmetic::on_pushButton_2_clicked()
 
     QFile checkfile2(datBName.c_str());
 
-    if(!checkfile1.exists()){
-        QMessageBox::information(this, "Error", "File"+qAPath+"/"+inputB+" does not exist!");
+    // spectrum B is needed for A+B, A-B, A*B and A/B
+    const bool needB = ui->checkBox->isChecked() || ui->checkBox_2->isChecked()
+                       || ui->checkBox_3->isChecked() || ui->checkBox_4->isChecked();
+
+    if(needB && !checkfile2.exists()){
+        QMessageBox::information(this, "Error", "File "+qAPath+"/"+inputB+" does not exist!");
         this->setCursor(QCursor(Qt::ArrowCursor));
        return;
     }
@@ -115,6 +119,24 @@ void Arithmetic::on_pushButton_2_clicked()
     ist3 >> c[g];
     istringstream ist4(zwei);
     ist4 >> d[g];
+    }
+
+    // pixel-wise operations require the same wavelength grid (bug report H7)
+    if(needB){
+        if(numpixA!=numpixB){
+            QMessageBox::information(this, "Error", "Unequal length of data ("+QString::number(numpixA)
+                                     +" and "+QString::number(numpixB)+" lines).");
+            this->setCursor(QCursor(Qt::ArrowCursor));
+            return;
+        }
+        for(int g=0; g<numpixA; g++){
+            if(std::fabs(c[g]-a[g]) > 1e-6*std::fabs(a[g])){
+                QMessageBox::information(this, "Error", "The spectra have different wavelength grids (line "
+                                         +QString::number(g+1)+").");
+                this->setCursor(QCursor(Qt::ArrowCursor));
+                return;
+            }
+        }
     }
 
     QString output=ui->lineEdit_3->text();
@@ -311,7 +333,7 @@ void Arithmetic::on_pushButton_3_clicked()
                 }
             }
         }
-        pdiff[ndiff]=dlines1-1;
+        pdiff[ndiff]=dlines1;   // end exclusive: the last point is written too
         //cout<<pdiff[ndiff+1]<<endl;
 
 
@@ -327,6 +349,7 @@ void Arithmetic::on_pushButton_3_clicked()
         outANameStream<<outA<<i<<"."<<ext;
         std::string outAName = outANameStream.str();
         ofstream ouA(outAName.c_str());
+        ouA<<setprecision(14);   // segment 0 also with full precision
 
         for(int n =0; n<pdiff[i]; n++){
             if(i==0){

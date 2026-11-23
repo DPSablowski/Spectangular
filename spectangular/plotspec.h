@@ -2,6 +2,7 @@
 #define PLOTSPEC_H
 
 #include <QDialog>
+#include "fluxratio.h"
 
 namespace Ui {
 class PlotSpec;
@@ -17,6 +18,8 @@ public:
 
 public slots:
     void seData(QString str, QString str2, QString str3, QString str4);
+    // flux-ratio model of the main window: F_A/F_B = k s(lambda)
+    void setRatioModel(const fr::Model &m, double k);
 
     void on_pushButton_2_clicked();
 
@@ -82,7 +85,6 @@ private slots:
 
     void on_pushButton_13_clicked();
 
-    void on_checkBox_14_clicked();
 
     void on_checkBox_13_clicked();
 
@@ -93,9 +95,12 @@ private slots:
     void on_checkBox_20_clicked();
 
     void on_checkBox_21_clicked();
+    void on_checkBox_rmodel_clicked();
 
 private:
     Ui::PlotSpec *ui;
+    fr::Model ratioModel;
+    double ratioK = 1.0;
 };
 
 #endif // PLOTSPEC_H

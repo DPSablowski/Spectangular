@@ -930,7 +930,7 @@
                 <item>
                  <widget class="QLabel" name="label_29">
                   <property name="text">
-                   <string>Long. Peri. Passage [rad]:</string>
+                   <string>Long. Peri. Passage [deg]:</string>
                   </property>
                  </widget>
                 </item>
