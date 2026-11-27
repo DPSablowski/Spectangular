@@ -27,6 +27,7 @@
 #include <QtWidgets/QMenu>
 #include <QtWidgets/QMenuBar>
 #include <QtWidgets/QPlainTextEdit>
+#include <QtWidgets/QProgressBar>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QScrollArea>
 #include <QtWidgets/QSpacerItem>
@@ -57,6 +58,7 @@ public:
     QAction *actionOrbitFit;
     QAction *actionFluxTemplate;
     QAction *actionBaryCorr;
+    QAction *actionPeriod;
     QWidget *centralWidget;
     QVBoxLayout *vCentral;
     QHBoxLayout *hWorkflow;
@@ -268,6 +270,19 @@ public:
     QCheckBox *checkBox_29;
     QCheckBox *checkBox_30;
     QSpacerItem *sp_51;
+    QGroupBox *grpLineScan;
+    QGridLayout *grdLineScan;
+    QLabel *lbl_ls1;
+    QLineEdit *lineEdit_lsGrid;
+    QLabel *lbl_ls2;
+    QLineEdit *lineEdit_lsLines;
+    QLabel *lbl_ls3;
+    QLineEdit *lineEdit_lsOut;
+    QPushButton *pushButton_lsFind;
+    QPushButton *pushButton_lsScan;
+    QCheckBox *checkBox_lsSave;
+    QPushButton *pushButton_lsShow;
+    QProgressBar *progressBar_lsScan;
     QSpacerItem *sp_55;
     QWidget *tabOut;
     QVBoxLayout *tabOut_l;
@@ -317,6 +332,13 @@ public:
     QLineEdit *lineEdit_best;
     QLabel *lbl_optdata;
     QLineEdit *lineEdit_optdata;
+    QGroupBox *grpAnalysis;
+    QGridLayout *grdAnalysis;
+    QCheckBox *checkBox_anaFit;
+    QLineEdit *lineEdit_anaFit;
+    QCheckBox *checkBox_anaLines;
+    QLineEdit *lineEdit_lines;
+    QLineEdit *lineEdit_anaLines;
     QSpacerItem *sp_67;
     QTabWidget *tabPlots;
     QWidget *tabSpectra;
@@ -324,7 +346,6 @@ public:
     QLabel *labelLegend;
     QCustomPlot *customPlot;
     QCustomPlot *customPlot_2;
-    QCustomPlot *customPlot_3;
     QHBoxLayout *hSpecOpts;
     QCheckBox *checkBox_10;
     QCheckBox *checkBox_22;
@@ -334,10 +355,9 @@ public:
     QSpinBox *spinBox_6;
     QSpacerItem *sp_70;
     QPushButton *pushButton_6;
-    QWidget *tabConv;
-    QVBoxLayout *tabConv_l;
-    QCustomPlot *customPlot_4;
+    QHBoxLayout *hStatPlots;
     QCustomPlot *customPlot_5;
+    QCustomPlot *customPlot_6;
     QHBoxLayout *hStatOpts;
     QLabel *lbl_72;
     QDoubleSpinBox *doubleSpinBox_st1;
@@ -346,11 +366,15 @@ public:
     QLabel *lbl_74;
     QSpacerItem *sp_75;
     QPushButton *pushButton_stat;
-    QWidget *tabMessages;
-    QVBoxLayout *tabMessages_l;
+    QWidget *tabConv;
+    QVBoxLayout *tabConv_l;
+    QCustomPlot *customPlot_4;
+    QHBoxLayout *hTextOut;
+    QGroupBox *groupBox_messages;
+    QVBoxLayout *vMessages;
     QPlainTextEdit *plainTextEdit_2;
-    QWidget *tabRVs;
-    QVBoxLayout *tabRVs_l;
+    QGroupBox *groupBox_rvs;
+    QVBoxLayout *vRVs;
     QPlainTextEdit *plainTextEdit;
     QFrame *frameStatus;
     QHBoxLayout *hStatus;
@@ -425,6 +449,8 @@ public:
         actionFluxTemplate->setObjectName(QString::fromUtf8("actionFluxTemplate"));
         actionBaryCorr = new QAction(MainWindow);
         actionBaryCorr->setObjectName(QString::fromUtf8("actionBaryCorr"));
+        actionPeriod = new QAction(MainWindow);
+        actionPeriod->setObjectName(QString::fromUtf8("actionPeriod"));
         centralWidget = new QWidget(MainWindow);
         centralWidget->setObjectName(QString::fromUtf8("centralWidget"));
         vCentral = new QVBoxLayout(centralWidget);
@@ -1569,6 +1595,70 @@ public:
 
         tabOpt_v->addWidget(grpFlux);
 
+        grpLineScan = new QGroupBox(tabOpt_c);
+        grpLineScan->setObjectName(QString::fromUtf8("grpLineScan"));
+        grdLineScan = new QGridLayout(grpLineScan);
+        grdLineScan->setObjectName(QString::fromUtf8("grdLineScan"));
+        lbl_ls1 = new QLabel(grpLineScan);
+        lbl_ls1->setObjectName(QString::fromUtf8("lbl_ls1"));
+
+        grdLineScan->addWidget(lbl_ls1, 0, 0, 1, 1);
+
+        lineEdit_lsGrid = new QLineEdit(grpLineScan);
+        lineEdit_lsGrid->setObjectName(QString::fromUtf8("lineEdit_lsGrid"));
+
+        grdLineScan->addWidget(lineEdit_lsGrid, 0, 1, 1, 1);
+
+        lbl_ls2 = new QLabel(grpLineScan);
+        lbl_ls2->setObjectName(QString::fromUtf8("lbl_ls2"));
+
+        grdLineScan->addWidget(lbl_ls2, 0, 2, 1, 1);
+
+        lineEdit_lsLines = new QLineEdit(grpLineScan);
+        lineEdit_lsLines->setObjectName(QString::fromUtf8("lineEdit_lsLines"));
+
+        grdLineScan->addWidget(lineEdit_lsLines, 0, 3, 1, 1);
+
+        lbl_ls3 = new QLabel(grpLineScan);
+        lbl_ls3->setObjectName(QString::fromUtf8("lbl_ls3"));
+
+        grdLineScan->addWidget(lbl_ls3, 1, 0, 1, 1);
+
+        lineEdit_lsOut = new QLineEdit(grpLineScan);
+        lineEdit_lsOut->setObjectName(QString::fromUtf8("lineEdit_lsOut"));
+
+        grdLineScan->addWidget(lineEdit_lsOut, 1, 1, 1, 1);
+
+        pushButton_lsFind = new QPushButton(grpLineScan);
+        pushButton_lsFind->setObjectName(QString::fromUtf8("pushButton_lsFind"));
+
+        grdLineScan->addWidget(pushButton_lsFind, 1, 2, 1, 1);
+
+        pushButton_lsScan = new QPushButton(grpLineScan);
+        pushButton_lsScan->setObjectName(QString::fromUtf8("pushButton_lsScan"));
+
+        grdLineScan->addWidget(pushButton_lsScan, 1, 3, 1, 1);
+
+        checkBox_lsSave = new QCheckBox(grpLineScan);
+        checkBox_lsSave->setObjectName(QString::fromUtf8("checkBox_lsSave"));
+
+        grdLineScan->addWidget(checkBox_lsSave, 2, 0, 1, 2);
+
+        pushButton_lsShow = new QPushButton(grpLineScan);
+        pushButton_lsShow->setObjectName(QString::fromUtf8("pushButton_lsShow"));
+
+        grdLineScan->addWidget(pushButton_lsShow, 2, 2, 1, 2);
+
+        progressBar_lsScan = new QProgressBar(grpLineScan);
+        progressBar_lsScan->setObjectName(QString::fromUtf8("progressBar_lsScan"));
+        progressBar_lsScan->setMaximum(1);
+        progressBar_lsScan->setValue(0);
+
+        grdLineScan->addWidget(progressBar_lsScan, 3, 0, 1, 4);
+
+
+        tabOpt_v->addWidget(grpLineScan);
+
         sp_55 = new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding);
 
         tabOpt_v->addItem(sp_55);
@@ -1811,6 +1901,40 @@ public:
 
         tabOut_v->addWidget(grpState);
 
+        grpAnalysis = new QGroupBox(tabOut_c);
+        grpAnalysis->setObjectName(QString::fromUtf8("grpAnalysis"));
+        grdAnalysis = new QGridLayout(grpAnalysis);
+        grdAnalysis->setObjectName(QString::fromUtf8("grdAnalysis"));
+        checkBox_anaFit = new QCheckBox(grpAnalysis);
+        checkBox_anaFit->setObjectName(QString::fromUtf8("checkBox_anaFit"));
+        checkBox_anaFit->setChecked(true);
+
+        grdAnalysis->addWidget(checkBox_anaFit, 0, 0, 1, 1);
+
+        lineEdit_anaFit = new QLineEdit(grpAnalysis);
+        lineEdit_anaFit->setObjectName(QString::fromUtf8("lineEdit_anaFit"));
+
+        grdAnalysis->addWidget(lineEdit_anaFit, 0, 1, 1, 2);
+
+        checkBox_anaLines = new QCheckBox(grpAnalysis);
+        checkBox_anaLines->setObjectName(QString::fromUtf8("checkBox_anaLines"));
+        checkBox_anaLines->setChecked(true);
+
+        grdAnalysis->addWidget(checkBox_anaLines, 1, 0, 1, 1);
+
+        lineEdit_lines = new QLineEdit(grpAnalysis);
+        lineEdit_lines->setObjectName(QString::fromUtf8("lineEdit_lines"));
+
+        grdAnalysis->addWidget(lineEdit_lines, 1, 1, 1, 1);
+
+        lineEdit_anaLines = new QLineEdit(grpAnalysis);
+        lineEdit_anaLines->setObjectName(QString::fromUtf8("lineEdit_anaLines"));
+
+        grdAnalysis->addWidget(lineEdit_anaLines, 1, 2, 1, 1);
+
+
+        tabOut_v->addWidget(grpAnalysis);
+
         sp_67 = new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding);
 
         tabOut_v->addItem(sp_67);
@@ -1853,12 +1977,6 @@ public:
         customPlot_2->setMinimumSize(QSize(300, 120));
 
         tabSpectra_l->addWidget(customPlot_2);
-
-        customPlot_3 = new QCustomPlot(tabSpectra);
-        customPlot_3->setObjectName(QString::fromUtf8("customPlot_3"));
-        customPlot_3->setMinimumSize(QSize(300, 180));
-
-        tabSpectra_l->addWidget(customPlot_3);
 
         hSpecOpts = new QHBoxLayout();
         hSpecOpts->setObjectName(QString::fromUtf8("hSpecOpts"));
@@ -1914,6 +2032,72 @@ public:
 
         tabSpectra_l->addLayout(hSpecOpts);
 
+        hStatPlots = new QHBoxLayout();
+        hStatPlots->setObjectName(QString::fromUtf8("hStatPlots"));
+        customPlot_5 = new QCustomPlot(tabSpectra);
+        customPlot_5->setObjectName(QString::fromUtf8("customPlot_5"));
+        customPlot_5->setMinimumSize(QSize(300, 200));
+
+        hStatPlots->addWidget(customPlot_5);
+
+        customPlot_6 = new QCustomPlot(tabSpectra);
+        customPlot_6->setObjectName(QString::fromUtf8("customPlot_6"));
+        customPlot_6->setMinimumSize(QSize(250, 200));
+
+        hStatPlots->addWidget(customPlot_6);
+
+
+        tabSpectra_l->addLayout(hStatPlots);
+
+        hStatOpts = new QHBoxLayout();
+        hStatOpts->setObjectName(QString::fromUtf8("hStatOpts"));
+        lbl_72 = new QLabel(tabSpectra);
+        lbl_72->setObjectName(QString::fromUtf8("lbl_72"));
+
+        hStatOpts->addWidget(lbl_72);
+
+        doubleSpinBox_st1 = new QDoubleSpinBox(tabSpectra);
+        doubleSpinBox_st1->setObjectName(QString::fromUtf8("doubleSpinBox_st1"));
+        doubleSpinBox_st1->setDecimals(2);
+        doubleSpinBox_st1->setMaximum(1000000.000000000000000);
+        doubleSpinBox_st1->setSingleStep(1.000000000000000);
+        doubleSpinBox_st1->setMinimumSize(QSize(100, 0));
+        doubleSpinBox_st1->setMaximumSize(QSize(100, 16777215));
+
+        hStatOpts->addWidget(doubleSpinBox_st1);
+
+        lbl_73 = new QLabel(tabSpectra);
+        lbl_73->setObjectName(QString::fromUtf8("lbl_73"));
+
+        hStatOpts->addWidget(lbl_73);
+
+        doubleSpinBox_st2 = new QDoubleSpinBox(tabSpectra);
+        doubleSpinBox_st2->setObjectName(QString::fromUtf8("doubleSpinBox_st2"));
+        doubleSpinBox_st2->setDecimals(2);
+        doubleSpinBox_st2->setMaximum(1000000.000000000000000);
+        doubleSpinBox_st2->setSingleStep(1.000000000000000);
+        doubleSpinBox_st2->setMinimumSize(QSize(100, 0));
+        doubleSpinBox_st2->setMaximumSize(QSize(100, 16777215));
+
+        hStatOpts->addWidget(doubleSpinBox_st2);
+
+        lbl_74 = new QLabel(tabSpectra);
+        lbl_74->setObjectName(QString::fromUtf8("lbl_74"));
+
+        hStatOpts->addWidget(lbl_74);
+
+        sp_75 = new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Minimum);
+
+        hStatOpts->addItem(sp_75);
+
+        pushButton_stat = new QPushButton(tabSpectra);
+        pushButton_stat->setObjectName(QString::fromUtf8("pushButton_stat"));
+
+        hStatOpts->addWidget(pushButton_stat);
+
+
+        tabSpectra_l->addLayout(hStatOpts);
+
         tabPlots->addTab(tabSpectra, QString());
         tabConv = new QWidget();
         tabConv->setObjectName(QString::fromUtf8("tabConv"));
@@ -1927,87 +2111,38 @@ public:
 
         tabConv_l->addWidget(customPlot_4);
 
-        customPlot_5 = new QCustomPlot(tabConv);
-        customPlot_5->setObjectName(QString::fromUtf8("customPlot_5"));
-        customPlot_5->setMinimumSize(QSize(300, 200));
-
-        tabConv_l->addWidget(customPlot_5);
-
-        hStatOpts = new QHBoxLayout();
-        hStatOpts->setObjectName(QString::fromUtf8("hStatOpts"));
-        lbl_72 = new QLabel(tabConv);
-        lbl_72->setObjectName(QString::fromUtf8("lbl_72"));
-
-        hStatOpts->addWidget(lbl_72);
-
-        doubleSpinBox_st1 = new QDoubleSpinBox(tabConv);
-        doubleSpinBox_st1->setObjectName(QString::fromUtf8("doubleSpinBox_st1"));
-        doubleSpinBox_st1->setDecimals(2);
-        doubleSpinBox_st1->setMaximum(1000000.000000000000000);
-        doubleSpinBox_st1->setSingleStep(1.000000000000000);
-        doubleSpinBox_st1->setMinimumSize(QSize(100, 0));
-        doubleSpinBox_st1->setMaximumSize(QSize(100, 16777215));
-
-        hStatOpts->addWidget(doubleSpinBox_st1);
-
-        lbl_73 = new QLabel(tabConv);
-        lbl_73->setObjectName(QString::fromUtf8("lbl_73"));
-
-        hStatOpts->addWidget(lbl_73);
-
-        doubleSpinBox_st2 = new QDoubleSpinBox(tabConv);
-        doubleSpinBox_st2->setObjectName(QString::fromUtf8("doubleSpinBox_st2"));
-        doubleSpinBox_st2->setDecimals(2);
-        doubleSpinBox_st2->setMaximum(1000000.000000000000000);
-        doubleSpinBox_st2->setSingleStep(1.000000000000000);
-        doubleSpinBox_st2->setMinimumSize(QSize(100, 0));
-        doubleSpinBox_st2->setMaximumSize(QSize(100, 16777215));
-
-        hStatOpts->addWidget(doubleSpinBox_st2);
-
-        lbl_74 = new QLabel(tabConv);
-        lbl_74->setObjectName(QString::fromUtf8("lbl_74"));
-
-        hStatOpts->addWidget(lbl_74);
-
-        sp_75 = new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Minimum);
-
-        hStatOpts->addItem(sp_75);
-
-        pushButton_stat = new QPushButton(tabConv);
-        pushButton_stat->setObjectName(QString::fromUtf8("pushButton_stat"));
-
-        hStatOpts->addWidget(pushButton_stat);
-
-
-        tabConv_l->addLayout(hStatOpts);
-
-        tabPlots->addTab(tabConv, QString());
-        tabMessages = new QWidget();
-        tabMessages->setObjectName(QString::fromUtf8("tabMessages"));
-        tabMessages_l = new QVBoxLayout(tabMessages);
-        tabMessages_l->setSpacing(4);
-        tabMessages_l->setObjectName(QString::fromUtf8("tabMessages_l"));
-        tabMessages_l->setContentsMargins(4, 4, 4, 4);
-        plainTextEdit_2 = new QPlainTextEdit(tabMessages);
+        hTextOut = new QHBoxLayout();
+        hTextOut->setObjectName(QString::fromUtf8("hTextOut"));
+        groupBox_messages = new QGroupBox(tabConv);
+        groupBox_messages->setObjectName(QString::fromUtf8("groupBox_messages"));
+        vMessages = new QVBoxLayout(groupBox_messages);
+        vMessages->setObjectName(QString::fromUtf8("vMessages"));
+        vMessages->setContentsMargins(4, 4, 4, 4);
+        plainTextEdit_2 = new QPlainTextEdit(groupBox_messages);
         plainTextEdit_2->setObjectName(QString::fromUtf8("plainTextEdit_2"));
 
-        tabMessages_l->addWidget(plainTextEdit_2);
+        vMessages->addWidget(plainTextEdit_2);
 
-        tabPlots->addTab(tabMessages, QString());
-        tabRVs = new QWidget();
-        tabRVs->setObjectName(QString::fromUtf8("tabRVs"));
-        tabRVs_l = new QVBoxLayout(tabRVs);
-        tabRVs_l->setSpacing(4);
-        tabRVs_l->setObjectName(QString::fromUtf8("tabRVs_l"));
-        tabRVs_l->setContentsMargins(4, 4, 4, 4);
-        plainTextEdit = new QPlainTextEdit(tabRVs);
+
+        hTextOut->addWidget(groupBox_messages);
+
+        groupBox_rvs = new QGroupBox(tabConv);
+        groupBox_rvs->setObjectName(QString::fromUtf8("groupBox_rvs"));
+        vRVs = new QVBoxLayout(groupBox_rvs);
+        vRVs->setObjectName(QString::fromUtf8("vRVs"));
+        vRVs->setContentsMargins(4, 4, 4, 4);
+        plainTextEdit = new QPlainTextEdit(groupBox_rvs);
         plainTextEdit->setObjectName(QString::fromUtf8("plainTextEdit"));
-        plainTextEdit->setEnabled(true);
 
-        tabRVs_l->addWidget(plainTextEdit);
+        vRVs->addWidget(plainTextEdit);
 
-        tabPlots->addTab(tabRVs, QString());
+
+        hTextOut->addWidget(groupBox_rvs);
+
+
+        tabConv_l->addLayout(hTextOut);
+
+        tabPlots->addTab(tabConv, QString());
 
         hBody->addWidget(tabPlots);
 
@@ -2187,6 +2322,7 @@ public:
         menuTools->addAction(actionOrbitFit);
         menuTools->addAction(actionFluxTemplate);
         menuTools->addAction(actionBaryCorr);
+        menuTools->addAction(actionPeriod);
         menuHelp->addAction(actionAbout);
         menuHelp->addAction(actionBug_Report);
         menuHelp->addAction(actionManual);
@@ -2242,6 +2378,7 @@ public:
         actionOrbitFit->setText(QCoreApplication::translate("MainWindow", "Orbit fit to RVs\342\200\246", nullptr));
         actionFluxTemplate->setText(QCoreApplication::translate("MainWindow", "Flux ratio from synthetic spectra\342\200\246", nullptr));
         actionBaryCorr->setText(QCoreApplication::translate("MainWindow", "Barycentric correction\342\200\246", nullptr));
+        actionPeriod->setText(QCoreApplication::translate("MainWindow", "Period analysis\342\200\246", nullptr));
         centralWidget->setStyleSheet(QCoreApplication::translate("MainWindow", "QLineEdit[readOnly=\"true\"], QAbstractSpinBox[readOnly=\"true\"] { color: palette(text); background: palette(window); }", nullptr));
 #if QT_CONFIG(tooltip)
         pushButton_2->setToolTip(QCoreApplication::translate("MainWindow", "Read the spectra and RVs, build the matrix.", nullptr));
@@ -2552,6 +2689,42 @@ public:
         lbl_50->setText(QCoreApplication::translate("MainWindow", "criterion", nullptr));
         checkBox_29->setText(QCoreApplication::translate("MainWindow", "Residuum", nullptr));
         checkBox_30->setText(QCoreApplication::translate("MainWindow", "slope m", nullptr));
+        grpLineScan->setTitle(QCoreApplication::translate("MainWindow", "Line width scan (orbit grid)", nullptr));
+        lbl_ls1->setText(QCoreApplication::translate("MainWindow", "Orbit grid file", nullptr));
+#if QT_CONFIG(tooltip)
+        lineEdit_lsGrid->setToolTip(QCoreApplication::translate("MainWindow", "7 rows (P, e, K_A, K_B, gamma, T_peri, omega as in the orbital element file), one column per orbit", nullptr));
+#endif // QT_CONFIG(tooltip)
+        lineEdit_lsGrid->setText(QCoreApplication::translate("MainWindow", "orbitgrid.dat", nullptr));
+        lbl_ls2->setText(QCoreApplication::translate("MainWindow", "Line list", nullptr));
+#if QT_CONFIG(tooltip)
+        lineEdit_lsLines->setToolTip(QCoreApplication::translate("MainWindow", "Lines of the scan, written by Find Lines / Apply", nullptr));
+#endif // QT_CONFIG(tooltip)
+        lineEdit_lsLines->setText(QCoreApplication::translate("MainWindow", "scanlines.dat", nullptr));
+        lbl_ls3->setText(QCoreApplication::translate("MainWindow", "Result file", nullptr));
+#if QT_CONFIG(tooltip)
+        lineEdit_lsOut->setToolTip(QCoreApplication::translate("MainWindow", "Result of the scan: elements, residuum, width of the lines of the second component", nullptr));
+#endif // QT_CONFIG(tooltip)
+        lineEdit_lsOut->setText(QCoreApplication::translate("MainWindow", "linescan.dat", nullptr));
+#if QT_CONFIG(tooltip)
+        pushButton_lsFind->setToolTip(QCoreApplication::translate("MainWindow", "Finds absorption lines in the current solution; add or remove them in the plot, then Apply", nullptr));
+#endif // QT_CONFIG(tooltip)
+        pushButton_lsFind->setText(QCoreApplication::translate("MainWindow", "Find Lines", nullptr));
+#if QT_CONFIG(tooltip)
+        pushButton_lsScan->setToolTip(QCoreApplication::translate("MainWindow", "Residuum and line width for every orbit of the grid (the other settings of the Data and Model tabs are used)", nullptr));
+#endif // QT_CONFIG(tooltip)
+        pushButton_lsScan->setText(QCoreApplication::translate("MainWindow", "Scan orbits", nullptr));
+#if QT_CONFIG(tooltip)
+        checkBox_lsSave->setToolTip(QCoreApplication::translate("MainWindow", "Writes the continuum-normalised A and B of every orbit (<result>_001_A.dat, _001_B.dat, ...; settings of the continuum as in the Output tab)", nullptr));
+#endif // QT_CONFIG(tooltip)
+        checkBox_lsSave->setText(QCoreApplication::translate("MainWindow", "Save the spectra of every orbit", nullptr));
+#if QT_CONFIG(tooltip)
+        pushButton_lsShow->setToolTip(QCoreApplication::translate("MainWindow", "Opens the result window from the files of an earlier scan (result file and <result>_profiles.dat), without computing", nullptr));
+#endif // QT_CONFIG(tooltip)
+        pushButton_lsShow->setText(QCoreApplication::translate("MainWindow", "Show results", nullptr));
+#if QT_CONFIG(tooltip)
+        progressBar_lsScan->setToolTip(QCoreApplication::translate("MainWindow", "Orbits of the grid computed so far", nullptr));
+#endif // QT_CONFIG(tooltip)
+        progressBar_lsScan->setFormat(QCoreApplication::translate("MainWindow", "%v / %m orbits", nullptr));
         tabSettings->setTabText(tabSettings->indexOf(tabOpt), QCoreApplication::translate("MainWindow", "Optimisation", nullptr));
         grpNames->setTitle(QCoreApplication::translate("MainWindow", "File names", nullptr));
         lbl_56->setText(QCoreApplication::translate("MainWindow", "Common name", nullptr));
@@ -2595,6 +2768,27 @@ public:
 #if QT_CONFIG(tooltip)
         lineEdit_optdata->setToolTip(QCoreApplication::translate("MainWindow", "Iteration, evaluation and residuum of every step of the optimisation (convergence plot).", nullptr));
 #endif // QT_CONFIG(tooltip)
+        grpAnalysis->setTitle(QCoreApplication::translate("MainWindow", "Analysis of the solution (run in Tools \342\206\222 Period analysis)", nullptr));
+        checkBox_anaFit->setText(QCoreApplication::translate("MainWindow", "RV O-C and line strength", nullptr));
+#if QT_CONFIG(tooltip)
+        checkBox_anaFit->setToolTip(QCoreApplication::translate("MainWindow", "With the component spectra fixed, every spectrum is fitted with its own shift of A and B (O-C of the RVs, with errors) and its own strength of the lines of A and B (1 = as in the component spectra).", nullptr));
+#endif // QT_CONFIG(tooltip)
+        lineEdit_anaFit->setText(QCoreApplication::translate("MainWindow", "rv_oc.dat", nullptr));
+#if QT_CONFIG(tooltip)
+        lineEdit_anaFit->setToolTip(QCoreApplication::translate("MainWindow", "Per spectrum: time, phase, RV of the model, O-C of the RV and line strength of A and B with standard errors, RMS of the fit.", nullptr));
+#endif // QT_CONFIG(tooltip)
+        checkBox_anaLines->setText(QCoreApplication::translate("MainWindow", "Statistics per line, windows from", nullptr));
+#if QT_CONFIG(tooltip)
+        checkBox_anaLines->setToolTip(QCoreApplication::translate("MainWindow", "Mean, RMS and equivalent width of observation - model in every window of the file (from, to in \303\205, frame of the input spectra, optional label; created with strong lines if missing), for every spectrum.", nullptr));
+#endif // QT_CONFIG(tooltip)
+        lineEdit_lines->setText(QCoreApplication::translate("MainWindow", "lines.dat", nullptr));
+#if QT_CONFIG(tooltip)
+        lineEdit_lines->setToolTip(QCoreApplication::translate("MainWindow", "Windows: from, to in \303\205 (frame of the input spectra, wide enough for the RVs) and a label per line; # comments. Default lines.dat: created with Balmer, He I/II, Mg II, Na D, Ca II and Mg b if missing.", nullptr));
+#endif // QT_CONFIG(tooltip)
+        lineEdit_anaLines->setText(QCoreApplication::translate("MainWindow", "linestat.dat", nullptr));
+#if QT_CONFIG(tooltip)
+        lineEdit_anaLines->setToolTip(QCoreApplication::translate("MainWindow", "Per spectrum and window: time, phase, label, pixels, mean, RMS and equivalent width [\303\205] of observation - model.", nullptr));
+#endif // QT_CONFIG(tooltip)
         tabSettings->setTabText(tabSettings->indexOf(tabOut), QCoreApplication::translate("MainWindow", "Output", nullptr));
         labelLegend->setText(QCoreApplication::translate("MainWindow", "<span style=\"color:#1f4fd1\">\342\226\240</span> Component A &nbsp; <span style=\"color:#d12f2f\">\342\226\240</span> Component B &nbsp; \342\226\240 Mean difference", nullptr));
         checkBox_10->setText(QCoreApplication::translate("MainWindow", "Live update", nullptr));
@@ -2608,7 +2802,9 @@ public:
         lbl_69->setToolTip(QCoreApplication::translate("MainWindow", "Number of the evaluation (Solve) that gave the best residuum so far.", nullptr));
 #endif // QT_CONFIG(tooltip)
         pushButton_6->setText(QCoreApplication::translate("MainWindow", "Plot", nullptr));
-        tabPlots->setTabText(tabPlots->indexOf(tabSpectra), QCoreApplication::translate("MainWindow", "Spectra", nullptr));
+#if QT_CONFIG(tooltip)
+        customPlot_6->setToolTip(QCoreApplication::translate("MainWindow", "RMS and mean of O-M against the number of the spectrum; spectra whose RMS lies more than 5 robust standard deviations (1.48 MAD) above the median are labelled.", nullptr));
+#endif // QT_CONFIG(tooltip)
         lbl_72->setText(QCoreApplication::translate("MainWindow", "Residuals per spectrum, from", nullptr));
         doubleSpinBox_st1->setSpecialValueText(QCoreApplication::translate("MainWindow", "auto", nullptr));
 #if QT_CONFIG(tooltip)
@@ -2624,10 +2820,10 @@ public:
 #if QT_CONFIG(tooltip)
         pushButton_stat->setToolTip(QCoreApplication::translate("MainWindow", "Recompute the residual statistics and write diffstatistic.dat.", nullptr));
 #endif // QT_CONFIG(tooltip)
-        tabPlots->setTabText(tabPlots->indexOf(tabConv), QCoreApplication::translate("MainWindow", "Convergence && residuals", nullptr));
-        tabPlots->setTabText(tabPlots->indexOf(tabMessages), QCoreApplication::translate("MainWindow", "Messages", nullptr));
-        plainTextEdit->setPlainText(QString());
-        tabPlots->setTabText(tabPlots->indexOf(tabRVs), QCoreApplication::translate("MainWindow", "RVs", nullptr));
+        tabPlots->setTabText(tabPlots->indexOf(tabSpectra), QCoreApplication::translate("MainWindow", "Spectra", nullptr));
+        groupBox_messages->setTitle(QCoreApplication::translate("MainWindow", "Messages", nullptr));
+        groupBox_rvs->setTitle(QCoreApplication::translate("MainWindow", "RVs", nullptr));
+        tabPlots->setTabText(tabPlots->indexOf(tabConv), QCoreApplication::translate("MainWindow", "Convergence && messages", nullptr));
         lbl_81->setText(QCoreApplication::translate("MainWindow", "Iteration", nullptr));
         lbl_82->setText(QCoreApplication::translate("MainWindow", "Evaluations", nullptr));
         lbl_83->setText(QCoreApplication::translate("MainWindow", "Best residuum", nullptr));

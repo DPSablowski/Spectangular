@@ -24,6 +24,9 @@
 #include "orbitfit.h"
 #include "fluxtemplate.h"
 #include "barycorrdialog.h"
+#include "perioddialog.h"
+#include "linefinder.h"
+#include "linewidth.h"
 #include <random>
 #include <functional>
 #include "levmar.h"
@@ -330,8 +333,10 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->customPlot->xAxis2->setVisible(true);
     ui->customPlot->xAxis2->setTickLabels(false);
+    ui->customPlot->xAxis2->setTicks(false);
     ui->customPlot->yAxis2->setVisible(true);
     ui->customPlot->yAxis2->setTickLabels(false);
+    ui->customPlot->yAxis2->setTicks(false);
     ui->customPlot->xAxis->setTickLength(1);
     //ui->customPlot->setBackground(Qt::transparent);
     ui->customPlot->xAxis->setTickPen(QPen(Qt::black));
@@ -345,8 +350,10 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->customPlot_2->xAxis2->setVisible(true);
     ui->customPlot_2->xAxis2->setTickLabels(false);
+    ui->customPlot_2->xAxis2->setTicks(false);
     ui->customPlot_2->yAxis2->setVisible(true);
     ui->customPlot_2->yAxis2->setTickLabels(false);
+    ui->customPlot_2->yAxis2->setTicks(false);
     //ui->customPlot_2->setBackground(Qt::transparent);
     ui->customPlot_2->xAxis->setTickPen(QPen(Qt::black));
     ui->customPlot_2->xAxis->setLabelColor(Qt::black);
@@ -358,38 +365,40 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->customPlot_2->xAxis->setLabel("Wavelength");
 
     ui->customPlot_2->hide();
+    // the differences plot was removed; the offset stays only for old configuration files
+    ui->doubleSpinBox_5->hide();
+    ui->lbl_68->hide();
 
-    ui->customPlot_3->xAxis2->setVisible(true);
-    ui->customPlot_3->xAxis2->setTickLabels(false);
-    ui->customPlot_3->yAxis2->setVisible(true);
-    ui->customPlot_3->yAxis2->setTickLabels(false);
-    //ui->customPlot_3->setBackground(Qt::transparent);
-    ui->customPlot_3->xAxis->setTickPen(QPen(Qt::black));
-    ui->customPlot_3->xAxis->setLabelColor(Qt::black);
-    ui->customPlot_3->xAxis->setTickLabelColor(Qt::black);
-    ui->customPlot_3->yAxis->setTickPen(QPen(Qt::black));
-    ui->customPlot_3->yAxis->setLabelColor(Qt::black);
-    ui->customPlot_3->yAxis->setTickLabelColor(Qt::black);
-    ui->customPlot_3->yAxis->setLabel("Difference");
-    ui->customPlot_3->xAxis->setLabel("Wavelength");
 
     ui->customPlot_4->xAxis2->setVisible(true);
     ui->customPlot_4->xAxis2->setTickLabels(false);
+    ui->customPlot_4->xAxis2->setTicks(false);
     ui->customPlot_4->yAxis2->setVisible(true);
     ui->customPlot_4->yAxis2->setTickLabels(false);
+    ui->customPlot_4->yAxis2->setTicks(false);
     ui->customPlot_4->yAxis->setLabel("Residuum");
     ui->customPlot_4->xAxis->setLabel("Iterations");
 
     // residuals per spectrum (x label set in plotResidualStatistics: phase, time or number)
     ui->customPlot_5->xAxis2->setVisible(true);
     ui->customPlot_5->xAxis2->setTickLabels(false);
+    ui->customPlot_5->xAxis2->setTicks(false);
     ui->customPlot_5->yAxis2->setVisible(true);
     ui->customPlot_5->yAxis2->setTickLabels(false);
+    ui->customPlot_5->yAxis2->setTicks(false);
     ui->customPlot_5->yAxis->setLabel("O-M");
     ui->customPlot_5->xAxis->setLabel("Orbital Phase");
+    // the same against the number of the spectrum (outliers labelled)
+    ui->customPlot_6->xAxis2->setVisible(true);
+    ui->customPlot_6->xAxis2->setTickLabels(false);
+    ui->customPlot_6->xAxis2->setTicks(false);
+    ui->customPlot_6->yAxis2->setVisible(true);
+    ui->customPlot_6->yAxis2->setTickLabels(false);
+    ui->customPlot_6->yAxis2->setTicks(false);
+    ui->customPlot_6->yAxis->setLabel("O-M");
+    ui->customPlot_6->xAxis->setLabel("Spectrum");
 
     connect(ui->customPlot, SIGNAL(mouseMove(QMouseEvent*)), this ,SLOT(showPointToolTip(QMouseEvent*)));
-    connect(ui->customPlot_3, SIGNAL(mouseMove(QMouseEvent*)), this ,SLOT(showPointToolTip_3(QMouseEvent*)));
 
     // Number of cores: the machine's count is displayed, the "Use" setting is applied.
     // Default 2 (if available): only the matrix-vector products of LSQR run in parallel and
@@ -620,6 +629,36 @@ static bool readFitsSpectrum(const std::string &file, const std::string &extName
                              std::string &usedExt, std::string &err);
 
 // Tools -> Barycentric correction: spectra (and start RVs) shifted to the barycentre
+// Tools -> Period analysis (residual statistics, fit per spectrum and line windows of the solution)
+void MainWindow::on_actionPeriod_triggered()
+{
+    qPath = ui->lineEdit_4->text();
+    PeriodDialog::MainData d;
+    d.work = qPath;
+    d.statFile = qDiffStat;
+    d.fitFile = ui->lineEdit_anaFit->text().trimmed();
+    d.lineStatFile = ui->lineEdit_anaLines->text().trimmed();
+    d.timesFile = ui->lineEdit_18->text();
+    d.first = ui->spinBox->value();
+    d.orbitalPeriod = orbele.size()>=1 && orbele[0]>0 ? orbele[0] : 0.0;
+    if(!(d.orbitalPeriod>0)){
+        std::vector<std::vector<double>> rows;
+        std::string err;
+        if(dataio::readTable((qPath+"/"+qOrbitFile).toStdString(), 1, rows, err) && !rows.empty() && rows[0][0]>0)
+            d.orbitalPeriod = rows[0][0];
+    }
+    auto *dlg = new PeriodDialog(this);
+    dlg->setAttribute(Qt::WA_DeleteOnClose);
+    dlg->setMainData(d);
+    connect(dlg, &PeriodDialog::analyseRequested, this, [this, dlg]() {
+        this->setCursor(QCursor(Qt::WaitCursor));
+        const bool ok = analyseSolution();
+        this->setCursor(QCursor(Qt::ArrowCursor));
+        dlg->analysisFinished(ok);
+    });
+    dlg->show();
+}
+
 void MainWindow::on_actionBaryCorr_triggered()
 {
     qPath = ui->lineEdit_4->text();
@@ -857,18 +896,6 @@ void MainWindow::showPointToolTip(QMouseEvent *event)
 
     double xc = ui->customPlot->xAxis->pixelToCoord(event->pos().x());
     double yc = ui->customPlot->yAxis->pixelToCoord(event->pos().y());
-
-    setToolTip(QString("%1 , %2").arg(xc).arg(yc));
-}
-
-//********************************************************
-//show mouse coordinates
-//********************************************************
-void MainWindow::showPointToolTip_3(QMouseEvent *event)
-{
-
-    double xc = ui->customPlot_3->xAxis->pixelToCoord(event->pos().x());
-    double yc = ui->customPlot_3->yAxis->pixelToCoord(event->pos().y());
 
     setToolTip(QString("%1 , %2").arg(xc).arg(yc));
 }
@@ -5160,7 +5187,7 @@ double MainWindow::DivideConquer(){
         if(ui->checkBox_19->isChecked()){
             QString qEval = QString::number(updac);
             ui->customPlot->savePng(qPath+"/Sol_"+qEval+".png");
-            ui->customPlot_3->savePng(qPath+"/Diff_"+qEval+".png");
+            ui->customPlot_5->savePng(qPath+"/Residuals_"+qEval+".png");
         }
 
         ++updac;
@@ -5308,8 +5335,9 @@ void MainWindow::plotResidualStatistics()
     f<<"# Residuals per spectrum, observation - model";
     if(std::isfinite(l2) || l1>0) f<<", "<<l1<<" - "<<l2<<" A";
     f<<", without "<<edge<<" edge pixels\n";
+    const bool timeCol = phase;     // with the phase as abscissa the time is added (period analysis)
     f<<"# spectrum\t"<<(phase ? "phase" : (int(t.size())==num ? "time" : "spectrum"))
-     <<"\tpixels\tmean\trms\tstd\n";
+     <<"\tpixels\tmean\trms\tstd"<<(timeCol ? "\ttime" : "")<<"\n";
     f<<setprecision(10);
     for(int j=0; j<num; j++){
         double s1 = 0.0, s2 = 0.0;
@@ -5328,13 +5356,31 @@ void MainWindow::plotResidualStatistics()
         const double mean = n>0 ? s1/n : 0.0;
         const double rms = n>0 ? std::sqrt(s2/n) : 0.0;
         const double sd = n>1 ? std::sqrt(std::max(0.0, (s2 - n*mean*mean)/(n-1))) : 0.0;
-        f<<(j+mini)<<"\t"<<x[j]<<"\t"<<n<<"\t"<<mean<<"\t"<<rms<<"\t"<<sd<<"\n";
+        f<<(j+mini)<<"\t"<<x[j]<<"\t"<<n<<"\t"<<mean<<"\t"<<rms<<"\t"<<sd;
+        if(timeCol) f<<"\t"<<t[j];
+        f<<"\n";
         qx[j] = x[j]; qmean[j] = mean; qrms[j] = rms;
     }
     f.close();
 
     if(runow!=0) return;     // batch mode: file only
+    // against the phase (orbit mode): a second plot against the number of the spectrum; otherwise
+    // (time or number) one plot against the number only (the file keeps the time)
+    const bool twoPlots = phase;
+    if(!twoPlots){
+        for(int j=0; j<num; j++) qx[j] = j+mini;
+        xlabel = "Spectrum";
+    }
+    ui->customPlot_6->setVisible(twoPlots);
     QCustomPlot *p = ui->customPlot_5;
+    p->xAxis->setAutoTickStep(twoPlots);
+    p->xAxis->setAutoSubTicks(twoPlots);
+    if(!twoPlots){     // integer ticks (1, 2, 5, 10, ... spectra)
+        double st = 1.0;
+        while(num/st > 12) st *= (QString::number(st).startsWith('2') ? 2.5 : 2.0);
+        p->xAxis->setTickStep(st);
+        p->xAxis->setSubTickCount(0);
+    }
     p->clearGraphs();
     p->addGraph();
     p->graph(0)->setData(qx, qrms);
@@ -5367,10 +5413,371 @@ void MainWindow::plotResidualStatistics()
     if(phase) p->xAxis->setRange(0.0, 1.0);
     else{
         const double xr = p->xAxis->range().size();
-        p->xAxis->setRange(p->xAxis->range().lower - 0.03*xr - 0.5*(xr==0), p->xAxis->range().upper + 0.03*xr + 0.5*(xr==0));
+        if(!twoPlots) p->xAxis->setRange(mini-0.7, mini+num-0.3);
+        else p->xAxis->setRange(p->xAxis->range().lower - 0.03*xr - 0.5*(xr==0), p->xAxis->range().upper + 0.03*xr + 0.5*(xr==0));
     }
     setYRange(p, ylo, yhi + 0.8*(yhi-ylo));   // room for the legend above the points
+
+    // against the number of the spectrum; outliers (RMS > median + 5 x 1.4826 MAD) labelled in
+    // both plots
+    std::vector<double> rv(qrms.begin(), qrms.end()), ad;
+    std::vector<double> tmp = rv;
+    std::nth_element(tmp.begin(), tmp.begin()+tmp.size()/2, tmp.end());
+    const double med = tmp[tmp.size()/2];
+    for(double v : rv) ad.push_back(std::fabs(v-med));
+    std::nth_element(ad.begin(), ad.begin()+ad.size()/2, ad.end());
+    const double sig = 1.4826*ad[ad.size()/2];
+    QCustomPlot *q = ui->customPlot_6;
+    q->clearGraphs();
+    q->clearItems();
+    p->clearItems();
+    QVector<double> qn(num);
+    for(int j=0; j<num; j++) qn[j] = j+mini;
+    q->addGraph();
+    q->graph(0)->setData(qn, qrms);
+    q->graph(0)->setLineStyle(QCPGraph::lsNone);
+    q->graph(0)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssDisc, QColor(31,119,180), 6));
+    q->graph(0)->setName("RMS");
+    q->addGraph();
+    q->graph(1)->setData(qn, qmean);
+    q->graph(1)->setLineStyle(QCPGraph::lsNone);
+    q->graph(1)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCircle, QColor(214,39,40), 6));
+    q->graph(1)->setName("mean");
+    QStringList outl;
+    for(int j=0; j<num; j++){
+        if(!(sig>0) || qrms[j] <= med + 5.0*sig) continue;
+        outl << QString::number(j+mini);
+        for(auto pr : {std::make_pair(q, qn[j]), std::make_pair(p, qx[j])}){
+            auto *lab = new QCPItemText(pr.first);
+            lab->position->setCoords(pr.second, qrms[j]);
+            lab->setPositionAlignment(Qt::AlignLeft|Qt::AlignBottom);
+            lab->setText(" "+QString::number(j+mini));
+            lab->setColor(QColor(214,39,40));
+        }
+    }
+    q->setProperty("outliers", outl.join(","));
+    q->legend->setVisible(false);
+    q->rescaleAxes();
+    // integer ticks (1, 2, 5, 10, ... spectra)
+    q->xAxis->setAutoTickStep(false);
+    {
+        double st = 1.0;
+        while(num/st > 12) st *= (QString::number(st).startsWith('2') ? 2.5 : 2.0);
+        q->xAxis->setTickStep(st);
+        q->xAxis->setAutoSubTicks(false);
+        q->xAxis->setSubTickCount(0);
+    }
+    q->xAxis->setRange(mini-0.7, mini+num-0.3);
+    setYRange(q, ylo, yhi + 0.15*(yhi-ylo));
     p->replot();
+    q->replot();
+}
+
+//**************************************************
+// Analysis of the solution (Output tab)
+//**************************************************
+void MainWindow::spectrumTimes(std::vector<double> &t, std::vector<double> &phase)
+{
+    t.clear();
+    phase.clear();
+    if(int(otimes.size())>=num && ui->checkBox_16->isChecked()) t.assign(otimes.begin(), otimes.begin()+num);
+    else{
+        std::vector<std::vector<double>> rows;
+        std::string err;
+        if(dataio::readTable((qPath+"/"+ui->lineEdit_18->text()).toStdString(), 1, rows, err) && int(rows.size())==num)
+            for(const auto &r : rows) t.push_back(r[0]);
+    }
+    if(ui->checkBox_16->isChecked() && int(t.size())==num && orbele.size()>=6 && orbele[0]>0)
+        for(int j=0; j<num; j++){
+            double ph = std::fmod((t[j]-orbele[5])/orbele[0], 1.0);
+            phase.push_back(ph<0 ? ph+1.0 : ph);
+        }
+}
+
+namespace {
+// Catmull-Rom value and derivative of v at the fractional position x (pixels); false if the
+// stencil leaves the vector or touches a bad pixel
+bool cubicAt(const std::vector<double> &v, const std::vector<char> &bad, double x, double &y, double &dy)
+{
+    const int i = int(std::floor(x));
+    if(i<1 || i+2>=int(v.size())) return false;
+    for(int k=i-1; k<=i+2; k++) if(bad[size_t(k)]) return false;
+    const double t = x-i, p0 = v[size_t(i-1)], p1 = v[size_t(i)], p2 = v[size_t(i+1)], p3 = v[size_t(i+2)];
+    const double a = -0.5*p0 + 1.5*p1 - 1.5*p2 + 0.5*p3, b = p0 - 2.5*p1 + 2*p2 - 0.5*p3, c = -0.5*p0 + 0.5*p2;
+    y = ((a*t + b)*t + c)*t + p1;
+    dy = (3*a*t + 2*b)*t + c;
+    return true;
+}
+
+// solves the symmetric system A x = b (n <= 4) by Gauss elimination; false if singular
+bool solveSmall(std::vector<std::vector<double>> A, std::vector<double> b, std::vector<double> &x)
+{
+    const int n = int(b.size());
+    for(int c=0; c<n; c++){
+        int p = c;
+        for(int r=c+1; r<n; r++) if(std::fabs(A[r][c])>std::fabs(A[p][c])) p = r;
+        if(!(std::fabs(A[p][c])>1e-300)) return false;
+        std::swap(A[p], A[c]);
+        std::swap(b[p], b[c]);
+        for(int r=c+1; r<n; r++){
+            const double q = A[r][c]/A[c][c];
+            for(int k=c; k<n; k++) A[r][k] -= q*A[c][k];
+            b[r] -= q*b[c];
+        }
+    }
+    x.assign(n, 0.0);
+    for(int c=n-1; c>=0; c--){
+        double v = b[c];
+        for(int k=c+1; k<n; k++) v -= A[c][k]*x[k];
+        x[c] = v/A[c][c];
+    }
+    return true;
+}
+
+// inverse of a small symmetric positive definite matrix (Gauss-Jordan); false if singular
+bool invertSmall(std::vector<std::vector<double>> A, std::vector<std::vector<double>> &inv)
+{
+    const int n = int(A.size());
+    inv.assign(n, std::vector<double>(n, 0.0));
+    for(int i=0; i<n; i++) inv[i][i] = 1.0;
+    for(int c=0; c<n; c++){
+        int p = c;
+        for(int r=c+1; r<n; r++) if(std::fabs(A[r][c])>std::fabs(A[p][c])) p = r;
+        if(!(std::fabs(A[p][c])>1e-300)) return false;
+        std::swap(A[p], A[c]);
+        std::swap(inv[p], inv[c]);
+        const double d = A[c][c];
+        for(int k=0; k<n; k++){ A[c][k] /= d; inv[c][k] /= d; }
+        for(int r=0; r<n; r++){
+            if(r==c) continue;
+            const double q = A[r][c];
+            for(int k=0; k<n; k++){ A[r][k] -= q*A[c][k]; inv[r][k] -= q*inv[c][k]; }
+        }
+    }
+    return true;
+}
+} // namespace
+
+bool MainWindow::analyseSolution()
+{
+    qPath = ui->lineEdit_4->text();
+    if(!g_matrixValid || num<1 || logbin<8 || int(C.n_elem)!=num*logbin || M.n_rows!=C.n_elem || X.n_elem!=M.n_cols
+            || g_layout.cols()!=int(M.n_cols)){
+        reportError("Error 54: Analysis of the solution: there is no solution. Read data and Solve (or optimise) first.");
+        return false;
+    }
+    const bool doFit = ui->checkBox_anaFit->isChecked(), doLines = ui->checkBox_anaLines->isChecked();
+    if(!doFit && !doLines){
+        reportError("Error 54: Analysis of the solution: nothing selected (Output tab, Analysis of the solution).");
+        return false;
+    }
+    std::vector<double> t, phase;
+    spectrumTimes(t, phase);
+    const bool sb2 = g_layout.nB>0 && RV3.size()>=num;
+    const arma::vec model = M*X;
+    const int edge = std::max(0, g_edgeMargin);
+    QStringList notes;
+    const double c = dis::kSpeedOfLight;
+
+    // ---- RV O-C and line strength per spectrum (components fixed)
+    if(doFit){
+        const QString name = ui->lineEdit_anaFit->text().trimmed();
+        if(name.isEmpty()){ reportError("Error 54: Analysis: no file name for the RV O-C."); return false; }
+        const dis::Layout &L = g_layout;
+        const bool scaled = g_colScale.n_elem==X.n_elem;
+        const arma::vec cs = scaled ? g_colScale : arma::vec(X.n_elem, arma::fill::ones);
+        const arma::vec x = cs % X;                    // component spectra
+        // contributions of A and B per row and their weights (sum of the interpolation entries)
+        arma::vec aPart(M.n_rows, arma::fill::zeros), bPart(M.n_rows, arma::fill::zeros),
+                  wA(M.n_rows, arma::fill::zeros), wB(M.n_rows, arma::fill::zeros);
+        for(arma::sp_mat::const_iterator it = M.begin(); it!=M.end(); ++it){
+            const arma::uword col = it.col(), row = it.row();
+            const double v = *it;
+            if(int(col)<L.nA){ aPart(row) += v*X(col); wA(row) += v*cs(col); }
+            else if(int(col)<L.nA+L.nB){ bPart(row) += v*X(col); wB(row) += v*cs(col); }
+        }
+        const double levA = L.nA>0 ? dis::continuumLevel(x.subvec(0, L.nA-1)) : 0.0;
+        const double levB = (sb2 && L.nB>0) ? dis::continuumLevel(x.subvec(L.nA, L.nA+L.nB-1)) : 0.0;
+        const bool range = ui->checkBox_33->isChecked();
+        const double lo = range ? std::log10(ui->doubleSpinBox_14->value()) : -1e300;
+        const double hi = range ? std::log10(ui->doubleSpinBox_15->value()) : 1e300;
+        const int np = sb2 ? 4 : 2;     // shift A, strength A (, shift B, strength B)
+        std::ofstream out((qPath+"/"+name).toStdString().c_str());
+        if(!out){ reportError("Error 52: Cannot write "+qPath+"/"+name+"."); return false; }
+        out<<"# RV O-C and line strength per spectrum: each spectrum fitted with the component spectra fixed, "
+           <<"own shift and own strength of the lines (1 = as in the component spectra) of A"<<(sb2 ? " and B" : "")
+           <<"; errors from the scatter of the fit\n";
+        out<<"# spectrum\ttime\tphase\tRV_A\tdRV_A\terr\tS_A\terr";
+        if(sb2) out<<"\tRV_B\tdRV_B\terr\tS_B\terr";
+        out<<"\tpixels\trms\n"<<setprecision(10);
+        int nOut = 0;
+        QStringList big;
+        std::vector<double> ocA, ocB;
+        std::vector<int> ocSpec;
+        for(int j=0; j<num; j++){
+            dis::keepAlive();
+            const size_t r0 = size_t(j)*logbin;
+            std::vector<double> la(logbin), lb(logbin), base(logbin), obs(logbin);
+            std::vector<char> bad(logbin, 0), use(logbin, 0);
+            for(int i=0; i<logbin; i++){
+                const arma::uword r = r0+i;
+                la[i] = aPart(r) - wA(r)*levA;
+                lb[i] = bPart(r) - wB(r)*levB;
+                base[i] = model(r) - aPart(r) - bPart(r) + wA(r)*levA + wB(r)*levB;
+                obs[i] = C(r);
+                bad[i] = rowMasked(r) || !std::isfinite(C(r)) || wA(r)==0.0;
+            }
+            for(int i=edge; i<logbin-edge; i++){
+                const arma::uword r = r0+i;
+                if(bad[i] || rowUncounted(r) || rowResExcluded(r)) continue;
+                if(range && !((W(r)>lo) && (W(r)<hi))) continue;
+                use[i] = 1;
+            }
+            std::vector<double> p(np, 0.0);
+            p[1] = 1.0;
+            if(sb2) p[3] = 1.0;
+            std::vector<std::vector<double>> JtJ;
+            double s2 = 0.0;
+            int n = 0;
+            bool ok = true;
+            for(int iter=0; iter<15; iter++){
+                JtJ.assign(np, std::vector<double>(np, 0.0));
+                std::vector<double> Jtr(np, 0.0);
+                s2 = 0.0;
+                n = 0;
+                for(int i=0; i<logbin; i++){
+                    if(!use[i]) continue;
+                    double ya, dya, yb = 0, dyb = 0;
+                    if(!cubicAt(la, bad, i-p[0], ya, dya)) continue;
+                    if(sb2 && !cubicAt(lb, bad, i-p[2], yb, dyb)) continue;
+                    const double m = base[i] + p[1]*ya + (sb2 ? p[3]*yb : 0.0);
+                    const double r = obs[i]-m;
+                    double J[4] = {-p[1]*dya, ya, sb2 ? -p[3]*dyb : 0.0, yb};
+                    for(int a=0; a<np; a++){
+                        Jtr[a] += J[a]*r;
+                        for(int b=0; b<np; b++) JtJ[a][b] += J[a]*J[b];
+                    }
+                    s2 += r*r;
+                    ++n;
+                }
+                std::vector<double> d;
+                if(n<=np+2 || !solveSmall(JtJ, Jtr, d)){ ok = false; break; }
+                double step = 0.0;
+                for(int a=0; a<np; a++){
+                    // shifts limited to 2 pixels per step
+                    if(a%2==0) d[a] = std::max(-2.0, std::min(2.0, d[a]));
+                    p[a] += d[a];
+                    step = std::max(step, std::fabs(d[a]));
+                }
+                if(step<1e-7) break;
+            }
+            std::vector<std::vector<double>> cov;
+            if(ok) ok = invertSmall(JtJ, cov);
+            const double sig2 = ok && n>np ? s2/(n-np) : 0.0;
+            auto dv = [&](double px, double rv){ return (c+rv)*(std::pow(10.0, px*g_dlog)-1.0); };
+            auto ev = [&](int a, double rv){ return ok ? std::fabs(dv(std::sqrt(std::max(0.0, sig2*cov[a][a])), rv)) : 0.0; };
+            out<<(j+mini)<<"\t"<<(int(t.size())==num ? t[j] : 0.0)<<"\t"<<(int(phase.size())==num ? phase[j] : 0.0);
+            const double eA = ev(0, RV1[j]);
+            out<<"\t"<<RV1[j]<<"\t"<<(ok ? dv(p[0], RV1[j]) : 0.0)<<"\t"<<eA<<"\t"<<(ok ? p[1] : 0.0)<<"\t"
+               <<(ok ? std::sqrt(std::max(0.0, sig2*cov[1][1])) : 0.0);
+            if(sb2){
+                out<<"\t"<<RV3[j]<<"\t"<<(ok ? dv(p[2], RV3[j]) : 0.0)<<"\t"<<ev(2, RV3[j])<<"\t"<<(ok ? p[3] : 0.0)<<"\t"
+                   <<(ok ? std::sqrt(std::max(0.0, sig2*cov[3][3])) : 0.0);
+            }
+            out<<"\t"<<n<<"\t"<<std::sqrt(n>0 ? s2/n : 0.0)<<"\n";
+            if(ok){
+                ++nOut;
+                ocA.push_back(dv(p[0], RV1[j]));
+                ocB.push_back(sb2 ? dv(p[2], RV3[j]) : 0.0);
+                ocSpec.push_back(j+mini);
+            }
+        }
+        out.close();
+        // robust scatter of the O-C (1.4826 MAD): the formal errors hold the noise of the spectrum
+        // only, not that of the (fixed) component spectra
+        auto rscat = [](std::vector<double> v){
+            if(v.size()<3) return 0.0;
+            std::nth_element(v.begin(), v.begin()+v.size()/2, v.end());
+            const double med = v[v.size()/2];
+            for(double &x : v) x = std::fabs(x-med);
+            std::nth_element(v.begin(), v.begin()+v.size()/2, v.end());
+            return 1.4826*v[v.size()/2];
+        };
+        // outliers: more than 5 robust scatters from the median O-C
+        auto med = [](std::vector<double> v){
+            if(v.empty()) return 0.0;
+            std::nth_element(v.begin(), v.begin()+v.size()/2, v.end());
+            return v[v.size()/2];
+        };
+        const double sA = rscat(ocA), sB = rscat(ocB), mA = med(ocA), mB = med(ocB);
+        for(size_t k=0; k<ocA.size(); k++)
+            if((sA>0 && std::fabs(ocA[k]-mA)>5*sA) || (sb2 && sB>0 && std::fabs(ocB[k]-mB)>5*sB))
+                big << QString::number(ocSpec[k]);
+        notes << QString("RV O-C and line strength of %1 spectra written to %2 (scatter of the O-C: A %3 km/s%4)")
+                 .arg(nOut).arg(name).arg(rscat(ocA), 0, 'f', 3).arg(sb2 ? QString(", B %1 km/s").arg(rscat(ocB), 0, 'f', 3) : QString())
+                 + (big.isEmpty() ? QString() : QString(" (O-C more than 5 times the scatter from the median: spectrum %1)").arg(big.join(", ")));
+    }
+
+    // ---- statistics per line window
+    if(doLines){
+        QString lname = ui->lineEdit_lines->text().trimmed();
+        const QString oname = ui->lineEdit_anaLines->text().trimmed();
+        if(lname.isEmpty() || oname.isEmpty()){ reportError("Error 54: Analysis: file name of the line windows or of the statistics missing."); return false; }
+        const QString lfile = qPath+"/"+lname;
+        if(!QFileInfo::exists(lfile)){
+            if(lname!="lines.dat"){
+                reportError("Error 54: Analysis: file of the line windows "+lfile+" does not exist.");
+                return false;
+            }
+            std::ofstream d(lfile.toStdString().c_str());
+            d<<dataio::kLineWindows;
+            notes << "Default line windows written to lines.dat";
+        }
+        std::vector<std::pair<double, double>> win;
+        std::vector<std::string> lab;
+        std::string err;
+        if(!dataio::readRanges(lfile.toStdString(), win, err, &lab) || win.empty()){
+            reportError("Error 54: Analysis: line windows ("+lname+"): "+(err.empty() ? QString("no windows.") : QString::fromStdString(err)));
+            return false;
+        }
+        std::ofstream out((qPath+"/"+oname).toStdString().c_str());
+        if(!out){ reportError("Error 52: Cannot write "+qPath+"/"+oname+"."); return false; }
+        out<<"# Statistics of observation - model per spectrum and line window ("<<lname.toStdString()
+           <<"); EW = sum of (O-M) x pixel width [A], negative: more absorption than the model\n";
+        out<<"# spectrum\ttime\tphase\tline\tfrom\tto\tpixels\tmean\trms\tEW\n"<<setprecision(10);
+        int used = 0;
+        QStringList outside;
+        for(size_t w=0; w<win.size(); w++){
+            const double l1 = std::log10(win[w].first), l2 = std::log10(win[w].second);
+            const std::string label = lab.size()>w && !lab[w].empty() ? lab[w] : ("line_"+std::to_string(w+1));
+            bool any = false;
+            for(int j=0; j<num; j++){
+                double s1 = 0, s2 = 0, ew = 0;
+                int n = 0;
+                for(int i=edge; i<logbin-edge; i++){
+                    const arma::uword r = arma::uword(j)*logbin+i;
+                    if(W(r)<l1 || W(r)>l2 || rowUncounted(r)) continue;
+                    const double d = C(r)-model(r);
+                    s1 += d;
+                    s2 += d*d;
+                    ew += d*std::pow(10.0, W(r))*std::log(10.0)*g_dlog;
+                    ++n;
+                }
+                if(n==0) continue;
+                any = true;
+                out<<(j+mini)<<"\t"<<(int(t.size())==num ? t[j] : 0.0)<<"\t"<<(int(phase.size())==num ? phase[j] : 0.0)<<"\t"
+                   <<label<<"\t"<<win[w].first<<"\t"<<win[w].second<<"\t"<<n<<"\t"<<s1/n<<"\t"<<std::sqrt(s2/n)<<"\t"<<ew<<"\n";
+            }
+            if(any) ++used; else outside << QString::fromStdString(label);
+        }
+        out.close();
+        notes << QString("Statistics of %1 line windows written to %2").arg(used).arg(oname)
+                 + (outside.isEmpty() ? QString() : QString(" (outside the data: %1)").arg(outside.join(", ")));
+    }
+    const QString m = "Analysis of the solution: "+notes.join("; ")+".";
+    cout<<m.toStdString()<<endl;
+    if(runow==0) ui->plainTextEdit_2->appendPlainText(m);
+    return true;
 }
 
 void MainWindow::on_pushButton_stat_clicked()
@@ -5384,7 +5791,6 @@ void MainWindow::on_pushButton_6_clicked()
     if((runow==0) & (optfratios==0)){       //plot only of in GUI-mode
         ui->customPlot->clearGraphs();
         ui->customPlot_2->clearGraphs();
-        ui->customPlot_3->clearGraphs();
 
         double xs1, xs2, ys1, ys2;
         string zeile, one, two;
@@ -5587,63 +5993,6 @@ void MainWindow::on_pushButton_6_clicked()
         }
         ui->customPlot->replot();
 
-        //Differences
-        QString plot3=ui->lineEdit_13->text();
-        string plot13 = plot3.toUtf8().constData();
-        std::ostringstream dat3NameStream(plot13);
-        dat3NameStream<<path<<"/"<<plot13;
-        std::string dat3Name = dat3NameStream.str();
-
-        QFile checkfile3(datName.c_str());
-
-        if(!checkfile3.exists()){
-            qDebug()<<"The file "<<checkfile3.fileName()<<" does not exist.";
-            QMessageBox::information(this, "Error", "File "+qPath+"/"+plot3+" does not exist!");
-            return;
-        }
-
-        ifstream toplot3(dat3Name.c_str());
-
-        number_of_lines=0;
-
-        while(std::getline(toplot3, zeile)){
-        ++number_of_lines;
-        dis::keepAlive();
-    }
-        cout<<number_of_lines<<endl;
-
-        toplot3.clear();
-        toplot3.seekg(0, ios::beg);
-
-        double offset = ui->doubleSpinBox_5->value();
-        // differences offset per spectrum; the statistics per spectrum are computed from the
-        // solution in memory (plotResidualStatistics, file diffstatistic.dat)
-        int index = 0;
-        a.resize(number_of_lines);
-        b.resize(number_of_lines);
-        for (int i=0; i<number_of_lines; i++){
-            dis::keepAlive();
-            toplot3 >> one >>two;
-            istringstream ist(one);
-            ist >> a[i];
-            istringstream ist2(two);
-            ist2 >> b[i];
-            if((i>0) && (a[i]<a[i-1])) ++index;   // a new spectrum begins
-            b[i]=b[i]+index*offset;
-        }
-        if(number_of_lines>0) ++index;
-        toplot3.close();
-
-        plotSegments(ui->customPlot_3, a, b);
-        ui->customPlot_3->xAxis->setRange(xs1, xs2);
-        {
-            // per spectrum without its edge pixels
-            double lo = 1e300, hi = -1e300;
-            innerYRange(a, b, plotTrim(logbin>0 ? logbin : a.size()/std::max(1, index), g_edgeMargin), lo, hi);
-            setYRange(ui->customPlot_3, lo, hi);
-        }
-        ui->customPlot_3->replot();
-
         //telluric lines
         if(ui->checkBox_8->isChecked()){
 
@@ -5705,7 +6054,6 @@ void MainWindow::on_pushButton_6_clicked()
         if((runow==0) & (optfratios==1)){
             ui->customPlot->clearGraphs();
             ui->customPlot_2->clearGraphs();
-            ui->customPlot_3->clearGraphs();
 
             double xs1, xs2, ys1, ys2;
             string zeile, one, two;
@@ -5892,58 +6240,6 @@ void MainWindow::on_pushButton_6_clicked()
             }
             ui->customPlot->replot();
 
-            // differences
-
-
-            QString plot3="frdifferences.dat";
-            string plot13 = plot3.toUtf8().constData();
-            std::ostringstream dat3NameStream(plot13);
-            dat3NameStream<<path<<"/"<<plot13;
-            std::string dat3Name = dat3NameStream.str();
-
-            QFile checkfile3(datName.c_str());
-
-            if(!checkfile3.exists()){
-                qDebug()<<"The file "<<checkfile3.fileName()<<" does not exist.";
-                QMessageBox::information(this, "Error", "File "+qPath+"/"+plot3+" does not exist!");
-                return;
-            }
-
-            ifstream toplot3(dat3Name.c_str());
-
-            number_of_lines=0;
-
-            while(std::getline(toplot3, zeile)){
-            ++number_of_lines;
-            dis::keepAlive();
-        }
-
-            toplot3.clear();
-            toplot3.seekg(0, ios::beg);
-
-            double offset = ui->doubleSpinBox_5->value();
-            // differences offset per spectrum; the statistics per spectrum are computed from the
-            // solution in memory (plotResidualStatistics, file diffstatistic.dat)
-            int index = 0;
-            a.resize(number_of_lines);
-            b.resize(number_of_lines);
-            for (int i=0; i<number_of_lines; i++){
-                dis::keepAlive();
-                toplot3 >> one >>two;
-                istringstream ist(one);
-                ist >> a[i];
-                istringstream ist2(two);
-                ist2 >> b[i];
-                if((i>0) && (a[i]<a[i-1])) ++index;   // a new spectrum begins
-                b[i]=b[i]+index*offset;
-            }
-            if(number_of_lines>0) ++index;
-            toplot3.close();
-
-            plotSegments(ui->customPlot_3, a, b);
-            ui->customPlot_3->xAxis->setRange(xs1, xs2);
-            ui->customPlot_3->yAxis->setRange(-0.5, 0.5+index*offset);
-            ui->customPlot_3->replot();
         }
         else{
             //
@@ -6552,7 +6848,7 @@ void MainWindow::on_pushButton_8_clicked()
     this->setCursor(QCursor(Qt::WaitCursor));
 
     ui->plainTextEdit_2->appendPlainText("Error Estimation");
-    ui->tabPlots->setCurrentWidget(ui->tabMessages);   // results appear there
+    ui->tabPlots->setCurrentWidget(ui->tabConv);   // results appear there
 
     abortt=0;
     g_abortableRun = true;
@@ -6644,7 +6940,9 @@ const char *const kSettingsExtra[] = {
     "checkBox_align", "doubleSpinBox_alignWidth",
     "lineEdit_best", "lineEdit_optdata", "lineEdit_stat", "lineEdit_orbit", "lineEdit_bc", "comboBox_bcframe",
     "lineEdit_tellw", "checkBox_tellfit", "doubleSpinBox_tdamp", "checkBox_tellrange", "lineEdit_tellrange",
-    "doubleSpinBox_telldet", "checkBox_resstatic"};
+    "doubleSpinBox_telldet", "checkBox_resstatic",
+    "checkBox_anaFit", "lineEdit_anaFit", "checkBox_anaLines", "lineEdit_lines", "lineEdit_anaLines",
+    "lineEdit_lsGrid", "lineEdit_lsLines", "lineEdit_lsOut", "checkBox_lsSave"};
 
 const char *const kSettingsHeaderV2 = "# Spectangular settings v2";
 
@@ -6746,6 +7044,15 @@ QString MainWindow::readSettings(const QString &fileName)
     ui->lineEdit_tellrange->setText("telluric_static.dat");
     ui->doubleSpinBox_telldet->setValue(5.0);
     ui->checkBox_resstatic->setChecked(false);
+    ui->checkBox_anaFit->setChecked(true);
+    ui->lineEdit_anaFit->setText("rv_oc.dat");
+    ui->checkBox_anaLines->setChecked(true);
+    ui->lineEdit_lines->setText("lines.dat");
+    ui->lineEdit_anaLines->setText("linestat.dat");
+    ui->checkBox_lsSave->setChecked(false);
+    ui->lineEdit_lsGrid->setText("orbitgrid.dat");
+    ui->lineEdit_lsLines->setText("scanlines.dat");
+    ui->lineEdit_lsOut->setText("linescan.dat");
     for(int i=0; i<nLegacy; i++){
         if(!setSettingValue(kSettingsLegacy[i], lines[i])) bad << kSettingsLegacy[i];
     }
@@ -6905,6 +7212,14 @@ void MainWindow::on_pushButton_11_clicked()
     ui->lineEdit_17->setText("optmat_"+cName+"."+cExt);
     ui->lineEdit_20->setText(cName+"_error."+cExt);
     ui->lineEdit_21->setText(cName+"_log."+cExt);
+    ui->lineEdit_24->setText(cName+"_errors."+cExt);
+    ui->lineEdit_stat->setText(cName+"_diffstat."+cExt);
+    ui->lineEdit_best->setText(cName+"_beststate."+cExt);
+    ui->lineEdit_optdata->setText(cName+"_optdata."+cExt);
+    ui->lineEdit_anaFit->setText(cName+"_rv_oc."+cExt);
+    ui->lineEdit_anaLines->setText(cName+"_linestat."+cExt);
+    ui->lineEdit_lsLines->setText(cName+"_scanlines."+cExt);
+    ui->lineEdit_lsOut->setText(cName+"_linescan."+cExt);
     g_configName = cName+"_conf";
 }
 
@@ -7946,6 +8261,250 @@ for(int i=0; i<num; i++){
 // pixels beyond the threshold (absorption and emission), widened by 0.5 A, gaps below 1 A
 // closed. Written to <file>_detected.<ext> and set in the Data tab.
 //****************************************
+// Spectra of the components A and B of the current solution on the wavelength grid of A (B is
+// interpolated onto it); false with Error 55 (if report) if there is no solution
+bool MainWindow::lineScanSpectra(std::vector<double> &lam, std::vector<double> &fa, std::vector<double> &fb, bool report)
+{
+    if(!g_matrixValid || num<1 || logbin<8 || M.n_rows!=C.n_elem || X.n_elem!=M.n_cols || g_layout.cols()!=int(M.n_cols)
+            || W.n_elem<2 || g_layout.nA<10 || g_layout.nB<10 || !(arma::abs(X).max()>0)){
+        if(report) reportError("Error 55: Line width: there is no solution of two components. Read data and Solve (or optimise) first.");
+        return false;
+    }
+    const arma::vec Xc = componentSpectra();
+    const double w0 = W(0);
+    std::vector<double> lb(g_layout.nB), vb(g_layout.nB);
+    lam.assign(g_layout.nA, 0.0);
+    fa.assign(g_layout.nA, 0.0);
+    for(int k=0; k<g_layout.nA; k++){
+        lam[k] = std::pow(10.0, dis::columnLog10Lambda(g_layout, 'A', k, w0, g_dlog));
+        fa[k] = Xc(k);
+    }
+    for(int k=0; k<g_layout.nB; k++){
+        lb[k] = std::pow(10.0, dis::columnLog10Lambda(g_layout, 'B', k, w0, g_dlog));
+        vb[k] = Xc(g_layout.startB()+k);
+    }
+    fb = linewidth::resample(lb, vb, lam);
+    return true;
+}
+
+// Component spectra for Find Lines: the files of A and B of the Output tab (the continuum-normalised
+// ones "<name>_norm.<ext>" if they exist, else the plain ones), otherwise the current solution
+bool MainWindow::lineFinderSpectra(std::vector<double> &lam, std::vector<double> &fa, std::vector<double> &fb, QString &source)
+{
+    QStringList used;
+    std::vector<double> w[2], v[2];
+    bool ok = true;
+    for(int part=0; part<2 && ok; part++){
+        const QString name = (part==0 ? ui->lineEdit_5 : ui->lineEdit_8)->text().trimmed();
+        QString file;
+        for(const QString &cand : {normName(name), name})
+            if(!name.isEmpty() && QFileInfo::exists(qPath+"/"+cand)){ file = cand; break; }
+        std::vector<std::vector<double>> rows;
+        std::string err;
+        if(file.isEmpty() || !dataio::readTable((qPath+"/"+file).toStdString(), 2, rows, err) || rows.size()<10){
+            ok = false;
+            break;
+        }
+        for(const auto &r : rows){ w[part].push_back(r[0]); v[part].push_back(r[1]); }
+        used << file;
+    }
+    if(ok){
+        lam = w[0];
+        fa = v[0];
+        fb = linewidth::resample(w[1], v[1], lam);
+        source = "files "+used.join(", ");
+        return true;
+    }
+    if(lineScanSpectra(lam, fa, fb, false)){
+        source = "current solution";
+        return true;
+    }
+    reportError("Error 55: Find Lines: no component spectra. The files of A and B (Output tab) do not exist and there is no solution. Solve (or optimise) first or set the file names.");
+    return false;
+}
+
+// Optimisation tab, Line width scan: Find Lines
+void MainWindow::on_pushButton_lsFind_clicked()
+{
+    qPath = ui->lineEdit_4->text();
+    LineFinderDialog::Data d;
+    QString source;
+    if(!lineFinderSpectra(d.lambda, d.fluxA, d.fluxB, source)) return;
+    const QString name = ui->lineEdit_lsLines->text().trimmed();
+    if(name.isEmpty()){
+        reportError("Error 56: Line width: no file name for the line list (Optimisation tab).");
+        return;
+    }
+    d.file = qPath+"/"+name;
+    // an existing list is shown and its settings are used
+    if(QFileInfo::exists(d.file)){
+        std::string err;
+        linewidth::readLineList(d.file.toStdString(), d.params, d.linesA, d.linesB, err);
+    }
+    auto *dlg = new LineFinderDialog(this);
+    dlg->setAttribute(Qt::WA_DeleteOnClose);
+    dlg->setData(d);
+    dlg->setWindowTitle("Find Lines ("+source+")");
+    connect(dlg, &LineFinderDialog::applied, this, [this](const QString &file){
+        const QString m = "Line width: line list written to "+file+".";
+        cout<<m.toStdString()<<endl;
+        if(runow==0) ui->plainTextEdit_2->appendPlainText(m);
+    });
+    dlg->show();
+}
+
+// Optimisation tab, Line width scan: residuum and line width for every orbit of the grid
+void MainWindow::on_pushButton_lsScan_clicked()
+{
+    qPath = ui->lineEdit_4->text();
+    const QString gridName = ui->lineEdit_lsGrid->text().trimmed(), lineName = ui->lineEdit_lsLines->text().trimmed(),
+                  outName = ui->lineEdit_lsOut->text().trimmed();
+    if(gridName.isEmpty() || lineName.isEmpty() || outName.isEmpty()){
+        reportError("Error 56: Line width scan: file name of the orbit grid, the line list or the result missing (Optimisation tab).");
+        return;
+    }
+    if(!ui->checkBox_4->isChecked() || ui->checkBox_2->isChecked() || ui->checkBox->isChecked()){
+        reportError("Error 56: Line width scan: needs two components with the orbit from orbital elements (Data tab).");
+        return;
+    }
+    std::vector<std::array<double, 7>> orbits;
+    std::string err;
+    if(!linewidth::readOrbitGrid((qPath+"/"+gridName).toStdString(), orbits, err) || orbits.empty()){
+        reportError("Error 56: Line width scan: "+(err.empty() ? QString("the orbit grid is empty.") : QString::fromStdString(err)));
+        return;
+    }
+    linewidth::Params prm;
+    std::vector<double> linesA, linesB;
+    if(!linewidth::readLineList((qPath+"/"+lineName).toStdString(), prm, linesA, linesB, err)){
+        reportError("Error 56: Line width scan: line list "+qPath+"/"+lineName+": "+QString::fromStdString(err)+" Create it with Find Lines.");
+        return;
+    }
+    std::ofstream out((qPath+"/"+outName).toStdString().c_str());
+    if(!out){
+        reportError("Error 52: Cannot write "+qPath+"/"+outName+".");
+        return;
+    }
+    abortt = 0;
+    this->setCursor(QCursor(Qt::WaitCursor));
+    MainWindow::disableButtons();
+    ui->pushButton_lsFind->setEnabled(false);
+    ui->pushButton_lsScan->setEnabled(false);
+    auto finish = [this](){
+        MainWindow::enableButtons();
+        ui->pushButton_lsFind->setEnabled(true);
+        ui->pushButton_lsScan->setEnabled(true);
+        this->setCursor(QCursor(Qt::ArrowCursor));
+    };
+    MainWindow::read_data();
+    if(error==1){
+        finish();
+        error = 0;
+        return;
+    }
+    const std::vector<double> keep(orbele.begin(), orbele.end());
+    std::vector<linewidth::ScanRow> rows;
+    const int n = int(orbits.size());
+    const bool saveSpectra = ui->checkBox_lsSave->isChecked();
+    const int dot = outName.lastIndexOf('.');
+    const QString spectraExt = dot>0 ? outName.mid(dot) : QString(".dat");
+    const QString spectraBase = qPath+"/"+(dot>0 ? outName.left(dot) : outName);
+    ui->progressBar_lsScan->setMaximum(n);
+    ui->progressBar_lsScan->setValue(0);
+    for(int k=0; k<n; k++){
+        linewidth::ScanRow row;
+        for(int e=0; e<7; e++){ orbele[e] = orbits[k][e]; row.el[e] = orbits[k][e]; }
+        if(orbit::elementsValid(orbele[0], orbele[1])){
+            row.residuum = MainWindow::evaluateOrbit();
+            std::vector<double> lam, fa, fb;
+            if(error==0 && std::isfinite(row.residuum) && lineScanSpectra(lam, fa, fb, true)){
+                row.m = linewidth::measure(lam, fa, fb, linesA, linesB, prm);
+                row.ok = row.m.ok;
+                if(saveSpectra){
+                    // continuum-normalised A and B of this orbit (as the Output tab option)
+                    const arma::vec Xc = componentSpectra();
+                    std::vector<double> wc[2], vc[2];
+                    std::vector<int> cc[2];
+                    for(int part=0; part<2; part++){
+                        const int nn = part==0 ? g_layout.nA : g_layout.nB;
+                        const int start = part==0 ? 0 : g_layout.startB();
+                        for(int i=0; i<nn; i++){
+                            wc[part].push_back(std::pow(10.0, dis::columnLog10Lambda(g_layout, part==0 ? 'A' : 'B', i, W(0), g_dlog)));
+                            vc[part].push_back(Xc(start+i));
+                            cc[part].push_back(start+i);
+                        }
+                    }
+                    if(wc[0].size()>=3 && wc[1].size()>=3){
+                        const QString tag = QString("_%1").arg(k+1, 3, 10, QChar('0'));
+                        const arma::vec res = M*X;
+                        writeRenormalised(res, Xc, wc, vc, cc, spectraBase+tag+"_A"+spectraExt, spectraBase+tag+"_B"+spectraExt,
+                                          ui->doubleSpinBox_normKnot->value(), ui->doubleSpinBox_normLow->value());
+                    }
+                }
+            }
+        }
+        error = 0;
+        rows.push_back(row);
+        ui->spinBox_4->setValue(k+1);
+        ui->progressBar_lsScan->setValue(k+1);
+        qApp->processEvents(QEventLoop::AllEvents);
+        if(abortt==1){
+            abortt = 0;
+            break;
+        }
+    }
+    for(int e=0; e<7; e++) orbele[e] = keep[e];
+    MainWindow::evaluateOrbit();     // the solution of the elements before the scan
+    finish();
+
+    out.close();
+    linewidth::ScanInfo info;
+    info.linesFile = lineName.toStdString();
+    const QString profName = spectraBase+"_profiles"+spectraExt;
+    if(!linewidth::writeScan((qPath+"/"+outName).toStdString(), info, rows, err)
+            || !linewidth::writeProfiles(profName.toStdString(), rows, err))
+        reportError("Error 52: "+QString::fromStdString(err));
+    const QString m = QString("Line width scan: %1 of %2 orbits, %3 lines in A, %4 in B, written to %5.")
+                          .arg(rows.size()).arg(n).arg(linesA.size()).arg(linesB.size()).arg(qPath+"/"+outName);
+    cout<<m.toStdString()<<endl;
+    if(runow==0){
+        ui->plainTextEdit_2->appendPlainText(m);
+        auto *dlg = new LineScanDialog(this);
+        dlg->setAttribute(Qt::WA_DeleteOnClose);
+        dlg->setRows(rows, qPath+"/"+outName);
+        dlg->show();
+    }
+}
+
+// Optimisation tab, Line width scan: Show results (of an earlier scan, from the files)
+void MainWindow::on_pushButton_lsShow_clicked()
+{
+    qPath = ui->lineEdit_4->text();
+    const QString outName = ui->lineEdit_lsOut->text().trimmed();
+    if(outName.isEmpty()){
+        reportError("Error 56: Line width scan: no file name for the result (Optimisation tab).");
+        return;
+    }
+    linewidth::ScanInfo info;
+    std::vector<linewidth::ScanRow> rows;
+    std::string err;
+    if(!linewidth::readScan((qPath+"/"+outName).toStdString(), info, rows, err)){
+        reportError("Error 56: Line width scan: "+QString::fromStdString(err)+" Run Scan orbits first.");
+        return;
+    }
+    const int dot = outName.lastIndexOf('.');
+    const QString profName = qPath+"/"+(dot>0 ? outName.left(dot)+"_profiles"+outName.mid(dot) : outName+"_profiles");
+    std::string perr;
+    const bool haveProfiles = linewidth::readProfiles(profName.toStdString(), rows, perr);
+    if(!haveProfiles){
+        cout<<("Line width scan: no profiles ("+perr+")")<<endl;
+        for(auto &r : rows){ r.m.dv.clear(); r.m.a.prof.clear(); r.m.a.err.clear(); r.m.b.prof.clear(); r.m.b.err.clear(); }
+    }
+    auto *dlg = new LineScanDialog(this);
+    dlg->setAttribute(Qt::WA_DeleteOnClose);
+    dlg->setRows(rows, qPath+"/"+outName);
+    dlg->show();
+}
+
 void MainWindow::on_pushButton_telldetect_clicked()
 {
     if(!g_matrixValid || g_layout.nT<3 || X.n_elem!=arma::uword(g_layout.cols()) || W.n_elem<2){

@@ -39,6 +39,10 @@ extern const char *const kTelluricMask;
 // of the optical, the weak ones included (format of readRanges)
 extern const char *const kStaticRanges;
 
+// Default windows of the line statistics (Output tab, Analysis): strong stellar lines, from to
+// in A wide enough for RVs of about +-150 km/s, label (format of readRanges)
+extern const char *const kLineWindows;
+
 // Marks the pixels whose wavelength (log10 lambda) lies in one of the ranges [from, to].
 // Returns the number of marked pixels.
 size_t markRanges(const std::vector<double> &log10Lambda,

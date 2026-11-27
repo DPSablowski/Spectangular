@@ -156,8 +156,10 @@ FluxTemplate::FluxTemplate(QWidget *parent) : QDialog(parent)
         (*p)->setMinimumHeight(200);
         (*p)->xAxis2->setVisible(true);
         (*p)->xAxis2->setTickLabels(false);
+        (*p)->xAxis2->setTicks(false);
         (*p)->yAxis2->setVisible(true);
         (*p)->yAxis2->setTickLabels(false);
+        (*p)->yAxis2->setTicks(false);
         (*p)->xAxis->setLabel("Wavelength [Å]");
         (*p)->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
         top->addWidget(*p, 1);

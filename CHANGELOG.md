@@ -56,6 +56,41 @@ therefore not directly comparable.
 
 ### Added
 
+- **All plots with a box:** the plots of the period analysis and of Find Lines also have the second axes visible without tick labels and ticks, like the spectrum plot; ticks of the unused second axes are off in all plots.
+- **Line width scan** (Optimisation tab, group "Line width scan"). Stage 1 of the line width of a
+  component as a criterion for the amplitudes: "Find Lines" opens a window with the spectrum of component A and then B (selectable; lines are defined for both components one after the other; from the component files of the Output tab, the normalised ones if present, otherwise from the current solution) and the absorption lines found (depth against a percentile
+  continuum, thresholds and window adjustable); lines are removed or added by a click in the plot,
+  X and Y range are set with fields, "Apply" writes both line lists (`scanlines.dat`, sections `# component A/B`, settings as
+  comments). "Scan orbits" reads a grid of orbits (`orbitgrid.dat`: seven rows, one column per
+  orbit), computes the solution for each and measures the Gaussian FWHM of the mean line profile of each component in the lines found in that same component (and the depth ratio and correlation, as
+  in the script for ι Tri B); result file `linescan.dat` and a window with FWHM and residuum
+  against the varying element. The result window also shows the mean line profile and its Gaussian fit for each orbit (written to `<result>_profiles.dat`); the continuum-normalised spectra of every orbit can be saved; "Show results" opens the window from the files of an earlier scan. The buttons are disabled and the cursor busy during the scan, a progress bar counts the orbits. The solution before the scan is restored. New module
+  `linewidth.cpp/h`, windows in `linefinder.cpp/h`; new Errors 55 (no solution) and 56 (files or
+  data mode). Synthetic test: K_B scanned from 33 to 57 km/s, the FWHM of B has its minimum
+  (24.1 km/s) at the true 45 km/s and grows to 31 km/s at the ends, like the residuum. Tests:
+  12 unit tests, `linescan`, `linescan_edit`, `linescan_nosolution`, `linescan_nogrid`,
+  `linescan_nolines`.
+- **Analysis of the solution** (Output tab, button "Analyse the current solution"). RV O−C and
+  line strength per spectrum: with the component spectra fixed, each spectrum is fitted with its
+  own shift and line strength of A and B (Gauss–Newton), with errors; the robust scatter of the
+  O−C and spectra beyond 5 times it are reported (`rv_oc.dat`). Statistics per line: mean, RMS
+  and equivalent width of O−M per spectrum in the windows of a line list (`lines.dat`, created
+  with strong stellar lines; output `linestat.dat`). New Error 54. Synthetic test: a shift of
+  1.5 km/s found as 1.36 km/s against the others (1/16 absorbed by the components), a line
+  strength 1.3 as 1.26 (expected 1.28), the EW of an emission within 4 %. Tests: `analysis`,
+  `analysis_nosolution`, `analysis_lines_missing`.
+- **Residuals against the number of the spectrum and period analysis of the residuals.** The
+  Convergence & residuals tab shows RMS and mean of O−M per spectrum also against the number of
+  the spectrum (orbit mode: second plot beside the one against the phase; RV mode: one plot
+  against the number only); outliers (RMS more than 5 × 1.48 MAD above the median) are labelled in both
+  plots. New tool Tools → Period analysis of the residuals: generalised Lomb–Scargle periodogram
+  (Zechmeister & Kürster 2009) of mean, RMS or std of O−M per spectrum against the time (column
+  "time" of the statistics, which is now added when the phase is the abscissa, or the times
+  file), outliers left out, spectral window, FAP levels 1 % and 0.1 %, orbital frequency and
+  harmonics marked, the five highest peaks with FAP and sine amplitude, data folded with a
+  selected period, periodogram written to `<statistics>_periodogram.dat`. Identical to
+  astropy's LombScargle on the residuals of ι Tri A. Tests: unit `testPeriod`, `period`,
+  `period_timecol`, `period_noise`, `period_nofile`, `residual_stats_outlier`.
 - **Residuum without the ranges of the static lines** (Model tab, Residuum: "Exclude the ranges
   of the static lines from the residuum"). The pixels in the ranges of the Data-tab file "Static
   lines only in" (observatory frame, shifted by BC in corrected spectra) do not count in the
@@ -552,6 +587,9 @@ therefore not directly comparable.
 
 ### Fixed
 
+- **"Apply" of the Output tab** now also sets the names of the error estimation, the residual
+  statistics, the best state, the convergence data and the files of the analysis
+  (`<name>_errors`, `_diffstat`, `_beststate`, `_optdata`, `_rv_oc`, `_linestat`).
 - **Strength of the static lines stuck at 0.** The strength per spectrum is updated
   multiplicatively; a spectrum whose static lines did not match (negative regression, set to
   0) lost its static columns and could never recover (ι Tri A, spectrum 2). Now the strength has
@@ -859,6 +897,23 @@ implementation (`neldermead.cpp`). (f54bffe)
 
 ### Changed
 
+- **Analysis of the solution merged with the period analysis.** The button "Analyse the current
+  solution" moves from the Output tab to Tools → Period analysis (renamed from "Period analysis
+  of the residuals"); the Output tab keeps what is written and the file names. The dialog gets
+  a source: residual statistics (as before), fit per spectrum (`rv_oc.dat`: RV O−C and line
+  strength of A and B, weighted with the errors) or statistics per line window (`linestat.dat`:
+  mean, RMS, EW per line); after the analysis it selects the fit and lists its quantities, so
+  that the periodogram of, e.g., the O−C of A or the EW of Hα follows at once. Outliers of the
+  other sources are cut on both sides of the median. Tests: `period_fit`, `period_lines`,
+  `period_fit_nofile`; `analysis*` run through the dialog.
+- **Result tabs rearranged: two instead of four.** The plot of the differences per spectrum in
+  the Spectra tab is removed (the differences file is still written); in its place the Spectra
+  tab shows the residuals per spectrum (RMS and mean of O−M against phase/time and against
+  the number, with window and Update). The second tab, now "Convergence & messages", holds the
+  convergence plot and below it Messages and RVs side by side; the tabs Messages and RVs are
+  gone. The field "Offset" (distance of the differences) is hidden and only kept for older
+  configurations. "Save every improvement" saves `Residuals_<n>.png` instead of `Diff_<n>.png`.
+  Test: `residual_stats` (layout of the tabs).
 - **Default: 2 cores.** The number of cores ("Use", Model tab; batch mode without
   `--threads`) is 2 instead of all, if the machine has two. In a scaling test on long spectra
   (14-core machine) 2 cores were fastest, more and fewer took longer: only the

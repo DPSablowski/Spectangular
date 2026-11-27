@@ -38,6 +38,10 @@ SOURCES += \
     $$PWD/fluxtemplate.cpp \
     $$PWD/barycorr.cpp \
     $$PWD/barycorrdialog.cpp \
+    $$PWD/periodogram.cpp \
+    $$PWD/linewidth.cpp \
+    $$PWD/linefinder.cpp \
+    $$PWD/perioddialog.cpp \
     $$PWD/resources.cpp
 
 HEADERS += \
@@ -62,6 +66,10 @@ HEADERS += \
     $$PWD/fluxtemplate.h \
     $$PWD/barycorr.h \
     $$PWD/barycorrdialog.h \
+    $$PWD/periodogram.h \
+    $$PWD/linewidth.h \
+    $$PWD/linefinder.h \
+    $$PWD/perioddialog.h \
     $$PWD/resources.h
 
 FORMS += \

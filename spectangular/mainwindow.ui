@@ -1,4 +1,4 @@
-<?xml version='1.0' encoding='UTF-8'?>
+<?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <class>MainWindow</class>
  <widget class="QMainWindow" name="MainWindow">
@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1440</width>
-    <height>920</height>
+    <height>983</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -15,7 +15,7 @@
   </property>
   <widget class="QWidget" name="centralWidget">
    <property name="styleSheet">
-    <string>QLineEdit[readOnly="true"], QAbstractSpinBox[readOnly="true"] { color: palette(text); background: palette(window); }</string>
+    <string>QLineEdit[readOnly=&quot;true&quot;], QAbstractSpinBox[readOnly=&quot;true&quot;] { color: palette(text); background: palette(window); }</string>
    </property>
    <layout class="QVBoxLayout" name="vCentral">
     <property name="spacing">
@@ -154,7 +154,7 @@
       <item>
        <spacer name="sp_79">
         <property name="orientation">
-         <enum>Qt::Horizontal</enum>
+         <enum>Qt::Orientation::Horizontal</enum>
         </property>
         <property name="sizeHint" stdset="0">
          <size>
@@ -173,14 +173,14 @@
       </item>
       <item>
        <widget class="QLineEdit" name="lineEdit_4">
-        <property name="text">
-         <string />
-        </property>
         <property name="minimumSize">
          <size>
           <width>380</width>
           <height>0</height>
          </size>
+        </property>
+        <property name="text">
+         <string/>
         </property>
        </widget>
       </item>
@@ -193,22 +193,25 @@
       </property>
       <item>
        <widget class="QTabWidget" name="tabSettings">
-        <property name="maximumSize">
-         <size>
-          <width>640</width>
-          <height>16777215</height>
-         </size>
-        </property>
         <property name="minimumSize">
          <size>
           <width>520</width>
           <height>0</height>
          </size>
         </property>
+        <property name="maximumSize">
+         <size>
+          <width>640</width>
+          <height>16777215</height>
+         </size>
+        </property>
         <property name="currentIndex">
          <number>0</number>
         </property>
         <widget class="QWidget" name="tabData">
+         <attribute name="title">
+          <string>Data</string>
+         </attribute>
          <layout class="QVBoxLayout" name="tabData_l">
           <property name="leftMargin">
            <number>0</number>
@@ -224,13 +227,21 @@
           </property>
           <item>
            <widget class="QScrollArea" name="tabData_s">
+            <property name="frameShape">
+             <enum>QFrame::Shape::NoFrame</enum>
+            </property>
             <property name="widgetResizable">
              <bool>true</bool>
             </property>
-            <property name="frameShape">
-             <enum>QFrame::NoFrame</enum>
-            </property>
             <widget class="QWidget" name="tabData_c">
+             <property name="geometry">
+              <rect>
+               <x>0</x>
+               <y>0</y>
+               <width>622</width>
+               <height>867</height>
+              </rect>
+             </property>
              <layout class="QVBoxLayout" name="tabData_v">
               <property name="spacing">
                <number>8</number>
@@ -263,7 +274,7 @@
                  <item row="0" column="1">
                   <widget class="QLineEdit" name="lineEdit_3">
                    <property name="text">
-                    <string />
+                    <string/>
                    </property>
                   </widget>
                  </item>
@@ -299,12 +310,6 @@
                  </item>
                  <item row="0" column="5">
                   <widget class="QSpinBox" name="spinBox_2">
-                   <property name="maximum">
-                    <number>999</number>
-                   </property>
-                   <property name="value">
-                    <number>1</number>
-                   </property>
                    <property name="minimumSize">
                     <size>
                      <width>56</width>
@@ -316,6 +321,12 @@
                      <width>56</width>
                      <height>16777215</height>
                     </size>
+                   </property>
+                   <property name="maximum">
+                    <number>999</number>
+                   </property>
+                   <property name="value">
+                    <number>1</number>
                    </property>
                   </widget>
                  </item>
@@ -371,7 +382,7 @@
                     <string>FITS: name of the binary table extension (optional).</string>
                    </property>
                    <property name="text">
-                    <string />
+                    <string/>
                    </property>
                   </widget>
                  </item>
@@ -384,9 +395,6 @@
                  </item>
                  <item row="2" column="3">
                   <widget class="QLineEdit" name="lineEdit_11">
-                   <property name="text">
-                    <string />
-                   </property>
                    <property name="minimumSize">
                     <size>
                      <width>56</width>
@@ -398,6 +406,9 @@
                      <width>56</width>
                      <height>16777215</height>
                     </size>
+                   </property>
+                   <property name="text">
+                    <string/>
                    </property>
                   </widget>
                  </item>
@@ -408,11 +419,8 @@
                    </property>
                   </widget>
                  </item>
-                 <item row="2" column="5" rowspan="1" colspan="2">
+                 <item row="2" column="5" colspan="2">
                   <widget class="QLineEdit" name="lineEdit_12">
-                   <property name="text">
-                    <string />
-                   </property>
                    <property name="minimumSize">
                     <size>
                      <width>56</width>
@@ -425,20 +433,35 @@
                      <height>16777215</height>
                     </size>
                    </property>
+                   <property name="text">
+                    <string/>
+                   </property>
                   </widget>
                  </item>
-                 <item row="3" column="0" rowspan="1" colspan="4">
+                 <item row="3" column="0" colspan="4">
                   <widget class="QCheckBox" name="checkBox_42">
-                   <property name="text">
-                    <string>Resample to a common log grid, step</string>
-                   </property>
                    <property name="toolTip">
                     <string>Resample all spectra onto one common, equidistant log10(lambda) grid when reading (cubic spline), with the step given here. Without the tick this happens automatically (step auto) when the spectra are not on one common log grid: linear wavelengths (Angstrom) or individual log grids. Range: the part covered by all spectra.</string>
                    </property>
+                   <property name="text">
+                    <string>Resample to a common log grid, step</string>
+                   </property>
                   </widget>
                  </item>
-                 <item row="3" column="4" rowspan="1" colspan="3">
+                 <item row="3" column="4" colspan="3">
                   <widget class="QDoubleSpinBox" name="doubleSpinBox_18">
+                   <property name="minimumSize">
+                    <size>
+                     <width>110</width>
+                     <height>0</height>
+                    </size>
+                   </property>
+                   <property name="maximumSize">
+                    <size>
+                     <width>110</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
                    <property name="toolTip">
                     <string>Step of the common log grid in km/s per pixel. auto: the finest median sampling among the spectra.</string>
                    </property>
@@ -456,18 +479,6 @@
                    </property>
                    <property name="singleStep">
                     <double>0.100000000000000</double>
-                   </property>
-                   <property name="minimumSize">
-                    <size>
-                     <width>110</width>
-                     <height>0</height>
-                    </size>
-                   </property>
-                   <property name="maximumSize">
-                    <size>
-                     <width>110</width>
-                     <height>16777215</height>
-                    </size>
                    </property>
                   </widget>
                  </item>
@@ -530,18 +541,12 @@
                     <string>Flux ratio F&lt;sub&gt;A&lt;/sub&gt;/F&lt;sub&gt;B&lt;/sub&gt;</string>
                    </property>
                    <property name="textFormat">
-                    <enum>Qt::RichText</enum>
+                    <enum>Qt::TextFormat::RichText</enum>
                    </property>
                   </widget>
                  </item>
                  <item row="1" column="1">
                   <widget class="QDoubleSpinBox" name="doubleSpinBox_4">
-                   <property name="decimals">
-                    <number>5</number>
-                   </property>
-                   <property name="singleStep">
-                    <double>0.020000000000000</double>
-                   </property>
                    <property name="minimumSize">
                     <size>
                      <width>90</width>
@@ -554,9 +559,15 @@
                      <height>16777215</height>
                     </size>
                    </property>
+                   <property name="decimals">
+                    <number>5</number>
+                   </property>
+                   <property name="singleStep">
+                    <double>0.020000000000000</double>
+                   </property>
                   </widget>
                  </item>
-                 <item row="1" column="2" rowspan="1" colspan="3">
+                 <item row="1" column="2" colspan="3">
                   <widget class="QLabel" name="lbl_10">
                    <property name="text">
                     <string>per spectrum: Tools › Editor</string>
@@ -572,6 +583,18 @@
                  </item>
                  <item row="2" column="1">
                   <widget class="QComboBox" name="comboBox_ratio">
+                   <property name="minimumSize">
+                    <size>
+                     <width>100</width>
+                     <height>0</height>
+                    </size>
+                   </property>
+                   <property name="maximumSize">
+                    <size>
+                     <width>100</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
                    <property name="toolTip">
                     <string>Wavelength dependence of the flux ratio F_A/F_B. constant: the same ratio at all wavelengths. Planck: ratio of two Planck functions with T_A and T_B. table: file with two columns (wavelength [A], ratio), interpolated linearly. The value in 'Flux ratio' (and per spectrum in the Editor or from the flux-ratio optimisation) is the ratio at the reference wavelength.</string>
                    </property>
@@ -590,18 +613,6 @@
                      <string>table</string>
                     </property>
                    </item>
-                   <property name="minimumSize">
-                    <size>
-                     <width>100</width>
-                     <height>0</height>
-                    </size>
-                   </property>
-                   <property name="maximumSize">
-                    <size>
-                     <width>100</width>
-                     <height>16777215</height>
-                    </size>
-                   </property>
                   </widget>
                  </item>
                  <item row="2" column="2">
@@ -610,30 +621,12 @@
                     <string>at λ&lt;sub&gt;ref&lt;/sub&gt;</string>
                    </property>
                    <property name="textFormat">
-                    <enum>Qt::RichText</enum>
+                    <enum>Qt::TextFormat::RichText</enum>
                    </property>
                   </widget>
                  </item>
-                 <item row="2" column="3" rowspan="1" colspan="2">
+                 <item row="2" column="3" colspan="2">
                   <widget class="QDoubleSpinBox" name="doubleSpinBox_lref">
-                   <property name="decimals">
-                    <number>1</number>
-                   </property>
-                   <property name="maximum">
-                    <double>1000000.0</double>
-                   </property>
-                   <property name="singleStep">
-                    <double>100</double>
-                   </property>
-                   <property name="suffix">
-                    <string> Å</string>
-                   </property>
-                   <property name="specialValueText">
-                    <string>auto</string>
-                   </property>
-                   <property name="toolTip">
-                    <string>Reference wavelength [A] at which the flux ratio is given. auto: centre of the data (geometric mean).</string>
-                   </property>
                    <property name="minimumSize">
                     <size>
                      <width>110</width>
@@ -645,6 +638,24 @@
                      <width>110</width>
                      <height>16777215</height>
                     </size>
+                   </property>
+                   <property name="toolTip">
+                    <string>Reference wavelength [A] at which the flux ratio is given. auto: centre of the data (geometric mean).</string>
+                   </property>
+                   <property name="specialValueText">
+                    <string>auto</string>
+                   </property>
+                   <property name="suffix">
+                    <string> Å</string>
+                   </property>
+                   <property name="decimals">
+                    <number>1</number>
+                   </property>
+                   <property name="maximum">
+                    <double>1000000.000000000000000</double>
+                   </property>
+                   <property name="singleStep">
+                    <double>100.000000000000000</double>
                    </property>
                   </widget>
                  </item>
@@ -654,33 +665,12 @@
                     <string>T&lt;sub&gt;A&lt;/sub&gt;, T&lt;sub&gt;B&lt;/sub&gt;</string>
                    </property>
                    <property name="textFormat">
-                    <enum>Qt::RichText</enum>
+                    <enum>Qt::TextFormat::RichText</enum>
                    </property>
                   </widget>
                  </item>
                  <item row="3" column="1">
                   <widget class="QDoubleSpinBox" name="doubleSpinBox_TA">
-                   <property name="decimals">
-                    <number>0</number>
-                   </property>
-                   <property name="minimum">
-                    <double>0</double>
-                   </property>
-                   <property name="maximum">
-                    <double>1000000.0</double>
-                   </property>
-                   <property name="singleStep">
-                    <double>100</double>
-                   </property>
-                   <property name="value">
-                    <double>10000</double>
-                   </property>
-                   <property name="suffix">
-                    <string> K</string>
-                   </property>
-                   <property name="toolTip">
-                    <string>Effective temperature of A [K] (Planck).</string>
-                   </property>
                    <property name="minimumSize">
                     <size>
                      <width>100</width>
@@ -692,32 +682,32 @@
                      <width>100</width>
                      <height>16777215</height>
                     </size>
+                   </property>
+                   <property name="toolTip">
+                    <string>Effective temperature of A [K] (Planck).</string>
+                   </property>
+                   <property name="suffix">
+                    <string> K</string>
+                   </property>
+                   <property name="decimals">
+                    <number>0</number>
+                   </property>
+                   <property name="minimum">
+                    <double>0.000000000000000</double>
+                   </property>
+                   <property name="maximum">
+                    <double>1000000.000000000000000</double>
+                   </property>
+                   <property name="singleStep">
+                    <double>100.000000000000000</double>
+                   </property>
+                   <property name="value">
+                    <double>10000.000000000000000</double>
                    </property>
                   </widget>
                  </item>
                  <item row="3" column="2">
                   <widget class="QDoubleSpinBox" name="doubleSpinBox_TB">
-                   <property name="decimals">
-                    <number>0</number>
-                   </property>
-                   <property name="minimum">
-                    <double>0</double>
-                   </property>
-                   <property name="maximum">
-                    <double>1000000.0</double>
-                   </property>
-                   <property name="singleStep">
-                    <double>100</double>
-                   </property>
-                   <property name="value">
-                    <double>10000</double>
-                   </property>
-                   <property name="suffix">
-                    <string> K</string>
-                   </property>
-                   <property name="toolTip">
-                    <string>Effective temperature of B [K] (Planck).</string>
-                   </property>
                    <property name="minimumSize">
                     <size>
                      <width>100</width>
@@ -729,6 +719,27 @@
                      <width>100</width>
                      <height>16777215</height>
                     </size>
+                   </property>
+                   <property name="toolTip">
+                    <string>Effective temperature of B [K] (Planck).</string>
+                   </property>
+                   <property name="suffix">
+                    <string> K</string>
+                   </property>
+                   <property name="decimals">
+                    <number>0</number>
+                   </property>
+                   <property name="minimum">
+                    <double>0.000000000000000</double>
+                   </property>
+                   <property name="maximum">
+                    <double>1000000.000000000000000</double>
+                   </property>
+                   <property name="singleStep">
+                    <double>100.000000000000000</double>
+                   </property>
+                   <property name="value">
+                    <double>10000.000000000000000</double>
                    </property>
                   </widget>
                  </item>
@@ -741,11 +752,11 @@
                  </item>
                  <item row="3" column="4">
                   <widget class="QLineEdit" name="lineEdit_ratio">
-                   <property name="text">
-                    <string>fluxratio.dat</string>
-                   </property>
                    <property name="toolTip">
                     <string>Flux-ratio table: two columns, wavelength [A] and F_A/F_B.</string>
+                   </property>
+                   <property name="text">
+                    <string>fluxratio.dat</string>
                    </property>
                   </widget>
                  </item>
@@ -768,10 +779,10 @@
                    </property>
                   </widget>
                  </item>
-                 <item row="0" column="1" rowspan="1" colspan="3">
+                 <item row="0" column="1" colspan="3">
                   <widget class="QLineEdit" name="lineEdit_2">
                    <property name="text">
-                    <string />
+                    <string/>
                    </property>
                   </widget>
                  </item>
@@ -785,10 +796,10 @@
                    </property>
                   </widget>
                  </item>
-                 <item row="1" column="1" rowspan="1" colspan="2">
+                 <item row="1" column="1" colspan="2">
                   <widget class="QLineEdit" name="lineEdit">
                    <property name="text">
-                    <string />
+                    <string/>
                    </property>
                   </widget>
                  </item>
@@ -809,9 +820,8 @@
                    </property>
                   </widget>
                  </item>
-                 <item row="2" column="1" rowspan="1" colspan="2">
-                  <widget class="QLineEdit" name="lineEdit_18">
-                  </widget>
+                 <item row="2" column="1" colspan="2">
+                  <widget class="QLineEdit" name="lineEdit_18"/>
                  </item>
                  <item row="2" column="3">
                   <widget class="QPushButton" name="pushButton_15">
@@ -895,7 +905,7 @@
                  <item row="6" column="0">
                   <widget class="QCheckBox" name="checkBox_tellrange">
                    <property name="toolTip">
-                    <string>Solve the static spectrum only in the wavelength ranges of the file (observatory frame), zero elsewhere: fewer unknowns, faster, and no broad structure outside. If the file does not exist, a default with all telluric O2 and H2O systems of the optical (weak ones included) is written to the work folder; edit it, or let "Detect" find the ranges in your data.</string>
+                    <string>Solve the static spectrum only in the wavelength ranges of the file (observatory frame), zero elsewhere: fewer unknowns, faster, and no broad structure outside. If the file does not exist, a default with all telluric O2 and H2O systems of the optical (weak ones included) is written to the work folder; edit it, or let &quot;Detect&quot; find the ranges in your data.</string>
                    </property>
                    <property name="text">
                     <string>Static lines only in</string>
@@ -905,43 +915,57 @@
                  <item row="6" column="1">
                   <widget class="QLineEdit" name="lineEdit_tellrange">
                    <property name="toolTip">
-                    <string>File of ranges: per line from to [A] (air, observatory frame) and optionally a group name (e.g. O2, H2O); '#' comments. With "fit per spectrum" every group gets its own strength per spectrum.</string>
+                    <string>File of ranges: per line from to [A] (air, observatory frame) and optionally a group name (e.g. O2, H2O); '#' comments. With &quot;fit per spectrum&quot; every group gets its own strength per spectrum.</string>
                    </property>
                   </widget>
                  </item>
                  <item row="6" column="2" colspan="2">
-                  <widget class="QWidget" name="row_telldetect">
-                   <layout class="QHBoxLayout" name="row_telldetect_l">
-                    <property name="leftMargin"><number>0</number></property>
-                    <property name="topMargin"><number>0</number></property>
-                    <property name="rightMargin"><number>0</number></property>
-                    <property name="bottomMargin"><number>0</number></property>
-                    <item>
-                     <widget class="QPushButton" name="pushButton_telldetect">
-                      <property name="toolTip">
-                       <string>Ranges from the static spectrum of the last Solve (with static lines; best over the whole range, option above off): pixels deviating by more than the given number of sigma from a running median (5 A), widened by 0.5 A, gaps below 1 A closed; absorption and emission (sky lines). Written to &lt;file&gt;_detected.&lt;ext&gt; and set above.</string>
-                      </property>
-                      <property name="text">
-                       <string>Detect</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QDoubleSpinBox" name="doubleSpinBox_telldet">
-                      <property name="toolTip">
-                       <string>Threshold of "Detect" in units of the noise of the static spectrum (robust, from the median absolute deviation).</string>
-                      </property>
-                      <property name="suffix">
-                       <string> σ</string>
-                      </property>
-                      <property name="decimals"><number>1</number></property>
-                      <property name="minimum"><double>1.0</double></property>
-                      <property name="maximum"><double>50.0</double></property>
-                      <property name="value"><double>5.0</double></property>
-                     </widget>
-                    </item>
-                   </layout>
-                  </widget>
+                  <layout class="QHBoxLayout" name="row_telldetect_l">
+                   <property name="leftMargin">
+                    <number>0</number>
+                   </property>
+                   <property name="topMargin">
+                    <number>0</number>
+                   </property>
+                   <property name="rightMargin">
+                    <number>0</number>
+                   </property>
+                   <property name="bottomMargin">
+                    <number>0</number>
+                   </property>
+                   <item>
+                    <widget class="QPushButton" name="pushButton_telldetect">
+                     <property name="toolTip">
+                      <string>Ranges from the static spectrum of the last Solve (with static lines; best over the whole range, option above off): pixels deviating by more than the given number of sigma from a running median (5 A), widened by 0.5 A, gaps below 1 A closed; absorption and emission (sky lines). Written to &lt;file&gt;_detected.&lt;ext&gt; and set above.</string>
+                     </property>
+                     <property name="text">
+                      <string>Detect</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QDoubleSpinBox" name="doubleSpinBox_telldet">
+                     <property name="toolTip">
+                      <string>Threshold of &quot;Detect&quot; in units of the noise of the static spectrum (robust, from the median absolute deviation).</string>
+                     </property>
+                     <property name="suffix">
+                      <string> σ</string>
+                     </property>
+                     <property name="decimals">
+                      <number>1</number>
+                     </property>
+                     <property name="minimum">
+                      <double>1.000000000000000</double>
+                     </property>
+                     <property name="maximum">
+                      <double>50.000000000000000</double>
+                     </property>
+                     <property name="value">
+                      <double>5.000000000000000</double>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
                  </item>
                 </layout>
                </widget>
@@ -961,27 +985,6 @@
                  </item>
                  <item row="0" column="1">
                   <widget class="QDoubleSpinBox" name="doubleSpinBox_16">
-                   <property name="toolTip">
-                    <string>Signal-to-noise ratio of the (continuum-normalised) spectra; noise sigma = 1/(S/N). auto: estimated from the residuum (residuum^2 / degrees of freedom).</string>
-                   </property>
-                   <property name="specialValueText">
-                    <string>auto</string>
-                   </property>
-                   <property name="decimals">
-                    <number>1</number>
-                   </property>
-                   <property name="minimum">
-                    <double>0</double>
-                   </property>
-                   <property name="maximum">
-                    <double>100000</double>
-                   </property>
-                   <property name="singleStep">
-                    <double>10</double>
-                   </property>
-                   <property name="value">
-                    <double>0</double>
-                   </property>
                    <property name="minimumSize">
                     <size>
                      <width>90</width>
@@ -994,29 +997,50 @@
                      <height>16777215</height>
                     </size>
                    </property>
+                   <property name="toolTip">
+                    <string>Signal-to-noise ratio of the (continuum-normalised) spectra; noise sigma = 1/(S/N). auto: estimated from the residuum (residuum^2 / degrees of freedom).</string>
+                   </property>
+                   <property name="specialValueText">
+                    <string>auto</string>
+                   </property>
+                   <property name="decimals">
+                    <number>1</number>
+                   </property>
+                   <property name="minimum">
+                    <double>0.000000000000000</double>
+                   </property>
+                   <property name="maximum">
+                    <double>100000.000000000000000</double>
+                   </property>
+                   <property name="singleStep">
+                    <double>10.000000000000000</double>
+                   </property>
+                   <property name="value">
+                    <double>0.000000000000000</double>
+                   </property>
                   </widget>
                  </item>
-                 <item row="0" column="2" rowspan="1" colspan="2">
+                 <item row="0" column="2" colspan="2">
                   <widget class="QLabel" name="lbl_16">
                    <property name="text">
                     <string>auto: from the residuum</string>
                    </property>
                   </widget>
                  </item>
-                 <item row="1" column="0" rowspan="1" colspan="2">
+                 <item row="1" column="0" colspan="2">
                   <widget class="QCheckBox" name="checkBox_41">
-                   <property name="text">
-                    <string>Weight per spectrum by S/N from</string>
-                   </property>
                    <property name="toolTip">
                     <string>Weighted least squares: each spectrum is weighted with 1/sigma^2, sigma = 1/(S/N), S/N per spectrum from the file (one value per line, same order as the spectra). Solve writes an estimate from the residuals to snr_estimated.dat.</string>
                    </property>
+                   <property name="text">
+                    <string>Weight per spectrum by S/N from</string>
+                   </property>
                   </widget>
                  </item>
-                 <item row="1" column="2" rowspan="1" colspan="2">
+                 <item row="1" column="2" colspan="2">
                   <widget class="QLineEdit" name="lineEdit_29">
                    <property name="toolTip">
-                    <string>File with one S/N value per spectrum, or "auto": estimate the S/N per spectrum from the residuals (3 iterations at the first solve, written to snr_estimated.dat).</string>
+                    <string>File with one S/N value per spectrum, or &quot;auto&quot;: estimate the S/N per spectrum from the residuals (3 iterations at the first solve, written to snr_estimated.dat).</string>
                    </property>
                    <property name="text">
                     <string>snr.dat</string>
@@ -1025,16 +1049,19 @@
                  </item>
                  <item row="2" column="0" colspan="2">
                   <widget class="QCheckBox" name="checkBox_align">
-                   <property name="text">
-                    <string>Align continua to the mean, smoothing</string>
-                   </property>
                    <property name="toolTip">
                     <string>Before disentangling, each spectrum is divided by its smoothed ratio to the mean of all spectra (boxcar of the given width, applied twice; excluded ranges left out). This removes differences of the normalisation between the spectra, which the disentangling turns into broad anti-correlated wiggles of A and B. Also removes real broad differences, e.g. from shifted Balmer wings, on scales of the width and above.</string>
+                   </property>
+                   <property name="text">
+                    <string>Align continua to the mean, smoothing</string>
                    </property>
                   </widget>
                  </item>
                  <item row="2" column="2" colspan="2">
                   <widget class="QDoubleSpinBox" name="doubleSpinBox_alignWidth">
+                   <property name="toolTip">
+                    <string>Width of the boxcar (applied twice) for the ratio of each spectrum to the mean spectrum. Must be much larger than the RV shifts of the lines (a few Å).</string>
+                   </property>
                    <property name="suffix">
                     <string> Å</string>
                    </property>
@@ -1042,19 +1069,16 @@
                     <number>0</number>
                    </property>
                    <property name="minimum">
-                    <double>5.0</double>
+                    <double>5.000000000000000</double>
                    </property>
                    <property name="maximum">
-                    <double>2000.0</double>
+                    <double>2000.000000000000000</double>
                    </property>
                    <property name="singleStep">
-                    <double>5.0</double>
+                    <double>5.000000000000000</double>
                    </property>
                    <property name="value">
-                    <double>30.0</double>
-                   </property>
-                   <property name="toolTip">
-                    <string>Width of the boxcar (applied twice) for the ratio of each spectrum to the mean spectrum. Must be much larger than the RV shifts of the lines (a few Å).</string>
+                    <double>30.000000000000000</double>
                    </property>
                   </widget>
                  </item>
@@ -1076,20 +1100,8 @@
                  </item>
                  <item row="0" column="1">
                   <widget class="QDoubleSpinBox" name="doubleSpinBox">
-                   <property name="buttonSymbols">
-                    <enum>QAbstractSpinBox::NoButtons</enum>
-                   </property>
-                   <property name="readOnly">
-                    <bool>true</bool>
-                   </property>
                    <property name="enabled">
                     <bool>false</bool>
-                   </property>
-                   <property name="minimum">
-                    <double>-999.000000000000000</double>
-                   </property>
-                   <property name="maximum">
-                    <double>999.000000000000000</double>
                    </property>
                    <property name="minimumSize">
                     <size>
@@ -1102,6 +1114,18 @@
                      <width>90</width>
                      <height>16777215</height>
                     </size>
+                   </property>
+                   <property name="readOnly">
+                    <bool>true</bool>
+                   </property>
+                   <property name="buttonSymbols">
+                    <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
+                   </property>
+                   <property name="minimum">
+                    <double>-999.000000000000000</double>
+                   </property>
+                   <property name="maximum">
+                    <double>999.000000000000000</double>
                    </property>
                   </widget>
                  </item>
@@ -1114,20 +1138,8 @@
                  </item>
                  <item row="0" column="3">
                   <widget class="QDoubleSpinBox" name="doubleSpinBox_2">
-                   <property name="buttonSymbols">
-                    <enum>QAbstractSpinBox::NoButtons</enum>
-                   </property>
-                   <property name="readOnly">
-                    <bool>true</bool>
-                   </property>
                    <property name="enabled">
                     <bool>false</bool>
-                   </property>
-                   <property name="minimum">
-                    <double>-999.000000000000000</double>
-                   </property>
-                   <property name="maximum">
-                    <double>999.990000000000009</double>
                    </property>
                    <property name="minimumSize">
                     <size>
@@ -1140,6 +1152,18 @@
                      <width>90</width>
                      <height>16777215</height>
                     </size>
+                   </property>
+                   <property name="readOnly">
+                    <bool>true</bool>
+                   </property>
+                   <property name="buttonSymbols">
+                    <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
+                   </property>
+                   <property name="minimum">
+                    <double>-999.000000000000000</double>
+                   </property>
+                   <property name="maximum">
+                    <double>999.990000000000009</double>
                    </property>
                   </widget>
                  </item>
@@ -1152,23 +1176,8 @@
                  </item>
                  <item row="1" column="1">
                   <widget class="QDoubleSpinBox" name="doubleSpinBox_3">
-                   <property name="buttonSymbols">
-                    <enum>QAbstractSpinBox::NoButtons</enum>
-                   </property>
-                   <property name="readOnly">
-                    <bool>true</bool>
-                   </property>
                    <property name="enabled">
                     <bool>false</bool>
-                   </property>
-                   <property name="frame">
-                    <bool>false</bool>
-                   </property>
-                   <property name="decimals">
-                    <number>5</number>
-                   </property>
-                   <property name="singleStep">
-                    <double>0.050000000000000</double>
                    </property>
                    <property name="minimumSize">
                     <size>
@@ -1182,6 +1191,21 @@
                      <height>16777215</height>
                     </size>
                    </property>
+                   <property name="frame">
+                    <bool>false</bool>
+                   </property>
+                   <property name="readOnly">
+                    <bool>true</bool>
+                   </property>
+                   <property name="buttonSymbols">
+                    <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
+                   </property>
+                   <property name="decimals">
+                    <number>5</number>
+                   </property>
+                   <property name="singleStep">
+                    <double>0.050000000000000</double>
+                   </property>
                   </widget>
                  </item>
                 </layout>
@@ -1190,7 +1214,7 @@
               <item>
                <spacer name="sp_20">
                 <property name="orientation">
-                 <enum>Qt::Vertical</enum>
+                 <enum>Qt::Orientation::Vertical</enum>
                 </property>
                 <property name="sizeHint" stdset="0">
                  <size>
@@ -1205,11 +1229,11 @@
            </widget>
           </item>
          </layout>
-         <attribute name="title">
-          <string>Data</string>
-         </attribute>
         </widget>
         <widget class="QWidget" name="tabModel">
+         <attribute name="title">
+          <string>Model</string>
+         </attribute>
          <layout class="QVBoxLayout" name="tabModel_l">
           <property name="leftMargin">
            <number>0</number>
@@ -1225,13 +1249,21 @@
           </property>
           <item>
            <widget class="QScrollArea" name="tabModel_s">
+            <property name="frameShape">
+             <enum>QFrame::Shape::NoFrame</enum>
+            </property>
             <property name="widgetResizable">
              <bool>true</bool>
             </property>
-            <property name="frameShape">
-             <enum>QFrame::NoFrame</enum>
-            </property>
             <widget class="QWidget" name="tabModel_c">
+             <property name="geometry">
+              <rect>
+               <x>0</x>
+               <y>0</y>
+               <width>636</width>
+               <height>686</height>
+              </rect>
+             </property>
              <layout class="QVBoxLayout" name="tabModel_v">
               <property name="spacing">
                <number>8</number>
@@ -1263,22 +1295,6 @@
                  </item>
                  <item row="0" column="1">
                   <widget class="QComboBox" name="comboBox_interp">
-                   <property name="sizeAdjustPolicy">
-                    <enum>QComboBox::AdjustToContents</enum>
-                   </property>
-                   <property name="toolTip">
-                    <string>Shift of the component spectra between pixels. Linear: 2 pixels, residuum has kinks at whole-pixel shifts. Cubic: 4-pixel Catmull-Rom (Keys) interpolation, smooth in the RVs and more accurate for narrow lines.</string>
-                   </property>
-                   <item>
-                    <property name="text">
-                     <string>Linear</string>
-                    </property>
-                   </item>
-                   <item>
-                    <property name="text">
-                     <string>Cubic</string>
-                    </property>
-                   </item>
                    <property name="minimumSize">
                     <size>
                      <width>100</width>
@@ -1291,12 +1307,28 @@
                      <height>16777215</height>
                     </size>
                    </property>
+                   <property name="toolTip">
+                    <string>Shift of the component spectra between pixels. Linear: 2 pixels, residuum has kinks at whole-pixel shifts. Cubic: 4-pixel Catmull-Rom (Keys) interpolation, smooth in the RVs and more accurate for narrow lines.</string>
+                   </property>
+                   <property name="sizeAdjustPolicy">
+                    <enum>QComboBox::SizeAdjustPolicy::AdjustToContents</enum>
+                   </property>
+                   <item>
+                    <property name="text">
+                     <string>Linear</string>
+                    </property>
+                   </item>
+                   <item>
+                    <property name="text">
+                     <string>Cubic</string>
+                    </property>
+                   </item>
                   </widget>
                  </item>
                  <item row="0" column="2">
                   <spacer name="sp_22">
                    <property name="orientation">
-                    <enum>Qt::Horizontal</enum>
+                    <enum>Qt::Orientation::Horizontal</enum>
                    </property>
                    <property name="sizeHint" stdset="0">
                     <size>
@@ -1306,7 +1338,7 @@
                    </property>
                   </spacer>
                  </item>
-                 <item row="1" column="0" rowspan="1" colspan="3">
+                 <item row="1" column="0" colspan="3">
                   <widget class="QLabel" name="lbl_23">
                    <property name="text">
                     <string>Cubic: smooth in the RVs, more accurate, 3–4× slower per solve.</string>
@@ -1331,21 +1363,21 @@
                  </item>
                  <item row="0" column="1">
                   <widget class="QCheckBox" name="checkBox_5">
-                   <property name="text">
-                    <string>LSQR</string>
-                   </property>
                    <property name="toolTip">
                     <string>Iterative least-squares solver on the sparse matrix (fast, little memory).</string>
+                   </property>
+                   <property name="text">
+                    <string>LSQR</string>
                    </property>
                   </widget>
                  </item>
                  <item row="0" column="2">
                   <widget class="QCheckBox" name="checkBox_6">
-                   <property name="text">
-                    <string>SVD (DaC)</string>
-                   </property>
                    <property name="toolTip">
                     <string>Truncated SVD (divide and conquer) on a dense copy of the matrix (slow, needs much memory).</string>
+                   </property>
+                   <property name="text">
+                    <string>SVD (DaC)</string>
                    </property>
                   </widget>
                  </item>
@@ -1359,7 +1391,7 @@
                  <item row="0" column="4">
                   <spacer name="sp_25">
                    <property name="orientation">
-                    <enum>Qt::Horizontal</enum>
+                    <enum>Qt::Orientation::Horizontal</enum>
                    </property>
                    <property name="sizeHint" stdset="0">
                     <size>
@@ -1378,15 +1410,6 @@
                  </item>
                  <item row="1" column="1">
                   <widget class="QSpinBox" name="spinBox_8">
-                   <property name="toolTip">
-                    <string>Number of cores used by LSQR (OpenMP) and by the SVD (multi-threaded BLAS such as OpenBLAS). Default 2: in a scaling test on long spectra more cores took longer.</string>
-                   </property>
-                   <property name="minimum">
-                    <number>1</number>
-                   </property>
-                   <property name="maximum">
-                    <number>9999</number>
-                   </property>
                    <property name="minimumSize">
                     <size>
                      <width>60</width>
@@ -1398,6 +1421,15 @@
                      <width>60</width>
                      <height>16777215</height>
                     </size>
+                   </property>
+                   <property name="toolTip">
+                    <string>Number of cores used by LSQR (OpenMP) and by the SVD (multi-threaded BLAS such as OpenBLAS). Default 2: in a scaling test on long spectra more cores took longer.</string>
+                   </property>
+                   <property name="minimum">
+                    <number>1</number>
+                   </property>
+                   <property name="maximum">
+                    <number>9999</number>
                    </property>
                   </widget>
                  </item>
@@ -1410,20 +1442,8 @@
                  </item>
                  <item row="1" column="3">
                   <widget class="QSpinBox" name="spinBox_7">
-                   <property name="buttonSymbols">
-                    <enum>QAbstractSpinBox::NoButtons</enum>
-                   </property>
-                   <property name="readOnly">
-                    <bool>true</bool>
-                   </property>
                    <property name="enabled">
                     <bool>false</bool>
-                   </property>
-                   <property name="minimum">
-                    <number>1</number>
-                   </property>
-                   <property name="maximum">
-                    <number>9999</number>
                    </property>
                    <property name="minimumSize">
                     <size>
@@ -1437,9 +1457,21 @@
                      <height>16777215</height>
                     </size>
                    </property>
+                   <property name="readOnly">
+                    <bool>true</bool>
+                   </property>
+                   <property name="buttonSymbols">
+                    <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
+                   </property>
+                   <property name="minimum">
+                    <number>1</number>
+                   </property>
+                   <property name="maximum">
+                    <number>9999</number>
+                   </property>
                   </widget>
                  </item>
-                                 <item row="2" column="0">
+                 <item row="2" column="0">
                   <widget class="QLabel" name="lbl_tdamp">
                    <property name="text">
                     <string>Damping static</string>
@@ -1468,7 +1500,7 @@
                    </property>
                   </widget>
                  </item>
-</layout>
+                </layout>
                </widget>
               </item>
               <item>
@@ -1501,7 +1533,7 @@
                  <item row="0" column="3">
                   <spacer name="sp_29">
                    <property name="orientation">
-                    <enum>Qt::Horizontal</enum>
+                    <enum>Qt::Orientation::Horizontal</enum>
                    </property>
                    <property name="sizeHint" stdset="0">
                     <size>
@@ -1511,13 +1543,13 @@
                    </property>
                   </spacer>
                  </item>
-                 <item row="1" column="0" rowspan="1" colspan="4">
+                 <item row="1" column="0" colspan="4">
                   <widget class="QCheckBox" name="checkBox_40">
-                   <property name="text">
-                    <string>Exclude edges (pixels covered by single spectra only)</string>
-                   </property>
                    <property name="toolTip">
                     <string>Compute the residuum without the outer pixels of each spectrum (RV range in pixels + 2). There the reconstructed spectra are constrained by single spectra only, and the residuum jumps when an RV crosses a pixel boundary.</string>
+                   </property>
+                   <property name="text">
+                    <string>Exclude edges (pixels covered by single spectra only)</string>
                    </property>
                   </widget>
                  </item>
@@ -1528,122 +1560,120 @@
                    </property>
                   </widget>
                  </item>
-                 <item row="2" column="1" rowspan="1" colspan="3">
-                  <widget class="QWidget" name="rowRange">
-                   <layout class="QHBoxLayout" name="rowRange_l">
-                    <property name="leftMargin">
-                     <number>0</number>
-                    </property>
-                    <property name="topMargin">
-                     <number>0</number>
-                    </property>
-                    <property name="rightMargin">
-                     <number>0</number>
-                    </property>
-                    <property name="bottomMargin">
-                     <number>0</number>
-                    </property>
-                    <item>
-                     <widget class="QDoubleSpinBox" name="doubleSpinBox_14">
-                      <property name="decimals">
-                       <number>4</number>
-                      </property>
-                      <property name="maximum">
-                       <double>9999.989999999999782</double>
-                      </property>
-                      <property name="minimumSize">
-                       <size>
-                        <width>100</width>
-                        <height>0</height>
-                       </size>
-                      </property>
-                      <property name="maximumSize">
-                       <size>
-                        <width>100</width>
-                        <height>16777215</height>
-                       </size>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QLabel" name="lbl_30">
-                      <property name="text">
-                       <string>to</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QDoubleSpinBox" name="doubleSpinBox_15">
-                      <property name="decimals">
-                       <number>4</number>
-                      </property>
-                      <property name="maximum">
-                       <double>9999.989999999999782</double>
-                      </property>
-                      <property name="minimumSize">
-                       <size>
-                        <width>100</width>
-                        <height>0</height>
-                       </size>
-                      </property>
-                      <property name="maximumSize">
-                       <size>
-                        <width>100</width>
-                        <height>16777215</height>
-                       </size>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QLabel" name="lbl_31">
-                      <property name="text">
-                       <string>Å</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <spacer name="sp_32">
-                      <property name="orientation">
-                       <enum>Qt::Horizontal</enum>
-                      </property>
-                      <property name="sizeHint" stdset="0">
-                       <size>
-                        <width>0</width>
-                        <height>0</height>
-                       </size>
-                      </property>
-                     </spacer>
-                    </item>
-                   </layout>
-                  </widget>
+                 <item row="2" column="1" colspan="3">
+                  <layout class="QHBoxLayout" name="rowRange_l">
+                   <property name="leftMargin">
+                    <number>0</number>
+                   </property>
+                   <property name="topMargin">
+                    <number>0</number>
+                   </property>
+                   <property name="rightMargin">
+                    <number>0</number>
+                   </property>
+                   <property name="bottomMargin">
+                    <number>0</number>
+                   </property>
+                   <item>
+                    <widget class="QDoubleSpinBox" name="doubleSpinBox_14">
+                     <property name="minimumSize">
+                      <size>
+                       <width>100</width>
+                       <height>0</height>
+                      </size>
+                     </property>
+                     <property name="maximumSize">
+                      <size>
+                       <width>100</width>
+                       <height>16777215</height>
+                      </size>
+                     </property>
+                     <property name="decimals">
+                      <number>4</number>
+                     </property>
+                     <property name="maximum">
+                      <double>9999.989999999999782</double>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QLabel" name="lbl_30">
+                     <property name="text">
+                      <string>to</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QDoubleSpinBox" name="doubleSpinBox_15">
+                     <property name="minimumSize">
+                      <size>
+                       <width>100</width>
+                       <height>0</height>
+                      </size>
+                     </property>
+                     <property name="maximumSize">
+                      <size>
+                       <width>100</width>
+                       <height>16777215</height>
+                      </size>
+                     </property>
+                     <property name="decimals">
+                      <number>4</number>
+                     </property>
+                     <property name="maximum">
+                      <double>9999.989999999999782</double>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QLabel" name="lbl_31">
+                     <property name="text">
+                      <string>Å</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <spacer name="sp_32">
+                     <property name="orientation">
+                      <enum>Qt::Orientation::Horizontal</enum>
+                     </property>
+                     <property name="sizeHint" stdset="0">
+                      <size>
+                       <width>0</width>
+                       <height>0</height>
+                      </size>
+                     </property>
+                    </spacer>
+                   </item>
+                  </layout>
                  </item>
                  <item row="3" column="0">
                   <widget class="QCheckBox" name="checkBox_mask">
-                   <property name="text">
-                    <string>Exclude ranges from</string>
-                   </property>
                    <property name="toolTip">
                     <string>Leave wavelength ranges out of the solution and the residuum, e.g. telluric bands: file in the work folder with from and to in Å (frame of the input spectra), one range per line. If telluric_mask.dat does not exist, it is created with the strongest telluric bands and the strong chromospheric lines (Balmer, Ca II H&amp;K, Mg b, Na D, Ca II IR triplet) and can then be edited.</string>
                    </property>
+                   <property name="text">
+                    <string>Exclude ranges from</string>
+                   </property>
                   </widget>
                  </item>
-                 <item row="3" column="1" rowspan="1" colspan="3">
+                 <item row="3" column="1" colspan="3">
                   <widget class="QLineEdit" name="lineEdit_mask">
-                   <property name="text">
-                    <string>telluric_mask.dat</string>
-                   </property>
                    <property name="toolTip">
                     <string>File with the excluded ranges (from, to in Å per line, further text ignored; # comments). Default telluric_mask.dat: created with the strongest telluric bands and strong chromospheric lines if missing.</string>
                    </property>
+                   <property name="text">
+                    <string>telluric_mask.dat</string>
+                   </property>
                   </widget>
                  </item>
-                <item row="4" column="0" rowspan="1" colspan="4">
+                 <item row="4" column="0" colspan="4">
                   <widget class="QCheckBox" name="checkBox_resstatic">
+                   <property name="toolTip">
+                    <string>Compute the residuum (and the residual statistics and the S/N estimate) without the pixels in the ranges of the file of the Data tab, &quot;Static lines only in&quot; (observatory frame; shifted by BC in corrected spectra). They stay in the solution. Takes effect with Read data or when ticked.</string>
+                   </property>
                    <property name="text">
                     <string>Exclude the ranges of the static lines from the residuum</string>
-                   </property>
-                   <property name="toolTip">
-                    <string>Compute the residuum (and the residual statistics and the S/N estimate) without the pixels in the ranges of the file of the Data tab, "Static lines only in" (observatory frame; shifted by BC in corrected spectra). They stay in the solution. Takes effect with Read data or when ticked.</string>
                    </property>
                   </widget>
                  </item>
@@ -1653,7 +1683,7 @@
               <item>
                <spacer name="sp_33">
                 <property name="orientation">
-                 <enum>Qt::Vertical</enum>
+                 <enum>Qt::Orientation::Vertical</enum>
                 </property>
                 <property name="sizeHint" stdset="0">
                  <size>
@@ -1668,11 +1698,11 @@
            </widget>
           </item>
          </layout>
-         <attribute name="title">
-          <string>Model</string>
-         </attribute>
         </widget>
         <widget class="QWidget" name="tabOpt">
+         <attribute name="title">
+          <string>Optimisation</string>
+         </attribute>
          <layout class="QVBoxLayout" name="tabOpt_l">
           <property name="leftMargin">
            <number>0</number>
@@ -1688,13 +1718,21 @@
           </property>
           <item>
            <widget class="QScrollArea" name="tabOpt_s">
+            <property name="frameShape">
+             <enum>QFrame::Shape::NoFrame</enum>
+            </property>
             <property name="widgetResizable">
              <bool>true</bool>
             </property>
-            <property name="frameShape">
-             <enum>QFrame::NoFrame</enum>
-            </property>
             <widget class="QWidget" name="tabOpt_c">
+             <property name="geometry">
+              <rect>
+               <x>0</x>
+               <y>0</y>
+               <width>622</width>
+               <height>751</height>
+              </rect>
+             </property>
              <layout class="QVBoxLayout" name="tabOpt_v">
               <property name="spacing">
                <number>8</number>
@@ -1738,7 +1776,7 @@
                    </property>
                    <item>
                     <widget class="QCheckBox" name="checkBox_18">
-                     <property name="checked">
+                     <property name="enabled">
                       <bool>true</bool>
                      </property>
                      <property name="toolTip">
@@ -1747,14 +1785,14 @@
                      <property name="text">
                       <string>P</string>
                      </property>
-                     <property name="enabled">
+                     <property name="checked">
                       <bool>true</bool>
                      </property>
                     </widget>
                    </item>
                    <item>
                     <widget class="QCheckBox" name="checkBox_17">
-                     <property name="checked">
+                     <property name="enabled">
                       <bool>true</bool>
                      </property>
                      <property name="toolTip">
@@ -1763,206 +1801,200 @@
                      <property name="text">
                       <string>e</string>
                      </property>
-                     <property name="enabled">
+                     <property name="checked">
                       <bool>true</bool>
                      </property>
                     </widget>
                    </item>
                    <item>
-                    <widget class="QWidget" name="row_checkBox_31">
-                     <layout class="QHBoxLayout" name="row_checkBox_31_l">
-                      <property name="leftMargin">
-                       <number>0</number>
-                      </property>
-                      <property name="topMargin">
-                       <number>0</number>
-                      </property>
-                      <property name="rightMargin">
-                       <number>0</number>
-                      </property>
-                      <property name="bottomMargin">
-                       <number>0</number>
-                      </property>
-                      <item>
-                       <widget class="QCheckBox" name="checkBox_31">
-                        <property name="checked">
-                         <bool>true</bool>
-                        </property>
-                        <property name="toolTip">
-                         <string>Free in the orbit fit (unticked: fixed at the value in the orbital elements file, Data tab).</string>
-                        </property>
-                        <property name="text">
-                         <string />
-                        </property>
-                       </widget>
-                      </item>
-                      <item>
-                       <widget class="QLabel" name="lbl_34">
-                        <property name="text">
-                         <string>K&lt;sub&gt;A&lt;/sub&gt;</string>
-                        </property>
-                        <property name="textFormat">
-                         <enum>Qt::RichText</enum>
-                        </property>
-                       </widget>
-                      </item>
-                      <item>
-                       <spacer name="sp_35">
-                        <property name="orientation">
-                         <enum>Qt::Horizontal</enum>
-                        </property>
-                        <property name="sizeHint" stdset="0">
-                         <size>
-                          <width>0</width>
-                          <height>0</height>
-                         </size>
-                        </property>
-                       </spacer>
-                      </item>
-                     </layout>
-                    </widget>
+                    <layout class="QHBoxLayout" name="row_checkBox_31_l">
+                     <property name="leftMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="topMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="rightMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="bottomMargin">
+                      <number>0</number>
+                     </property>
+                     <item>
+                      <widget class="QCheckBox" name="checkBox_31">
+                       <property name="toolTip">
+                        <string>Free in the orbit fit (unticked: fixed at the value in the orbital elements file, Data tab).</string>
+                       </property>
+                       <property name="text">
+                        <string/>
+                       </property>
+                       <property name="checked">
+                        <bool>true</bool>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QLabel" name="lbl_34">
+                       <property name="text">
+                        <string>K&lt;sub&gt;A&lt;/sub&gt;</string>
+                       </property>
+                       <property name="textFormat">
+                        <enum>Qt::TextFormat::RichText</enum>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <spacer name="sp_35">
+                       <property name="orientation">
+                        <enum>Qt::Orientation::Horizontal</enum>
+                       </property>
+                       <property name="sizeHint" stdset="0">
+                        <size>
+                         <width>0</width>
+                         <height>0</height>
+                        </size>
+                       </property>
+                      </spacer>
+                     </item>
+                    </layout>
                    </item>
                    <item>
-                    <widget class="QWidget" name="row_checkBox_36">
-                     <layout class="QHBoxLayout" name="row_checkBox_36_l">
-                      <property name="leftMargin">
-                       <number>0</number>
-                      </property>
-                      <property name="topMargin">
-                       <number>0</number>
-                      </property>
-                      <property name="rightMargin">
-                       <number>0</number>
-                      </property>
-                      <property name="bottomMargin">
-                       <number>0</number>
-                      </property>
-                      <item>
-                       <widget class="QCheckBox" name="checkBox_36">
-                        <property name="checked">
-                         <bool>true</bool>
-                        </property>
-                        <property name="toolTip">
-                         <string>Free in the orbit fit (unticked: fixed at the value in the orbital elements file, Data tab).</string>
-                        </property>
-                        <property name="text">
-                         <string />
-                        </property>
-                       </widget>
-                      </item>
-                      <item>
-                       <widget class="QLabel" name="lbl_36">
-                        <property name="text">
-                         <string>K&lt;sub&gt;B&lt;/sub&gt;</string>
-                        </property>
-                        <property name="textFormat">
-                         <enum>Qt::RichText</enum>
-                        </property>
-                       </widget>
-                      </item>
-                      <item>
-                       <spacer name="sp_37">
-                        <property name="orientation">
-                         <enum>Qt::Horizontal</enum>
-                        </property>
-                        <property name="sizeHint" stdset="0">
-                         <size>
-                          <width>0</width>
-                          <height>0</height>
-                         </size>
-                        </property>
-                       </spacer>
-                      </item>
-                     </layout>
-                    </widget>
+                    <layout class="QHBoxLayout" name="row_checkBox_36_l">
+                     <property name="leftMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="topMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="rightMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="bottomMargin">
+                      <number>0</number>
+                     </property>
+                     <item>
+                      <widget class="QCheckBox" name="checkBox_36">
+                       <property name="toolTip">
+                        <string>Free in the orbit fit (unticked: fixed at the value in the orbital elements file, Data tab).</string>
+                       </property>
+                       <property name="text">
+                        <string/>
+                       </property>
+                       <property name="checked">
+                        <bool>true</bool>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QLabel" name="lbl_36">
+                       <property name="text">
+                        <string>K&lt;sub&gt;B&lt;/sub&gt;</string>
+                       </property>
+                       <property name="textFormat">
+                        <enum>Qt::TextFormat::RichText</enum>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <spacer name="sp_37">
+                       <property name="orientation">
+                        <enum>Qt::Orientation::Horizontal</enum>
+                       </property>
+                       <property name="sizeHint" stdset="0">
+                        <size>
+                         <width>0</width>
+                         <height>0</height>
+                        </size>
+                       </property>
+                      </spacer>
+                     </item>
+                    </layout>
                    </item>
                    <item>
                     <widget class="QCheckBox" name="checkBox_37">
-                     <property name="checked">
-                      <bool>false</bool>
-                     </property>
                      <property name="toolTip">
                       <string>Free in the orbit fit (unticked: fixed at the value in the orbital elements file, Data tab). Default fixed: the disentangling does not determine gamma (a common shift of the RVs is absorbed by the component spectra, also with static lines).</string>
                      </property>
                      <property name="text">
                       <string>γ</string>
                      </property>
+                     <property name="checked">
+                      <bool>false</bool>
+                     </property>
                     </widget>
                    </item>
                    <item>
-                    <widget class="QWidget" name="row_checkBox_35">
-                     <layout class="QHBoxLayout" name="row_checkBox_35_l">
-                      <property name="leftMargin">
-                       <number>0</number>
-                      </property>
-                      <property name="topMargin">
-                       <number>0</number>
-                      </property>
-                      <property name="rightMargin">
-                       <number>0</number>
-                      </property>
-                      <property name="bottomMargin">
-                       <number>0</number>
-                      </property>
-                      <item>
-                       <widget class="QCheckBox" name="checkBox_35">
-                        <property name="checked">
-                         <bool>true</bool>
-                        </property>
-                        <property name="toolTip">
-                         <string>Free in the orbit fit (unticked: fixed at the value in the orbital elements file, Data tab).</string>
-                        </property>
-                        <property name="text">
-                         <string />
-                        </property>
-                        <property name="enabled">
-                         <bool>true</bool>
-                        </property>
-                       </widget>
-                      </item>
-                      <item>
-                       <widget class="QLabel" name="lbl_38">
-                        <property name="text">
-                         <string>T&lt;sub&gt;peri&lt;/sub&gt;</string>
-                        </property>
-                        <property name="textFormat">
-                         <enum>Qt::RichText</enum>
-                        </property>
-                       </widget>
-                      </item>
-                      <item>
-                       <spacer name="sp_39">
-                        <property name="orientation">
-                         <enum>Qt::Horizontal</enum>
-                        </property>
-                        <property name="sizeHint" stdset="0">
-                         <size>
-                          <width>0</width>
-                          <height>0</height>
-                         </size>
-                        </property>
-                       </spacer>
-                      </item>
-                     </layout>
-                    </widget>
+                    <layout class="QHBoxLayout" name="row_checkBox_35_l">
+                     <property name="leftMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="topMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="rightMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="bottomMargin">
+                      <number>0</number>
+                     </property>
+                     <item>
+                      <widget class="QCheckBox" name="checkBox_35">
+                       <property name="enabled">
+                        <bool>true</bool>
+                       </property>
+                       <property name="toolTip">
+                        <string>Free in the orbit fit (unticked: fixed at the value in the orbital elements file, Data tab).</string>
+                       </property>
+                       <property name="text">
+                        <string/>
+                       </property>
+                       <property name="checked">
+                        <bool>true</bool>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QLabel" name="lbl_38">
+                       <property name="text">
+                        <string>T&lt;sub&gt;peri&lt;/sub&gt;</string>
+                       </property>
+                       <property name="textFormat">
+                        <enum>Qt::TextFormat::RichText</enum>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <spacer name="sp_39">
+                       <property name="orientation">
+                        <enum>Qt::Orientation::Horizontal</enum>
+                       </property>
+                       <property name="sizeHint" stdset="0">
+                        <size>
+                         <width>0</width>
+                         <height>0</height>
+                        </size>
+                       </property>
+                      </spacer>
+                     </item>
+                    </layout>
                    </item>
                    <item>
                     <widget class="QCheckBox" name="checkBox_38">
-                     <property name="checked">
-                      <bool>true</bool>
-                     </property>
                      <property name="toolTip">
                       <string>Free in the orbit fit (unticked: fixed at the value in the orbital elements file, Data tab).</string>
                      </property>
                      <property name="text">
                       <string>ω</string>
                      </property>
+                     <property name="checked">
+                      <bool>true</bool>
+                     </property>
                     </widget>
                    </item>
                    <item>
                     <spacer name="sp_42">
                      <property name="orientation">
-                      <enum>Qt::Horizontal</enum>
+                      <enum>Qt::Orientation::Horizontal</enum>
                      </property>
                      <property name="sizeHint" stdset="0">
                       <size>
@@ -1988,11 +2020,11 @@
                    </item>
                    <item>
                     <widget class="QLineEdit" name="lineEdit_fixA">
-                     <property name="placeholderText">
-                      <string>none</string>
-                     </property>
                      <property name="toolTip">
                       <string>Spectra whose RV of component A stays at its start value, e.g. 0, 3, 7-9 (numbers as in the file names). Empty: all free.</string>
+                     </property>
+                     <property name="placeholderText">
+                      <string>none</string>
                      </property>
                     </widget>
                    </item>
@@ -2005,11 +2037,11 @@
                    </item>
                    <item>
                     <widget class="QLineEdit" name="lineEdit_fixB">
-                     <property name="placeholderText">
-                      <string>none</string>
-                     </property>
                      <property name="toolTip">
                       <string>Spectra whose RV of component B stays at its start value, e.g. 0, 3, 7-9. Empty: all free.</string>
+                     </property>
+                     <property name="placeholderText">
+                      <string>none</string>
                      </property>
                     </widget>
                    </item>
@@ -2031,24 +2063,8 @@
                    </property>
                   </widget>
                  </item>
-                 <item row="0" column="1" rowspan="1" colspan="3">
+                 <item row="0" column="1" colspan="3">
                   <widget class="QComboBox" name="comboBox_method">
-                   <property name="sizeAdjustPolicy">
-                    <enum>QComboBox::AdjustToContents</enum>
-                   </property>
-                   <property name="toolTip">
-                    <string>Nelder-Mead: simplex search, robust from far away, slow near the minimum. Levenberg-Marquardt: uses the derivatives of the residuals (variable projection), converges in few iterations near the minimum; local method, needs a reasonable start. Only for residuum "Mean".</string>
-                   </property>
-                   <item>
-                    <property name="text">
-                     <string>Nelder-Mead</string>
-                    </property>
-                   </item>
-                   <item>
-                    <property name="text">
-                     <string>Levenberg-Marquardt</string>
-                    </property>
-                   </item>
                    <property name="minimumSize">
                     <size>
                      <width>210</width>
@@ -2061,6 +2077,22 @@
                      <height>16777215</height>
                     </size>
                    </property>
+                   <property name="toolTip">
+                    <string>Nelder-Mead: simplex search, robust from far away, slow near the minimum. Levenberg-Marquardt: uses the derivatives of the residuals (variable projection), converges in few iterations near the minimum; local method, needs a reasonable start. Only for residuum &quot;Mean&quot;.</string>
+                   </property>
+                   <property name="sizeAdjustPolicy">
+                    <enum>QComboBox::SizeAdjustPolicy::AdjustToContents</enum>
+                   </property>
+                   <item>
+                    <property name="text">
+                     <string>Nelder-Mead</string>
+                    </property>
+                   </item>
+                   <item>
+                    <property name="text">
+                     <string>Levenberg-Marquardt</string>
+                    </property>
+                   </item>
                   </widget>
                  </item>
                  <item row="1" column="0">
@@ -2100,12 +2132,6 @@
                  </item>
                  <item row="2" column="1">
                   <widget class="QSpinBox" name="spinBox_3">
-                   <property name="maximum">
-                    <number>9999</number>
-                   </property>
-                   <property name="value">
-                    <number>9999</number>
-                   </property>
                    <property name="minimumSize">
                     <size>
                      <width>80</width>
@@ -2117,6 +2143,12 @@
                      <width>80</width>
                      <height>16777215</height>
                     </size>
+                   </property>
+                   <property name="maximum">
+                    <number>9999</number>
+                   </property>
+                   <property name="value">
+                    <number>9999</number>
                    </property>
                   </widget>
                  </item>
@@ -2138,24 +2170,6 @@
                  </item>
                  <item row="0" column="1">
                   <widget class="QDoubleSpinBox" name="doubleSpinBox_17">
-                   <property name="toolTip">
-                    <string>Auto Stop: the optimisation has converged when the best chi^2 improved by less than this value within the window. With Reinitiate also the criterion between two restarts.</string>
-                   </property>
-                   <property name="decimals">
-                    <number>3</number>
-                   </property>
-                   <property name="minimum">
-                    <double>0.001</double>
-                   </property>
-                   <property name="maximum">
-                    <double>1000</double>
-                   </property>
-                   <property name="singleStep">
-                    <double>0.05</double>
-                   </property>
-                   <property name="value">
-                    <double>0.1</double>
-                   </property>
                    <property name="minimumSize">
                     <size>
                      <width>70</width>
@@ -2167,6 +2181,24 @@
                      <width>70</width>
                      <height>16777215</height>
                     </size>
+                   </property>
+                   <property name="toolTip">
+                    <string>Auto Stop: the optimisation has converged when the best chi^2 improved by less than this value within the window. With Reinitiate also the criterion between two restarts.</string>
+                   </property>
+                   <property name="decimals">
+                    <number>3</number>
+                   </property>
+                   <property name="minimum">
+                    <double>0.001000000000000</double>
+                   </property>
+                   <property name="maximum">
+                    <double>1000.000000000000000</double>
+                   </property>
+                   <property name="singleStep">
+                    <double>0.050000000000000</double>
+                   </property>
+                   <property name="value">
+                    <double>0.100000000000000</double>
                    </property>
                   </widget>
                  </item>
@@ -2179,18 +2211,6 @@
                  </item>
                  <item row="0" column="3">
                   <widget class="QSpinBox" name="spinBox_11">
-                   <property name="toolTip">
-                    <string>Window for Auto Stop: number of iterations over which the improvement is measured. auto: 10 x number of parameters, at least 200.</string>
-                   </property>
-                   <property name="specialValueText">
-                    <string>auto</string>
-                   </property>
-                   <property name="maximum">
-                    <number>100000</number>
-                   </property>
-                   <property name="value">
-                    <number>0</number>
-                   </property>
                    <property name="minimumSize">
                     <size>
                      <width>70</width>
@@ -2203,6 +2223,18 @@
                      <height>16777215</height>
                     </size>
                    </property>
+                   <property name="toolTip">
+                    <string>Window for Auto Stop: number of iterations over which the improvement is measured. auto: 10 x number of parameters, at least 200.</string>
+                   </property>
+                   <property name="specialValueText">
+                    <string>auto</string>
+                   </property>
+                   <property name="maximum">
+                    <number>100000</number>
+                   </property>
+                   <property name="value">
+                    <number>0</number>
+                   </property>
                   </widget>
                  </item>
                  <item row="0" column="4">
@@ -2212,7 +2244,7 @@
                    </property>
                   </widget>
                  </item>
-                 <item row="1" column="0" rowspan="1" colspan="5">
+                 <item row="1" column="0" colspan="5">
                   <widget class="QCheckBox" name="checkBox_32">
                    <property name="text">
                     <string>Reinitiate after convergence</string>
@@ -2237,6 +2269,18 @@
                  </item>
                  <item row="0" column="1">
                   <widget class="QComboBox" name="comboBox_err">
+                   <property name="minimumSize">
+                    <size>
+                     <width>130</width>
+                     <height>0</height>
+                    </size>
+                   </property>
+                   <property name="maximumSize">
+                    <size>
+                     <width>130</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
                    <property name="toolTip">
                     <string>Curvature: quadratic model of the residuum around the best point (fast; a lower bound at moderate S/N). Monte Carlo: noise with the scatter of the residuals added to the best model, the orbit refitted (Levenberg-Marquardt) for every realisation; errors = scatter of the fits (slow: one fit per realisation).</string>
                    </property>
@@ -2250,18 +2294,6 @@
                      <string>Monte Carlo</string>
                     </property>
                    </item>
-                   <property name="minimumSize">
-                    <size>
-                     <width>130</width>
-                     <height>0</height>
-                    </size>
-                   </property>
-                   <property name="maximumSize">
-                    <size>
-                     <width>130</width>
-                     <height>16777215</height>
-                    </size>
-                   </property>
                   </widget>
                  </item>
                  <item row="0" column="2">
@@ -2273,18 +2305,6 @@
                  </item>
                  <item row="0" column="3">
                   <widget class="QSpinBox" name="spinBox_mc">
-                   <property name="minimum">
-                    <number>3</number>
-                   </property>
-                   <property name="maximum">
-                    <number>10000</number>
-                   </property>
-                   <property name="value">
-                    <number>30</number>
-                   </property>
-                   <property name="toolTip">
-                    <string>Number of Monte Carlo realisations.</string>
-                   </property>
                    <property name="minimumSize">
                     <size>
                      <width>80</width>
@@ -2297,12 +2317,24 @@
                      <height>16777215</height>
                     </size>
                    </property>
+                   <property name="toolTip">
+                    <string>Number of Monte Carlo realisations.</string>
+                   </property>
+                   <property name="minimum">
+                    <number>3</number>
+                   </property>
+                   <property name="maximum">
+                    <number>10000</number>
+                   </property>
+                   <property name="value">
+                    <number>30</number>
+                   </property>
                   </widget>
                  </item>
                  <item row="0" column="4">
                   <spacer name="sp_54">
                    <property name="orientation">
-                    <enum>Qt::Horizontal</enum>
+                    <enum>Qt::Orientation::Horizontal</enum>
                    </property>
                    <property name="sizeHint" stdset="0">
                     <size>
@@ -2352,7 +2384,7 @@
                  <item row="0" column="4">
                   <spacer name="sp_51">
                    <property name="orientation">
-                    <enum>Qt::Horizontal</enum>
+                    <enum>Qt::Orientation::Horizontal</enum>
                    </property>
                    <property name="sizeHint" stdset="0">
                     <size>
@@ -2366,9 +2398,125 @@
                </widget>
               </item>
               <item>
+               <widget class="QGroupBox" name="grpLineScan">
+                <property name="title">
+                 <string>Line width scan (orbit grid)</string>
+                </property>
+                <layout class="QGridLayout" name="grdLineScan">
+                 <item row="0" column="0">
+                  <widget class="QLabel" name="lbl_ls1">
+                   <property name="text">
+                    <string>Orbit grid file</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="0" column="1">
+                  <widget class="QLineEdit" name="lineEdit_lsGrid">
+                   <property name="toolTip">
+                    <string>7 rows (P, e, K_A, K_B, gamma, T_peri, omega as in the orbital element file), one column per orbit</string>
+                   </property>
+                   <property name="text">
+                    <string>orbitgrid.dat</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="0" column="2">
+                  <widget class="QLabel" name="lbl_ls2">
+                   <property name="text">
+                    <string>Line list</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="0" column="3">
+                  <widget class="QLineEdit" name="lineEdit_lsLines">
+                   <property name="toolTip">
+                    <string>Lines of the scan, written by Find Lines / Apply</string>
+                   </property>
+                   <property name="text">
+                    <string>scanlines.dat</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="1" column="0">
+                  <widget class="QLabel" name="lbl_ls3">
+                   <property name="text">
+                    <string>Result file</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="1" column="1">
+                  <widget class="QLineEdit" name="lineEdit_lsOut">
+                   <property name="toolTip">
+                    <string>Result of the scan: elements, residuum, width of the lines of the second component</string>
+                   </property>
+                   <property name="text">
+                    <string>linescan.dat</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="1" column="2">
+                  <widget class="QPushButton" name="pushButton_lsFind">
+                   <property name="toolTip">
+                    <string>Finds absorption lines in the current solution; add or remove them in the plot, then Apply</string>
+                   </property>
+                   <property name="text">
+                    <string>Find Lines</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="1" column="3">
+                  <widget class="QPushButton" name="pushButton_lsScan">
+                   <property name="toolTip">
+                    <string>Residuum and line width for every orbit of the grid (the other settings of the Data and Model tabs are used)</string>
+                   </property>
+                   <property name="text">
+                    <string>Scan orbits</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="2" column="0" colspan="2">
+                  <widget class="QCheckBox" name="checkBox_lsSave">
+                   <property name="toolTip">
+                    <string>Writes the continuum-normalised A and B of every orbit (&lt;result&gt;_001_A.dat, _001_B.dat, ...; settings of the continuum as in the Output tab)</string>
+                   </property>
+                   <property name="text">
+                    <string>Save the spectra of every orbit</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="2" column="2" colspan="2">
+                  <widget class="QPushButton" name="pushButton_lsShow">
+                   <property name="toolTip">
+                    <string>Opens the result window from the files of an earlier scan (result file and &lt;result&gt;_profiles.dat), without computing</string>
+                   </property>
+                   <property name="text">
+                    <string>Show results</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="3" column="0" colspan="4">
+                  <widget class="QProgressBar" name="progressBar_lsScan">
+                   <property name="toolTip">
+                    <string>Orbits of the grid computed so far</string>
+                   </property>
+                   <property name="maximum">
+                    <number>1</number>
+                   </property>
+                   <property name="value">
+                    <number>0</number>
+                   </property>
+                   <property name="format">
+                    <string>%v / %m orbits</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+              <item>
                <spacer name="sp_55">
                 <property name="orientation">
-                 <enum>Qt::Vertical</enum>
+                 <enum>Qt::Orientation::Vertical</enum>
                 </property>
                 <property name="sizeHint" stdset="0">
                  <size>
@@ -2383,11 +2531,11 @@
            </widget>
           </item>
          </layout>
-         <attribute name="title">
-          <string>Optimisation</string>
-         </attribute>
         </widget>
         <widget class="QWidget" name="tabOut">
+         <attribute name="title">
+          <string>Output</string>
+         </attribute>
          <layout class="QVBoxLayout" name="tabOut_l">
           <property name="leftMargin">
            <number>0</number>
@@ -2403,13 +2551,21 @@
           </property>
           <item>
            <widget class="QScrollArea" name="tabOut_s">
+            <property name="frameShape">
+             <enum>QFrame::Shape::NoFrame</enum>
+            </property>
             <property name="widgetResizable">
              <bool>true</bool>
             </property>
-            <property name="frameShape">
-             <enum>QFrame::NoFrame</enum>
-            </property>
             <widget class="QWidget" name="tabOut_c">
+             <property name="geometry">
+              <rect>
+               <x>0</x>
+               <y>0</y>
+               <width>622</width>
+               <height>824</height>
+              </rect>
+             </property>
              <layout class="QVBoxLayout" name="tabOut_v">
               <property name="spacing">
                <number>8</number>
@@ -2440,8 +2596,7 @@
                   </widget>
                  </item>
                  <item row="0" column="1">
-                  <widget class="QLineEdit" name="lineEdit_25">
-                </widget>
+                  <widget class="QLineEdit" name="lineEdit_25"/>
                  </item>
                  <item row="0" column="2">
                   <widget class="QLineEdit" name="lineEdit_26">
@@ -2466,7 +2621,7 @@
                    </property>
                   </widget>
                  </item>
-                 <item row="1" column="0" rowspan="1" colspan="4">
+                 <item row="1" column="0" colspan="4">
                   <widget class="QLabel" name="lbl_57">
                    <property name="text">
                     <string>Sets all names below; each can still be edited.</string>
@@ -2490,8 +2645,7 @@
                   </widget>
                  </item>
                  <item row="0" column="1">
-                  <widget class="QLineEdit" name="lineEdit_5">
-                </widget>
+                  <widget class="QLineEdit" name="lineEdit_5"/>
                  </item>
                  <item row="1" column="0">
                   <widget class="QLabel" name="lbl_59">
@@ -2501,8 +2655,7 @@
                   </widget>
                  </item>
                  <item row="1" column="1">
-                  <widget class="QLineEdit" name="lineEdit_8">
-                </widget>
+                  <widget class="QLineEdit" name="lineEdit_8"/>
                  </item>
                  <item row="2" column="0">
                   <widget class="QLabel" name="lbl_60">
@@ -2512,8 +2665,7 @@
                   </widget>
                  </item>
                  <item row="2" column="1">
-                  <widget class="QLineEdit" name="lineEdit_10">
-                </widget>
+                  <widget class="QLineEdit" name="lineEdit_10"/>
                  </item>
                  <item row="3" column="0">
                   <widget class="QLabel" name="lbl_61">
@@ -2523,8 +2675,7 @@
                   </widget>
                  </item>
                  <item row="3" column="1">
-                  <widget class="QLineEdit" name="lineEdit_13">
-                </widget>
+                  <widget class="QLineEdit" name="lineEdit_13"/>
                  </item>
                  <item row="4" column="0">
                   <widget class="QLabel" name="lbl_62">
@@ -2534,8 +2685,7 @@
                   </widget>
                  </item>
                  <item row="4" column="1">
-                  <widget class="QLineEdit" name="lineEdit_20">
-                </widget>
+                  <widget class="QLineEdit" name="lineEdit_20"/>
                  </item>
                  <item row="5" column="0">
                   <widget class="QLabel" name="lbl_63">
@@ -2545,8 +2695,7 @@
                   </widget>
                  </item>
                  <item row="5" column="1">
-                  <widget class="QLineEdit" name="lineEdit_24">
-                    </widget>
+                  <widget class="QLineEdit" name="lineEdit_24"/>
                  </item>
                  <item row="6" column="0">
                   <widget class="QLabel" name="lbl_stat">
@@ -2562,7 +2711,7 @@
                    </property>
                   </widget>
                  </item>
-                 <item row="7" column="0" rowspan="1" colspan="2">
+                 <item row="7" column="0" colspan="2">
                   <widget class="QCheckBox" name="checkBox_19">
                    <property name="text">
                     <string>Save every improvement (files and plots)</string>
@@ -2571,11 +2720,11 @@
                  </item>
                  <item row="8" column="0" colspan="2">
                   <widget class="QCheckBox" name="checkBox_norm">
-                   <property name="text">
-                    <string>Also write continuum-normalised A and B (*_norm) and plot them</string>
-                   </property>
                    <property name="toolTip">
                     <string>Fits a continuum to each disentangled component: a cubic spline per piece between excluded ranges, through the upper points (points more than the chosen number of sigma below the fit are lines, more than 3 sigma above are spikes; sigma from the points above the fit; iterated). Writes A and B divided by it as &lt;name&gt;_norm.&lt;ext&gt; beside the files as they come from the disentangling, and plots the normalised spectra.</string>
+                   </property>
+                   <property name="text">
+                    <string>Also write continuum-normalised A and B (*_norm) and plot them</string>
                    </property>
                   </widget>
                  </item>
@@ -2588,6 +2737,9 @@
                  </item>
                  <item row="9" column="1">
                   <widget class="QDoubleSpinBox" name="doubleSpinBox_normKnot">
+                   <property name="toolTip">
+                    <string>Distance of the spline knots of the continuum fit. Smaller: follows broader wiggles more closely but also broad lines (Balmer wings); larger: smoother. Pieces shorter than this get a straight line (shorter than 20 Å: a constant).</string>
+                   </property>
                    <property name="suffix">
                     <string> Å</string>
                    </property>
@@ -2595,19 +2747,16 @@
                     <number>0</number>
                    </property>
                    <property name="minimum">
-                    <double>10.0</double>
+                    <double>10.000000000000000</double>
                    </property>
                    <property name="maximum">
-                    <double>5000.0</double>
+                    <double>5000.000000000000000</double>
                    </property>
                    <property name="singleStep">
-                    <double>10.0</double>
+                    <double>10.000000000000000</double>
                    </property>
                    <property name="value">
-                    <double>80.0</double>
-                   </property>
-                   <property name="toolTip">
-                    <string>Distance of the spline knots of the continuum fit. Smaller: follows broader wiggles more closely but also broad lines (Balmer wings); larger: smoother. Pieces shorter than this get a straight line (shorter than 20 Å: a constant).</string>
+                    <double>80.000000000000000</double>
                    </property>
                   </widget>
                  </item>
@@ -2620,6 +2769,9 @@
                  </item>
                  <item row="10" column="1">
                   <widget class="QDoubleSpinBox" name="doubleSpinBox_normLow">
+                   <property name="toolTip">
+                    <string>Points this far below the continuum fit count as lines and are left out (sigma from the points above the fit). Smaller: the continuum follows the upper envelope more closely (line-rich, cool stars); larger: closer to the mean of the continuum points (white noise, few lines).</string>
+                   </property>
                    <property name="suffix">
                     <string> σ</string>
                    </property>
@@ -2627,19 +2779,16 @@
                     <number>1</number>
                    </property>
                    <property name="minimum">
-                    <double>0.5</double>
+                    <double>0.500000000000000</double>
                    </property>
                    <property name="maximum">
-                    <double>5.0</double>
+                    <double>5.000000000000000</double>
                    </property>
                    <property name="singleStep">
-                    <double>0.1</double>
+                    <double>0.100000000000000</double>
                    </property>
                    <property name="value">
-                    <double>1.5</double>
-                   </property>
-                   <property name="toolTip">
-                    <string>Points this far below the continuum fit count as lines and are left out (sigma from the points above the fit). Smaller: the continuum follows the upper envelope more closely (line-rich, cool stars); larger: closer to the mean of the continuum points (white noise, few lines).</string>
+                    <double>1.500000000000000</double>
                    </property>
                   </widget>
                  </item>
@@ -2660,12 +2809,10 @@
                   </widget>
                  </item>
                  <item row="0" column="1">
-                  <widget class="QLineEdit" name="lineEdit_14">
-                </widget>
+                  <widget class="QLineEdit" name="lineEdit_14"/>
                  </item>
                  <item row="0" column="2">
-                  <widget class="QLineEdit" name="lineEdit_15">
-                </widget>
+                  <widget class="QLineEdit" name="lineEdit_15"/>
                  </item>
                  <item row="1" column="0">
                   <widget class="QLabel" name="lbl_65">
@@ -2675,12 +2822,10 @@
                   </widget>
                  </item>
                  <item row="1" column="1">
-                  <widget class="QLineEdit" name="lineEdit_16">
-                </widget>
+                  <widget class="QLineEdit" name="lineEdit_16"/>
                  </item>
                  <item row="1" column="2">
-                  <widget class="QLineEdit" name="lineEdit_17">
-                </widget>
+                  <widget class="QLineEdit" name="lineEdit_17"/>
                  </item>
                  <item row="2" column="0">
                   <widget class="QLabel" name="lbl_66">
@@ -2689,9 +2834,8 @@
                    </property>
                   </widget>
                  </item>
-                 <item row="2" column="1" rowspan="1" colspan="2">
-                  <widget class="QLineEdit" name="lineEdit_21">
-                </widget>
+                 <item row="2" column="1" colspan="2">
+                  <widget class="QLineEdit" name="lineEdit_21"/>
                  </item>
                  <item row="3" column="0">
                   <widget class="QLabel" name="lbl_best">
@@ -2725,9 +2869,74 @@
                </widget>
               </item>
               <item>
+               <widget class="QGroupBox" name="grpAnalysis">
+                <property name="title">
+                 <string>Analysis of the solution (run in Tools → Period analysis)</string>
+                </property>
+                <layout class="QGridLayout" name="grdAnalysis">
+                 <item row="0" column="0">
+                  <widget class="QCheckBox" name="checkBox_anaFit">
+                   <property name="toolTip">
+                    <string>With the component spectra fixed, every spectrum is fitted with its own shift of A and B (O-C of the RVs, with errors) and its own strength of the lines of A and B (1 = as in the component spectra).</string>
+                   </property>
+                   <property name="text">
+                    <string>RV O-C and line strength</string>
+                   </property>
+                   <property name="checked">
+                    <bool>true</bool>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="0" column="1" colspan="2">
+                  <widget class="QLineEdit" name="lineEdit_anaFit">
+                   <property name="toolTip">
+                    <string>Per spectrum: time, phase, RV of the model, O-C of the RV and line strength of A and B with standard errors, RMS of the fit.</string>
+                   </property>
+                   <property name="text">
+                    <string>rv_oc.dat</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="1" column="0">
+                  <widget class="QCheckBox" name="checkBox_anaLines">
+                   <property name="toolTip">
+                    <string>Mean, RMS and equivalent width of observation - model in every window of the file (from, to in Å, frame of the input spectra, optional label; created with strong lines if missing), for every spectrum.</string>
+                   </property>
+                   <property name="text">
+                    <string>Statistics per line, windows from</string>
+                   </property>
+                   <property name="checked">
+                    <bool>true</bool>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="1" column="1">
+                  <widget class="QLineEdit" name="lineEdit_lines">
+                   <property name="toolTip">
+                    <string>Windows: from, to in Å (frame of the input spectra, wide enough for the RVs) and a label per line; # comments. Default lines.dat: created with Balmer, He I/II, Mg II, Na D, Ca II and Mg b if missing.</string>
+                   </property>
+                   <property name="text">
+                    <string>lines.dat</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="1" column="2">
+                  <widget class="QLineEdit" name="lineEdit_anaLines">
+                   <property name="toolTip">
+                    <string>Per spectrum and window: time, phase, label, pixels, mean, RMS and equivalent width [Å] of observation - model.</string>
+                   </property>
+                   <property name="text">
+                    <string>linestat.dat</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+              <item>
                <spacer name="sp_67">
                 <property name="orientation">
-                 <enum>Qt::Vertical</enum>
+                 <enum>Qt::Orientation::Vertical</enum>
                 </property>
                 <property name="sizeHint" stdset="0">
                  <size>
@@ -2742,18 +2951,18 @@
            </widget>
           </item>
          </layout>
-         <attribute name="title">
-          <string>Output</string>
-         </attribute>
         </widget>
        </widget>
       </item>
       <item>
        <widget class="QTabWidget" name="tabPlots">
         <property name="currentIndex">
-         <number>0</number>
+         <number>1</number>
         </property>
         <widget class="QWidget" name="tabSpectra">
+         <attribute name="title">
+          <string>Spectra</string>
+         </attribute>
          <layout class="QVBoxLayout" name="tabSpectra_l">
           <property name="spacing">
            <number>4</number>
@@ -2772,17 +2981,17 @@
           </property>
           <item>
            <widget class="QLabel" name="labelLegend">
-            <property name="text">
-             <string>&lt;span style="color:#1f4fd1"&gt;■&lt;/span&gt; Component A &amp;nbsp; &lt;span style="color:#d12f2f"&gt;■&lt;/span&gt; Component B &amp;nbsp; ■ Mean difference</string>
-            </property>
-            <property name="textFormat">
-             <enum>Qt::RichText</enum>
-            </property>
             <property name="sizePolicy">
              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
+            </property>
+            <property name="text">
+             <string>&lt;span style=&quot;color:#1f4fd1&quot;&gt;■&lt;/span&gt; Component A &amp;nbsp; &lt;span style=&quot;color:#d12f2f&quot;&gt;■&lt;/span&gt; Component B &amp;nbsp; ■ Mean difference</string>
+            </property>
+            <property name="textFormat">
+             <enum>Qt::TextFormat::RichText</enum>
             </property>
            </widget>
           </item>
@@ -2807,16 +3016,6 @@
            </widget>
           </item>
           <item>
-           <widget class="QCustomPlot" name="customPlot_3" native="true">
-            <property name="minimumSize">
-             <size>
-              <width>300</width>
-              <height>180</height>
-             </size>
-            </property>
-           </widget>
-          </item>
-          <item>
            <layout class="QHBoxLayout" name="hSpecOpts">
             <item>
              <widget class="QCheckBox" name="checkBox_10">
@@ -2834,59 +3033,50 @@
             </item>
             <item>
              <widget class="QLabel" name="lbl_68">
-              <property name="text">
-               <string>Offset</string>
-              </property>
               <property name="toolTip">
                <string>Vertical offset between the differences of the spectra in the lower plot.</string>
+              </property>
+              <property name="text">
+               <string>Offset</string>
               </property>
              </widget>
             </item>
             <item>
              <widget class="QDoubleSpinBox" name="doubleSpinBox_5">
+              <property name="minimumSize">
+               <size>
+                <width>70</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>70</width>
+                <height>16777215</height>
+               </size>
+              </property>
               <property name="singleStep">
                <double>0.100000000000000</double>
               </property>
               <property name="value">
                <double>0.300000000000000</double>
               </property>
-              <property name="minimumSize">
-               <size>
-                <width>70</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>70</width>
-                <height>16777215</height>
-               </size>
-              </property>
              </widget>
             </item>
             <item>
              <widget class="QLabel" name="lbl_69">
-              <property name="text">
-               <string>best at eval.</string>
-              </property>
               <property name="toolTip">
                <string>Number of the evaluation (Solve) that gave the best residuum so far.</string>
+              </property>
+              <property name="text">
+               <string>best at eval.</string>
               </property>
              </widget>
             </item>
             <item>
              <widget class="QSpinBox" name="spinBox_6">
-              <property name="buttonSymbols">
-               <enum>QAbstractSpinBox::NoButtons</enum>
-              </property>
-              <property name="readOnly">
-               <bool>true</bool>
-              </property>
               <property name="enabled">
                <bool>false</bool>
-              </property>
-              <property name="maximum">
-               <number>9999</number>
               </property>
               <property name="minimumSize">
                <size>
@@ -2899,13 +3089,22 @@
                 <width>70</width>
                 <height>16777215</height>
                </size>
+              </property>
+              <property name="readOnly">
+               <bool>true</bool>
+              </property>
+              <property name="buttonSymbols">
+               <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
+              </property>
+              <property name="maximum">
+               <number>9999</number>
               </property>
              </widget>
             </item>
             <item>
              <spacer name="sp_70">
               <property name="orientation">
-               <enum>Qt::Horizontal</enum>
+               <enum>Qt::Orientation::Horizontal</enum>
               </property>
               <property name="sizeHint" stdset="0">
                <size>
@@ -2924,12 +3123,149 @@
             </item>
            </layout>
           </item>
+          <item>
+           <layout class="QHBoxLayout" name="hStatPlots">
+            <item>
+             <widget class="QCustomPlot" name="customPlot_5" native="true">
+              <property name="minimumSize">
+               <size>
+                <width>300</width>
+                <height>200</height>
+               </size>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QCustomPlot" name="customPlot_6" native="true">
+              <property name="minimumSize">
+               <size>
+                <width>250</width>
+                <height>200</height>
+               </size>
+              </property>
+              <property name="toolTip">
+               <string>RMS and mean of O-M against the number of the spectrum; spectra whose RMS lies more than 5 robust standard deviations (1.48 MAD) above the median are labelled.</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="hStatOpts">
+            <item>
+             <widget class="QLabel" name="lbl_72">
+              <property name="text">
+               <string>Residuals per spectrum, from</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QDoubleSpinBox" name="doubleSpinBox_st1">
+              <property name="minimumSize">
+               <size>
+                <width>100</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>100</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="toolTip">
+               <string>Wavelength range of the residual statistics [A], e.g. one line. auto: residuum range of the Model tab (Only from ... to), if switched on, otherwise the whole spectrum (without the edges).</string>
+              </property>
+              <property name="specialValueText">
+               <string>auto</string>
+              </property>
+              <property name="decimals">
+               <number>2</number>
+              </property>
+              <property name="maximum">
+               <double>1000000.000000000000000</double>
+              </property>
+              <property name="singleStep">
+               <double>1.000000000000000</double>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="lbl_73">
+              <property name="text">
+               <string>to</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QDoubleSpinBox" name="doubleSpinBox_st2">
+              <property name="minimumSize">
+               <size>
+                <width>100</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>100</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="toolTip">
+               <string>Upper end of the wavelength range [A]. auto: as the lower end.</string>
+              </property>
+              <property name="specialValueText">
+               <string>auto</string>
+              </property>
+              <property name="decimals">
+               <number>2</number>
+              </property>
+              <property name="maximum">
+               <double>1000000.000000000000000</double>
+              </property>
+              <property name="singleStep">
+               <double>1.000000000000000</double>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="lbl_74">
+              <property name="text">
+               <string>Å</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="sp_75">
+              <property name="orientation">
+               <enum>Qt::Orientation::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>0</width>
+                <height>0</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item>
+             <widget class="QPushButton" name="pushButton_stat">
+              <property name="toolTip">
+               <string>Recompute the residual statistics and write diffstatistic.dat.</string>
+              </property>
+              <property name="text">
+               <string>Update</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
          </layout>
-         <attribute name="title">
-          <string>Spectra</string>
-         </attribute>
         </widget>
         <widget class="QWidget" name="tabConv">
+         <attribute name="title">
+          <string>Convergence &amp;&amp; messages</string>
+         </attribute>
          <layout class="QVBoxLayout" name="tabConv_l">
           <property name="spacing">
            <number>4</number>
@@ -2948,6 +3284,12 @@
           </property>
           <item>
            <widget class="QCustomPlot" name="customPlot_4" native="true">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="minimumSize">
              <size>
               <width>300</width>
@@ -2957,187 +3299,58 @@
            </widget>
           </item>
           <item>
-           <widget class="QCustomPlot" name="customPlot_5">
-            <property name="minimumSize">
-             <size>
-              <width>300</width>
-              <height>200</height>
-             </size>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <layout class="QHBoxLayout" name="hStatOpts">
+           <layout class="QHBoxLayout" name="hTextOut">
             <item>
-             <widget class="QLabel" name="lbl_72">
-              <property name="text">
-               <string>Residuals per spectrum, from</string>
+             <widget class="QGroupBox" name="groupBox_messages">
+              <property name="title">
+               <string>Messages</string>
               </property>
+              <layout class="QVBoxLayout" name="vMessages">
+               <property name="leftMargin">
+                <number>4</number>
+               </property>
+               <property name="topMargin">
+                <number>4</number>
+               </property>
+               <property name="rightMargin">
+                <number>4</number>
+               </property>
+               <property name="bottomMargin">
+                <number>4</number>
+               </property>
+               <item>
+                <widget class="QPlainTextEdit" name="plainTextEdit_2"/>
+               </item>
+              </layout>
              </widget>
             </item>
             <item>
-             <widget class="QDoubleSpinBox" name="doubleSpinBox_st1">
-              <property name="decimals">
-               <number>2</number>
+             <widget class="QGroupBox" name="groupBox_rvs">
+              <property name="title">
+               <string>RVs</string>
               </property>
-              <property name="maximum">
-               <double>1000000.0</double>
-              </property>
-              <property name="singleStep">
-               <double>1</double>
-              </property>
-              <property name="specialValueText">
-               <string>auto</string>
-              </property>
-              <property name="toolTip">
-               <string>Wavelength range of the residual statistics [A], e.g. one line. auto: residuum range of the Model tab (Only from ... to), if switched on, otherwise the whole spectrum (without the edges).</string>
-              </property>
-              <property name="minimumSize">
-               <size>
-                <width>100</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>100</width>
-                <height>16777215</height>
-               </size>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLabel" name="lbl_73">
-              <property name="text">
-               <string>to</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QDoubleSpinBox" name="doubleSpinBox_st2">
-              <property name="decimals">
-               <number>2</number>
-              </property>
-              <property name="maximum">
-               <double>1000000.0</double>
-              </property>
-              <property name="singleStep">
-               <double>1</double>
-              </property>
-              <property name="specialValueText">
-               <string>auto</string>
-              </property>
-              <property name="toolTip">
-               <string>Upper end of the wavelength range [A]. auto: as the lower end.</string>
-              </property>
-              <property name="minimumSize">
-               <size>
-                <width>100</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>100</width>
-                <height>16777215</height>
-               </size>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLabel" name="lbl_74">
-              <property name="text">
-               <string>Å</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <spacer name="sp_75">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>0</width>
-                <height>0</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-            <item>
-             <widget class="QPushButton" name="pushButton_stat">
-              <property name="text">
-               <string>Update</string>
-              </property>
-              <property name="toolTip">
-               <string>Recompute the residual statistics and write diffstatistic.dat.</string>
-              </property>
+              <layout class="QVBoxLayout" name="vRVs">
+               <property name="leftMargin">
+                <number>4</number>
+               </property>
+               <property name="topMargin">
+                <number>4</number>
+               </property>
+               <property name="rightMargin">
+                <number>4</number>
+               </property>
+               <property name="bottomMargin">
+                <number>4</number>
+               </property>
+               <item>
+                <widget class="QPlainTextEdit" name="plainTextEdit"/>
+               </item>
+              </layout>
              </widget>
             </item>
            </layout>
           </item>
          </layout>
-         <attribute name="title">
-          <string>Convergence &amp;&amp; residuals</string>
-         </attribute>
-        </widget>
-        <widget class="QWidget" name="tabMessages">
-         <layout class="QVBoxLayout" name="tabMessages_l">
-          <property name="spacing">
-           <number>4</number>
-          </property>
-          <property name="leftMargin">
-           <number>4</number>
-          </property>
-          <property name="topMargin">
-           <number>4</number>
-          </property>
-          <property name="rightMargin">
-           <number>4</number>
-          </property>
-          <property name="bottomMargin">
-           <number>4</number>
-          </property>
-          <item>
-           <widget class="QPlainTextEdit" name="plainTextEdit_2">
-                  </widget>
-          </item>
-         </layout>
-         <attribute name="title">
-          <string>Messages</string>
-         </attribute>
-        </widget>
-        <widget class="QWidget" name="tabRVs">
-         <layout class="QVBoxLayout" name="tabRVs_l">
-          <property name="spacing">
-           <number>4</number>
-          </property>
-          <property name="leftMargin">
-           <number>4</number>
-          </property>
-          <property name="topMargin">
-           <number>4</number>
-          </property>
-          <property name="rightMargin">
-           <number>4</number>
-          </property>
-          <property name="bottomMargin">
-           <number>4</number>
-          </property>
-          <item>
-           <widget class="QPlainTextEdit" name="plainTextEdit">
-            <property name="enabled">
-             <bool>true</bool>
-            </property>
-            <property name="plainText">
-             <string />
-            </property>
-           </widget>
-          </item>
-         </layout>
-         <attribute name="title">
-          <string>RVs</string>
-         </attribute>
         </widget>
        </widget>
       </item>
@@ -3146,7 +3359,7 @@
     <item>
      <widget class="QFrame" name="frameStatus">
       <property name="frameShape">
-       <enum>QFrame::StyledPanel</enum>
+       <enum>QFrame::Shape::StyledPanel</enum>
       </property>
       <layout class="QHBoxLayout" name="hStatus">
        <property name="leftMargin">
@@ -3170,17 +3383,8 @@
        </item>
        <item>
         <widget class="QSpinBox" name="spinBox_4">
-         <property name="buttonSymbols">
-          <enum>QAbstractSpinBox::NoButtons</enum>
-         </property>
-         <property name="readOnly">
-          <bool>true</bool>
-         </property>
          <property name="enabled">
           <bool>false</bool>
-         </property>
-         <property name="maximum">
-          <number>9999</number>
          </property>
          <property name="minimumSize">
           <size>
@@ -3193,6 +3397,15 @@
            <width>70</width>
            <height>16777215</height>
           </size>
+         </property>
+         <property name="readOnly">
+          <bool>true</bool>
+         </property>
+         <property name="buttonSymbols">
+          <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
+         </property>
+         <property name="maximum">
+          <number>9999</number>
          </property>
         </widget>
        </item>
@@ -3205,17 +3418,8 @@
        </item>
        <item>
         <widget class="QSpinBox" name="spinBox_5">
-         <property name="buttonSymbols">
-          <enum>QAbstractSpinBox::NoButtons</enum>
-         </property>
-         <property name="readOnly">
-          <bool>true</bool>
-         </property>
          <property name="enabled">
           <bool>false</bool>
-         </property>
-         <property name="maximum">
-          <number>99999</number>
          </property>
          <property name="minimumSize">
           <size>
@@ -3228,6 +3432,15 @@
            <width>80</width>
            <height>16777215</height>
           </size>
+         </property>
+         <property name="readOnly">
+          <bool>true</bool>
+         </property>
+         <property name="buttonSymbols">
+          <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
+         </property>
+         <property name="maximum">
+          <number>99999</number>
          </property>
         </widget>
        </item>
@@ -3240,14 +3453,8 @@
        </item>
        <item>
         <widget class="QLineEdit" name="lineEdit_7">
-         <property name="readOnly">
-          <bool>true</bool>
-         </property>
          <property name="enabled">
           <bool>false</bool>
-         </property>
-         <property name="text">
-          <string />
          </property>
          <property name="minimumSize">
           <size>
@@ -3260,6 +3467,12 @@
            <width>150</width>
            <height>16777215</height>
           </size>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+         <property name="readOnly">
+          <bool>true</bool>
          </property>
         </widget>
        </item>
@@ -3272,14 +3485,8 @@
        </item>
        <item>
         <widget class="QLineEdit" name="lineEdit_6">
-         <property name="readOnly">
-          <bool>true</bool>
-         </property>
          <property name="enabled">
           <bool>false</bool>
-         </property>
-         <property name="text">
-          <string />
          </property>
          <property name="minimumSize">
           <size>
@@ -3293,12 +3500,18 @@
            <height>16777215</height>
           </size>
          </property>
+         <property name="text">
+          <string/>
+         </property>
+         <property name="readOnly">
+          <bool>true</bool>
+         </property>
         </widget>
        </item>
        <item>
         <spacer name="sp_85">
          <property name="orientation">
-          <enum>Qt::Horizontal</enum>
+          <enum>Qt::Orientation::Horizontal</enum>
          </property>
          <property name="sizeHint" stdset="0">
           <size>
@@ -3311,7 +3524,7 @@
        <item>
         <widget class="QLabel" name="labelRunInfo">
          <property name="text">
-          <string />
+          <string/>
          </property>
         </widget>
        </item>
@@ -3325,46 +3538,47 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1585</width>
-     <height>22</height>
+     <width>1440</width>
+     <height>23</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
     <property name="title">
      <string>File</string>
     </property>
-    <addaction name="actionOpen_Configuration" />
-    <addaction name="actionSave_Configuration" />
-    <addaction name="actionSave_Configuration_As" />
-    <addaction name="separator" />
-    <addaction name="actionQuit" />
+    <addaction name="actionOpen_Configuration"/>
+    <addaction name="actionSave_Configuration"/>
+    <addaction name="actionSave_Configuration_As"/>
+    <addaction name="separator"/>
+    <addaction name="actionQuit"/>
    </widget>
    <widget class="QMenu" name="menuTools">
     <property name="title">
      <string>Tools</string>
     </property>
-    <addaction name="actionSpectrum_Plotter" />
-    <addaction name="actionCorrelation" />
-    <addaction name="actionEditor" />
-    <addaction name="actionArithmetic" />
-    <addaction name="actionSubtract" />
-    <addaction name="actionOrbitFit" />
-    <addaction name="actionFluxTemplate" />
-    <addaction name="actionBaryCorr" />
+    <addaction name="actionSpectrum_Plotter"/>
+    <addaction name="actionCorrelation"/>
+    <addaction name="actionEditor"/>
+    <addaction name="actionArithmetic"/>
+    <addaction name="actionSubtract"/>
+    <addaction name="actionOrbitFit"/>
+    <addaction name="actionFluxTemplate"/>
+    <addaction name="actionBaryCorr"/>
+    <addaction name="actionPeriod"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
      <string>Help</string>
     </property>
-    <addaction name="actionAbout" />
-    <addaction name="actionBug_Report" />
-    <addaction name="actionManual" />
+    <addaction name="actionAbout"/>
+    <addaction name="actionBug_Report"/>
+    <addaction name="actionManual"/>
    </widget>
-   <addaction name="menuFile" />
-   <addaction name="menuTools" />
-   <addaction name="menuHelp" />
+   <addaction name="menuFile"/>
+   <addaction name="menuTools"/>
+   <addaction name="menuHelp"/>
   </widget>
-  <widget class="QStatusBar" name="statusBar" />
+  <widget class="QStatusBar" name="statusBar"/>
   <widget class="QDockWidget" name="dockSubtract">
    <property name="windowTitle">
     <string>Subtract component</string>
@@ -3415,8 +3629,7 @@
       </widget>
      </item>
      <item row="0" column="4">
-      <widget class="QLineEdit" name="lineEdit_27">
-                  </widget>
+      <widget class="QLineEdit" name="lineEdit_27"/>
      </item>
      <item row="1" column="0">
       <widget class="QCheckBox" name="checkBox_24">
@@ -3447,10 +3660,9 @@
       </widget>
      </item>
      <item row="1" column="4">
-      <widget class="QLineEdit" name="lineEdit_28">
-                  </widget>
+      <widget class="QLineEdit" name="lineEdit_28"/>
      </item>
-     <item row="2" column="0" rowspan="1" colspan="5">
+     <item row="2" column="0" colspan="5">
       <widget class="QLabel" name="lbl_88">
        <property name="text">
         <string>Subtracts the contribution of component A or B (from compl.txt) from every spectrum; optionally shifted to its rest frame, with a constant added or multiplied.</string>
@@ -3567,6 +3779,11 @@
     <string>Barycentric correction…</string>
    </property>
   </action>
+  <action name="actionPeriod">
+   <property name="text">
+    <string>Period analysis…</string>
+   </property>
+  </action>
  </widget>
  <customwidgets>
   <customwidget>
@@ -3577,7 +3794,7 @@
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="images.qrc" />
+  <include location="images.qrc"/>
  </resources>
- <connections />
+ <connections/>
 </ui>

@@ -36,6 +36,7 @@ private slots:
     void on_actionOrbitFit_triggered();
     void on_actionFluxTemplate_triggered();
     void on_actionBaryCorr_triggered();
+    void on_actionPeriod_triggered();
     void on_actionOpen_Configuration_triggered();
     void on_actionSave_Configuration_triggered();
     void on_actionSave_Configuration_As_triggered();
@@ -151,7 +152,6 @@ private slots:
 
     void showPointToolTip(QMouseEvent *event);
 
-    void showPointToolTip_3(QMouseEvent *event);
 
 
     void plot_functionvalues();
@@ -175,6 +175,9 @@ private slots:
 
     void on_pushButton_15_clicked();
     void on_pushButton_telldetect_clicked();
+    void on_pushButton_lsFind_clicked();
+    void on_pushButton_lsScan_clicked();
+    void on_pushButton_lsShow_clicked();
 
 private:
     void reportError(const QString &msg);
@@ -187,11 +190,18 @@ private:
                              QString &name);
     // rows left out of the residuum only (Model tab, "Exclude the ranges of the static lines")
     bool buildResidualExclusion();
+    // Output tab, "Analysis of the solution": RV O-C and line strength per spectrum, statistics
+    // per line window; false with a message if there is no solution or a file cannot be used
+    bool analyseSolution();
+    // time and orbital phase of every spectrum (empty if unknown)
+    void spectrumTimes(std::vector<double> &t, std::vector<double> &phase);
     bool fitStaticStrengths(std::vector<std::vector<double>> &w);
     bool fitStrengthsWindowed(int &iters, double &change, QString &note);
     bool setupRatioShape();
     bool freeRVIndices(bool sb1, std::vector<int> &freeIdx, QString &err) const;
     arma::vec componentSpectra() const;
+    bool lineScanSpectra(std::vector<double> &lam, std::vector<double> &fa, std::vector<double> &fb, bool report);
+    bool lineFinderSpectra(std::vector<double> &lam, std::vector<double> &fa, std::vector<double> &fb, QString &source);
     void plotResidualStatistics();
     bool ratioModelFromUi(fr::Model &m, std::string &err) const;
     void updateRatioControls();

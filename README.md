@@ -78,13 +78,14 @@ Qt Creator 4.12.2 and Qt 5.15.
   - *Model*: interpolation, solver and cores, residuum (criterion, edges, wavelength range).
   - *Optimisation*: free orbital elements (ticked = free) or fixed RVs (spectrum numbers),
     method, start (New / Continue / initial file), maximum iterations, Auto Stop,
-    Reinitiate, error estimation (curvature or Monte Carlo), flux ratios.
+    Reinitiate, error estimation (curvature or Monte Carlo), flux ratios, line width scan.
   - *Output*: common file name, result files, optimisation files.
-- **Right – results in four tabs:** Spectra (components, static lines, differences; the
-  y range ignores the outermost pixels, which are determined by single spectra and can be
-  outliers), Convergence & residuals (Δχ², and the residuals observation − model per
-  spectrum against phase or time, optionally in a wavelength window, also written to
-  `diffstatistic.dat`), Messages (including the error estimation), RVs.
+- **Right – results in two tabs:** Spectra (components and static lines, the y range
+  ignores the outermost pixels, which are determined by single spectra and can be outliers;
+  below them the residuals observation − model per spectrum against phase or time and
+  against the number of the spectrum, optionally in a wavelength window, also written to
+  `diffstatistic.dat`) and Convergence & messages (Δχ²; below it Messages, including the
+  error estimation, and RVs side by side).
 - **Bottom – status:** iteration, evaluations, best residuum, time; solver, interpolation,
   method and cores in use.
 - Tools → Subtract component… opens the subtraction of a component as a panel.
@@ -232,6 +233,30 @@ Model tab, Residuum, "Exclude the ranges of the static lines from the residuum":
 the Data-tab file "Static lines only in" do not count in the residuum (and the residual
 statistics and S/N estimate) but stay in the solution; in corrected spectra they are shifted
 by BC.
+
+Spectra tab, below the components: RMS and mean of O−M per spectrum against the phase or time and
+against the number of the spectrum (outliers labelled).
+
+Optimisation tab, "Line width scan": "Find Lines" shows the spectrum of component A and then of
+component B (selectable, one after the other; from the Output-tab files, normalised preferred, or the
+current solution) with the absorption lines found; click on a line removes it, click elsewhere
+adds one, "Apply" writes both line lists (`scanlines.dat`, sections per component). "Scan orbits" computes the solution for
+every orbit of a grid (`orbitgrid.dat`: seven rows P, e, K_A, K_B, γ, T_peri, ω, one column per
+orbit) and writes the residuum and the Gaussian FWHM of the mean line profile of each
+component, measured in the lines found in that component (and depth ratio and correlation) to `linescan.dat`; window with FWHM and residuum
+against the varying element and the mean line profile with its Gaussian fit per orbit (also written,
+`linescan_profiles.dat`); optionally the normalised spectra of every orbit are saved; "Show results"
+opens the window again from the files. The width of the lines is a sharp criterion for K when the
+components are similar.
+
+Tools → Period analysis: Lomb–Scargle periodogram against the time, with spectral window,
+false-alarm levels and the orbital frequency marked, of the residual statistics (mean, RMS, std
+of O−M), of the fit per spectrum (RV O−C and line strength of A and B, weighted with the errors;
+`rv_oc.dat`) or of the statistics per line window (mean, RMS, equivalent width of O−M;
+`lines.dat` → `linestat.dat`). "Analyse the current solution" in this dialog writes the last two
+files for the current solution; what is written and the file names are set in the Output tab
+(group "Analysis of the solution"). "Apply" of the common name sets all file names of the
+Output tab, including these.
 
 ## Best state and Continue
 

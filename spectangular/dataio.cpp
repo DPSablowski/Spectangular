@@ -350,6 +350,27 @@ const char *const kTelluricMask =
     "8537.7  8546.4   Ca II 8542.09 (IR triplet)\n"
     "8657.8  8666.5   Ca II 8662.14 (IR triplet)\n";
 
+const char *const kLineWindows =
+    "# Windows of the line statistics (Spectangular, Output tab, Analysis of the solution):\n"
+    "# from to [A, frame of the input spectra] label. Wide enough for the RVs (about +-150 km/s);\n"
+    "# edit or add lines as needed.\n"
+    "3929.0 3938.0 CaII_K\n"
+    "3964.0 3973.0 CaII_H\n"
+    "4095.0 4108.0 H_delta\n"
+    "4334.0 4347.0 H_gamma\n"
+    "4467.0 4476.5 HeI_4471\n"
+    "4477.5 4484.5 MgII_4481\n"
+    "4681.5 4690.5 HeII_4686\n"
+    "4854.5 4868.0 H_beta\n"
+    "5164.0 5187.0 Mg_b\n"
+    "5871.0 5881.0 HeI_5876\n"
+    "5885.0 5901.0 Na_D\n"
+    "6555.5 6570.0 H_alpha\n"
+    "6674.0 6683.0 HeI_6678\n"
+    "8494.0 8503.5 CaII_8498\n"
+    "8537.5 8547.0 CaII_8542\n"
+    "8657.0 8667.0 CaII_8662\n";
+
 const char *const kStaticRanges =
     "# Wavelength ranges of the static lines (Spectangular, Data tab: static lines only in ranges).\n"
     "# Per line: from to [A], further text is ignored; '#' starts a comment line.\n"

@@ -133,6 +133,10 @@ SOURCES       = ../../erfa/anp.c \
 		../../fluxtemplate.cpp \
 		../../barycorr.cpp \
 		../../barycorrdialog.cpp \
+		../../periodogram.cpp \
+		../../linewidth.cpp \
+		../../linefinder.cpp \
+		../../perioddialog.cpp \
 		../../resources.cpp \
 		../../main.cpp qrc_images.cpp \
 		moc_mainwindow.cpp \
@@ -143,7 +147,9 @@ SOURCES       = ../../erfa/anp.c \
 		moc_arithmetic.cpp \
 		moc_orbitfit.cpp \
 		moc_fluxtemplate.cpp \
-		moc_barycorrdialog.cpp
+		moc_barycorrdialog.cpp \
+		moc_linefinder.cpp \
+		moc_perioddialog.cpp
 OBJECTS       = anp.o \
 		anpm.o \
 		apco.o \
@@ -225,6 +231,10 @@ OBJECTS       = anp.o \
 		fluxtemplate.o \
 		barycorr.o \
 		barycorrdialog.o \
+		periodogram.o \
+		linewidth.o \
+		linefinder.o \
+		perioddialog.o \
 		resources.o \
 		main.o \
 		qrc_images.o \
@@ -236,7 +246,9 @@ OBJECTS       = anp.o \
 		moc_arithmetic.o \
 		moc_orbitfit.o \
 		moc_fluxtemplate.o \
-		moc_barycorrdialog.o
+		moc_barycorrdialog.o \
+		moc_linefinder.o \
+		moc_perioddialog.o
 DIST          = /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/spec_pre.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/common/unix.conf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/common/linux.conf \
@@ -341,6 +353,10 @@ DIST          = /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/spec_pre.prf \
 		../../fluxtemplate.h \
 		../../barycorr.h \
 		../../barycorrdialog.h \
+		../../periodogram.h \
+		../../linewidth.h \
+		../../linefinder.h \
+		../../perioddialog.h \
 		../../resources.h ../../erfa/anp.c \
 		../../erfa/anpm.c \
 		../../erfa/apco.c \
@@ -422,6 +438,10 @@ DIST          = /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/spec_pre.prf \
 		../../fluxtemplate.cpp \
 		../../barycorr.cpp \
 		../../barycorrdialog.cpp \
+		../../periodogram.cpp \
+		../../linewidth.cpp \
+		../../linefinder.cpp \
+		../../perioddialog.cpp \
 		../../resources.cpp \
 		../../main.cpp
 QMAKE_TARGET  = Spectangular
@@ -614,8 +634,8 @@ distdir: FORCE
 	$(COPY_FILE) --parents $(DIST) $(DISTDIR)/
 	$(COPY_FILE) --parents ../../images.qrc $(DISTDIR)/
 	$(COPY_FILE) --parents /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/data/dummy.cpp $(DISTDIR)/
-	$(COPY_FILE) --parents ../../erfa/erfa.h ../../erfa/erfam.h ../../erfa/erfaextra.h ../../erfa/erfadatextra.h ../../mainwindow.h ../../plotspec.h ../../qcustomplot.h ../../correlation.h ../../edit.h ../../arithmetic.h ../../orbitfit.h ../../orbit.h ../../disentangle.h ../../dataio.h ../../neldermead.h ../../errorestimate.h ../../levmar.h ../../fluxratio.h ../../rvfit.h ../../templatefit.h ../../continuum.h ../../version.h ../../fluxtemplate.h ../../barycorr.h ../../barycorrdialog.h ../../resources.h $(DISTDIR)/
-	$(COPY_FILE) --parents ../../erfa/anp.c ../../erfa/anpm.c ../../erfa/apco.c ../../erfa/apco13.c ../../erfa/apcs.c ../../erfa/bpn2xy.c ../../erfa/c2ixys.c ../../erfa/cal2jd.c ../../erfa/cp.c ../../erfa/cr.c ../../erfa/dat.c ../../erfa/dtdb.c ../../erfa/eform.c ../../erfa/eors.c ../../erfa/epv00.c ../../erfa/era00.c ../../erfa/erfadatextra.c ../../erfa/fad03.c ../../erfa/fae03.c ../../erfa/faf03.c ../../erfa/faju03.c ../../erfa/fal03.c ../../erfa/falp03.c ../../erfa/fama03.c ../../erfa/fame03.c ../../erfa/faom03.c ../../erfa/fapa03.c ../../erfa/fasa03.c ../../erfa/faur03.c ../../erfa/fave03.c ../../erfa/fw2m.c ../../erfa/gd2gc.c ../../erfa/gd2gce.c ../../erfa/ir.c ../../erfa/jd2cal.c ../../erfa/nut00a.c ../../erfa/nut06a.c ../../erfa/obl06.c ../../erfa/pfw06.c ../../erfa/pm.c ../../erfa/pn.c ../../erfa/pnm06a.c ../../erfa/pom00.c ../../erfa/pvtob.c ../../erfa/refco.c ../../erfa/rx.c ../../erfa/rxp.c ../../erfa/rxpv.c ../../erfa/ry.c ../../erfa/rz.c ../../erfa/s06.c ../../erfa/sp00.c ../../erfa/sxp.c ../../erfa/taitt.c ../../erfa/taiut1.c ../../erfa/tr.c ../../erfa/trxp.c ../../erfa/trxpv.c ../../erfa/utctai.c ../../erfa/utcut1.c ../../erfa/zp.c ../../mainwindow.cpp ../../plotspec.cpp ../../qcustomplot.cpp ../../correlation.cpp ../../edit.cpp ../../arithmetic.cpp ../../orbitfit.cpp ../../orbit.cpp ../../disentangle.cpp ../../dataio.cpp ../../neldermead.cpp ../../errorestimate.cpp ../../levmar.cpp ../../fluxratio.cpp ../../rvfit.cpp ../../templatefit.cpp ../../continuum.cpp ../../fluxtemplate.cpp ../../barycorr.cpp ../../barycorrdialog.cpp ../../resources.cpp ../../main.cpp $(DISTDIR)/
+	$(COPY_FILE) --parents ../../erfa/erfa.h ../../erfa/erfam.h ../../erfa/erfaextra.h ../../erfa/erfadatextra.h ../../mainwindow.h ../../plotspec.h ../../qcustomplot.h ../../correlation.h ../../edit.h ../../arithmetic.h ../../orbitfit.h ../../orbit.h ../../disentangle.h ../../dataio.h ../../neldermead.h ../../errorestimate.h ../../levmar.h ../../fluxratio.h ../../rvfit.h ../../templatefit.h ../../continuum.h ../../version.h ../../fluxtemplate.h ../../barycorr.h ../../barycorrdialog.h ../../periodogram.h ../../linewidth.h ../../linefinder.h ../../perioddialog.h ../../resources.h $(DISTDIR)/
+	$(COPY_FILE) --parents ../../erfa/anp.c ../../erfa/anpm.c ../../erfa/apco.c ../../erfa/apco13.c ../../erfa/apcs.c ../../erfa/bpn2xy.c ../../erfa/c2ixys.c ../../erfa/cal2jd.c ../../erfa/cp.c ../../erfa/cr.c ../../erfa/dat.c ../../erfa/dtdb.c ../../erfa/eform.c ../../erfa/eors.c ../../erfa/epv00.c ../../erfa/era00.c ../../erfa/erfadatextra.c ../../erfa/fad03.c ../../erfa/fae03.c ../../erfa/faf03.c ../../erfa/faju03.c ../../erfa/fal03.c ../../erfa/falp03.c ../../erfa/fama03.c ../../erfa/fame03.c ../../erfa/faom03.c ../../erfa/fapa03.c ../../erfa/fasa03.c ../../erfa/faur03.c ../../erfa/fave03.c ../../erfa/fw2m.c ../../erfa/gd2gc.c ../../erfa/gd2gce.c ../../erfa/ir.c ../../erfa/jd2cal.c ../../erfa/nut00a.c ../../erfa/nut06a.c ../../erfa/obl06.c ../../erfa/pfw06.c ../../erfa/pm.c ../../erfa/pn.c ../../erfa/pnm06a.c ../../erfa/pom00.c ../../erfa/pvtob.c ../../erfa/refco.c ../../erfa/rx.c ../../erfa/rxp.c ../../erfa/rxpv.c ../../erfa/ry.c ../../erfa/rz.c ../../erfa/s06.c ../../erfa/sp00.c ../../erfa/sxp.c ../../erfa/taitt.c ../../erfa/taiut1.c ../../erfa/tr.c ../../erfa/trxp.c ../../erfa/trxpv.c ../../erfa/utctai.c ../../erfa/utcut1.c ../../erfa/zp.c ../../mainwindow.cpp ../../plotspec.cpp ../../qcustomplot.cpp ../../correlation.cpp ../../edit.cpp ../../arithmetic.cpp ../../orbitfit.cpp ../../orbit.cpp ../../disentangle.cpp ../../dataio.cpp ../../neldermead.cpp ../../errorestimate.cpp ../../levmar.cpp ../../fluxratio.cpp ../../rvfit.cpp ../../templatefit.cpp ../../continuum.cpp ../../fluxtemplate.cpp ../../barycorr.cpp ../../barycorrdialog.cpp ../../periodogram.cpp ../../linewidth.cpp ../../linefinder.cpp ../../perioddialog.cpp ../../resources.cpp ../../main.cpp $(DISTDIR)/
 	$(COPY_FILE) --parents ../../mainwindow.ui ../../plotspec.ui ../../correlation.ui ../../edit.ui ../../arithmetic.ui ../../orbitfit.ui $(DISTDIR)/
 
 
@@ -659,9 +679,9 @@ compiler_moc_predefs_clean:
 moc_predefs.h: /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/data/dummy.cpp
 	clang++ -pipe -fopenmp -g -O2 -std=gnu++1z -Wall -Wextra -dM -E -o moc_predefs.h /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/data/dummy.cpp
 
-compiler_moc_header_make_all: moc_mainwindow.cpp moc_plotspec.cpp moc_qcustomplot.cpp moc_correlation.cpp moc_edit.cpp moc_arithmetic.cpp moc_orbitfit.cpp moc_fluxtemplate.cpp moc_barycorrdialog.cpp
+compiler_moc_header_make_all: moc_mainwindow.cpp moc_plotspec.cpp moc_qcustomplot.cpp moc_correlation.cpp moc_edit.cpp moc_arithmetic.cpp moc_orbitfit.cpp moc_fluxtemplate.cpp moc_barycorrdialog.cpp moc_linefinder.cpp moc_perioddialog.cpp
 compiler_moc_header_clean:
-	-$(DEL_FILE) moc_mainwindow.cpp moc_plotspec.cpp moc_qcustomplot.cpp moc_correlation.cpp moc_edit.cpp moc_arithmetic.cpp moc_orbitfit.cpp moc_fluxtemplate.cpp moc_barycorrdialog.cpp
+	-$(DEL_FILE) moc_mainwindow.cpp moc_plotspec.cpp moc_qcustomplot.cpp moc_correlation.cpp moc_edit.cpp moc_arithmetic.cpp moc_orbitfit.cpp moc_fluxtemplate.cpp moc_barycorrdialog.cpp moc_linefinder.cpp moc_perioddialog.cpp
 moc_mainwindow.cpp: ../../mainwindow.h \
 		../../fluxratio.h \
 		../../disentangle.h \
@@ -717,6 +737,18 @@ moc_barycorrdialog.cpp: ../../barycorrdialog.h \
 		moc_predefs.h \
 		/usr/lib/qt5/bin/moc
 	/usr/lib/qt5/bin/moc $(DEFINES) --include /home/daniel/Downloads/spectangular-korrekturen-quellen/spectangular/build/Desktop-Debug/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-clang -I/home/daniel/Downloads/spectangular-korrekturen-quellen/spectangular -I/home/daniel/Downloads/spectangular-korrekturen-quellen/spectangular -I/usr/include/x86_64-linux-gnu/qt5 -I/usr/include/x86_64-linux-gnu/qt5/QtPrintSupport -I/usr/include/x86_64-linux-gnu/qt5/QtWidgets -I/usr/include/x86_64-linux-gnu/qt5/QtGui -I/usr/include/x86_64-linux-gnu/qt5/QtCore -I. -I/usr/include/c++/15 -I/usr/include/x86_64-linux-gnu/c++/15 -I/usr/include/c++/15/backward -I/usr/lib/llvm-21/lib/clang/21/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include ../../barycorrdialog.h -o moc_barycorrdialog.cpp
+
+moc_linefinder.cpp: ../../linefinder.h \
+		../../linewidth.h \
+		moc_predefs.h \
+		/usr/lib/qt5/bin/moc
+	/usr/lib/qt5/bin/moc $(DEFINES) --include /home/daniel/Downloads/spectangular-korrekturen-quellen/spectangular/build/Desktop-Debug/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-clang -I/home/daniel/Downloads/spectangular-korrekturen-quellen/spectangular -I/home/daniel/Downloads/spectangular-korrekturen-quellen/spectangular -I/usr/include/x86_64-linux-gnu/qt5 -I/usr/include/x86_64-linux-gnu/qt5/QtPrintSupport -I/usr/include/x86_64-linux-gnu/qt5/QtWidgets -I/usr/include/x86_64-linux-gnu/qt5/QtGui -I/usr/include/x86_64-linux-gnu/qt5/QtCore -I. -I/usr/include/c++/15 -I/usr/include/x86_64-linux-gnu/c++/15 -I/usr/include/c++/15/backward -I/usr/lib/llvm-21/lib/clang/21/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include ../../linefinder.h -o moc_linefinder.cpp
+
+moc_perioddialog.cpp: ../../perioddialog.h \
+		../../periodogram.h \
+		moc_predefs.h \
+		/usr/lib/qt5/bin/moc
+	/usr/lib/qt5/bin/moc $(DEFINES) --include /home/daniel/Downloads/spectangular-korrekturen-quellen/spectangular/build/Desktop-Debug/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-clang -I/home/daniel/Downloads/spectangular-korrekturen-quellen/spectangular -I/home/daniel/Downloads/spectangular-korrekturen-quellen/spectangular -I/usr/include/x86_64-linux-gnu/qt5 -I/usr/include/x86_64-linux-gnu/qt5/QtPrintSupport -I/usr/include/x86_64-linux-gnu/qt5/QtWidgets -I/usr/include/x86_64-linux-gnu/qt5/QtGui -I/usr/include/x86_64-linux-gnu/qt5/QtCore -I. -I/usr/include/c++/15 -I/usr/include/x86_64-linux-gnu/c++/15 -I/usr/include/c++/15/backward -I/usr/lib/llvm-21/lib/clang/21/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include ../../perioddialog.h -o moc_perioddialog.cpp
 
 compiler_moc_objc_header_make_all:
 compiler_moc_objc_header_clean:
@@ -1005,6 +1037,10 @@ mainwindow.o: ../../mainwindow.cpp ../../mainwindow.h \
 		../../fluxtemplate.h \
 		../../templatefit.h \
 		../../barycorrdialog.h \
+		../../perioddialog.h \
+		../../periodogram.h \
+		../../linefinder.h \
+		../../linewidth.h \
 		../../levmar.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o mainwindow.o ../../mainwindow.cpp
 
@@ -1088,6 +1124,23 @@ barycorrdialog.o: ../../barycorrdialog.cpp ../../barycorrdialog.h \
 		../../dataio.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o barycorrdialog.o ../../barycorrdialog.cpp
 
+periodogram.o: ../../periodogram.cpp ../../periodogram.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o periodogram.o ../../periodogram.cpp
+
+linewidth.o: ../../linewidth.cpp ../../linewidth.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o linewidth.o ../../linewidth.cpp
+
+linefinder.o: ../../linefinder.cpp ../../linefinder.h \
+		../../linewidth.h \
+		../../qcustomplot.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o linefinder.o ../../linefinder.cpp
+
+perioddialog.o: ../../perioddialog.cpp ../../perioddialog.h \
+		../../periodogram.h \
+		../../dataio.h \
+		../../qcustomplot.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o perioddialog.o ../../perioddialog.cpp
+
 resources.o: ../../resources.cpp ../../resources.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o resources.o ../../resources.cpp
 
@@ -1130,6 +1183,12 @@ moc_fluxtemplate.o: moc_fluxtemplate.cpp
 
 moc_barycorrdialog.o: moc_barycorrdialog.cpp 
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o moc_barycorrdialog.o moc_barycorrdialog.cpp
+
+moc_linefinder.o: moc_linefinder.cpp 
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o moc_linefinder.o moc_linefinder.cpp
+
+moc_perioddialog.o: moc_perioddialog.cpp 
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o moc_perioddialog.o moc_perioddialog.cpp
 
 ####### Install
 

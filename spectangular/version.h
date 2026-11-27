@@ -4,7 +4,7 @@
 // Identification of the build, shown at the start (console and Messages).
 // In a source archive made with "git archive", git fills in the commit (export-subst, see
 // .gitattributes); in a git checkout qmake passes it as SPECTANGULAR_GIT_COMMIT.
-#define SPECTANGULAR_ARCHIVE_COMMIT "89dabab (2026-11-23)"
+#define SPECTANGULAR_ARCHIVE_COMMIT "76adad6 (2026-11-26)"
 
 inline const char *spectangularCommit()
 {

@@ -66,8 +66,10 @@ PlotSpec::PlotSpec(QWidget *parent) :
     legendFont.setPointSize(16);
     ui->customPlot->xAxis2->setVisible(true);
     ui->customPlot->xAxis2->setTickLabels(false);
+    ui->customPlot->xAxis2->setTicks(false);
     ui->customPlot->yAxis2->setVisible(true);
     ui->customPlot->yAxis2->setTickLabels(false);
+    ui->customPlot->yAxis2->setTicks(false);
     ui->customPlot->xAxis->setLabelFont(legendFont);
     ui->customPlot->yAxis->setLabelFont(legendFont);
     ui->customPlot->xAxis->setTickLabelFont(legendFont);

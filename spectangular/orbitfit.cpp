@@ -29,8 +29,10 @@ OrbitFit::OrbitFit(QWidget *parent) :
     for(QCustomPlot *p : {ui->customPlot, ui->customPlot_res}){
         p->xAxis2->setVisible(true);
         p->xAxis2->setTickLabels(false);
+        p->xAxis2->setTicks(false);
         p->yAxis2->setVisible(true);
         p->yAxis2->setTickLabels(false);
+        p->yAxis2->setTicks(false);
         p->xAxis->setLabel("Orbital Phase");
         p->xAxis->setRange(0.0, 1.0);
     }
