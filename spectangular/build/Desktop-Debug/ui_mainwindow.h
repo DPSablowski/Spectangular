@@ -138,7 +138,6 @@ public:
     QCheckBox *checkBox_tellfit;
     QCheckBox *checkBox_tellrange;
     QLineEdit *lineEdit_tellrange;
-    QWidget *row_telldetect;
     QHBoxLayout *row_telldetect_l;
     QPushButton *pushButton_telldetect;
     QDoubleSpinBox *doubleSpinBox_telldet;
@@ -192,7 +191,6 @@ public:
     QSpacerItem *sp_29;
     QCheckBox *checkBox_40;
     QCheckBox *checkBox_33;
-    QWidget *rowRange;
     QHBoxLayout *rowRange_l;
     QDoubleSpinBox *doubleSpinBox_14;
     QLabel *lbl_30;
@@ -215,18 +213,15 @@ public:
     QHBoxLayout *hFree;
     QCheckBox *checkBox_18;
     QCheckBox *checkBox_17;
-    QWidget *row_checkBox_31;
     QHBoxLayout *row_checkBox_31_l;
     QCheckBox *checkBox_31;
     QLabel *lbl_34;
     QSpacerItem *sp_35;
-    QWidget *row_checkBox_36;
     QHBoxLayout *row_checkBox_36_l;
     QCheckBox *checkBox_36;
     QLabel *lbl_36;
     QSpacerItem *sp_37;
     QCheckBox *checkBox_37;
-    QWidget *row_checkBox_35;
     QHBoxLayout *row_checkBox_35_l;
     QCheckBox *checkBox_35;
     QLabel *lbl_38;
@@ -412,7 +407,7 @@ public:
     {
         if (MainWindow->objectName().isEmpty())
             MainWindow->setObjectName(QString::fromUtf8("MainWindow"));
-        MainWindow->resize(1440, 920);
+        MainWindow->resize(1440, 983);
         actionSpectrum_Plotter = new QAction(MainWindow);
         actionSpectrum_Plotter->setObjectName(QString::fromUtf8("actionSpectrum_Plotter"));
         QIcon icon;
@@ -533,8 +528,8 @@ public:
         hBody->setObjectName(QString::fromUtf8("hBody"));
         tabSettings = new QTabWidget(centralWidget);
         tabSettings->setObjectName(QString::fromUtf8("tabSettings"));
-        tabSettings->setMaximumSize(QSize(640, 16777215));
         tabSettings->setMinimumSize(QSize(520, 0));
+        tabSettings->setMaximumSize(QSize(640, 16777215));
         tabData = new QWidget();
         tabData->setObjectName(QString::fromUtf8("tabData"));
         tabData_l = new QVBoxLayout(tabData);
@@ -542,10 +537,11 @@ public:
         tabData_l->setContentsMargins(0, 0, 0, 0);
         tabData_s = new QScrollArea(tabData);
         tabData_s->setObjectName(QString::fromUtf8("tabData_s"));
+        tabData_s->setFrameShape(QFrame::Shape::NoFrame);
         tabData_s->setWidgetResizable(true);
-        tabData_s->setFrameShape(QFrame::NoFrame);
         tabData_c = new QWidget();
         tabData_c->setObjectName(QString::fromUtf8("tabData_c"));
+        tabData_c->setGeometry(QRect(0, 0, 622, 867));
         tabData_v = new QVBoxLayout(tabData_c);
         tabData_v->setSpacing(8);
         tabData_v->setObjectName(QString::fromUtf8("tabData_v"));
@@ -583,10 +579,10 @@ public:
 
         spinBox_2 = new QSpinBox(grpSpectra);
         spinBox_2->setObjectName(QString::fromUtf8("spinBox_2"));
-        spinBox_2->setMaximum(999);
-        spinBox_2->setValue(1);
         spinBox_2->setMinimumSize(QSize(56, 0));
         spinBox_2->setMaximumSize(QSize(56, 16777215));
+        spinBox_2->setMaximum(999);
+        spinBox_2->setValue(1);
 
         grdSpectra->addWidget(spinBox_2, 0, 5, 1, 1);
 
@@ -650,11 +646,11 @@ public:
 
         doubleSpinBox_18 = new QDoubleSpinBox(grpSpectra);
         doubleSpinBox_18->setObjectName(QString::fromUtf8("doubleSpinBox_18"));
+        doubleSpinBox_18->setMinimumSize(QSize(110, 0));
+        doubleSpinBox_18->setMaximumSize(QSize(110, 16777215));
         doubleSpinBox_18->setDecimals(3);
         doubleSpinBox_18->setMaximum(1000.000000000000000);
         doubleSpinBox_18->setSingleStep(0.100000000000000);
-        doubleSpinBox_18->setMinimumSize(QSize(110, 0));
-        doubleSpinBox_18->setMaximumSize(QSize(110, 16777215));
 
         grdSpectra->addWidget(doubleSpinBox_18, 3, 4, 1, 3);
 
@@ -695,16 +691,16 @@ public:
 
         lbl_9 = new QLabel(grpSystem);
         lbl_9->setObjectName(QString::fromUtf8("lbl_9"));
-        lbl_9->setTextFormat(Qt::RichText);
+        lbl_9->setTextFormat(Qt::TextFormat::RichText);
 
         grdSystem->addWidget(lbl_9, 1, 0, 1, 1);
 
         doubleSpinBox_4 = new QDoubleSpinBox(grpSystem);
         doubleSpinBox_4->setObjectName(QString::fromUtf8("doubleSpinBox_4"));
-        doubleSpinBox_4->setDecimals(5);
-        doubleSpinBox_4->setSingleStep(0.020000000000000);
         doubleSpinBox_4->setMinimumSize(QSize(90, 0));
         doubleSpinBox_4->setMaximumSize(QSize(90, 16777215));
+        doubleSpinBox_4->setDecimals(5);
+        doubleSpinBox_4->setSingleStep(0.020000000000000);
 
         grdSystem->addWidget(doubleSpinBox_4, 1, 1, 1, 1);
 
@@ -730,47 +726,47 @@ public:
 
         lbl_12 = new QLabel(grpSystem);
         lbl_12->setObjectName(QString::fromUtf8("lbl_12"));
-        lbl_12->setTextFormat(Qt::RichText);
+        lbl_12->setTextFormat(Qt::TextFormat::RichText);
 
         grdSystem->addWidget(lbl_12, 2, 2, 1, 1);
 
         doubleSpinBox_lref = new QDoubleSpinBox(grpSystem);
         doubleSpinBox_lref->setObjectName(QString::fromUtf8("doubleSpinBox_lref"));
+        doubleSpinBox_lref->setMinimumSize(QSize(110, 0));
+        doubleSpinBox_lref->setMaximumSize(QSize(110, 16777215));
         doubleSpinBox_lref->setDecimals(1);
         doubleSpinBox_lref->setMaximum(1000000.000000000000000);
         doubleSpinBox_lref->setSingleStep(100.000000000000000);
-        doubleSpinBox_lref->setMinimumSize(QSize(110, 0));
-        doubleSpinBox_lref->setMaximumSize(QSize(110, 16777215));
 
         grdSystem->addWidget(doubleSpinBox_lref, 2, 3, 1, 2);
 
         lbl_13 = new QLabel(grpSystem);
         lbl_13->setObjectName(QString::fromUtf8("lbl_13"));
-        lbl_13->setTextFormat(Qt::RichText);
+        lbl_13->setTextFormat(Qt::TextFormat::RichText);
 
         grdSystem->addWidget(lbl_13, 3, 0, 1, 1);
 
         doubleSpinBox_TA = new QDoubleSpinBox(grpSystem);
         doubleSpinBox_TA->setObjectName(QString::fromUtf8("doubleSpinBox_TA"));
+        doubleSpinBox_TA->setMinimumSize(QSize(100, 0));
+        doubleSpinBox_TA->setMaximumSize(QSize(100, 16777215));
         doubleSpinBox_TA->setDecimals(0);
         doubleSpinBox_TA->setMinimum(0.000000000000000);
         doubleSpinBox_TA->setMaximum(1000000.000000000000000);
         doubleSpinBox_TA->setSingleStep(100.000000000000000);
         doubleSpinBox_TA->setValue(10000.000000000000000);
-        doubleSpinBox_TA->setMinimumSize(QSize(100, 0));
-        doubleSpinBox_TA->setMaximumSize(QSize(100, 16777215));
 
         grdSystem->addWidget(doubleSpinBox_TA, 3, 1, 1, 1);
 
         doubleSpinBox_TB = new QDoubleSpinBox(grpSystem);
         doubleSpinBox_TB->setObjectName(QString::fromUtf8("doubleSpinBox_TB"));
+        doubleSpinBox_TB->setMinimumSize(QSize(100, 0));
+        doubleSpinBox_TB->setMaximumSize(QSize(100, 16777215));
         doubleSpinBox_TB->setDecimals(0);
         doubleSpinBox_TB->setMinimum(0.000000000000000);
         doubleSpinBox_TB->setMaximum(1000000.000000000000000);
         doubleSpinBox_TB->setSingleStep(100.000000000000000);
         doubleSpinBox_TB->setValue(10000.000000000000000);
-        doubleSpinBox_TB->setMinimumSize(QSize(100, 0));
-        doubleSpinBox_TB->setMaximumSize(QSize(100, 16777215));
 
         grdSystem->addWidget(doubleSpinBox_TB, 3, 2, 1, 1);
 
@@ -883,17 +879,15 @@ public:
 
         grdRV->addWidget(lineEdit_tellrange, 6, 1, 1, 1);
 
-        row_telldetect = new QWidget(grpRV);
-        row_telldetect->setObjectName(QString::fromUtf8("row_telldetect"));
-        row_telldetect_l = new QHBoxLayout(row_telldetect);
+        row_telldetect_l = new QHBoxLayout();
         row_telldetect_l->setObjectName(QString::fromUtf8("row_telldetect_l"));
         row_telldetect_l->setContentsMargins(0, 0, 0, 0);
-        pushButton_telldetect = new QPushButton(row_telldetect);
+        pushButton_telldetect = new QPushButton(grpRV);
         pushButton_telldetect->setObjectName(QString::fromUtf8("pushButton_telldetect"));
 
         row_telldetect_l->addWidget(pushButton_telldetect);
 
-        doubleSpinBox_telldet = new QDoubleSpinBox(row_telldetect);
+        doubleSpinBox_telldet = new QDoubleSpinBox(grpRV);
         doubleSpinBox_telldet->setObjectName(QString::fromUtf8("doubleSpinBox_telldet"));
         doubleSpinBox_telldet->setDecimals(1);
         doubleSpinBox_telldet->setMinimum(1.000000000000000);
@@ -903,7 +897,7 @@ public:
         row_telldetect_l->addWidget(doubleSpinBox_telldet);
 
 
-        grdRV->addWidget(row_telldetect, 6, 2, 1, 2);
+        grdRV->addLayout(row_telldetect_l, 6, 2, 1, 2);
 
 
         tabData_v->addWidget(grpRV);
@@ -919,13 +913,13 @@ public:
 
         doubleSpinBox_16 = new QDoubleSpinBox(grpNoise);
         doubleSpinBox_16->setObjectName(QString::fromUtf8("doubleSpinBox_16"));
+        doubleSpinBox_16->setMinimumSize(QSize(90, 0));
+        doubleSpinBox_16->setMaximumSize(QSize(90, 16777215));
         doubleSpinBox_16->setDecimals(1);
         doubleSpinBox_16->setMinimum(0.000000000000000);
         doubleSpinBox_16->setMaximum(100000.000000000000000);
         doubleSpinBox_16->setSingleStep(10.000000000000000);
         doubleSpinBox_16->setValue(0.000000000000000);
-        doubleSpinBox_16->setMinimumSize(QSize(90, 0));
-        doubleSpinBox_16->setMaximumSize(QSize(90, 16777215));
 
         grdNoise->addWidget(doubleSpinBox_16, 0, 1, 1, 1);
 
@@ -973,13 +967,13 @@ public:
 
         doubleSpinBox = new QDoubleSpinBox(grpRead);
         doubleSpinBox->setObjectName(QString::fromUtf8("doubleSpinBox"));
-        doubleSpinBox->setButtonSymbols(QAbstractSpinBox::NoButtons);
-        doubleSpinBox->setReadOnly(true);
         doubleSpinBox->setEnabled(false);
-        doubleSpinBox->setMinimum(-999.000000000000000);
-        doubleSpinBox->setMaximum(999.000000000000000);
         doubleSpinBox->setMinimumSize(QSize(90, 0));
         doubleSpinBox->setMaximumSize(QSize(90, 16777215));
+        doubleSpinBox->setReadOnly(true);
+        doubleSpinBox->setButtonSymbols(QAbstractSpinBox::ButtonSymbols::NoButtons);
+        doubleSpinBox->setMinimum(-999.000000000000000);
+        doubleSpinBox->setMaximum(999.000000000000000);
 
         grdRead->addWidget(doubleSpinBox, 0, 1, 1, 1);
 
@@ -990,13 +984,13 @@ public:
 
         doubleSpinBox_2 = new QDoubleSpinBox(grpRead);
         doubleSpinBox_2->setObjectName(QString::fromUtf8("doubleSpinBox_2"));
-        doubleSpinBox_2->setButtonSymbols(QAbstractSpinBox::NoButtons);
-        doubleSpinBox_2->setReadOnly(true);
         doubleSpinBox_2->setEnabled(false);
-        doubleSpinBox_2->setMinimum(-999.000000000000000);
-        doubleSpinBox_2->setMaximum(999.990000000000009);
         doubleSpinBox_2->setMinimumSize(QSize(90, 0));
         doubleSpinBox_2->setMaximumSize(QSize(90, 16777215));
+        doubleSpinBox_2->setReadOnly(true);
+        doubleSpinBox_2->setButtonSymbols(QAbstractSpinBox::ButtonSymbols::NoButtons);
+        doubleSpinBox_2->setMinimum(-999.000000000000000);
+        doubleSpinBox_2->setMaximum(999.990000000000009);
 
         grdRead->addWidget(doubleSpinBox_2, 0, 3, 1, 1);
 
@@ -1007,14 +1001,14 @@ public:
 
         doubleSpinBox_3 = new QDoubleSpinBox(grpRead);
         doubleSpinBox_3->setObjectName(QString::fromUtf8("doubleSpinBox_3"));
-        doubleSpinBox_3->setButtonSymbols(QAbstractSpinBox::NoButtons);
-        doubleSpinBox_3->setReadOnly(true);
         doubleSpinBox_3->setEnabled(false);
-        doubleSpinBox_3->setFrame(false);
-        doubleSpinBox_3->setDecimals(5);
-        doubleSpinBox_3->setSingleStep(0.050000000000000);
         doubleSpinBox_3->setMinimumSize(QSize(90, 0));
         doubleSpinBox_3->setMaximumSize(QSize(90, 16777215));
+        doubleSpinBox_3->setFrame(false);
+        doubleSpinBox_3->setReadOnly(true);
+        doubleSpinBox_3->setButtonSymbols(QAbstractSpinBox::ButtonSymbols::NoButtons);
+        doubleSpinBox_3->setDecimals(5);
+        doubleSpinBox_3->setSingleStep(0.050000000000000);
 
         grdRead->addWidget(doubleSpinBox_3, 1, 1, 1, 1);
 
@@ -1037,10 +1031,11 @@ public:
         tabModel_l->setContentsMargins(0, 0, 0, 0);
         tabModel_s = new QScrollArea(tabModel);
         tabModel_s->setObjectName(QString::fromUtf8("tabModel_s"));
+        tabModel_s->setFrameShape(QFrame::Shape::NoFrame);
         tabModel_s->setWidgetResizable(true);
-        tabModel_s->setFrameShape(QFrame::NoFrame);
         tabModel_c = new QWidget();
         tabModel_c->setObjectName(QString::fromUtf8("tabModel_c"));
+        tabModel_c->setGeometry(QRect(0, 0, 636, 686));
         tabModel_v = new QVBoxLayout(tabModel_c);
         tabModel_v->setSpacing(8);
         tabModel_v->setObjectName(QString::fromUtf8("tabModel_v"));
@@ -1058,9 +1053,9 @@ public:
         comboBox_interp->addItem(QString());
         comboBox_interp->addItem(QString());
         comboBox_interp->setObjectName(QString::fromUtf8("comboBox_interp"));
-        comboBox_interp->setSizeAdjustPolicy(QComboBox::AdjustToContents);
         comboBox_interp->setMinimumSize(QSize(100, 0));
         comboBox_interp->setMaximumSize(QSize(100, 16777215));
+        comboBox_interp->setSizeAdjustPolicy(QComboBox::SizeAdjustPolicy::AdjustToContents);
 
         grdShift->addWidget(comboBox_interp, 0, 1, 1, 1);
 
@@ -1111,10 +1106,10 @@ public:
 
         spinBox_8 = new QSpinBox(grpSolver);
         spinBox_8->setObjectName(QString::fromUtf8("spinBox_8"));
-        spinBox_8->setMinimum(1);
-        spinBox_8->setMaximum(9999);
         spinBox_8->setMinimumSize(QSize(60, 0));
         spinBox_8->setMaximumSize(QSize(60, 16777215));
+        spinBox_8->setMinimum(1);
+        spinBox_8->setMaximum(9999);
 
         grdSolver->addWidget(spinBox_8, 1, 1, 1, 1);
 
@@ -1125,13 +1120,13 @@ public:
 
         spinBox_7 = new QSpinBox(grpSolver);
         spinBox_7->setObjectName(QString::fromUtf8("spinBox_7"));
-        spinBox_7->setButtonSymbols(QAbstractSpinBox::NoButtons);
-        spinBox_7->setReadOnly(true);
         spinBox_7->setEnabled(false);
-        spinBox_7->setMinimum(1);
-        spinBox_7->setMaximum(9999);
         spinBox_7->setMinimumSize(QSize(50, 0));
         spinBox_7->setMaximumSize(QSize(50, 16777215));
+        spinBox_7->setReadOnly(true);
+        spinBox_7->setButtonSymbols(QAbstractSpinBox::ButtonSymbols::NoButtons);
+        spinBox_7->setMinimum(1);
+        spinBox_7->setMaximum(9999);
 
         grdSolver->addWidget(spinBox_7, 1, 3, 1, 1);
 
@@ -1186,35 +1181,33 @@ public:
 
         grdResiduum->addWidget(checkBox_33, 2, 0, 1, 1);
 
-        rowRange = new QWidget(grpResiduum);
-        rowRange->setObjectName(QString::fromUtf8("rowRange"));
-        rowRange_l = new QHBoxLayout(rowRange);
+        rowRange_l = new QHBoxLayout();
         rowRange_l->setObjectName(QString::fromUtf8("rowRange_l"));
         rowRange_l->setContentsMargins(0, 0, 0, 0);
-        doubleSpinBox_14 = new QDoubleSpinBox(rowRange);
+        doubleSpinBox_14 = new QDoubleSpinBox(grpResiduum);
         doubleSpinBox_14->setObjectName(QString::fromUtf8("doubleSpinBox_14"));
-        doubleSpinBox_14->setDecimals(4);
-        doubleSpinBox_14->setMaximum(9999.989999999999782);
         doubleSpinBox_14->setMinimumSize(QSize(100, 0));
         doubleSpinBox_14->setMaximumSize(QSize(100, 16777215));
+        doubleSpinBox_14->setDecimals(4);
+        doubleSpinBox_14->setMaximum(9999.989999999999782);
 
         rowRange_l->addWidget(doubleSpinBox_14);
 
-        lbl_30 = new QLabel(rowRange);
+        lbl_30 = new QLabel(grpResiduum);
         lbl_30->setObjectName(QString::fromUtf8("lbl_30"));
 
         rowRange_l->addWidget(lbl_30);
 
-        doubleSpinBox_15 = new QDoubleSpinBox(rowRange);
+        doubleSpinBox_15 = new QDoubleSpinBox(grpResiduum);
         doubleSpinBox_15->setObjectName(QString::fromUtf8("doubleSpinBox_15"));
-        doubleSpinBox_15->setDecimals(4);
-        doubleSpinBox_15->setMaximum(9999.989999999999782);
         doubleSpinBox_15->setMinimumSize(QSize(100, 0));
         doubleSpinBox_15->setMaximumSize(QSize(100, 16777215));
+        doubleSpinBox_15->setDecimals(4);
+        doubleSpinBox_15->setMaximum(9999.989999999999782);
 
         rowRange_l->addWidget(doubleSpinBox_15);
 
-        lbl_31 = new QLabel(rowRange);
+        lbl_31 = new QLabel(grpResiduum);
         lbl_31->setObjectName(QString::fromUtf8("lbl_31"));
 
         rowRange_l->addWidget(lbl_31);
@@ -1224,7 +1217,7 @@ public:
         rowRange_l->addItem(sp_32);
 
 
-        grdResiduum->addWidget(rowRange, 2, 1, 1, 3);
+        grdResiduum->addLayout(rowRange_l, 2, 1, 1, 3);
 
         checkBox_mask = new QCheckBox(grpResiduum);
         checkBox_mask->setObjectName(QString::fromUtf8("checkBox_mask"));
@@ -1260,10 +1253,11 @@ public:
         tabOpt_l->setContentsMargins(0, 0, 0, 0);
         tabOpt_s = new QScrollArea(tabOpt);
         tabOpt_s->setObjectName(QString::fromUtf8("tabOpt_s"));
+        tabOpt_s->setFrameShape(QFrame::Shape::NoFrame);
         tabOpt_s->setWidgetResizable(true);
-        tabOpt_s->setFrameShape(QFrame::NoFrame);
         tabOpt_c = new QWidget();
         tabOpt_c->setObjectName(QString::fromUtf8("tabOpt_c"));
+        tabOpt_c->setGeometry(QRect(0, 0, 622, 751));
         tabOpt_v = new QVBoxLayout(tabOpt_c);
         tabOpt_v->setSpacing(8);
         tabOpt_v->setObjectName(QString::fromUtf8("tabOpt_v"));
@@ -1287,32 +1281,30 @@ public:
         hFree->setObjectName(QString::fromUtf8("hFree"));
         checkBox_18 = new QCheckBox(grpTarget);
         checkBox_18->setObjectName(QString::fromUtf8("checkBox_18"));
-        checkBox_18->setChecked(true);
         checkBox_18->setEnabled(true);
+        checkBox_18->setChecked(true);
 
         hFree->addWidget(checkBox_18);
 
         checkBox_17 = new QCheckBox(grpTarget);
         checkBox_17->setObjectName(QString::fromUtf8("checkBox_17"));
-        checkBox_17->setChecked(true);
         checkBox_17->setEnabled(true);
+        checkBox_17->setChecked(true);
 
         hFree->addWidget(checkBox_17);
 
-        row_checkBox_31 = new QWidget(grpTarget);
-        row_checkBox_31->setObjectName(QString::fromUtf8("row_checkBox_31"));
-        row_checkBox_31_l = new QHBoxLayout(row_checkBox_31);
+        row_checkBox_31_l = new QHBoxLayout();
         row_checkBox_31_l->setObjectName(QString::fromUtf8("row_checkBox_31_l"));
         row_checkBox_31_l->setContentsMargins(0, 0, 0, 0);
-        checkBox_31 = new QCheckBox(row_checkBox_31);
+        checkBox_31 = new QCheckBox(grpTarget);
         checkBox_31->setObjectName(QString::fromUtf8("checkBox_31"));
         checkBox_31->setChecked(true);
 
         row_checkBox_31_l->addWidget(checkBox_31);
 
-        lbl_34 = new QLabel(row_checkBox_31);
+        lbl_34 = new QLabel(grpTarget);
         lbl_34->setObjectName(QString::fromUtf8("lbl_34"));
-        lbl_34->setTextFormat(Qt::RichText);
+        lbl_34->setTextFormat(Qt::TextFormat::RichText);
 
         row_checkBox_31_l->addWidget(lbl_34);
 
@@ -1321,22 +1313,20 @@ public:
         row_checkBox_31_l->addItem(sp_35);
 
 
-        hFree->addWidget(row_checkBox_31);
+        hFree->addLayout(row_checkBox_31_l);
 
-        row_checkBox_36 = new QWidget(grpTarget);
-        row_checkBox_36->setObjectName(QString::fromUtf8("row_checkBox_36"));
-        row_checkBox_36_l = new QHBoxLayout(row_checkBox_36);
+        row_checkBox_36_l = new QHBoxLayout();
         row_checkBox_36_l->setObjectName(QString::fromUtf8("row_checkBox_36_l"));
         row_checkBox_36_l->setContentsMargins(0, 0, 0, 0);
-        checkBox_36 = new QCheckBox(row_checkBox_36);
+        checkBox_36 = new QCheckBox(grpTarget);
         checkBox_36->setObjectName(QString::fromUtf8("checkBox_36"));
         checkBox_36->setChecked(true);
 
         row_checkBox_36_l->addWidget(checkBox_36);
 
-        lbl_36 = new QLabel(row_checkBox_36);
+        lbl_36 = new QLabel(grpTarget);
         lbl_36->setObjectName(QString::fromUtf8("lbl_36"));
-        lbl_36->setTextFormat(Qt::RichText);
+        lbl_36->setTextFormat(Qt::TextFormat::RichText);
 
         row_checkBox_36_l->addWidget(lbl_36);
 
@@ -1345,7 +1335,7 @@ public:
         row_checkBox_36_l->addItem(sp_37);
 
 
-        hFree->addWidget(row_checkBox_36);
+        hFree->addLayout(row_checkBox_36_l);
 
         checkBox_37 = new QCheckBox(grpTarget);
         checkBox_37->setObjectName(QString::fromUtf8("checkBox_37"));
@@ -1353,21 +1343,19 @@ public:
 
         hFree->addWidget(checkBox_37);
 
-        row_checkBox_35 = new QWidget(grpTarget);
-        row_checkBox_35->setObjectName(QString::fromUtf8("row_checkBox_35"));
-        row_checkBox_35_l = new QHBoxLayout(row_checkBox_35);
+        row_checkBox_35_l = new QHBoxLayout();
         row_checkBox_35_l->setObjectName(QString::fromUtf8("row_checkBox_35_l"));
         row_checkBox_35_l->setContentsMargins(0, 0, 0, 0);
-        checkBox_35 = new QCheckBox(row_checkBox_35);
+        checkBox_35 = new QCheckBox(grpTarget);
         checkBox_35->setObjectName(QString::fromUtf8("checkBox_35"));
-        checkBox_35->setChecked(true);
         checkBox_35->setEnabled(true);
+        checkBox_35->setChecked(true);
 
         row_checkBox_35_l->addWidget(checkBox_35);
 
-        lbl_38 = new QLabel(row_checkBox_35);
+        lbl_38 = new QLabel(grpTarget);
         lbl_38->setObjectName(QString::fromUtf8("lbl_38"));
-        lbl_38->setTextFormat(Qt::RichText);
+        lbl_38->setTextFormat(Qt::TextFormat::RichText);
 
         row_checkBox_35_l->addWidget(lbl_38);
 
@@ -1376,7 +1364,7 @@ public:
         row_checkBox_35_l->addItem(sp_39);
 
 
-        hFree->addWidget(row_checkBox_35);
+        hFree->addLayout(row_checkBox_35_l);
 
         checkBox_38 = new QCheckBox(grpTarget);
         checkBox_38->setObjectName(QString::fromUtf8("checkBox_38"));
@@ -1433,9 +1421,9 @@ public:
         comboBox_method->addItem(QString());
         comboBox_method->addItem(QString());
         comboBox_method->setObjectName(QString::fromUtf8("comboBox_method"));
-        comboBox_method->setSizeAdjustPolicy(QComboBox::AdjustToContents);
         comboBox_method->setMinimumSize(QSize(210, 0));
         comboBox_method->setMaximumSize(QSize(210, 16777215));
+        comboBox_method->setSizeAdjustPolicy(QComboBox::SizeAdjustPolicy::AdjustToContents);
 
         grdMethod->addWidget(comboBox_method, 0, 1, 1, 3);
 
@@ -1466,10 +1454,10 @@ public:
 
         spinBox_3 = new QSpinBox(grpMethod);
         spinBox_3->setObjectName(QString::fromUtf8("spinBox_3"));
-        spinBox_3->setMaximum(9999);
-        spinBox_3->setValue(9999);
         spinBox_3->setMinimumSize(QSize(80, 0));
         spinBox_3->setMaximumSize(QSize(80, 16777215));
+        spinBox_3->setMaximum(9999);
+        spinBox_3->setValue(9999);
 
         grdMethod->addWidget(spinBox_3, 2, 1, 1, 1);
 
@@ -1487,13 +1475,13 @@ public:
 
         doubleSpinBox_17 = new QDoubleSpinBox(grpStop);
         doubleSpinBox_17->setObjectName(QString::fromUtf8("doubleSpinBox_17"));
+        doubleSpinBox_17->setMinimumSize(QSize(70, 0));
+        doubleSpinBox_17->setMaximumSize(QSize(70, 16777215));
         doubleSpinBox_17->setDecimals(3);
         doubleSpinBox_17->setMinimum(0.001000000000000);
         doubleSpinBox_17->setMaximum(1000.000000000000000);
         doubleSpinBox_17->setSingleStep(0.050000000000000);
         doubleSpinBox_17->setValue(0.100000000000000);
-        doubleSpinBox_17->setMinimumSize(QSize(70, 0));
-        doubleSpinBox_17->setMaximumSize(QSize(70, 16777215));
 
         grdStop->addWidget(doubleSpinBox_17, 0, 1, 1, 1);
 
@@ -1504,10 +1492,10 @@ public:
 
         spinBox_11 = new QSpinBox(grpStop);
         spinBox_11->setObjectName(QString::fromUtf8("spinBox_11"));
-        spinBox_11->setMaximum(100000);
-        spinBox_11->setValue(0);
         spinBox_11->setMinimumSize(QSize(70, 0));
         spinBox_11->setMaximumSize(QSize(70, 16777215));
+        spinBox_11->setMaximum(100000);
+        spinBox_11->setValue(0);
 
         grdStop->addWidget(spinBox_11, 0, 3, 1, 1);
 
@@ -1549,11 +1537,11 @@ public:
 
         spinBox_mc = new QSpinBox(grpErr);
         spinBox_mc->setObjectName(QString::fromUtf8("spinBox_mc"));
+        spinBox_mc->setMinimumSize(QSize(80, 0));
+        spinBox_mc->setMaximumSize(QSize(80, 16777215));
         spinBox_mc->setMinimum(3);
         spinBox_mc->setMaximum(10000);
         spinBox_mc->setValue(30);
-        spinBox_mc->setMinimumSize(QSize(80, 0));
-        spinBox_mc->setMaximumSize(QSize(80, 16777215));
 
         grdErr->addWidget(spinBox_mc, 0, 3, 1, 1);
 
@@ -1675,10 +1663,11 @@ public:
         tabOut_l->setContentsMargins(0, 0, 0, 0);
         tabOut_s = new QScrollArea(tabOut);
         tabOut_s->setObjectName(QString::fromUtf8("tabOut_s"));
+        tabOut_s->setFrameShape(QFrame::Shape::NoFrame);
         tabOut_s->setWidgetResizable(true);
-        tabOut_s->setFrameShape(QFrame::NoFrame);
         tabOut_c = new QWidget();
         tabOut_c->setObjectName(QString::fromUtf8("tabOut_c"));
+        tabOut_c->setGeometry(QRect(0, 0, 622, 824));
         tabOut_v = new QVBoxLayout(tabOut_c);
         tabOut_v->setSpacing(8);
         tabOut_v->setObjectName(QString::fromUtf8("tabOut_v"));
@@ -1957,12 +1946,12 @@ public:
         tabSpectra_l->setContentsMargins(4, 4, 4, 4);
         labelLegend = new QLabel(tabSpectra);
         labelLegend->setObjectName(QString::fromUtf8("labelLegend"));
-        labelLegend->setTextFormat(Qt::RichText);
         QSizePolicy sizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
         sizePolicy.setHorizontalStretch(0);
         sizePolicy.setVerticalStretch(0);
         sizePolicy.setHeightForWidth(labelLegend->sizePolicy().hasHeightForWidth());
         labelLegend->setSizePolicy(sizePolicy);
+        labelLegend->setTextFormat(Qt::TextFormat::RichText);
 
         tabSpectra_l->addWidget(labelLegend);
 
@@ -1997,10 +1986,10 @@ public:
 
         doubleSpinBox_5 = new QDoubleSpinBox(tabSpectra);
         doubleSpinBox_5->setObjectName(QString::fromUtf8("doubleSpinBox_5"));
-        doubleSpinBox_5->setSingleStep(0.100000000000000);
-        doubleSpinBox_5->setValue(0.300000000000000);
         doubleSpinBox_5->setMinimumSize(QSize(70, 0));
         doubleSpinBox_5->setMaximumSize(QSize(70, 16777215));
+        doubleSpinBox_5->setSingleStep(0.100000000000000);
+        doubleSpinBox_5->setValue(0.300000000000000);
 
         hSpecOpts->addWidget(doubleSpinBox_5);
 
@@ -2011,12 +2000,12 @@ public:
 
         spinBox_6 = new QSpinBox(tabSpectra);
         spinBox_6->setObjectName(QString::fromUtf8("spinBox_6"));
-        spinBox_6->setButtonSymbols(QAbstractSpinBox::NoButtons);
-        spinBox_6->setReadOnly(true);
         spinBox_6->setEnabled(false);
-        spinBox_6->setMaximum(9999);
         spinBox_6->setMinimumSize(QSize(70, 0));
         spinBox_6->setMaximumSize(QSize(70, 16777215));
+        spinBox_6->setReadOnly(true);
+        spinBox_6->setButtonSymbols(QAbstractSpinBox::ButtonSymbols::NoButtons);
+        spinBox_6->setMaximum(9999);
 
         hSpecOpts->addWidget(spinBox_6);
 
@@ -2058,11 +2047,11 @@ public:
 
         doubleSpinBox_st1 = new QDoubleSpinBox(tabSpectra);
         doubleSpinBox_st1->setObjectName(QString::fromUtf8("doubleSpinBox_st1"));
+        doubleSpinBox_st1->setMinimumSize(QSize(100, 0));
+        doubleSpinBox_st1->setMaximumSize(QSize(100, 16777215));
         doubleSpinBox_st1->setDecimals(2);
         doubleSpinBox_st1->setMaximum(1000000.000000000000000);
         doubleSpinBox_st1->setSingleStep(1.000000000000000);
-        doubleSpinBox_st1->setMinimumSize(QSize(100, 0));
-        doubleSpinBox_st1->setMaximumSize(QSize(100, 16777215));
 
         hStatOpts->addWidget(doubleSpinBox_st1);
 
@@ -2073,11 +2062,11 @@ public:
 
         doubleSpinBox_st2 = new QDoubleSpinBox(tabSpectra);
         doubleSpinBox_st2->setObjectName(QString::fromUtf8("doubleSpinBox_st2"));
+        doubleSpinBox_st2->setMinimumSize(QSize(100, 0));
+        doubleSpinBox_st2->setMaximumSize(QSize(100, 16777215));
         doubleSpinBox_st2->setDecimals(2);
         doubleSpinBox_st2->setMaximum(1000000.000000000000000);
         doubleSpinBox_st2->setSingleStep(1.000000000000000);
-        doubleSpinBox_st2->setMinimumSize(QSize(100, 0));
-        doubleSpinBox_st2->setMaximumSize(QSize(100, 16777215));
 
         hStatOpts->addWidget(doubleSpinBox_st2);
 
@@ -2107,6 +2096,11 @@ public:
         tabConv_l->setContentsMargins(4, 4, 4, 4);
         customPlot_4 = new QCustomPlot(tabConv);
         customPlot_4->setObjectName(QString::fromUtf8("customPlot_4"));
+        QSizePolicy sizePolicy1(QSizePolicy::Preferred, QSizePolicy::MinimumExpanding);
+        sizePolicy1.setHorizontalStretch(0);
+        sizePolicy1.setVerticalStretch(0);
+        sizePolicy1.setHeightForWidth(customPlot_4->sizePolicy().hasHeightForWidth());
+        customPlot_4->setSizePolicy(sizePolicy1);
         customPlot_4->setMinimumSize(QSize(300, 200));
 
         tabConv_l->addWidget(customPlot_4);
@@ -2151,7 +2145,7 @@ public:
 
         frameStatus = new QFrame(centralWidget);
         frameStatus->setObjectName(QString::fromUtf8("frameStatus"));
-        frameStatus->setFrameShape(QFrame::StyledPanel);
+        frameStatus->setFrameShape(QFrame::Shape::StyledPanel);
         hStatus = new QHBoxLayout(frameStatus);
         hStatus->setObjectName(QString::fromUtf8("hStatus"));
         hStatus->setContentsMargins(4, 4, 4, 4);
@@ -2162,12 +2156,12 @@ public:
 
         spinBox_4 = new QSpinBox(frameStatus);
         spinBox_4->setObjectName(QString::fromUtf8("spinBox_4"));
-        spinBox_4->setButtonSymbols(QAbstractSpinBox::NoButtons);
-        spinBox_4->setReadOnly(true);
         spinBox_4->setEnabled(false);
-        spinBox_4->setMaximum(9999);
         spinBox_4->setMinimumSize(QSize(70, 0));
         spinBox_4->setMaximumSize(QSize(70, 16777215));
+        spinBox_4->setReadOnly(true);
+        spinBox_4->setButtonSymbols(QAbstractSpinBox::ButtonSymbols::NoButtons);
+        spinBox_4->setMaximum(9999);
 
         hStatus->addWidget(spinBox_4);
 
@@ -2178,12 +2172,12 @@ public:
 
         spinBox_5 = new QSpinBox(frameStatus);
         spinBox_5->setObjectName(QString::fromUtf8("spinBox_5"));
-        spinBox_5->setButtonSymbols(QAbstractSpinBox::NoButtons);
-        spinBox_5->setReadOnly(true);
         spinBox_5->setEnabled(false);
-        spinBox_5->setMaximum(99999);
         spinBox_5->setMinimumSize(QSize(80, 0));
         spinBox_5->setMaximumSize(QSize(80, 16777215));
+        spinBox_5->setReadOnly(true);
+        spinBox_5->setButtonSymbols(QAbstractSpinBox::ButtonSymbols::NoButtons);
+        spinBox_5->setMaximum(99999);
 
         hStatus->addWidget(spinBox_5);
 
@@ -2194,10 +2188,10 @@ public:
 
         lineEdit_7 = new QLineEdit(frameStatus);
         lineEdit_7->setObjectName(QString::fromUtf8("lineEdit_7"));
-        lineEdit_7->setReadOnly(true);
         lineEdit_7->setEnabled(false);
         lineEdit_7->setMinimumSize(QSize(150, 0));
         lineEdit_7->setMaximumSize(QSize(150, 16777215));
+        lineEdit_7->setReadOnly(true);
 
         hStatus->addWidget(lineEdit_7);
 
@@ -2208,10 +2202,10 @@ public:
 
         lineEdit_6 = new QLineEdit(frameStatus);
         lineEdit_6->setObjectName(QString::fromUtf8("lineEdit_6"));
-        lineEdit_6->setReadOnly(true);
         lineEdit_6->setEnabled(false);
         lineEdit_6->setMinimumSize(QSize(110, 0));
         lineEdit_6->setMaximumSize(QSize(110, 16777215));
+        lineEdit_6->setReadOnly(true);
 
         hStatus->addWidget(lineEdit_6);
 
@@ -2230,7 +2224,7 @@ public:
         MainWindow->setCentralWidget(centralWidget);
         menuBar = new QMenuBar(MainWindow);
         menuBar->setObjectName(QString::fromUtf8("menuBar"));
-        menuBar->setGeometry(QRect(0, 0, 1585, 22));
+        menuBar->setGeometry(QRect(0, 0, 1440, 23));
         menuFile = new QMenu(menuBar);
         menuFile->setObjectName(QString::fromUtf8("menuFile"));
         menuTools = new QMenu(menuBar);
@@ -2330,7 +2324,7 @@ public:
         retranslateUi(MainWindow);
 
         tabSettings->setCurrentIndex(0);
-        tabPlots->setCurrentIndex(0);
+        tabPlots->setCurrentIndex(1);
 
 
         QMetaObject::connectSlotsByName(MainWindow);
@@ -2420,10 +2414,10 @@ public:
         lineEdit_11->setText(QString());
         lbl_7->setText(QCoreApplication::translate("MainWindow", "flux col.", nullptr));
         lineEdit_12->setText(QString());
-        checkBox_42->setText(QCoreApplication::translate("MainWindow", "Resample to a common log grid, step", nullptr));
 #if QT_CONFIG(tooltip)
         checkBox_42->setToolTip(QCoreApplication::translate("MainWindow", "Resample all spectra onto one common, equidistant log10(lambda) grid when reading (cubic spline), with the step given here. Without the tick this happens automatically (step auto) when the spectra are not on one common log grid: linear wavelengths (Angstrom) or individual log grids. Range: the part covered by all spectra.", nullptr));
 #endif // QT_CONFIG(tooltip)
+        checkBox_42->setText(QCoreApplication::translate("MainWindow", "Resample to a common log grid, step", nullptr));
 #if QT_CONFIG(tooltip)
         doubleSpinBox_18->setToolTip(QCoreApplication::translate("MainWindow", "Step of the common log grid in km/s per pixel. auto: the finest median sampling among the spectra.", nullptr));
 #endif // QT_CONFIG(tooltip)
@@ -2446,25 +2440,25 @@ public:
         comboBox_ratio->setToolTip(QCoreApplication::translate("MainWindow", "Wavelength dependence of the flux ratio F_A/F_B. constant: the same ratio at all wavelengths. Planck: ratio of two Planck functions with T_A and T_B. table: file with two columns (wavelength [A], ratio), interpolated linearly. The value in 'Flux ratio' (and per spectrum in the Editor or from the flux-ratio optimisation) is the ratio at the reference wavelength.", nullptr));
 #endif // QT_CONFIG(tooltip)
         lbl_12->setText(QCoreApplication::translate("MainWindow", "at \316\273<sub>ref</sub>", nullptr));
-        doubleSpinBox_lref->setSuffix(QCoreApplication::translate("MainWindow", " \303\205", nullptr));
-        doubleSpinBox_lref->setSpecialValueText(QCoreApplication::translate("MainWindow", "auto", nullptr));
 #if QT_CONFIG(tooltip)
         doubleSpinBox_lref->setToolTip(QCoreApplication::translate("MainWindow", "Reference wavelength [A] at which the flux ratio is given. auto: centre of the data (geometric mean).", nullptr));
 #endif // QT_CONFIG(tooltip)
+        doubleSpinBox_lref->setSpecialValueText(QCoreApplication::translate("MainWindow", "auto", nullptr));
+        doubleSpinBox_lref->setSuffix(QCoreApplication::translate("MainWindow", " \303\205", nullptr));
         lbl_13->setText(QCoreApplication::translate("MainWindow", "T<sub>A</sub>, T<sub>B</sub>", nullptr));
-        doubleSpinBox_TA->setSuffix(QCoreApplication::translate("MainWindow", " K", nullptr));
 #if QT_CONFIG(tooltip)
         doubleSpinBox_TA->setToolTip(QCoreApplication::translate("MainWindow", "Effective temperature of A [K] (Planck).", nullptr));
 #endif // QT_CONFIG(tooltip)
-        doubleSpinBox_TB->setSuffix(QCoreApplication::translate("MainWindow", " K", nullptr));
+        doubleSpinBox_TA->setSuffix(QCoreApplication::translate("MainWindow", " K", nullptr));
 #if QT_CONFIG(tooltip)
         doubleSpinBox_TB->setToolTip(QCoreApplication::translate("MainWindow", "Effective temperature of B [K] (Planck).", nullptr));
 #endif // QT_CONFIG(tooltip)
+        doubleSpinBox_TB->setSuffix(QCoreApplication::translate("MainWindow", " K", nullptr));
         lbl_14->setText(QCoreApplication::translate("MainWindow", "table", nullptr));
-        lineEdit_ratio->setText(QCoreApplication::translate("MainWindow", "fluxratio.dat", nullptr));
 #if QT_CONFIG(tooltip)
         lineEdit_ratio->setToolTip(QCoreApplication::translate("MainWindow", "Flux-ratio table: two columns, wavelength [A] and F_A/F_B.", nullptr));
 #endif // QT_CONFIG(tooltip)
+        lineEdit_ratio->setText(QCoreApplication::translate("MainWindow", "fluxratio.dat", nullptr));
         grpRV->setTitle(QCoreApplication::translate("MainWindow", "Radial velocities (start values; selects what is fitted)", nullptr));
 #if QT_CONFIG(tooltip)
         checkBox_2->setToolTip(QCoreApplication::translate("MainWindow", "Start RVs from a file (one line per spectrum: RV_A RV_B). The optimisation fits individual RVs.", nullptr));
@@ -2529,22 +2523,22 @@ public:
 #endif // QT_CONFIG(tooltip)
         doubleSpinBox_16->setSpecialValueText(QCoreApplication::translate("MainWindow", "auto", nullptr));
         lbl_16->setText(QCoreApplication::translate("MainWindow", "auto: from the residuum", nullptr));
-        checkBox_41->setText(QCoreApplication::translate("MainWindow", "Weight per spectrum by S/N from", nullptr));
 #if QT_CONFIG(tooltip)
         checkBox_41->setToolTip(QCoreApplication::translate("MainWindow", "Weighted least squares: each spectrum is weighted with 1/sigma^2, sigma = 1/(S/N), S/N per spectrum from the file (one value per line, same order as the spectra). Solve writes an estimate from the residuals to snr_estimated.dat.", nullptr));
 #endif // QT_CONFIG(tooltip)
+        checkBox_41->setText(QCoreApplication::translate("MainWindow", "Weight per spectrum by S/N from", nullptr));
 #if QT_CONFIG(tooltip)
         lineEdit_29->setToolTip(QCoreApplication::translate("MainWindow", "File with one S/N value per spectrum, or \"auto\": estimate the S/N per spectrum from the residuals (3 iterations at the first solve, written to snr_estimated.dat).", nullptr));
 #endif // QT_CONFIG(tooltip)
         lineEdit_29->setText(QCoreApplication::translate("MainWindow", "snr.dat", nullptr));
-        checkBox_align->setText(QCoreApplication::translate("MainWindow", "Align continua to the mean, smoothing", nullptr));
 #if QT_CONFIG(tooltip)
         checkBox_align->setToolTip(QCoreApplication::translate("MainWindow", "Before disentangling, each spectrum is divided by its smoothed ratio to the mean of all spectra (boxcar of the given width, applied twice; excluded ranges left out). This removes differences of the normalisation between the spectra, which the disentangling turns into broad anti-correlated wiggles of A and B. Also removes real broad differences, e.g. from shifted Balmer wings, on scales of the width and above.", nullptr));
 #endif // QT_CONFIG(tooltip)
-        doubleSpinBox_alignWidth->setSuffix(QCoreApplication::translate("MainWindow", " \303\205", nullptr));
+        checkBox_align->setText(QCoreApplication::translate("MainWindow", "Align continua to the mean, smoothing", nullptr));
 #if QT_CONFIG(tooltip)
         doubleSpinBox_alignWidth->setToolTip(QCoreApplication::translate("MainWindow", "Width of the boxcar (applied twice) for the ratio of each spectrum to the mean spectrum. Must be much larger than the RV shifts of the lines (a few \303\205).", nullptr));
 #endif // QT_CONFIG(tooltip)
+        doubleSpinBox_alignWidth->setSuffix(QCoreApplication::translate("MainWindow", " \303\205", nullptr));
         grpRead->setTitle(QCoreApplication::translate("MainWindow", "After reading", nullptr));
         lbl_17->setText(QCoreApplication::translate("MainWindow", "max |RV| A [km/s]", nullptr));
         lbl_18->setText(QCoreApplication::translate("MainWindow", "max |RV| B [km/s]", nullptr));
@@ -2561,14 +2555,14 @@ public:
         lbl_23->setText(QCoreApplication::translate("MainWindow", "Cubic: smooth in the RVs, more accurate, 3\342\200\2234\303\227 slower per solve.", nullptr));
         grpSolver->setTitle(QCoreApplication::translate("MainWindow", "Linear system", nullptr));
         lbl_24->setText(QCoreApplication::translate("MainWindow", "Solver", nullptr));
-        checkBox_5->setText(QCoreApplication::translate("MainWindow", "LSQR", nullptr));
 #if QT_CONFIG(tooltip)
         checkBox_5->setToolTip(QCoreApplication::translate("MainWindow", "Iterative least-squares solver on the sparse matrix (fast, little memory).", nullptr));
 #endif // QT_CONFIG(tooltip)
-        checkBox_6->setText(QCoreApplication::translate("MainWindow", "SVD (DaC)", nullptr));
+        checkBox_5->setText(QCoreApplication::translate("MainWindow", "LSQR", nullptr));
 #if QT_CONFIG(tooltip)
         checkBox_6->setToolTip(QCoreApplication::translate("MainWindow", "Truncated SVD (divide and conquer) on a dense copy of the matrix (slow, needs much memory).", nullptr));
 #endif // QT_CONFIG(tooltip)
+        checkBox_6->setText(QCoreApplication::translate("MainWindow", "SVD (DaC)", nullptr));
         checkBox_7->setText(QCoreApplication::translate("MainWindow", "Bidiagonal Matrix", nullptr));
         lbl_26->setText(QCoreApplication::translate("MainWindow", "Cores", nullptr));
 #if QT_CONFIG(tooltip)
@@ -2583,25 +2577,25 @@ public:
         lbl_28->setText(QCoreApplication::translate("MainWindow", "Criterion", nullptr));
         checkBox_14->setText(QCoreApplication::translate("MainWindow", "Mean (\317\207\302\262)", nullptr));
         checkBox_15->setText(QCoreApplication::translate("MainWindow", "Peak", nullptr));
-        checkBox_40->setText(QCoreApplication::translate("MainWindow", "Exclude edges (pixels covered by single spectra only)", nullptr));
 #if QT_CONFIG(tooltip)
         checkBox_40->setToolTip(QCoreApplication::translate("MainWindow", "Compute the residuum without the outer pixels of each spectrum (RV range in pixels + 2). There the reconstructed spectra are constrained by single spectra only, and the residuum jumps when an RV crosses a pixel boundary.", nullptr));
 #endif // QT_CONFIG(tooltip)
+        checkBox_40->setText(QCoreApplication::translate("MainWindow", "Exclude edges (pixels covered by single spectra only)", nullptr));
         checkBox_33->setText(QCoreApplication::translate("MainWindow", "Only from", nullptr));
         lbl_30->setText(QCoreApplication::translate("MainWindow", "to", nullptr));
         lbl_31->setText(QCoreApplication::translate("MainWindow", "\303\205", nullptr));
-        checkBox_mask->setText(QCoreApplication::translate("MainWindow", "Exclude ranges from", nullptr));
 #if QT_CONFIG(tooltip)
         checkBox_mask->setToolTip(QCoreApplication::translate("MainWindow", "Leave wavelength ranges out of the solution and the residuum, e.g. telluric bands: file in the work folder with from and to in \303\205 (frame of the input spectra), one range per line. If telluric_mask.dat does not exist, it is created with the strongest telluric bands and the strong chromospheric lines (Balmer, Ca II H&K, Mg b, Na D, Ca II IR triplet) and can then be edited.", nullptr));
 #endif // QT_CONFIG(tooltip)
-        lineEdit_mask->setText(QCoreApplication::translate("MainWindow", "telluric_mask.dat", nullptr));
+        checkBox_mask->setText(QCoreApplication::translate("MainWindow", "Exclude ranges from", nullptr));
 #if QT_CONFIG(tooltip)
         lineEdit_mask->setToolTip(QCoreApplication::translate("MainWindow", "File with the excluded ranges (from, to in \303\205 per line, further text ignored; # comments). Default telluric_mask.dat: created with the strongest telluric bands and strong chromospheric lines if missing.", nullptr));
 #endif // QT_CONFIG(tooltip)
-        checkBox_resstatic->setText(QCoreApplication::translate("MainWindow", "Exclude the ranges of the static lines from the residuum", nullptr));
+        lineEdit_mask->setText(QCoreApplication::translate("MainWindow", "telluric_mask.dat", nullptr));
 #if QT_CONFIG(tooltip)
         checkBox_resstatic->setToolTip(QCoreApplication::translate("MainWindow", "Compute the residuum (and the residual statistics and the S/N estimate) without the pixels in the ranges of the file of the Data tab, \"Static lines only in\" (observatory frame; shifted by BC in corrected spectra). They stay in the solution. Takes effect with Read data or when ticked.", nullptr));
 #endif // QT_CONFIG(tooltip)
+        checkBox_resstatic->setText(QCoreApplication::translate("MainWindow", "Exclude the ranges of the static lines from the residuum", nullptr));
         tabSettings->setTabText(tabSettings->indexOf(tabModel), QCoreApplication::translate("MainWindow", "Model", nullptr));
         grpTarget->setTitle(QCoreApplication::translate("MainWindow", "What is fitted", nullptr));
         labelFitTarget->setText(QCoreApplication::translate("MainWindow", "Individual RVs", nullptr));
@@ -2638,15 +2632,15 @@ public:
 #endif // QT_CONFIG(tooltip)
         checkBox_38->setText(QCoreApplication::translate("MainWindow", "\317\211", nullptr));
         labelFixedRV->setText(QCoreApplication::translate("MainWindow", "Fixed RVs (spectrum numbers) A", nullptr));
-        lineEdit_fixA->setPlaceholderText(QCoreApplication::translate("MainWindow", "none", nullptr));
 #if QT_CONFIG(tooltip)
         lineEdit_fixA->setToolTip(QCoreApplication::translate("MainWindow", "Spectra whose RV of component A stays at its start value, e.g. 0, 3, 7-9 (numbers as in the file names). Empty: all free.", nullptr));
 #endif // QT_CONFIG(tooltip)
+        lineEdit_fixA->setPlaceholderText(QCoreApplication::translate("MainWindow", "none", nullptr));
         labelFixedRVB->setText(QCoreApplication::translate("MainWindow", "B", nullptr));
-        lineEdit_fixB->setPlaceholderText(QCoreApplication::translate("MainWindow", "none", nullptr));
 #if QT_CONFIG(tooltip)
         lineEdit_fixB->setToolTip(QCoreApplication::translate("MainWindow", "Spectra whose RV of component B stays at its start value, e.g. 0, 3, 7-9. Empty: all free.", nullptr));
 #endif // QT_CONFIG(tooltip)
+        lineEdit_fixB->setPlaceholderText(QCoreApplication::translate("MainWindow", "none", nullptr));
         grpMethod->setTitle(QCoreApplication::translate("MainWindow", "Method", nullptr));
         lbl_45->setText(QCoreApplication::translate("MainWindow", "Method", nullptr));
         comboBox_method->setItemText(0, QCoreApplication::translate("MainWindow", "Nelder-Mead", nullptr));
@@ -2742,20 +2736,20 @@ public:
         lineEdit_stat->setToolTip(QCoreApplication::translate("MainWindow", "Residuals per spectrum (mean, rms, std of observation - model), written by Update in the convergence tab.", nullptr));
 #endif // QT_CONFIG(tooltip)
         checkBox_19->setText(QCoreApplication::translate("MainWindow", "Save every improvement (files and plots)", nullptr));
-        checkBox_norm->setText(QCoreApplication::translate("MainWindow", "Also write continuum-normalised A and B (*_norm) and plot them", nullptr));
 #if QT_CONFIG(tooltip)
         checkBox_norm->setToolTip(QCoreApplication::translate("MainWindow", "Fits a continuum to each disentangled component: a cubic spline per piece between excluded ranges, through the upper points (points more than the chosen number of sigma below the fit are lines, more than 3 sigma above are spikes; sigma from the points above the fit; iterated). Writes A and B divided by it as <name>_norm.<ext> beside the files as they come from the disentangling, and plots the normalised spectra.", nullptr));
 #endif // QT_CONFIG(tooltip)
+        checkBox_norm->setText(QCoreApplication::translate("MainWindow", "Also write continuum-normalised A and B (*_norm) and plot them", nullptr));
         lbl_normKnot->setText(QCoreApplication::translate("MainWindow", "Continuum: spline knots every", nullptr));
-        doubleSpinBox_normKnot->setSuffix(QCoreApplication::translate("MainWindow", " \303\205", nullptr));
 #if QT_CONFIG(tooltip)
         doubleSpinBox_normKnot->setToolTip(QCoreApplication::translate("MainWindow", "Distance of the spline knots of the continuum fit. Smaller: follows broader wiggles more closely but also broad lines (Balmer wings); larger: smoother. Pieces shorter than this get a straight line (shorter than 20 \303\205: a constant).", nullptr));
 #endif // QT_CONFIG(tooltip)
+        doubleSpinBox_normKnot->setSuffix(QCoreApplication::translate("MainWindow", " \303\205", nullptr));
         lbl_normLow->setText(QCoreApplication::translate("MainWindow", "Continuum: reject points below the fit by more than", nullptr));
-        doubleSpinBox_normLow->setSuffix(QCoreApplication::translate("MainWindow", " \317\203", nullptr));
 #if QT_CONFIG(tooltip)
         doubleSpinBox_normLow->setToolTip(QCoreApplication::translate("MainWindow", "Points this far below the continuum fit count as lines and are left out (sigma from the points above the fit). Smaller: the continuum follows the upper envelope more closely (line-rich, cool stars); larger: closer to the mean of the continuum points (white noise, few lines).", nullptr));
 #endif // QT_CONFIG(tooltip)
+        doubleSpinBox_normLow->setSuffix(QCoreApplication::translate("MainWindow", " \317\203", nullptr));
         grpState->setTitle(QCoreApplication::translate("MainWindow", "Optimisation state", nullptr));
         lbl_64->setText(QCoreApplication::translate("MainWindow", "Initial simplex", nullptr));
         lbl_65->setText(QCoreApplication::translate("MainWindow", "Current simplex", nullptr));
@@ -2769,57 +2763,57 @@ public:
         lineEdit_optdata->setToolTip(QCoreApplication::translate("MainWindow", "Iteration, evaluation and residuum of every step of the optimisation (convergence plot).", nullptr));
 #endif // QT_CONFIG(tooltip)
         grpAnalysis->setTitle(QCoreApplication::translate("MainWindow", "Analysis of the solution (run in Tools \342\206\222 Period analysis)", nullptr));
-        checkBox_anaFit->setText(QCoreApplication::translate("MainWindow", "RV O-C and line strength", nullptr));
 #if QT_CONFIG(tooltip)
         checkBox_anaFit->setToolTip(QCoreApplication::translate("MainWindow", "With the component spectra fixed, every spectrum is fitted with its own shift of A and B (O-C of the RVs, with errors) and its own strength of the lines of A and B (1 = as in the component spectra).", nullptr));
 #endif // QT_CONFIG(tooltip)
-        lineEdit_anaFit->setText(QCoreApplication::translate("MainWindow", "rv_oc.dat", nullptr));
+        checkBox_anaFit->setText(QCoreApplication::translate("MainWindow", "RV O-C and line strength", nullptr));
 #if QT_CONFIG(tooltip)
         lineEdit_anaFit->setToolTip(QCoreApplication::translate("MainWindow", "Per spectrum: time, phase, RV of the model, O-C of the RV and line strength of A and B with standard errors, RMS of the fit.", nullptr));
 #endif // QT_CONFIG(tooltip)
-        checkBox_anaLines->setText(QCoreApplication::translate("MainWindow", "Statistics per line, windows from", nullptr));
+        lineEdit_anaFit->setText(QCoreApplication::translate("MainWindow", "rv_oc.dat", nullptr));
 #if QT_CONFIG(tooltip)
         checkBox_anaLines->setToolTip(QCoreApplication::translate("MainWindow", "Mean, RMS and equivalent width of observation - model in every window of the file (from, to in \303\205, frame of the input spectra, optional label; created with strong lines if missing), for every spectrum.", nullptr));
 #endif // QT_CONFIG(tooltip)
-        lineEdit_lines->setText(QCoreApplication::translate("MainWindow", "lines.dat", nullptr));
+        checkBox_anaLines->setText(QCoreApplication::translate("MainWindow", "Statistics per line, windows from", nullptr));
 #if QT_CONFIG(tooltip)
         lineEdit_lines->setToolTip(QCoreApplication::translate("MainWindow", "Windows: from, to in \303\205 (frame of the input spectra, wide enough for the RVs) and a label per line; # comments. Default lines.dat: created with Balmer, He I/II, Mg II, Na D, Ca II and Mg b if missing.", nullptr));
 #endif // QT_CONFIG(tooltip)
-        lineEdit_anaLines->setText(QCoreApplication::translate("MainWindow", "linestat.dat", nullptr));
+        lineEdit_lines->setText(QCoreApplication::translate("MainWindow", "lines.dat", nullptr));
 #if QT_CONFIG(tooltip)
         lineEdit_anaLines->setToolTip(QCoreApplication::translate("MainWindow", "Per spectrum and window: time, phase, label, pixels, mean, RMS and equivalent width [\303\205] of observation - model.", nullptr));
 #endif // QT_CONFIG(tooltip)
+        lineEdit_anaLines->setText(QCoreApplication::translate("MainWindow", "linestat.dat", nullptr));
         tabSettings->setTabText(tabSettings->indexOf(tabOut), QCoreApplication::translate("MainWindow", "Output", nullptr));
         labelLegend->setText(QCoreApplication::translate("MainWindow", "<span style=\"color:#1f4fd1\">\342\226\240</span> Component A &nbsp; <span style=\"color:#d12f2f\">\342\226\240</span> Component B &nbsp; \342\226\240 Mean difference", nullptr));
         checkBox_10->setText(QCoreApplication::translate("MainWindow", "Live update", nullptr));
         checkBox_22->setText(QCoreApplication::translate("MainWindow", "Show static lines", nullptr));
-        lbl_68->setText(QCoreApplication::translate("MainWindow", "Offset", nullptr));
 #if QT_CONFIG(tooltip)
         lbl_68->setToolTip(QCoreApplication::translate("MainWindow", "Vertical offset between the differences of the spectra in the lower plot.", nullptr));
 #endif // QT_CONFIG(tooltip)
-        lbl_69->setText(QCoreApplication::translate("MainWindow", "best at eval.", nullptr));
+        lbl_68->setText(QCoreApplication::translate("MainWindow", "Offset", nullptr));
 #if QT_CONFIG(tooltip)
         lbl_69->setToolTip(QCoreApplication::translate("MainWindow", "Number of the evaluation (Solve) that gave the best residuum so far.", nullptr));
 #endif // QT_CONFIG(tooltip)
+        lbl_69->setText(QCoreApplication::translate("MainWindow", "best at eval.", nullptr));
         pushButton_6->setText(QCoreApplication::translate("MainWindow", "Plot", nullptr));
 #if QT_CONFIG(tooltip)
         customPlot_6->setToolTip(QCoreApplication::translate("MainWindow", "RMS and mean of O-M against the number of the spectrum; spectra whose RMS lies more than 5 robust standard deviations (1.48 MAD) above the median are labelled.", nullptr));
 #endif // QT_CONFIG(tooltip)
         lbl_72->setText(QCoreApplication::translate("MainWindow", "Residuals per spectrum, from", nullptr));
-        doubleSpinBox_st1->setSpecialValueText(QCoreApplication::translate("MainWindow", "auto", nullptr));
 #if QT_CONFIG(tooltip)
         doubleSpinBox_st1->setToolTip(QCoreApplication::translate("MainWindow", "Wavelength range of the residual statistics [A], e.g. one line. auto: residuum range of the Model tab (Only from ... to), if switched on, otherwise the whole spectrum (without the edges).", nullptr));
 #endif // QT_CONFIG(tooltip)
+        doubleSpinBox_st1->setSpecialValueText(QCoreApplication::translate("MainWindow", "auto", nullptr));
         lbl_73->setText(QCoreApplication::translate("MainWindow", "to", nullptr));
-        doubleSpinBox_st2->setSpecialValueText(QCoreApplication::translate("MainWindow", "auto", nullptr));
 #if QT_CONFIG(tooltip)
         doubleSpinBox_st2->setToolTip(QCoreApplication::translate("MainWindow", "Upper end of the wavelength range [A]. auto: as the lower end.", nullptr));
 #endif // QT_CONFIG(tooltip)
+        doubleSpinBox_st2->setSpecialValueText(QCoreApplication::translate("MainWindow", "auto", nullptr));
         lbl_74->setText(QCoreApplication::translate("MainWindow", "\303\205", nullptr));
-        pushButton_stat->setText(QCoreApplication::translate("MainWindow", "Update", nullptr));
 #if QT_CONFIG(tooltip)
         pushButton_stat->setToolTip(QCoreApplication::translate("MainWindow", "Recompute the residual statistics and write diffstatistic.dat.", nullptr));
 #endif // QT_CONFIG(tooltip)
+        pushButton_stat->setText(QCoreApplication::translate("MainWindow", "Update", nullptr));
         tabPlots->setTabText(tabPlots->indexOf(tabSpectra), QCoreApplication::translate("MainWindow", "Spectra", nullptr));
         groupBox_messages->setTitle(QCoreApplication::translate("MainWindow", "Messages", nullptr));
         groupBox_rvs->setTitle(QCoreApplication::translate("MainWindow", "RVs", nullptr));
